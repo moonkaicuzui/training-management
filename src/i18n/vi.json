@@ -1,0 +1,146 @@
+{
+  "common": {
+    "search": "Tìm kiếm",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "add": "Thêm",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "actions": "Thao tác",
+    "status": "Trạng thái",
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "all": "Tất cả",
+    "filter": "Lọc",
+    "export": "Xuất Excel",
+    "download": "Tải xuống"
+  },
+  "nav": {
+    "dashboard": "Tổng quan",
+    "programs": "Chương trình đào tạo",
+    "progress": "Tiến độ",
+    "schedule": "Lịch đào tạo",
+    "results": "Nhập kết quả",
+    "employees": "Quản lý nhân viên",
+    "retraining": "Đào tạo lại"
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "totalEmployees": "Tổng nhân viên",
+    "monthlyCompletions": "Hoàn thành tháng này",
+    "completionRate": "Tỷ lệ hoàn thành",
+    "retrainingNeeded": "Cần đào tạo lại",
+    "monthlyChart": "Thống kê theo tháng",
+    "gradeDistribution": "Phân bố xếp loại",
+    "recentResults": "Kết quả gần đây",
+    "quickActions": "Thao tác nhanh",
+    "newTraining": "Đăng ký đào tạo mới",
+    "enterResults": "Nhập kết quả"
+  },
+  "employee": {
+    "title": "Quản lý nhân viên",
+    "id": "Mã nhân viên",
+    "name": "Họ tên",
+    "department": "Phòng ban",
+    "position": "Chức vụ",
+    "building": "Tòa nhà",
+    "line": "Dây chuyền",
+    "hireDate": "Ngày vào làm",
+    "status": "Trạng thái",
+    "trainingHistory": "Lịch sử đào tạo",
+    "addEmployee": "Thêm nhân viên",
+    "editEmployee": "Sửa thông tin nhân viên"
+  },
+  "program": {
+    "title": "Chương trình đào tạo",
+    "code": "Mã",
+    "name": "Tên chương trình",
+    "category": "Phân loại",
+    "targetPositions": "Đối tượng",
+    "passingScore": "Điểm đạt",
+    "duration": "Thời lượng",
+    "validity": "Hiệu lực",
+    "months": "tháng",
+    "hours": "giờ",
+    "addProgram": "Thêm chương trình",
+    "editProgram": "Sửa chương trình",
+    "confirmDelete": "Bạn có chắc muốn xóa chương trình này? Dữ liệu lịch sử sẽ được giữ lại."
+  },
+  "training": {
+    "date": "Ngày đào tạo",
+    "score": "Điểm",
+    "grade": "Xếp loại",
+    "result": "Kết quả",
+    "pass": "Đạt",
+    "fail": "Không đạt",
+    "absent": "Vắng mặt",
+    "trainer": "Giảng viên",
+    "location": "Địa điểm",
+    "notes": "Ghi chú",
+    "remarks": "Nhận xét",
+    "needsRetraining": "Cần đào tạo lại"
+  },
+  "session": {
+    "title": "Lịch đào tạo",
+    "planned": "Đã lên lịch",
+    "completed": "Đã hoàn thành",
+    "cancelled": "Đã hủy",
+    "addSession": "Thêm buổi đào tạo",
+    "attendees": "Người tham gia"
+  },
+  "progress": {
+    "title": "Tiến độ đào tạo",
+    "viewByEmployee": "Xem theo nhân viên",
+    "viewByProgram": "Xem theo chương trình",
+    "notTaken": "Chưa học",
+    "expiring": "Sắp hết hạn",
+    "expired": "Đã hết hạn"
+  },
+  "retraining": {
+    "title": "Đào tạo lại",
+    "reason": "Lý do",
+    "failed": "Không đạt",
+    "expiredTraining": "Hết hạn đào tạo",
+    "recommended": "Chương trình đề xuất"
+  },
+  "grade": {
+    "aa": "AA",
+    "a": "A",
+    "b": "B",
+    "c": "C"
+  },
+  "category": {
+    "QIP": "QIP",
+    "PRODUCTION": "Sản xuất",
+    "RETRAINING": "Đào tạo lại",
+    "NEWCOMER": "Nhân viên mới",
+    "PROMOTION": "Thăng chức"
+  },
+  "position": {
+    "TQC": "TQC",
+    "RQC": "RQC",
+    "QIP_LINE_LEADER": "Line Leader QIP",
+    "PRO_LINE_LEADER": "Line Leader Sản xuất",
+    "GROUP_LEADER": "Group Leader",
+    "SUPERVISOR": "Supervisor",
+    "A_MANAGER": "A. Manager"
+  },
+  "building": {
+    "BUILDING_A_F1": "Tòa A - Tầng 1",
+    "BUILDING_A_F2": "Tòa A - Tầng 2",
+    "BUILDING_C": "Tòa C"
+  },
+  "messages": {
+    "saveSuccess": "Lưu thành công",
+    "saveError": "Lưu thất bại",
+    "deleteSuccess": "Xóa thành công",
+    "deleteError": "Xóa thất bại",
+    "loadError": "Không thể tải dữ liệu",
+    "confirmDeleteTitle": "Xác nhận xóa",
+    "editReasonRequired": "Vui lòng nhập lý do sửa đổi"
+  }
+}

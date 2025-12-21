@@ -1,0 +1,146 @@
+{
+  "common": {
+    "search": "Search",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "noData": "No data",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "all": "All",
+    "filter": "Filter",
+    "export": "Export Excel",
+    "download": "Download"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "programs": "Training Programs",
+    "progress": "Progress",
+    "schedule": "Schedule",
+    "results": "Enter Results",
+    "employees": "Employees",
+    "retraining": "Retraining"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalEmployees": "Total Employees",
+    "monthlyCompletions": "Monthly Completions",
+    "completionRate": "Completion Rate",
+    "retrainingNeeded": "Retraining Needed",
+    "monthlyChart": "Monthly Statistics",
+    "gradeDistribution": "Grade Distribution",
+    "recentResults": "Recent Results",
+    "quickActions": "Quick Actions",
+    "newTraining": "New Training",
+    "enterResults": "Enter Results"
+  },
+  "employee": {
+    "title": "Employee Management",
+    "id": "Employee ID",
+    "name": "Name",
+    "department": "Department",
+    "position": "Position",
+    "building": "Building",
+    "line": "Line",
+    "hireDate": "Hire Date",
+    "status": "Status",
+    "trainingHistory": "Training History",
+    "addEmployee": "Add Employee",
+    "editEmployee": "Edit Employee"
+  },
+  "program": {
+    "title": "Training Programs",
+    "code": "Code",
+    "name": "Program Name",
+    "category": "Category",
+    "targetPositions": "Target Positions",
+    "passingScore": "Passing Score",
+    "duration": "Duration",
+    "validity": "Validity",
+    "months": "months",
+    "hours": "hours",
+    "addProgram": "Add Program",
+    "editProgram": "Edit Program",
+    "confirmDelete": "Are you sure you want to delete this program? Training history will be preserved."
+  },
+  "training": {
+    "date": "Training Date",
+    "score": "Score",
+    "grade": "Grade",
+    "result": "Result",
+    "pass": "Pass",
+    "fail": "Fail",
+    "absent": "Absent",
+    "trainer": "Trainer",
+    "location": "Location",
+    "notes": "Notes",
+    "remarks": "Remarks",
+    "needsRetraining": "Needs Retraining"
+  },
+  "session": {
+    "title": "Training Schedule",
+    "planned": "Planned",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "addSession": "Add Session",
+    "attendees": "Attendees"
+  },
+  "progress": {
+    "title": "Training Progress",
+    "viewByEmployee": "View by Employee",
+    "viewByProgram": "View by Program",
+    "notTaken": "Not Taken",
+    "expiring": "Expiring Soon",
+    "expired": "Expired"
+  },
+  "retraining": {
+    "title": "Retraining",
+    "reason": "Reason",
+    "failed": "Failed",
+    "expiredTraining": "Expired Training",
+    "recommended": "Recommended Programs"
+  },
+  "grade": {
+    "aa": "AA",
+    "a": "A",
+    "b": "B",
+    "c": "C"
+  },
+  "category": {
+    "QIP": "QIP",
+    "PRODUCTION": "Production",
+    "RETRAINING": "Retraining",
+    "NEWCOMER": "Newcomer",
+    "PROMOTION": "Promotion"
+  },
+  "position": {
+    "TQC": "TQC",
+    "RQC": "RQC",
+    "QIP_LINE_LEADER": "QIP Line Leader",
+    "PRO_LINE_LEADER": "Production Line Leader",
+    "GROUP_LEADER": "Group Leader",
+    "SUPERVISOR": "Supervisor",
+    "A_MANAGER": "A. Manager"
+  },
+  "building": {
+    "BUILDING_A_F1": "Building A - F1",
+    "BUILDING_A_F2": "Building A - F2",
+    "BUILDING_C": "Building C"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "saveError": "Failed to save",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Failed to delete",
+    "loadError": "Failed to load data",
+    "confirmDeleteTitle": "Confirm Delete",
+    "editReasonRequired": "Please enter a reason for editing"
+  }
+}
