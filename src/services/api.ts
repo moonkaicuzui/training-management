@@ -33,8 +33,8 @@ import {
 
 // ========== Configuration ==========
 
-const USE_MOCK_API = true; // Set to false when GAS is ready
-const GAS_URL = ''; // Add your Google Apps Script URL here
+const USE_MOCK_API = false; // Set to false when GAS is ready
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJM5WUGsjZEsQq6YcALTyTxJOsM9Diuqpk-sDswAuuWrf_/exec';
 
 // Simulate API delay for realistic UX
 const MOCK_DELAY = 300;
