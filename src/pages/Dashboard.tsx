@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,6 +8,8 @@ import {
   AlertTriangle,
   Plus,
   ClipboardCheck,
+  Clock,
+  Calendar,
 } from 'lucide-react';
 import {
   Card,
@@ -39,7 +41,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { useTrainingStore } from '@/stores/trainingStore';
+import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
 
@@ -55,26 +57,59 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const {
-    dashboardStats,
-    monthlyData,
-    gradeDistribution,
-    retrainingTargets,
+    derived,
     loading,
     fetchDashboardStats,
     fetchMonthlyData,
     fetchGradeDistribution,
     fetchRetrainingTargets,
-  } = useTrainingStore();
+    fetchExpiringTrainings,
+  } = useNormalizedTrainingStore();
+
+  // Extract data from derived state
+  const dashboardStats = derived.dashboard.stats;
+  const monthlyData = derived.dashboard.monthlyData;
+  const gradeDistribution = derived.dashboard.gradeDistribution;
+  const retrainingTargets = derived.retraining.targets;
+  const expiringTrainings = derived.retraining.expiring;
+
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardStats();
-    fetchMonthlyData();
-    fetchGradeDistribution();
-    fetchRetrainingTargets();
+    const fetchAllData = async () => {
+      try {
+        setError(null);
+        // 병렬로 모든 데이터 가져오기 (성능 개선)
+        await Promise.all([
+          fetchDashboardStats(),
+          fetchMonthlyData(),
+          fetchGradeDistribution(),
+          fetchRetrainingTargets(),
+          fetchExpiringTrainings(30),
+        ]);
+      } catch (err) {
+        console.error('Dashboard data fetch error:', err);
+        setError(t('messages.loadError'));
+      }
+    };
+    fetchAllData();
   }, []);
 
-  if (loading.dashboard) {
+  if (loading.views.dashboard) {
     return <PageLoading />;
+  }
+
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <AlertTriangle className="h-12 w-12 text-destructive" />
+        <p className="text-lg text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()}>
+          {t('common.retry')}
+        </Button>
+      </div>
+    );
   }
 
   const stats = [
@@ -84,6 +119,8 @@ export default function Dashboard() {
       icon: Users,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
+      link: '/employees',
+      trend: null, // Could add month-over-month change
     },
     {
       title: t('dashboard.monthlyCompletions'),
@@ -91,6 +128,8 @@ export default function Dashboard() {
       icon: GraduationCap,
       color: 'text-status-pass',
       bgColor: 'bg-status-pass/10',
+      link: '/results',
+      trend: null,
     },
     {
       title: t('dashboard.completionRate'),
@@ -98,6 +137,8 @@ export default function Dashboard() {
       icon: TrendingUp,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
+      link: '/results',
+      trend: null,
     },
     {
       title: t('dashboard.retrainingNeeded'),
@@ -105,6 +146,8 @@ export default function Dashboard() {
       icon: AlertTriangle,
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
+      link: '/retraining',
+      trend: null,
     },
   ];
 
@@ -115,7 +158,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
           <p className="text-muted-foreground">
-            Q-TRAIN 교육 관리 시스템에 오신 것을 환영합니다
+            {t('dashboard.welcome')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -133,15 +176,30 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Card key={index}>
+          <Card
+            key={index}
+            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 group"
+            onClick={() => navigate(stat.link)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(stat.link)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-full ${stat.bgColor}`}>
+              <div className={`p-2 rounded-full ${stat.bgColor} group-hover:scale-110 transition-transform`}>
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
+              {stat.trend !== null && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className={stat.trend > 0 ? 'text-status-pass' : 'text-destructive'}>
+                    {stat.trend > 0 ? '↑' : '↓'} {Math.abs(stat.trend)}%
+                  </span>
+                  {' '}{t('dashboard.fromLastMonth')}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -153,25 +211,51 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>{t('dashboard.monthlyChart')}</CardTitle>
-            <CardDescription>계획 대비 완료 현황</CardDescription>
+            <CardDescription>{t('dashboard.plannedVsCompleted')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="month"
-                    tickFormatter={(value) => value.substring(5)}
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="planned" name="계획" fill="#93C5FD" />
-                  <Bar dataKey="completed" name="완료" fill="#1E40AF" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {monthlyData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[300px] text-center px-4">
+                <div className="rounded-full bg-muted p-6 mb-4">
+                  <GraduationCap className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{t('dashboard.noMonthlyData')}</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                  {t('dashboard.noMonthlyDataDesc')}
+                </p>
+                <Button onClick={() => navigate('/schedule')} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('dashboard.scheduleTraining')}
+                </Button>
+              </div>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={monthlyData}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="month"
+                      tickFormatter={(value) => value.substring(5)}
+                      className="text-sm"
+                    />
+                    <YAxis className="text-sm" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="planned" name={t('dashboard.planned')} fill="#93C5FD" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="completed" name={t('dashboard.completed')} fill="#1E40AF" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -179,36 +263,59 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>{t('dashboard.gradeDistribution')}</CardTitle>
-            <CardDescription>교육 결과 등급 분포</CardDescription>
+            <CardDescription>{t('dashboard.gradeDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={gradeDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ payload, percent }) =>
-                      percent && percent > 0 ? `${payload?.grade} (${Math.round(percent * 100)}%)` : ''
-                    }
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="count"
-                    nameKey="grade"
-                  >
-                    {gradeDistribution.map((entry) => (
-                      <Cell
-                        key={entry.grade}
-                        fill={GRADE_COLORS[entry.grade]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {gradeDistribution.length === 0 || gradeDistribution.every(g => g.count === 0) ? (
+              <div className="flex flex-col items-center justify-center h-[300px] text-center px-4">
+                <div className="rounded-full bg-muted p-6 mb-4">
+                  <TrendingUp className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{t('dashboard.noGradeData')}</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                  {t('dashboard.noGradeDataDesc')}
+                </p>
+                <Button onClick={() => navigate('/results')} variant="outline" size="sm">
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  {t('dashboard.enterResults')}
+                </Button>
+              </div>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={gradeDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ payload, percent }) =>
+                        percent && percent > 0 ? `${payload?.grade} (${Math.round(percent * 100)}%)` : ''
+                      }
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="grade"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {gradeDistribution.map((entry) => (
+                        <Cell
+                          key={entry.grade}
+                          fill={GRADE_COLORS[entry.grade]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -218,29 +325,38 @@ export default function Dashboard() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t('retraining.title')}</CardTitle>
-            <CardDescription>재교육이 필요한 직원 목록 (최근 10명)</CardDescription>
+            <CardDescription>{t('dashboard.retrainingList')} {t('dashboard.recent10')}</CardDescription>
           </div>
           {retrainingTargets.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => navigate('/retraining')}>
-              전체 보기
+              {t('common.viewAll')}
             </Button>
           )}
         </CardHeader>
         <CardContent>
           {retrainingTargets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              재교육이 필요한 직원이 없습니다
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <div className="rounded-full bg-status-pass/10 p-6 mb-4">
+                <ClipboardCheck className="h-12 w-12 text-status-pass" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{t('dashboard.noRetrainingNeeded')}</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                {t('dashboard.allEmployeesCompliant')}
+              </p>
             </div>
           ) : (
-            <Table>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('employee.name')}</TableHead>
                   <TableHead>{t('employee.position')}</TableHead>
                   <TableHead>{t('employee.building')}</TableHead>
-                  <TableHead>프로그램</TableHead>
-                  <TableHead>불합격일</TableHead>
-                  <TableHead>점수</TableHead>
+                  <TableHead>{t('common.program')}</TableHead>
+                  <TableHead>{t('common.failDate')}</TableHead>
+                  <TableHead>{t('common.score')}</TableHead>
                   <TableHead>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -252,7 +368,7 @@ export default function Dashboard() {
                     </TableCell>
                     <TableCell>{target.employee.position}</TableCell>
                     <TableCell>
-                      {target.employee.building.replace('BUILDING_', '').replace('_', ' ')}
+                      {t(`building.${target.employee.building}`)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
@@ -263,11 +379,11 @@ export default function Dashboard() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(target.lastResult.training_date), 'yyyy-MM-dd')}
+                      {format(new Date(target.last_result.training_date), 'yyyy-MM-dd')}
                     </TableCell>
                     <TableCell>
                       <Badge variant="destructive">
-                        {target.lastResult.score ?? 'N/A'}
+                        {target.last_result.score ?? 'N/A'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -276,16 +392,117 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => navigate(`/employees/${target.employee.employee_id}`)}
                       >
-                        상세
+                        {t('common.detail')}
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {retrainingTargets.slice(0, 10).map((target, index) => (
+                  <Card key={index} className="p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-base">{target.employee.employee_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {target.employee.position}
+                        </p>
+                      </div>
+                      <Badge variant="destructive">
+                        {target.last_result.score ?? 'N/A'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{t('employee.building')}:</span>
+                        <span className="font-medium">
+                          {t(`building.${target.employee.building}`)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">{t('common.program')}:</span>
+                        <div className="flex flex-col items-end">
+                          <Badge variant="outline" className="mb-1">
+                            {target.program.program_code}
+                          </Badge>
+                          <span className="text-xs">{target.program.program_name}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{t('common.failDate')}:</span>
+                        <span className="font-medium">
+                          {format(new Date(target.last_result.training_date), 'yyyy-MM-dd')}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-3"
+                      onClick={() => navigate(`/employees/${target.employee.employee_id}`)}
+                    >
+                      {t('common.detail')}
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Expiring Trainings */}
+      {expiringTrainings.length > 0 && (
+        <Card className="border-warning/50 bg-warning/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-full bg-warning/20">
+                <Clock className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">{t('progress.expiring')}</CardTitle>
+                <CardDescription>
+                  {t('dashboard.recent10')} - {expiringTrainings.length}건
+                </CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate('/retraining')}>
+              {t('common.viewAll')}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {expiringTrainings.slice(0, 6).map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-background hover:shadow-sm transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/employees/${item.employee.employee_id}`)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.employee.employee_name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {item.program.program_name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2">
+                    <Badge
+                      variant={item.days_until_expiry <= 7 ? 'destructive' : 'outline'}
+                      className={item.days_until_expiry <= 7 ? '' : 'border-warning text-warning'}
+                    >
+                      <Calendar className="h-3 w-3 mr-1" />
+                      D-{item.days_until_expiry}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
