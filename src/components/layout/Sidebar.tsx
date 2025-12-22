@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Users,
@@ -16,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useUIStore } from '@/stores/uiStore';
 
 interface NavItem {
-  title: string;
+  titleKey: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
@@ -24,32 +25,32 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: '대시보드',
+    titleKey: 'nav.dashboard',
     href: '/',
     icon: LayoutDashboard,
   },
   {
-    title: '교육 프로그램',
+    titleKey: 'nav.programs',
     href: '/programs',
     icon: BookOpen,
   },
   {
-    title: '진도 현황',
+    titleKey: 'nav.progress',
     href: '/progress',
     icon: Grid3X3,
   },
   {
-    title: '교육 일정',
+    titleKey: 'nav.schedule',
     href: '/schedule',
     icon: Calendar,
   },
   {
-    title: '결과 입력',
+    titleKey: 'nav.results',
     href: '/results',
     icon: ClipboardCheck,
   },
   {
-    title: '직원 관리',
+    titleKey: 'nav.employees',
     href: '/employees',
     icon: Users,
   },
@@ -57,13 +58,14 @@ const navItems: NavItem[] = [
 
 const secondaryItems: NavItem[] = [
   {
-    title: '재교육 대상자',
+    titleKey: 'nav.retraining',
     href: '/retraining',
     icon: AlertTriangle,
   },
 ];
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
 
@@ -104,7 +106,7 @@ export function Sidebar() {
         <ScrollArea className="h-[calc(100vh-4rem)] md:h-screen py-4">
           <div className="px-3 py-2">
             <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              메인 메뉴
+              {t('sidebar.mainMenu')}
             </h2>
             <nav className="space-y-1">
               {navItems.map((item) => (
@@ -122,7 +124,7 @@ export function Sidebar() {
                   }
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.title}
+                  {t(item.titleKey)}
                   {item.badge && (
                     <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
                       {item.badge}
@@ -137,7 +139,7 @@ export function Sidebar() {
 
           <div className="px-3 py-2">
             <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              관리
+              {t('sidebar.management')}
             </h2>
             <nav className="space-y-1">
               {secondaryItems.map((item) => (
@@ -155,7 +157,7 @@ export function Sidebar() {
                   }
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.title}
+                  {t(item.titleKey)}
                 </NavLink>
               ))}
             </nav>
@@ -165,19 +167,19 @@ export function Sidebar() {
           <div className="mt-auto px-3 py-4">
             <Separator className="mb-4" />
             <div className="rounded-lg bg-muted p-4">
-              <h3 className="text-sm font-semibold mb-2">빠른 통계</h3>
+              <h3 className="text-sm font-semibold mb-2">{t('sidebar.quickStats')}</h3>
               <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex justify-between">
-                  <span>이번 달 교육</span>
-                  <span className="font-medium text-foreground">12건</span>
+                  <span>{t('sidebar.monthlyTrainings')}</span>
+                  <span className="font-medium text-foreground">12</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>합격률</span>
+                  <span>{t('sidebar.passRate')}</span>
                   <span className="font-medium text-status-pass">95%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>재교육 필요</span>
-                  <span className="font-medium text-destructive">3명</span>
+                  <span>{t('sidebar.retrainingNeeded')}</span>
+                  <span className="font-medium text-destructive">3</span>
                 </div>
               </div>
             </div>

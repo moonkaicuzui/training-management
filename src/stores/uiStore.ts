@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '@/i18n';
 import type { Language, ToastMessage } from '@/types';
 
 interface UIState {
@@ -37,6 +38,11 @@ export const useUIStore = create<UIState>((set) => ({
   setLanguage: (lang) => {
     set({ language: lang });
     localStorage.setItem('q-train-language', lang);
+    i18n.changeLanguage(lang);
+    // HTML lang 속성 동적 업데이트 (접근성 개선)
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
   },
 
   // Sidebar - default open on desktop
@@ -88,5 +94,8 @@ if (typeof window !== 'undefined') {
   const savedLanguage = localStorage.getItem('q-train-language') as Language;
   if (savedLanguage && ['vi', 'ko', 'en'].includes(savedLanguage)) {
     useUIStore.getState().setLanguage(savedLanguage);
+  } else {
+    // 기본 언어로 HTML lang 속성 설정
+    document.documentElement.lang = 'vi';
   }
 }

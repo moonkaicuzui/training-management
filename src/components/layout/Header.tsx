@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search, Menu, Globe, Bell, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ const languages: { code: Language; name: string; flag: string }[] = [
 ];
 
 export function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { language, setLanguage, toggleSidebar } = useUIStore();
   const { retrainingTargets } = useTrainingStore();
@@ -96,7 +98,7 @@ export function Header() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="직원 ID 또는 이름으로 검색..."
+            placeholder={t('header.searchPlaceholder')}
             className="pl-8 w-full"
             value={searchQuery}
             onChange={(e) => {
@@ -115,7 +117,7 @@ export function Header() {
             {searchResults.employees.length > 0 && (
               <div>
                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted">
-                  직원
+                  {t('header.employees')}
                 </div>
                 {searchResults.employees.map((employee) => (
                   <button
@@ -137,7 +139,7 @@ export function Header() {
             {searchResults.programs.length > 0 && (
               <div>
                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted">
-                  교육 프로그램
+                  {t('header.programs')}
                 </div>
                 {searchResults.programs.map((program) => (
                   <button
@@ -163,7 +165,7 @@ export function Header() {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative" aria-label={t('header.notifications')}>
               <Bell className="h-5 w-5" />
               {retrainingTargets.length > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
@@ -173,11 +175,11 @@ export function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>알림</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {retrainingTargets.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground text-sm">
-                새로운 알림이 없습니다
+                {t('header.noNotifications')}
               </div>
             ) : (
               retrainingTargets.slice(0, 5).map((target, index) => (
@@ -188,7 +190,7 @@ export function Header() {
                 >
                   <div className="font-medium">{target.employee.employee_name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {target.program.program_name} 재교육 필요
+                    {target.program.program_name} - {t('header.retrainingNeeded')}
                   </div>
                 </DropdownMenuItem>
               ))
@@ -200,7 +202,7 @@ export function Header() {
                   className="text-center text-primary cursor-pointer"
                   onClick={() => navigate('/retraining')}
                 >
-                  모든 알림 보기 ({retrainingTargets.length}건)
+                  {t('header.viewAllNotifications')} ({retrainingTargets.length})
                 </DropdownMenuItem>
               </>
             )}
@@ -210,12 +212,12 @@ export function Header() {
         {/* Language Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label={t('header.language')}>
               <Globe className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>언어 / Language</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('header.language')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {languages.map((lang) => (
               <DropdownMenuItem
@@ -233,15 +235,15 @@ export function Header() {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full" aria-label={t('header.admin')}>
               <User className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>관리자</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('header.admin')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>설정</DropdownMenuItem>
-            <DropdownMenuItem>도움말</DropdownMenuItem>
+            <DropdownMenuItem>{t('header.settings')}</DropdownMenuItem>
+            <DropdownMenuItem>{t('header.help')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -17,7 +17,26 @@
     "all": "Tất cả",
     "filter": "Lọc",
     "export": "Xuất Excel",
-    "download": "Tải xuống"
+    "download": "Tải xuống",
+    "viewAll": "Xem tất cả",
+    "detail": "Chi tiết",
+    "program": "Chương trình",
+    "failDate": "Ngày không đạt",
+    "score": "Điểm",
+    "retry": "Thử lại"
+  },
+  "header": {
+    "searchPlaceholder": "Tìm kiếm theo mã hoặc tên nhân viên...",
+    "employees": "Nhân viên",
+    "programs": "Chương trình đào tạo",
+    "notifications": "Thông báo",
+    "noNotifications": "Không có thông báo mới",
+    "viewAllNotifications": "Xem tất cả thông báo",
+    "retrainingNeeded": "Cần đào tạo lại",
+    "language": "Ngôn ngữ",
+    "admin": "Quản trị viên",
+    "settings": "Cài đặt",
+    "help": "Trợ giúp"
   },
   "nav": {
     "dashboard": "Tổng quan",
@@ -28,18 +47,41 @@
     "employees": "Quản lý nhân viên",
     "retraining": "Đào tạo lại"
   },
+  "sidebar": {
+    "mainMenu": "Menu chính",
+    "management": "Quản lý",
+    "quickStats": "Thống kê nhanh",
+    "monthlyTrainings": "Đào tạo tháng này",
+    "passRate": "Tỷ lệ đạt",
+    "retrainingNeeded": "Cần đào tạo lại"
+  },
   "dashboard": {
     "title": "Tổng quan",
+    "welcome": "Chào mừng đến với Hệ thống Quản lý Đào tạo Q-TRAIN",
     "totalEmployees": "Tổng nhân viên",
     "monthlyCompletions": "Hoàn thành tháng này",
     "completionRate": "Tỷ lệ hoàn thành",
     "retrainingNeeded": "Cần đào tạo lại",
     "monthlyChart": "Thống kê theo tháng",
+    "plannedVsCompleted": "Kế hoạch so với Hoàn thành",
+    "planned": "Kế hoạch",
+    "completed": "Hoàn thành",
     "gradeDistribution": "Phân bố xếp loại",
+    "gradeDesc": "Phân bố xếp loại kết quả đào tạo",
     "recentResults": "Kết quả gần đây",
     "quickActions": "Thao tác nhanh",
     "newTraining": "Đăng ký đào tạo mới",
-    "enterResults": "Nhập kết quả"
+    "enterResults": "Nhập kết quả",
+    "retrainingList": "Danh sách nhân viên cần đào tạo lại",
+    "recent10": "(10 người gần đây)",
+    "noRetrainingNeeded": "Không có nhân viên cần đào tạo lại",
+    "allEmployeesCompliant": "Tất cả nhân viên đã hoàn thành yêu cầu đào tạo",
+    "fromLastMonth": "so với tháng trước",
+    "noMonthlyData": "Không có dữ liệu theo tháng",
+    "noMonthlyDataDesc": "Chưa có buổi đào tạo nào được lên lịch. Tạo buổi đào tạo đầu tiên để bắt đầu.",
+    "scheduleTraining": "Lên lịch đào tạo",
+    "noGradeData": "Không có dữ liệu xếp loại",
+    "noGradeDataDesc": "Chưa có kết quả đào tạo nào được nhập. Nhập kết quả đào tạo để xem thống kê."
   },
   "employee": {
     "title": "Quản lý nhân viên",

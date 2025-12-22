@@ -17,7 +17,26 @@
     "all": "전체",
     "filter": "필터",
     "export": "Excel 내보내기",
-    "download": "다운로드"
+    "download": "다운로드",
+    "viewAll": "전체 보기",
+    "detail": "상세",
+    "program": "프로그램",
+    "failDate": "불합격일",
+    "score": "점수",
+    "retry": "다시 시도"
+  },
+  "header": {
+    "searchPlaceholder": "직원 ID 또는 이름으로 검색...",
+    "employees": "직원",
+    "programs": "교육 프로그램",
+    "notifications": "알림",
+    "noNotifications": "새로운 알림이 없습니다",
+    "viewAllNotifications": "모든 알림 보기",
+    "retrainingNeeded": "재교육 필요",
+    "language": "언어 선택",
+    "admin": "관리자",
+    "settings": "설정",
+    "help": "도움말"
   },
   "nav": {
     "dashboard": "대시보드",
@@ -28,18 +47,41 @@
     "employees": "직원 관리",
     "retraining": "재교육 대상"
   },
+  "sidebar": {
+    "mainMenu": "메인 메뉴",
+    "management": "관리",
+    "quickStats": "빠른 통계",
+    "monthlyTrainings": "이번 달 교육",
+    "passRate": "합격률",
+    "retrainingNeeded": "재교육 필요"
+  },
   "dashboard": {
     "title": "대시보드",
+    "welcome": "Q-TRAIN 교육 관리 시스템에 오신 것을 환영합니다",
     "totalEmployees": "전체 직원",
     "monthlyCompletions": "이번 달 완료",
     "completionRate": "이수율",
     "retrainingNeeded": "재교육 필요",
     "monthlyChart": "월별 교육 현황",
+    "plannedVsCompleted": "계획 대비 완료 현황",
+    "planned": "계획",
+    "completed": "완료",
     "gradeDistribution": "등급 분포",
+    "gradeDesc": "교육 결과 등급 분포",
     "recentResults": "최근 교육 결과",
     "quickActions": "빠른 작업",
     "newTraining": "새 교육 등록",
-    "enterResults": "결과 입력"
+    "enterResults": "결과 입력",
+    "retrainingList": "재교육이 필요한 직원 목록",
+    "recent10": "(최근 10명)",
+    "noRetrainingNeeded": "재교육이 필요한 직원이 없습니다",
+    "allEmployeesCompliant": "모든 직원이 교육을 완료했습니다",
+    "fromLastMonth": "지난 달 대비",
+    "noMonthlyData": "월별 데이터가 없습니다",
+    "noMonthlyDataDesc": "아직 교육 일정이 등록되지 않았습니다. 새로운 교육을 등록하여 시작하세요.",
+    "scheduleTraining": "교육 일정 등록",
+    "noGradeData": "등급 데이터가 없습니다",
+    "noGradeDataDesc": "아직 교육 결과가 입력되지 않았습니다. 교육 결과를 입력하여 통계를 확인하세요."
   },
   "employee": {
     "title": "직원 관리",

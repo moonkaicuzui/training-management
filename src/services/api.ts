@@ -1,6 +1,7 @@
 // ============================================================
 // Q-TRAIN API Service
 // Mock API for development, switch to GAS for production
+// Enhanced with error handling, caching, and retry logic
 // ============================================================
 
 import type {
@@ -39,7 +40,254 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJ
 // Simulate API delay for realistic UX
 const MOCK_DELAY = 300;
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // ms
+const RETRY_BACKOFF = 2; // exponential backoff multiplier
+
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// ========== Error Classes ==========
+
+export class ApiError extends Error {
+  code: string;
+  status?: number;
+  details?: unknown;
+
+  constructor(
+    message: string,
+    code: string,
+    status?: number,
+    details?: unknown
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
+    this.details = details;
+  }
+}
+
+export class NetworkError extends ApiError {
+  constructor(message: string = '네트워크 연결을 확인해주세요') {
+    super(message, 'NETWORK_ERROR');
+    this.name = 'NetworkError';
+  }
+}
+
+export class TimeoutError extends ApiError {
+  constructor(message: string = '요청 시간이 초과되었습니다') {
+    super(message, 'TIMEOUT_ERROR');
+    this.name = 'TimeoutError';
+  }
+}
+
+export class ValidationError extends ApiError {
+  constructor(message: string, details?: unknown) {
+    super(message, 'VALIDATION_ERROR', 400, details);
+    this.name = 'ValidationError';
+  }
+}
+
+export class NotFoundError extends ApiError {
+  constructor(message: string = '요청한 리소스를 찾을 수 없습니다') {
+    super(message, 'NOT_FOUND', 404);
+    this.name = 'NotFoundError';
+  }
+}
+
+// ========== Cache Implementation ==========
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+class ApiCache {
+  private cache = new Map<string, CacheEntry<unknown>>();
+
+  set<T>(key: string, data: T, ttl: number = CACHE_TTL): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl,
+    });
+  }
+
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return entry.data as T;
+  }
+
+  invalidate(pattern?: string): void {
+    if (!pattern) {
+      this.cache.clear();
+      return;
+    }
+
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  has(key: string): boolean {
+    return this.get(key) !== null;
+  }
+}
+
+const apiCache = new ApiCache();
+
+// ========== Retry Logic ==========
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries: number = MAX_RETRIES,
+  delayMs: number = RETRY_DELAY
+): Promise<T> {
+  let lastError: Error;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+
+      // Don't retry on validation or not found errors
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
+        throw error;
+      }
+
+      if (attempt < retries) {
+        const waitTime = delayMs * Math.pow(RETRY_BACKOFF, attempt);
+        await delay(waitTime);
+      }
+    }
+  }
+
+  throw lastError!;
+}
+
+// ========== Fetch Wrapper ==========
+
+interface ApiFetchOptions {
+  timeout?: number;
+  useCache?: boolean;
+  cacheKey?: string;
+  cacheTTL?: number;
+}
+
+async function apiFetch<T>(
+  url: string,
+  options: RequestInit & ApiFetchOptions = {}
+): Promise<T> {
+  const { timeout = 30000, useCache = false, cacheKey, cacheTTL, ...fetchOptions } = options;
+
+  // Check cache first
+  if (useCache && cacheKey) {
+    const cached = apiCache.get<T>(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.message || `HTTP Error: ${response.status}`,
+        'HTTP_ERROR',
+        response.status,
+        errorData
+      );
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new ApiError(data.error, 'API_ERROR', response.status, data);
+    }
+
+    const result = data.data ?? data;
+
+    // Store in cache
+    if (useCache && cacheKey) {
+      apiCache.set(cacheKey, result, cacheTTL);
+    }
+
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new TimeoutError();
+      }
+      if (error.message.includes('fetch')) {
+        throw new NetworkError();
+      }
+    }
+
+    throw new ApiError(
+      '알 수 없는 오류가 발생했습니다',
+      'UNKNOWN_ERROR',
+      undefined,
+      error
+    );
+  }
+}
+
+// ========== Cache Invalidation Helpers ==========
+
+export function invalidateEmployeeCache(): void {
+  apiCache.invalidate('employees');
+}
+
+export function invalidateProgramCache(): void {
+  apiCache.invalidate('programs');
+}
+
+export function invalidateSessionCache(): void {
+  apiCache.invalidate('sessions');
+}
+
+export function invalidateResultCache(): void {
+  apiCache.invalidate('results');
+}
+
+export function invalidateDashboardCache(): void {
+  apiCache.invalidate('dashboard');
+}
+
+export function invalidateAllCache(): void {
+  apiCache.invalidate();
+}
 
 // ========== Grade Calculation ==========
 
@@ -97,11 +345,16 @@ export async function getEmployees(filters?: EmployeeFilters): Promise<Employee[
     return result;
   }
 
-  // GAS API call
+  // GAS API call with retry and caching
   const params = new URLSearchParams({ action: 'getEmployees', ...filters });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  const cacheKey = `employees:${params.toString()}`;
+
+  return withRetry(() =>
+    apiFetch<Employee[]>(`${GAS_URL}?${params}`, {
+      useCache: true,
+      cacheKey,
+    })
+  );
 }
 
 export async function getEmployee(id: string): Promise<Employee | null> {
@@ -111,9 +364,14 @@ export async function getEmployee(id: string): Promise<Employee | null> {
   }
 
   const params = new URLSearchParams({ action: 'getEmployee', id });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  const cacheKey = `employees:${id}`;
+
+  return withRetry(() =>
+    apiFetch<Employee | null>(`${GAS_URL}?${params}`, {
+      useCache: true,
+      cacheKey,
+    })
+  );
 }
 
 export async function getEmployeeHistory(id: string): Promise<TrainingResultRecord[]> {
@@ -123,9 +381,14 @@ export async function getEmployeeHistory(id: string): Promise<TrainingResultReco
   }
 
   const params = new URLSearchParams({ action: 'getEmployeeHistory', id });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  const cacheKey = `employees:history:${id}`;
+
+  return withRetry(() =>
+    apiFetch<TrainingResultRecord[]>(`${GAS_URL}?${params}`, {
+      useCache: true,
+      cacheKey,
+    })
+  );
 }
 
 export async function createEmployee(employee: Omit<Employee, 'updated_at'>): Promise<Employee> {
@@ -139,12 +402,15 @@ export async function createEmployee(employee: Omit<Employee, 'updated_at'>): Pr
     return newEmployee;
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createEmployee', data: employee }),
-  });
-  const data = await response.json();
-  return data.data;
+  const result = await withRetry(() =>
+    apiFetch<Employee>(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'createEmployee', data: employee }),
+    })
+  );
+
+  invalidateEmployeeCache();
+  return result;
 }
 
 export async function updateEmployee(
@@ -164,12 +430,15 @@ export async function updateEmployee(
     return mockEmployees[index];
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateEmployee', id, data: updates }),
-  });
-  const data = await response.json();
-  return data.data;
+  const result = await withRetry(() =>
+    apiFetch<Employee | null>(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateEmployee', id, data: updates }),
+    })
+  );
+
+  invalidateEmployeeCache();
+  return result;
 }
 
 // ========== Training Program API ==========

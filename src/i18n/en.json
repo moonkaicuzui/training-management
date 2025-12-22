@@ -17,7 +17,26 @@
     "all": "All",
     "filter": "Filter",
     "export": "Export Excel",
-    "download": "Download"
+    "download": "Download",
+    "viewAll": "View All",
+    "detail": "Detail",
+    "program": "Program",
+    "failDate": "Fail Date",
+    "score": "Score",
+    "retry": "Retry"
+  },
+  "header": {
+    "searchPlaceholder": "Search by employee ID or name...",
+    "employees": "Employees",
+    "programs": "Training Programs",
+    "notifications": "Notifications",
+    "noNotifications": "No new notifications",
+    "viewAllNotifications": "View all notifications",
+    "retrainingNeeded": "Retraining needed",
+    "language": "Language",
+    "admin": "Admin",
+    "settings": "Settings",
+    "help": "Help"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -28,18 +47,41 @@
     "employees": "Employees",
     "retraining": "Retraining"
   },
+  "sidebar": {
+    "mainMenu": "Main Menu",
+    "management": "Management",
+    "quickStats": "Quick Stats",
+    "monthlyTrainings": "Monthly Trainings",
+    "passRate": "Pass Rate",
+    "retrainingNeeded": "Retraining Needed"
+  },
   "dashboard": {
     "title": "Dashboard",
+    "welcome": "Welcome to Q-TRAIN Training Management System",
     "totalEmployees": "Total Employees",
     "monthlyCompletions": "Monthly Completions",
     "completionRate": "Completion Rate",
     "retrainingNeeded": "Retraining Needed",
     "monthlyChart": "Monthly Statistics",
+    "plannedVsCompleted": "Planned vs Completed",
+    "planned": "Planned",
+    "completed": "Completed",
     "gradeDistribution": "Grade Distribution",
+    "gradeDesc": "Training Result Grade Distribution",
     "recentResults": "Recent Results",
     "quickActions": "Quick Actions",
     "newTraining": "New Training",
-    "enterResults": "Enter Results"
+    "enterResults": "Enter Results",
+    "retrainingList": "Employees needing retraining",
+    "recent10": "(Recent 10)",
+    "noRetrainingNeeded": "No employees need retraining",
+    "allEmployeesCompliant": "All employees have completed their training requirements",
+    "fromLastMonth": "from last month",
+    "noMonthlyData": "No monthly data available",
+    "noMonthlyDataDesc": "No training sessions have been scheduled yet. Create your first training session to get started.",
+    "scheduleTraining": "Schedule Training",
+    "noGradeData": "No grade data available",
+    "noGradeDataDesc": "No training results have been entered yet. Enter training results to view statistics."
   },
   "employee": {
     "title": "Employee Management",
