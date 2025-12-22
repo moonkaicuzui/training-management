@@ -32,24 +32,33 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTrainingStore } from '@/stores/trainingStore';
+import { useProgressMatrixData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { buildings, departments, positions, categories } from '@/data/mockData';
 import { format } from 'date-fns';
-import type { ProgressMatrixCell, Employee, TrainingProgram } from '@/types';
+import type {
+  NormalizedProgressCell,
+  NormalizedEmployee,
+  NormalizedTrainingProgram,
+  TrainingStatus,
+} from '@/types/normalized';
+import type { EmployeeId, ProgramCode } from '@/types/branded';
+import type { Building, Department, Position, ProgramCategory } from '@/types';
 
-type CellStatus = 'pass' | 'fail' | 'expiring' | 'expired' | 'not_taken';
+type CellDisplayStatus = 'pass' | 'fail' | 'expiring' | 'expired' | 'not_taken';
 
-function getCellStatus(cell: ProgressMatrixCell | undefined): CellStatus {
-  if (!cell) return 'not_taken';
-  if (cell.isExpired) return 'expired';
-  if (cell.isExpiring) return 'expiring';
-  if (cell.lastResult === 'PASS') return 'pass';
-  if (cell.lastResult === 'FAIL') return 'fail';
-  return 'not_taken';
+function getDisplayStatus(status: TrainingStatus): CellDisplayStatus {
+  switch (status) {
+    case 'PASS': return 'pass';
+    case 'FAIL': return 'fail';
+    case 'EXPIRING': return 'expiring';
+    case 'EXPIRED': return 'expired';
+    case 'NOT_TAKEN':
+    default: return 'not_taken';
+  }
 }
 
-function getCellDisplay(status: CellStatus): { symbol: string; className: string } {
+function getCellDisplay(status: CellDisplayStatus): { symbol: string; className: string } {
   switch (status) {
     case 'pass':
       return { symbol: '✓', className: 'bg-status-pass/20 text-status-pass hover:bg-status-pass/30' };
@@ -68,28 +77,29 @@ function getCellDisplay(status: CellStatus): { symbol: string; className: string
 export default function Progress() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { progressMatrix, loading, fetchProgressMatrix } = useTrainingStore();
+  const { progressMatrix, loading } = useProgressMatrixData();
+  const fetchProgressMatrix = useNormalizedTrainingStore((state) => state.fetchProgressMatrix);
 
   const [buildingFilter, setBuildingFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [positionFilter, setPositionFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedCell, setSelectedCell] = useState<{
-    employee: Employee;
-    program: TrainingProgram;
-    cell: ProgressMatrixCell | undefined;
+    employee: NormalizedEmployee;
+    program: NormalizedTrainingProgram;
+    cell: NormalizedProgressCell | undefined;
   } | null>(null);
 
   useEffect(() => {
     fetchProgressMatrix({
-      building: buildingFilter !== 'all' ? buildingFilter as any : undefined,
-      department: departmentFilter !== 'all' ? departmentFilter : undefined,
-      position: positionFilter !== 'all' ? positionFilter as any : undefined,
-      category: categoryFilter !== 'all' ? categoryFilter as any : undefined,
+      building: buildingFilter !== 'all' ? buildingFilter as Building : undefined,
+      department: departmentFilter !== 'all' ? departmentFilter as Department : undefined,
+      position: positionFilter !== 'all' ? positionFilter as Position : undefined,
+      category: categoryFilter !== 'all' ? categoryFilter as ProgramCategory : undefined,
     });
-  }, [buildingFilter, departmentFilter, positionFilter, categoryFilter]);
+  }, [buildingFilter, departmentFilter, positionFilter, categoryFilter, fetchProgressMatrix]);
 
-  if (loading.progressMatrix) {
+  if (loading) {
     return <PageLoading />;
   }
 
@@ -107,10 +117,12 @@ export default function Progress() {
   Object.values(matrix).forEach((employeeData) => {
     Object.values(employeeData).forEach((cell) => {
       if (cell) {
-        if (cell.isExpired) expiredCount++;
-        else if (cell.isExpiring) expiringCount++;
-        else if (cell.lastResult === 'PASS') passCount++;
-        else if (cell.lastResult === 'FAIL') failCount++;
+        switch (cell.status) {
+          case 'EXPIRED': expiredCount++; break;
+          case 'EXPIRING': expiringCount++; break;
+          case 'PASS': passCount++; break;
+          case 'FAIL': failCount++; break;
+        }
       }
     });
   });
@@ -118,10 +130,11 @@ export default function Progress() {
   const notTakenCount = totalCells - passCount - failCount - expiredCount - expiringCount;
 
   const handleCellClick = (
-    employee: Employee,
-    program: TrainingProgram
+    employee: NormalizedEmployee,
+    program: NormalizedTrainingProgram
   ) => {
-    const cell = matrix[employee.employee_id]?.[program.program_code];
+    const employeeMatrix = matrix[employee.employee_id as EmployeeId];
+    const cell = employeeMatrix?.[program.program_code as ProgramCode];
     setSelectedCell({ employee, program, cell });
   };
 
@@ -289,7 +302,7 @@ export default function Progress() {
                       <th className="sticky left-0 z-20 bg-background border p-2 text-left min-w-[150px]">
                         직원
                       </th>
-                      {programs.map((program: TrainingProgram) => (
+                      {programs.map((program) => (
                         <TooltipProvider key={program.program_code}>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -311,7 +324,7 @@ export default function Progress() {
                     </tr>
                   </thead>
                   <tbody>
-                    {employees.map((employee: Employee) => (
+                    {employees.map((employee) => (
                       <tr key={employee.employee_id}>
                         <td className="sticky left-0 z-10 bg-background border p-2">
                           <div
@@ -326,10 +339,11 @@ export default function Progress() {
                             </div>
                           </div>
                         </td>
-                        {programs.map((program: TrainingProgram) => {
-                          const cell = matrix[employee.employee_id]?.[program.program_code];
-                          const status = getCellStatus(cell);
-                          const display = getCellDisplay(status);
+                        {programs.map((program) => {
+                          const employeeMatrix = matrix[employee.employee_id as EmployeeId];
+                          const cell = employeeMatrix?.[program.program_code as ProgramCode];
+                          const displayStatus = cell ? getDisplayStatus(cell.status) : 'not_taken';
+                          const display = getCellDisplay(displayStatus);
                           return (
                             <td
                               key={program.program_code}
@@ -387,73 +401,73 @@ export default function Progress() {
                   <span className="text-sm text-muted-foreground">최근 결과</span>
                   <Badge
                     variant={
-                      selectedCell.cell.lastResult === 'PASS'
+                      selectedCell.cell.last_result === 'PASS'
                         ? 'success'
-                        : selectedCell.cell.lastResult === 'FAIL'
+                        : selectedCell.cell.last_result === 'FAIL'
                         ? 'destructive'
                         : 'secondary'
                     }
                   >
-                    {selectedCell.cell.lastResult === 'PASS'
+                    {selectedCell.cell.last_result === 'PASS'
                       ? t('training.pass')
-                      : selectedCell.cell.lastResult === 'FAIL'
+                      : selectedCell.cell.last_result === 'FAIL'
                       ? t('training.fail')
                       : t('training.absent')}
                   </Badge>
                 </div>
-                {selectedCell.cell.lastScore !== undefined && (
+                {selectedCell.cell.last_score !== null && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">점수</span>
-                    <span className="font-medium">{selectedCell.cell.lastScore}점</span>
+                    <span className="font-medium">{selectedCell.cell.last_score}점</span>
                   </div>
                 )}
-                {selectedCell.cell.lastGrade && (
+                {selectedCell.cell.last_grade && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">등급</span>
                     <Badge
                       variant={
-                        selectedCell.cell.lastGrade === 'AA'
+                        selectedCell.cell.last_grade === 'AA'
                           ? 'gradeAA'
-                          : selectedCell.cell.lastGrade === 'A'
+                          : selectedCell.cell.last_grade === 'A'
                           ? 'gradeA'
-                          : selectedCell.cell.lastGrade === 'B'
+                          : selectedCell.cell.last_grade === 'B'
                           ? 'gradeB'
                           : 'gradeC'
                       }
                     >
-                      {selectedCell.cell.lastGrade}
+                      {selectedCell.cell.last_grade}
                     </Badge>
                   </div>
                 )}
-                {selectedCell.cell.lastTrainingDate && (
+                {selectedCell.cell.last_training_date && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">교육일</span>
                     <span>
-                      {format(new Date(selectedCell.cell.lastTrainingDate), 'yyyy-MM-dd')}
+                      {format(new Date(selectedCell.cell.last_training_date), 'yyyy-MM-dd')}
                     </span>
                   </div>
                 )}
-                {selectedCell.cell.expirationDate && (
+                {selectedCell.cell.expiration_date && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">만료일</span>
                     <span
                       className={
-                        selectedCell.cell.isExpired
+                        selectedCell.cell.status === 'EXPIRED'
                           ? 'text-status-expired'
-                          : selectedCell.cell.isExpiring
+                          : selectedCell.cell.status === 'EXPIRING'
                           ? 'text-status-warning'
                           : ''
                       }
                     >
-                      {format(new Date(selectedCell.cell.expirationDate), 'yyyy-MM-dd')}
-                      {selectedCell.cell.isExpired && ' (만료됨)'}
-                      {selectedCell.cell.isExpiring && !selectedCell.cell.isExpired && ' (만료 임박)'}
+                      {format(new Date(selectedCell.cell.expiration_date), 'yyyy-MM-dd')}
+                      {selectedCell.cell.status === 'EXPIRED' && ' (만료됨)'}
+                      {selectedCell.cell.status === 'EXPIRING' && ' (만료 임박)'}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">총 이수 횟수</span>
-                  <span>{selectedCell.cell.completionCount}회</span>
+                  <span>{selectedCell.cell.completion_count}회</span>
                 </div>
               </div>
             ) : (

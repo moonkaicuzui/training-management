@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useTrainingStore } from '@/stores/trainingStore';
+import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { departments, positions, buildings } from '@/data/mockData';
 import { format } from 'date-fns';
@@ -35,7 +35,8 @@ import { format } from 'date-fns';
 export default function Employees() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { employees, loading, fetchEmployees } = useTrainingStore();
+  const { employees, loading } = useEmployeesData();
+  const fetchEmployees = useNormalizedTrainingStore((state) => state.fetchEmployees);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -53,7 +54,7 @@ export default function Employees() {
     });
   }, [searchQuery, departmentFilter, positionFilter, buildingFilter, statusFilter]);
 
-  if (loading.employees) {
+  if (loading) {
     return <PageLoading />;
   }
 
