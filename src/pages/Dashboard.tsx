@@ -28,19 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import { LazyBarChart, LazyPieChart, Bar } from '@/components/charts/LazyCharts';
 import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -229,32 +217,15 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={monthlyData}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis
-                      dataKey="month"
-                      tickFormatter={(value) => value.substring(5)}
-                      className="text-sm"
-                    />
-                    <YAxis className="text-sm" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="planned" name={t('dashboard.planned')} fill="#93C5FD" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="completed" name={t('dashboard.completed')} fill="#1E40AF" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <LazyBarChart
+                data={monthlyData}
+                height={300}
+                xAxisKey="month"
+                xAxisFormatter={(value) => value.substring(5)}
+              >
+                <Bar dataKey="planned" name={t('dashboard.planned')} fill="#93C5FD" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" name={t('dashboard.completed')} fill="#1E40AF" radius={[4, 4, 0, 0]} />
+              </LazyBarChart>
             )}
           </CardContent>
         </Card>
@@ -281,40 +252,11 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={gradeDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ payload, percent }) =>
-                        percent && percent > 0 ? `${payload?.grade} (${Math.round(percent * 100)}%)` : ''
-                      }
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="count"
-                      nameKey="grade"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {gradeDistribution.map((entry) => (
-                        <Cell
-                          key={entry.grade}
-                          fill={GRADE_COLORS[entry.grade]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <LazyPieChart
+                data={gradeDistribution}
+                height={300}
+                colors={GRADE_COLORS}
+              />
             )}
           </CardContent>
         </Card>

@@ -9,6 +9,19 @@ import {
   ClipboardCheck,
   AlertTriangle,
   X,
+  UserCheck,
+  FileBarChart,
+  Award,
+  GraduationCap,
+  CalendarClock,
+  History,
+  Bell,
+  BarChart3,
+  FolderOpen,
+  UserPlus,
+  UserMinus,
+  Settings,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -45,6 +58,11 @@ const navItems: NavItem[] = [
     icon: Calendar,
   },
   {
+    titleKey: 'nav.attendance',
+    href: '/attendance',
+    icon: UserCheck,
+  },
+  {
     titleKey: 'nav.results',
     href: '/results',
     icon: ClipboardCheck,
@@ -61,6 +79,78 @@ const secondaryItems: NavItem[] = [
     titleKey: 'nav.retraining',
     href: '/retraining',
     icon: AlertTriangle,
+  },
+  {
+    titleKey: 'nav.certificates',
+    href: '/certificates',
+    icon: Award,
+  },
+  {
+    titleKey: 'nav.reports',
+    href: '/reports',
+    icon: FileBarChart,
+  },
+  {
+    titleKey: 'nav.notifications',
+    href: '/notifications',
+    icon: Bell,
+  },
+  {
+    titleKey: 'nav.evaluation',
+    href: '/evaluation',
+    icon: BarChart3,
+  },
+  {
+    titleKey: 'nav.materials',
+    href: '/materials',
+    icon: FolderOpen,
+  },
+];
+
+const adminItems: NavItem[] = [
+  {
+    titleKey: 'nav.trainers',
+    href: '/trainers',
+    icon: GraduationCap,
+  },
+  {
+    titleKey: 'nav.trainingPlan',
+    href: '/training-plan',
+    icon: CalendarClock,
+  },
+  {
+    titleKey: 'nav.auditLog',
+    href: '/audit-log',
+    icon: History,
+  },
+];
+
+// New TQC (신입 TQC 교육) 메뉴
+const newTQCItems: NavItem[] = [
+  {
+    titleKey: 'nav.newTQC.dashboard',
+    href: '/new-tqc/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    titleKey: 'nav.newTQC.trainees',
+    href: '/new-tqc/trainees',
+    icon: UserPlus,
+  },
+  {
+    titleKey: 'nav.newTQC.meetings',
+    href: '/new-tqc/meetings',
+    icon: CalendarDays,
+  },
+  {
+    titleKey: 'nav.newTQC.resignations',
+    href: '/new-tqc/resignations',
+    icon: UserMinus,
+  },
+  {
+    titleKey: 'nav.newTQC.settings',
+    href: '/new-tqc/settings',
+    icon: Settings,
   },
 ];
 
@@ -137,12 +227,69 @@ export function Sidebar() {
 
           <Separator className="my-4" />
 
+          {/* New TQC Section */}
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+              {t('sidebar.newTQC')}
+            </h2>
+            <nav className="space-y-1">
+              {newTQCItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {t(item.titleKey)}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <Separator className="my-4" />
+
           <div className="px-3 py-2">
             <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
               {t('sidebar.management')}
             </h2>
             <nav className="space-y-1">
               {secondaryItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {t(item.titleKey)}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+              {t('sidebar.admin')}
+            </h2>
+            <nav className="space-y-1">
+              {adminItems.map((item) => (
                 <NavLink
                   key={item.href}
                   to={item.href}

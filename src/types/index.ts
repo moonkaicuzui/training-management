@@ -361,3 +361,24 @@ export interface LanguageOption {
   name: string;
   nativeName: string;
 }
+
+// ========== Extended Feature Types ==========
+
+// Re-export new feature types
+export * from './attendance';
+export * from './trainer';
+export * from './notification';
+export * from './trainingPlan';
+export * from './certificate';
+export {
+  type Evaluation,
+  type EvaluationResponse,
+  type EvaluationTemplate,
+  type EvaluationQuestion,
+  type EffectivenessReport,
+  type EvaluationType as TrainingEvaluationType,
+  DEFAULT_SATISFACTION_QUESTIONS,
+} from './evaluation';
+
+// ========== New TQC (신입 TQC 교육) Types ==========
+export * from './newTqc';

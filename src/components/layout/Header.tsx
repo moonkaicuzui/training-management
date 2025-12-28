@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Menu, Globe, Bell, User } from 'lucide-react';
+import { Search, Menu, Globe, Bell, User, LogOut, Shield, BookOpen, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +16,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUIStore } from '@/stores/uiStore';
 import { useTrainingStore } from '@/stores/trainingStore';
+import { useAuthStore } from '@/stores/authStore';
 import { globalSearch } from '@/services/api';
 import type { Employee, TrainingProgram, Language } from '@/types';
+import type { UserRole } from '@/types/auth';
 
 const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
@@ -23,11 +27,19 @@ const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
 ];
 
+// 역할별 아이콘 및 표시 정보
+const roleConfig: Record<UserRole, { icon: typeof Shield; label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  ADMIN: { icon: Shield, label: 'auth.admin', variant: 'default' },
+  TRAINER: { icon: BookOpen, label: 'auth.trainer', variant: 'secondary' },
+  VIEWER: { icon: Eye, label: 'auth.viewer', variant: 'outline' },
+};
+
 export function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { language, setLanguage, toggleSidebar } = useUIStore();
   const { retrainingTargets } = useTrainingStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{
@@ -235,15 +247,70 @@ export function Header() {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label={t('header.admin')}>
-              <User className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="rounded-full" aria-label={t('auth.profile')}>
+              {isAuthenticated && user ? (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.picture} alt={user.name} />
+                  <AvatarFallback>
+                    {user.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <User className="h-5 w-5" />
+              )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{t('header.admin')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>{t('header.settings')}</DropdownMenuItem>
-            <DropdownMenuItem>{t('header.help')}</DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-56">
+            {isAuthenticated && user ? (
+              <>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2">
+                  {(() => {
+                    const config = roleConfig[user.role];
+                    const RoleIcon = config.icon;
+                    return (
+                      <>
+                        <RoleIcon className="h-4 w-4" />
+                        <span>{t('auth.role')}:</span>
+                        <Badge variant={config.variant} className="ml-auto text-xs">
+                          {t(config.label)}
+                        </Badge>
+                      </>
+                    );
+                  })()}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>{t('header.settings')}</DropdownMenuItem>
+                <DropdownMenuItem>{t('header.help')}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive gap-2"
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t('auth.logout')}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuLabel>{t('auth.login')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/login')}>
+                  {t('auth.login')}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -23,6 +23,28 @@ import type {
   RetrainingTarget,
   ExpiringTraining,
   Grade,
+  // New TQC Types
+  NewTQCTeam,
+  NewTQCTrainee,
+  NewTQCTraineeFilters,
+  NewTQCColorBlindTest,
+  NewTQCColorBlindTestInput,
+  NewTQCTrainingStage,
+  NewTQCStageUpdate,
+  NewTQCMeeting,
+  NewTQCMeetingFilters,
+  NewTQCMeetingInput,
+  NewTQCMeetingUpdate,
+  NewTQCResignation,
+  NewTQCResignationFilters,
+  NewTQCResignationInput,
+  NewTQCTraineeInput,
+  NewTQCTraineeUpdate,
+  NewTQCTeamInput,
+  NewTQCTeamUpdate,
+  NewTQCDashboardStats,
+  NewTQCResignationAnalysis,
+  NewTQCTraineeWithDetails,
 } from '@/types';
 
 import {
@@ -30,11 +52,18 @@ import {
   mockPrograms,
   mockSessions,
   mockResults,
+  // New TQC Mock Data
+  mockNewTQCTeams,
+  mockNewTQCTrainees,
+  mockNewTQCColorBlindTests,
+  mockNewTQCTrainingStages,
+  mockNewTQCMeetings,
+  mockNewTQCResignations,
 } from '@/data/mockData';
 
 // ========== Configuration ==========
 
-const USE_MOCK_API = false; // Set to false when GAS is ready
+const USE_MOCK_API = true; // Demo mode - using mock data for demonstration
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJM5WUGsjZEsQq6YcALTyTxJOsM9Diuqpk-sDswAuuWrf_/exec';
 
 // Simulate API delay for realistic UX
@@ -1120,6 +1149,826 @@ export async function globalSearch(query: string): Promise<{
   }
 
   const params = new URLSearchParams({ action: 'globalSearch', query });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+// ============================================================
+// New TQC (신입 TQC 교육) API
+// ============================================================
+
+// ========== New TQC Team API ==========
+
+export async function getNewTQCTeams(includeInactive = false): Promise<NewTQCTeam[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    if (includeInactive) {
+      return [...mockNewTQCTeams];
+    }
+    return mockNewTQCTeams.filter(t => t.is_active);
+  }
+
+  const params = new URLSearchParams({
+    action: 'getNewTQCTeams',
+    includeInactive: includeInactive.toString(),
+  });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function getNewTQCTeamById(teamId: string): Promise<NewTQCTeam | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    return mockNewTQCTeams.find(t => t.team_id === teamId) || null;
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCTeamById', teamId });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function createNewTQCTeam(input: NewTQCTeamInput): Promise<NewTQCTeam> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const now = new Date().toISOString();
+    const newTeam: NewTQCTeam = {
+      team_id: input.team_name.toUpperCase().replace(/\s+/g, '_'),
+      team_name: input.team_name,
+      team_name_vn: input.team_name_vn,
+      team_name_kr: input.team_name_kr,
+      factory: input.factory,
+      line: input.line,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+    };
+    mockNewTQCTeams.push(newTeam);
+    return newTeam;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createNewTQCTeam', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+export async function updateNewTQCTeam(input: NewTQCTeamUpdate): Promise<NewTQCTeam | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const index = mockNewTQCTeams.findIndex(t => t.team_id === input.team_id);
+    if (index === -1) return null;
+
+    mockNewTQCTeams[index] = {
+      ...mockNewTQCTeams[index],
+      ...input,
+      updated_at: new Date().toISOString(),
+    };
+    return mockNewTQCTeams[index];
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateNewTQCTeam', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+export async function deleteNewTQCTeam(teamId: string): Promise<boolean> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const index = mockNewTQCTeams.findIndex(t => t.team_id === teamId);
+    if (index === -1) return false;
+
+    // Soft delete - set is_active to false
+    mockNewTQCTeams[index].is_active = false;
+    mockNewTQCTeams[index].updated_at = new Date().toISOString();
+    return true;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'deleteNewTQCTeam', teamId }),
+  });
+  const data = await response.json();
+  return data.success;
+}
+
+// ========== New TQC Trainee API ==========
+
+export async function getNewTQCTrainees(
+  filters?: NewTQCTraineeFilters
+): Promise<NewTQCTrainee[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    let result = [...mockNewTQCTrainees];
+
+    if (filters) {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        result = result.filter(
+          t =>
+            t.name.toLowerCase().includes(searchLower) ||
+            t.trainee_id.toLowerCase().includes(searchLower) ||
+            t.employee_id?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        result = result.filter(t => t.status === filters.status);
+      }
+
+      if (filters.trainer && filters.trainer !== 'all') {
+        result = result.filter(t => t.trainer_id === filters.trainer);
+      }
+
+      if (filters.team && filters.team !== 'all') {
+        result = result.filter(t => t.team_id === filters.team);
+      }
+
+      if (filters.startWeek) {
+        const week = parseInt(filters.startWeek, 10);
+        result = result.filter(t => t.start_week === week);
+      }
+
+      if (filters.colorBlindStatus && filters.colorBlindStatus !== 'all') {
+        if (filters.colorBlindStatus === 'pending') {
+          result = result.filter(t => t.color_blind_status === null);
+        } else {
+          result = result.filter(t => t.color_blind_status === filters.colorBlindStatus);
+        }
+      }
+    }
+
+    return result.sort((a, b) => b.start_date.localeCompare(a.start_date));
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCTrainees' });
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
+  }
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function getNewTQCTraineeById(traineeId: string): Promise<NewTQCTrainee | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    return mockNewTQCTrainees.find(t => t.trainee_id === traineeId) || null;
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCTraineeById', traineeId });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function getNewTQCTraineeWithDetails(
+  traineeId: string
+): Promise<NewTQCTraineeWithDetails | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const trainee = mockNewTQCTrainees.find(t => t.trainee_id === traineeId);
+    if (!trainee) return null;
+
+    const team = mockNewTQCTeams.find(t => t.team_id === trainee.team_id);
+    const stages = mockNewTQCTrainingStages.filter(s => s.trainee_id === traineeId);
+    const colorBlindTests = mockNewTQCColorBlindTests.filter(c => c.trainee_id === traineeId);
+    const meetings = mockNewTQCMeetings.filter(m => m.trainee_id === traineeId);
+    const resignation = mockNewTQCResignations.find(r => r.trainee_id === traineeId);
+
+    return {
+      ...trainee,
+      team,
+      stages: stages.sort((a, b) => a.stage_order - b.stage_order),
+      colorBlindTests: colorBlindTests.sort((a, b) => b.test_date.localeCompare(a.test_date)),
+      meetings: meetings.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date)),
+      resignation,
+    };
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCTraineeWithDetails', traineeId });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function createNewTQCTrainee(input: NewTQCTraineeInput): Promise<NewTQCTrainee> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const now = new Date().toISOString();
+    const startDate = new Date(input.start_date);
+    const startOfYear = new Date(startDate.getFullYear(), 0, 1);
+    const weekNum = Math.ceil(
+      ((startDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24) + 1) / 7
+    );
+
+    const traineeCount = mockNewTQCTrainees.length + 1;
+    const traineeId = `TRN-${new Date().getFullYear()}-${String(traineeCount).padStart(3, '0')}`;
+
+    const expectedEndDate = new Date(startDate);
+    expectedEndDate.setMonth(expectedEndDate.getMonth() + 3);
+
+    const newTrainee: NewTQCTrainee = {
+      trainee_id: traineeId,
+      employee_id: input.employee_id,
+      name: input.name,
+      team_id: input.team_id,
+      trainer_id: input.trainer_id,
+      start_week: weekNum,
+      start_date: input.start_date,
+      expected_end_date: expectedEndDate.toISOString().split('T')[0],
+      introducer: input.introducer,
+      status: 'IN_TRAINING',
+      color_blind_status: null,
+      progress_percentage: 0,
+      notes: input.notes,
+      created_at: now,
+      updated_at: now,
+      created_by: 'admin',
+    };
+
+    mockNewTQCTrainees.push(newTrainee);
+
+    // Create default training stages
+    const defaultStages = ['Orientation', 'Basic Training', 'Line Assignment', 'Field Evaluation'];
+    defaultStages.forEach((stageName, index) => {
+      const stageId = `STG-${traineeId.split('-')[2]}-${index + 1}`;
+      mockNewTQCTrainingStages.push({
+        stage_id: stageId,
+        trainee_id: traineeId,
+        stage_name: stageName,
+        stage_order: index + 1,
+        status: 'PENDING',
+        updated_at: now,
+      });
+    });
+
+    return newTrainee;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createNewTQCTrainee', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+export async function updateNewTQCTrainee(
+  input: NewTQCTraineeUpdate
+): Promise<NewTQCTrainee | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const index = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
+    if (index === -1) return null;
+
+    mockNewTQCTrainees[index] = {
+      ...mockNewTQCTrainees[index],
+      ...input,
+      updated_at: new Date().toISOString(),
+    };
+    return mockNewTQCTrainees[index];
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateNewTQCTrainee', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Color Blind Test API ==========
+
+export async function getNewTQCColorBlindTests(traineeId?: string): Promise<NewTQCColorBlindTest[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    if (traineeId) {
+      return mockNewTQCColorBlindTests.filter(t => t.trainee_id === traineeId);
+    }
+    return [...mockNewTQCColorBlindTests];
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCColorBlindTests' });
+  if (traineeId) params.append('traineeId', traineeId);
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function createNewTQCColorBlindTest(
+  input: NewTQCColorBlindTestInput
+): Promise<NewTQCColorBlindTest> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const now = new Date().toISOString();
+    const testCount = mockNewTQCColorBlindTests.length + 1;
+
+    const newTest: NewTQCColorBlindTest = {
+      test_id: `CBT-${new Date().getFullYear()}-${String(testCount).padStart(3, '0')}`,
+      trainee_id: input.trainee_id,
+      test_date: input.test_date,
+      result: input.result,
+      notes: input.notes,
+      tested_by: 'admin',
+      created_at: now,
+    };
+
+    mockNewTQCColorBlindTests.push(newTest);
+
+    // Update trainee's color_blind_status
+    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
+    if (traineeIndex !== -1) {
+      mockNewTQCTrainees[traineeIndex].color_blind_status = input.result;
+      mockNewTQCTrainees[traineeIndex].updated_at = now;
+    }
+
+    return newTest;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createNewTQCColorBlindTest', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Training Stage API ==========
+
+export async function getNewTQCTrainingStages(traineeId: string): Promise<NewTQCTrainingStage[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    return mockNewTQCTrainingStages
+      .filter(s => s.trainee_id === traineeId)
+      .sort((a, b) => a.stage_order - b.stage_order);
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCTrainingStages', traineeId });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function updateNewTQCTrainingStage(
+  input: NewTQCStageUpdate
+): Promise<NewTQCTrainingStage | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const index = mockNewTQCTrainingStages.findIndex(s => s.stage_id === input.stage_id);
+    if (index === -1) return null;
+
+    const now = new Date().toISOString();
+    mockNewTQCTrainingStages[index] = {
+      ...mockNewTQCTrainingStages[index],
+      ...input,
+      updated_at: now,
+      updated_by: 'admin',
+    };
+
+    // Update trainee progress
+    const traineeId = mockNewTQCTrainingStages[index].trainee_id;
+    const traineeStages = mockNewTQCTrainingStages.filter(s => s.trainee_id === traineeId);
+    const completedCount = traineeStages.filter(s => s.status === 'COMPLETED').length;
+    const progress = Math.round((completedCount / traineeStages.length) * 100);
+
+    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === traineeId);
+    if (traineeIndex !== -1) {
+      mockNewTQCTrainees[traineeIndex].progress_percentage = progress;
+      mockNewTQCTrainees[traineeIndex].updated_at = now;
+
+      // Check if all stages are completed
+      if (progress === 100) {
+        mockNewTQCTrainees[traineeIndex].status = 'COMPLETED';
+      }
+    }
+
+    return mockNewTQCTrainingStages[index];
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateNewTQCTrainingStage', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Meeting API ==========
+
+export async function getNewTQCMeetings(filters?: NewTQCMeetingFilters): Promise<NewTQCMeeting[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    let result = [...mockNewTQCMeetings];
+
+    if (filters) {
+      if (filters.traineeId) {
+        result = result.filter(m => m.trainee_id === filters.traineeId);
+      }
+
+      if (filters.meetingType && filters.meetingType !== 'all') {
+        result = result.filter(m => m.meeting_type === filters.meetingType);
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        result = result.filter(m => m.status === filters.status);
+      }
+
+      if (filters.dateFrom) {
+        result = result.filter(m => m.scheduled_date >= filters.dateFrom!);
+      }
+
+      if (filters.dateTo) {
+        result = result.filter(m => m.scheduled_date <= filters.dateTo!);
+      }
+    }
+
+    return result.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCMeetings' });
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
+  }
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function createNewTQCMeeting(input: NewTQCMeetingInput): Promise<NewTQCMeeting> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const now = new Date().toISOString();
+    const meetingCount = mockNewTQCMeetings.length + 1;
+
+    const newMeeting: NewTQCMeeting = {
+      meeting_id: `MTG-${String(meetingCount).padStart(3, '0')}-${input.meeting_type}`,
+      trainee_id: input.trainee_id,
+      meeting_type: input.meeting_type,
+      scheduled_date: input.scheduled_date,
+      status: 'SCHEDULED',
+      attendees: input.attendees || [],
+      notes: input.notes,
+      created_at: now,
+      updated_at: now,
+    };
+
+    mockNewTQCMeetings.push(newMeeting);
+    return newMeeting;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createNewTQCMeeting', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+export async function updateNewTQCMeeting(
+  input: NewTQCMeetingUpdate
+): Promise<NewTQCMeeting | null> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const index = mockNewTQCMeetings.findIndex(m => m.meeting_id === input.meeting_id);
+    if (index === -1) return null;
+
+    const now = new Date().toISOString();
+    mockNewTQCMeetings[index] = {
+      ...mockNewTQCMeetings[index],
+      ...input,
+      updated_at: now,
+    };
+
+    // Update trainee's meeting date if completed
+    if (input.status === 'COMPLETED' && input.completed_date) {
+      const meeting = mockNewTQCMeetings[index];
+      const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === meeting.trainee_id);
+      if (traineeIndex !== -1) {
+        const trainee = mockNewTQCTrainees[traineeIndex];
+        if (meeting.meeting_type === '1WEEK') {
+          trainee.meeting_1week_date = input.completed_date;
+        } else if (meeting.meeting_type === '1MONTH') {
+          trainee.meeting_1month_date = input.completed_date;
+        } else if (meeting.meeting_type === '3MONTH') {
+          trainee.meeting_3month_date = input.completed_date;
+        }
+        trainee.updated_at = now;
+      }
+    }
+
+    return mockNewTQCMeetings[index];
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateNewTQCMeeting', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Resignation API ==========
+
+export async function getNewTQCResignations(
+  filters?: NewTQCResignationFilters
+): Promise<NewTQCResignation[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    let result = [...mockNewTQCResignations];
+
+    if (filters) {
+      if (filters.reasonCategory && filters.reasonCategory !== 'all') {
+        result = result.filter(r => r.reason_category === filters.reasonCategory);
+      }
+
+      if (filters.trainer && filters.trainer !== 'all') {
+        const traineeIds = mockNewTQCTrainees
+          .filter(t => t.trainer_id === filters.trainer)
+          .map(t => t.trainee_id);
+        result = result.filter(r => traineeIds.includes(r.trainee_id));
+      }
+
+      if (filters.team && filters.team !== 'all') {
+        const traineeIds = mockNewTQCTrainees
+          .filter(t => t.team_id === filters.team)
+          .map(t => t.trainee_id);
+        result = result.filter(r => traineeIds.includes(r.trainee_id));
+      }
+
+      if (filters.dateFrom) {
+        result = result.filter(r => r.resign_date >= filters.dateFrom!);
+      }
+
+      if (filters.dateTo) {
+        result = result.filter(r => r.resign_date <= filters.dateTo!);
+      }
+    }
+
+    return result.sort((a, b) => b.resign_date.localeCompare(a.resign_date));
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCResignations' });
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
+  }
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+export async function createNewTQCResignation(
+  input: NewTQCResignationInput
+): Promise<NewTQCResignation> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    const now = new Date().toISOString();
+    const trainee = mockNewTQCTrainees.find(t => t.trainee_id === input.trainee_id);
+    if (!trainee) throw new NotFoundError('Trainee not found');
+
+    const startDate = new Date(trainee.start_date);
+    const resignDate = new Date(input.resign_date);
+    const trainingDays = Math.ceil(
+      (resignDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    const stages = mockNewTQCTrainingStages.filter(s => s.trainee_id === input.trainee_id);
+    const completedStages = stages.filter(s => s.status === 'COMPLETED');
+    const lastCompletedStage =
+      completedStages.length > 0
+        ? completedStages.sort((a, b) => b.stage_order - a.stage_order)[0].stage_name
+        : undefined;
+
+    const resignationCount = mockNewTQCResignations.length + 1;
+    const newResignation: NewTQCResignation = {
+      resignation_id: `RSG-${new Date().getFullYear()}-${String(resignationCount).padStart(3, '0')}`,
+      trainee_id: input.trainee_id,
+      resign_date: input.resign_date,
+      reason_category: input.reason_category,
+      reason_detail: input.reason_detail,
+      training_duration_days: trainingDays,
+      last_completed_stage: lastCompletedStage,
+      created_at: now,
+      created_by: 'admin',
+    };
+
+    mockNewTQCResignations.push(newResignation);
+
+    // Update trainee status
+    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
+    if (traineeIndex !== -1) {
+      mockNewTQCTrainees[traineeIndex].status = 'RESIGNED';
+      mockNewTQCTrainees[traineeIndex].updated_at = now;
+    }
+
+    return newResignation;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createNewTQCResignation', data: input }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Dashboard Stats API ==========
+
+export async function getNewTQCDashboardStats(): Promise<NewTQCDashboardStats> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+
+    const trainees = mockNewTQCTrainees;
+    const inTraining = trainees.filter(t => t.status === 'IN_TRAINING');
+    const completed = trainees.filter(t => t.status === 'COMPLETED');
+    const resigned = trainees.filter(t => t.status === 'RESIGNED');
+
+    const colorBlindPending = trainees.filter(
+      t => t.status === 'IN_TRAINING' && t.color_blind_status === null
+    );
+    const colorBlindFailed = trainees.filter(t => t.color_blind_status === 'FAIL');
+
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const meetingsThisWeek = mockNewTQCMeetings.filter(m => {
+      const meetingDate = new Date(m.scheduled_date);
+      return meetingDate >= weekStart && meetingDate <= weekEnd;
+    });
+
+    const meetingsPending = mockNewTQCMeetings.filter(
+      m => m.status === 'SCHEDULED' && new Date(m.scheduled_date) <= now
+    );
+
+    const avgProgress =
+      inTraining.length > 0
+        ? Math.round(
+            inTraining.reduce((sum, t) => sum + t.progress_percentage, 0) / inTraining.length
+          )
+        : 0;
+
+    const resignationRate =
+      trainees.length > 0 ? Math.round((resigned.length / trainees.length) * 100) : 0;
+
+    return {
+      totalTrainees: trainees.length,
+      inTraining: inTraining.length,
+      completed: completed.length,
+      resigned: resigned.length,
+      colorBlindPending: colorBlindPending.length,
+      colorBlindFailed: colorBlindFailed.length,
+      meetingsThisWeek: meetingsThisWeek.length,
+      meetingsPending: meetingsPending.length,
+      averageProgress: avgProgress,
+      resignationRate,
+    };
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCDashboardStats' });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Resignation Analysis API ==========
+
+export async function getNewTQCResignationAnalysis(): Promise<NewTQCResignationAnalysis> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+
+    const resignations = mockNewTQCResignations;
+    const trainees = mockNewTQCTrainees;
+
+    // By Reason
+    const reasonCounts: Record<string, number> = {};
+    resignations.forEach(r => {
+      reasonCounts[r.reason_category] = (reasonCounts[r.reason_category] || 0) + 1;
+    });
+    const byReason = Object.entries(reasonCounts).map(([reason, count]) => ({
+      reason: reason as NewTQCResignation['reason_category'],
+      count,
+      percentage: Math.round((count / resignations.length) * 100),
+    }));
+
+    // By Month
+    const monthCounts: Record<string, number> = {};
+    resignations.forEach(r => {
+      const month = r.resign_date.substring(0, 7);
+      monthCounts[month] = (monthCounts[month] || 0) + 1;
+    });
+    const byMonth = Object.entries(monthCounts)
+      .map(([month, count]) => ({ month, count }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    // By Trainer
+    const trainerStats: Record<string, { count: number; total: number }> = {};
+    trainees.forEach(t => {
+      if (!trainerStats[t.trainer_id]) {
+        trainerStats[t.trainer_id] = { count: 0, total: 0 };
+      }
+      trainerStats[t.trainer_id].total++;
+      if (t.status === 'RESIGNED') {
+        trainerStats[t.trainer_id].count++;
+      }
+    });
+    const byTrainer = Object.entries(trainerStats).map(([trainer, stats]) => ({
+      trainer,
+      count: stats.count,
+      total: stats.total,
+      rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
+    }));
+
+    // By Team
+    const teamStats: Record<string, { count: number; total: number }> = {};
+    trainees.forEach(t => {
+      if (!teamStats[t.team_id]) {
+        teamStats[t.team_id] = { count: 0, total: 0 };
+      }
+      teamStats[t.team_id].total++;
+      if (t.status === 'RESIGNED') {
+        teamStats[t.team_id].count++;
+      }
+    });
+    const byTeam = Object.entries(teamStats).map(([team, stats]) => ({
+      team,
+      count: stats.count,
+      total: stats.total,
+      rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
+    }));
+
+    // By Week
+    const weekCounts: Record<number, number> = {};
+    trainees
+      .filter(t => t.status === 'RESIGNED')
+      .forEach(t => {
+        weekCounts[t.start_week] = (weekCounts[t.start_week] || 0) + 1;
+      });
+    const byWeek = Object.entries(weekCounts)
+      .map(([week, count]) => ({ week: parseInt(week, 10), count }))
+      .sort((a, b) => a.week - b.week);
+
+    // Average Training Days
+    const avgTrainingDays =
+      resignations.length > 0
+        ? Math.round(
+            resignations.reduce((sum, r) => sum + r.training_duration_days, 0) / resignations.length
+          )
+        : 0;
+
+    return {
+      byReason,
+      byMonth,
+      byTrainer,
+      byTeam,
+      byWeek,
+      averageTrainingDays: avgTrainingDays,
+    };
+  }
+
+  const params = new URLSearchParams({ action: 'getNewTQCResignationAnalysis' });
+  const response = await fetch(`${GAS_URL}?${params}`);
+  const data = await response.json();
+  return data.data;
+}
+
+// ========== New TQC Upcoming Meetings API ==========
+
+export async function getNewTQCUpcomingMeetings(days: number = 7): Promise<NewTQCMeeting[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() + days);
+
+    return mockNewTQCMeetings
+      .filter(m => {
+        const meetingDate = new Date(m.scheduled_date);
+        return m.status === 'SCHEDULED' && meetingDate >= now && meetingDate <= endDate;
+      })
+      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+  }
+
+  const params = new URLSearchParams({
+    action: 'getNewTQCUpcomingMeetings',
+    days: days.toString(),
+  });
   const response = await fetch(`${GAS_URL}?${params}`);
   const data = await response.json();
   return data.data;

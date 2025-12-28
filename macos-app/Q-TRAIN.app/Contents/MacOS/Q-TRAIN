@@ -1,0 +1,9 @@
+#!/bin/bash
+# Q-TRAIN Education Management System Launcher
+# HWK Vietnam QIP Training Management
+
+# Application URL (Correct GitHub Pages URL)
+APP_URL="https://moonkaicuzui.github.io/training-management/"
+
+# Open the URL in the default browser
+open "$APP_URL"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Save, Pencil, History } from 'lucide-react';
+import { Search, Save, Pencil, History, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +48,18 @@ interface ResultEntry {
   score: number | null;
   result: 'PASS' | 'FAIL' | 'ABSENT';
   remarks: string;
+  isDuplicate?: boolean; // 중복 여부 표시
+}
+
+interface DuplicateInfo {
+  employee_id: string;
+  employee_name: string;
+  existingResult: {
+    training_date: string;
+    score: number | null;
+    result: string;
+    grade: string | null;
+  };
 }
 
 export default function Results() {
@@ -65,6 +77,11 @@ export default function Results() {
     remarks: string;
     editReason: string;
   } | null>(null);
+
+  // Duplicate detection state
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateInfo[]>([]);
+  const [pendingResults, setPendingResults] = useState<ResultInput[]>([]);
 
   // For viewing recent results
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,10 +151,41 @@ export default function Results() {
     setResultEntries(newEntries);
   };
 
+  // Check for existing results (duplicates)
+  const checkForDuplicates = (resultsToCheck: ResultInput[]): DuplicateInfo[] => {
+    const foundDuplicates: DuplicateInfo[] = [];
+
+    for (const input of resultsToCheck) {
+      // Check against existing results
+      const existing = results.find(
+        (r) =>
+          r.employee_id === input.employee_id &&
+          r.program_code === input.program_code &&
+          r.training_date === input.training_date
+      );
+
+      if (existing) {
+        const emp = employees.find((e) => e.employee_id === input.employee_id);
+        foundDuplicates.push({
+          employee_id: input.employee_id,
+          employee_name: emp?.employee_name || input.employee_id,
+          existingResult: {
+            training_date: existing.training_date,
+            score: existing.score,
+            result: existing.result,
+            grade: existing.grade,
+          },
+        });
+      }
+    }
+
+    return foundDuplicates;
+  };
+
   const handleSaveResults = async () => {
     if (!session || !program) return;
 
-    const resultsToSave: ResultInput[] = resultEntries.map(entry => ({
+    const resultsToSave: ResultInput[] = resultEntries.map((entry) => ({
       session_id: session.session_id,
       employee_id: entry.employee_id,
       program_code: session.program_code,
@@ -148,6 +196,22 @@ export default function Results() {
       remarks: entry.remarks,
     }));
 
+    // Check for duplicates
+    const foundDuplicates = checkForDuplicates(resultsToSave);
+
+    if (foundDuplicates.length > 0) {
+      // Show duplicate warning dialog
+      setDuplicates(foundDuplicates);
+      setPendingResults(resultsToSave);
+      setDuplicateDialogOpen(true);
+      return;
+    }
+
+    // No duplicates, save directly
+    await saveResults(resultsToSave);
+  };
+
+  const saveResults = async (resultsToSave: ResultInput[]) => {
     try {
       await recordResults(resultsToSave);
       addToast({
@@ -157,12 +221,39 @@ export default function Results() {
       });
       setSelectedSession('');
       setResultEntries([]);
+      setDuplicateDialogOpen(false);
+      setDuplicates([]);
+      setPendingResults([]);
     } catch (error) {
       addToast({
         type: 'error',
         title: t('messages.saveError'),
       });
     }
+  };
+
+  const handleConfirmWithDuplicates = async () => {
+    // Filter out duplicates and save only non-duplicate results
+    const nonDuplicateResults = pendingResults.filter(
+      (r) => !duplicates.some((d) => d.employee_id === r.employee_id)
+    );
+
+    if (nonDuplicateResults.length === 0) {
+      addToast({
+        type: 'error',
+        title: '저장할 결과 없음',
+        description: '모든 결과가 이미 입력되어 있습니다.',
+      });
+      setDuplicateDialogOpen(false);
+      return;
+    }
+
+    await saveResults(nonDuplicateResults);
+    addToast({
+      type: 'info',
+      title: '중복 제외 저장',
+      description: `${duplicates.length}건의 중복 결과가 제외되었습니다.`,
+    });
   };
 
   const handleEditResult = (result: typeof results[0]) => {
@@ -591,6 +682,67 @@ export default function Results() {
             <Button onClick={handleSaveEdit}>
               <History className="h-4 w-4 mr-2" />
               수정 저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Warning Dialog */}
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              중복 결과 감지
+            </DialogTitle>
+            <DialogDescription>
+              다음 직원들은 이미 같은 날짜에 같은 프로그램의 결과가 입력되어 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {duplicates.map((dup) => (
+              <div
+                key={dup.employee_id}
+                className="p-3 bg-amber-50 border border-amber-200 rounded-lg"
+              >
+                <div className="font-medium text-amber-800">
+                  {dup.employee_name} ({dup.employee_id})
+                </div>
+                <div className="text-sm text-amber-700 mt-1">
+                  기존 결과: {format(new Date(dup.existingResult.training_date), 'yyyy-MM-dd')} |{' '}
+                  {dup.existingResult.score !== null ? `${dup.existingResult.score}점` : '-'} |{' '}
+                  {dup.existingResult.result === 'PASS'
+                    ? t('training.pass')
+                    : dup.existingResult.result === 'FAIL'
+                    ? t('training.fail')
+                    : t('training.absent')}
+                  {dup.existingResult.grade && ` | ${dup.existingResult.grade}등급`}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+            <p>
+              <strong>저장 진행</strong>: 중복된 {duplicates.length}건을 제외하고{' '}
+              {pendingResults.length - duplicates.length}건만 저장합니다.
+            </p>
+            <p className="mt-1">
+              기존 결과를 수정하려면 '최근 결과' 목록에서 수정 버튼을 사용하세요.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleConfirmWithDuplicates}
+              disabled={pendingResults.length - duplicates.length === 0}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              중복 제외하고 저장 ({pendingResults.length - duplicates.length}건)
             </Button>
           </DialogFooter>
         </DialogContent>

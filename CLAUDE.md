@@ -8,10 +8,15 @@
 - **UI**: Tailwind CSS + shadcn/ui + Recharts
 - **State**: Zustand
 - **i18n**: i18next (vi/ko/en)
-- **Backend**: Google Apps Script + Google Sheets
-- **Hosting**: GitHub Pages
+- **Backend**: Firebase (Auth + Firestore)
+- **Hosting**: Firebase Hosting
 
 ### Key URLs
+- **Firebase Hosting**: https://q-train-web.web.app/
+- **Firebase Console**: https://console.firebase.google.com/project/q-train-web/
+- **Firebase Project ID**: `q-train-web`
+
+### Legacy URLs (deprecated)
 - **GitHub Pages**: https://moonkaicuzui.github.io/training-management/
 - **GAS API**: `https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJM5WUGsjZEsQq6YcALTyTxJOsM9Diuqpk-sDswAuuWrf_/exec`
 - **Spreadsheet ID**: `1Rv0v_xxe86Hr0ptFphnZKyZZ_7CwmXOkuerd4o7BqOg`
@@ -151,8 +156,8 @@ npm run dev
 # Build
 npm run build
 
-# Deploy to GitHub Pages
-npm run deploy
+# Deploy to Firebase Hosting
+npm run build && firebase deploy --only hosting
 
 # Type check
 npm run typecheck

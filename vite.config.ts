@@ -16,7 +16,9 @@ export default defineConfig({
     },
   },
   plugins: [react()],
-  base: '/training-management/',
+  // Firebase Hosting: use root path
+  // GitHub Pages: use '/training-management/'
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
