@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Q-TRAIN</title>
+    <script>
+      // GitHub Pages SPA redirect script
+      // This script takes the current URL and converts the path into a query
+      // string, then redirects to index.html which will handle the routing
+      (function() {
+        var pathSegmentsToKeep = 1; // Keep '/training-management' segment
+        var location = window.location;
+        var path = location.pathname.split('/').slice(pathSegmentsToKeep + 1).join('/');
+        var search = location.search;
+        var hash = location.hash;
+
+        // Build the redirect URL
+        var redirectUrl = location.origin + '/training-management/?p=/' + path;
+        if (search) {
+          redirectUrl += '&q=' + encodeURIComponent(search.slice(1));
+        }
+        if (hash) {
+          redirectUrl += hash;
+        }
+
+        location.replace(redirectUrl);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>
