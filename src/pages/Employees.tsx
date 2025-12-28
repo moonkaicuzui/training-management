@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Plus, Eye } from 'lucide-react';
+import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,11 +39,18 @@ export default function Employees() {
   const { employees, loading } = useEmployeesData();
   const fetchEmployees = useNormalizedTrainingStore((state) => state.fetchEmployees);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [positionFilter, setPositionFilter] = useState<string>('all');
-  const [buildingFilter, setBuildingFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('ACTIVE');
+  // URL 기반 필터 상태 관리
+  const { filters, setFilter } = useUrlFilters({
+    defaults: {
+      search: '',
+      department: 'all',
+      position: 'all',
+      building: 'all',
+      status: 'ACTIVE',
+    },
+  });
+
+  const { search: searchQuery, department: departmentFilter, position: positionFilter, building: buildingFilter, status: statusFilter } = filters;
 
   useEffect(() => {
     fetchEmployees({
@@ -52,6 +60,8 @@ export default function Employees() {
       building: buildingFilter !== 'all' ? buildingFilter as any : undefined,
       status: statusFilter !== 'all' ? statusFilter as any : undefined,
     });
+    // fetchEmployees는 Zustand store에서 제공하는 안정적인 함수이므로 의존성에서 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, departmentFilter, positionFilter, buildingFilter, statusFilter]);
 
   if (loading) {
@@ -65,7 +75,7 @@ export default function Employees() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('employee.title')}</h1>
           <p className="text-muted-foreground">
-            직원 정보 및 교육 이력을 관리하세요
+            {t('employee.description')}
           </p>
         </div>
         <Button>
@@ -81,13 +91,13 @@ export default function Employees() {
             <div className="relative lg:col-span-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="사번 또는 이름..."
+                placeholder={t('employee.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => setFilter('search', e.target.value)}
               />
             </div>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <Select value={departmentFilter} onValueChange={(v) => setFilter('department', v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t('employee.department')} />
               </SelectTrigger>
@@ -100,7 +110,7 @@ export default function Employees() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={positionFilter} onValueChange={setPositionFilter}>
+            <Select value={positionFilter} onValueChange={(v) => setFilter('position', v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t('employee.position')} />
               </SelectTrigger>
@@ -113,7 +123,7 @@ export default function Employees() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+            <Select value={buildingFilter} onValueChange={(v) => setFilter('building', v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t('employee.building')} />
               </SelectTrigger>
@@ -126,7 +136,7 @@ export default function Employees() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => setFilter('status', v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t('common.status')} />
               </SelectTrigger>
@@ -143,8 +153,8 @@ export default function Employees() {
       {/* Employees Table */}
       <Card>
         <CardHeader>
-          <CardTitle>직원 목록</CardTitle>
-          <CardDescription>{employees.length}명의 직원</CardDescription>
+          <CardTitle>{t('employee.list')}</CardTitle>
+          <CardDescription>{t('employee.count', { count: employees.length })}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

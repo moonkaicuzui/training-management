@@ -3,8 +3,10 @@
 // Improved version with better state management
 // ============================================================
 
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import type {
   NormalizedEmployee,
   NormalizedEmployeeFilters,
@@ -1105,73 +1107,106 @@ export const useResultsList = () =>
 
 /**
  * Dashboard data selector (legacy compatible)
+ * useShallow로 감싸서 불필요한 리렌더링 방지
  */
 export const useDashboardData = () =>
-  useNormalizedTrainingStore((state) => ({
-    dashboardStats: state.derived.dashboard.stats,
-    monthlyData: state.derived.dashboard.monthlyData,
-    gradeDistribution: state.derived.dashboard.gradeDistribution,
-    retrainingTargets: state.derived.retraining.targets,
-    expiringTrainings: state.derived.retraining.expiring,
-    loading: state.loading.views.dashboard,
-  }));
+  useNormalizedTrainingStore(
+    useShallow((state) => ({
+      dashboardStats: state.derived.dashboard.stats,
+      monthlyData: state.derived.dashboard.monthlyData,
+      gradeDistribution: state.derived.dashboard.gradeDistribution,
+      retrainingTargets: state.derived.retraining.targets,
+      expiringTrainings: state.derived.retraining.expiring,
+      loading: state.loading.views.dashboard,
+    }))
+  );
 
 /**
  * Employees data selector (legacy compatible)
+ * 개별 셀렉터로 분리하여 불필요한 리렌더링 방지
  */
-export const useEmployeesData = () =>
-  useNormalizedTrainingStore((state) => ({
-    employees: Array.from(state.entities.employees.values()),
-    loading: state.loading.entities.employees,
-    filters: state.filters.employees,
-  }));
+export const useEmployeesData = () => {
+  const employeesMap = useNormalizedTrainingStore((state) => state.entities.employees);
+  const loading = useNormalizedTrainingStore((state) => state.loading.entities.employees);
+  const filters = useNormalizedTrainingStore((state) => state.filters.employees);
+
+  // useMemo로 배열 변환 메모이제이션
+  const employees = useMemo(
+    () => Array.from(employeesMap.values()),
+    [employeesMap]
+  );
+
+  return { employees, loading, filters };
+};
 
 /**
  * Programs data selector (legacy compatible)
  */
-export const useProgramsData = () =>
-  useNormalizedTrainingStore((state) => ({
-    programs: Array.from(state.entities.programs.values()),
-    loading: state.loading.entities.programs,
-    filters: state.filters.programs,
-  }));
+export const useProgramsData = () => {
+  const programsMap = useNormalizedTrainingStore((state) => state.entities.programs);
+  const loading = useNormalizedTrainingStore((state) => state.loading.entities.programs);
+  const filters = useNormalizedTrainingStore((state) => state.filters.programs);
+
+  const programs = useMemo(
+    () => Array.from(programsMap.values()),
+    [programsMap]
+  );
+
+  return { programs, loading, filters };
+};
 
 /**
  * Sessions data selector (legacy compatible)
  */
-export const useSessionsData = () =>
-  useNormalizedTrainingStore((state) => ({
-    sessions: Array.from(state.entities.sessions.values()),
-    loading: state.loading.entities.sessions,
-    filters: state.filters.sessions,
-  }));
+export const useSessionsData = () => {
+  const sessionsMap = useNormalizedTrainingStore((state) => state.entities.sessions);
+  const loading = useNormalizedTrainingStore((state) => state.loading.entities.sessions);
+  const filters = useNormalizedTrainingStore((state) => state.filters.sessions);
+
+  const sessions = useMemo(
+    () => Array.from(sessionsMap.values()),
+    [sessionsMap]
+  );
+
+  return { sessions, loading, filters };
+};
 
 /**
  * Results data selector (legacy compatible)
  */
-export const useResultsData = () =>
-  useNormalizedTrainingStore((state) => ({
-    results: Array.from(state.entities.results.values()),
-    loading: state.loading.entities.results,
-    filters: state.filters.results,
-  }));
+export const useResultsData = () => {
+  const resultsMap = useNormalizedTrainingStore((state) => state.entities.results);
+  const loading = useNormalizedTrainingStore((state) => state.loading.entities.results);
+  const filters = useNormalizedTrainingStore((state) => state.filters.results);
+
+  const results = useMemo(
+    () => Array.from(resultsMap.values()),
+    [resultsMap]
+  );
+
+  return { results, loading, filters };
+};
 
 /**
  * Progress matrix data selector (legacy compatible)
  */
 export const useProgressMatrixData = () =>
-  useNormalizedTrainingStore((state) => ({
-    progressMatrix: state.derived.progressMatrix,
-    loading: state.loading.views.progressMatrix,
-    filters: state.filters.progressMatrix,
-  }));
+  useNormalizedTrainingStore(
+    useShallow((state) => ({
+      progressMatrix: state.derived.progressMatrix,
+      loading: state.loading.views.progressMatrix,
+      filters: state.filters.progressMatrix,
+    }))
+  );
 
 /**
  * Retraining data selector (legacy compatible)
  */
 export const useRetrainingData = () =>
-  useNormalizedTrainingStore((state) => ({
-    retrainingTargets: state.derived.retraining.targets,
-    expiringTrainings: state.derived.retraining.expiring,
-    loading: state.loading.views.retraining,
-  }));
+  useNormalizedTrainingStore(
+    useShallow((state) => ({
+      retrainingTargets: state.derived.retraining.targets,
+      expiringTrainings: state.derived.retraining.expiring,
+      loading: state.loading.views.retraining,
+    }))
+  );

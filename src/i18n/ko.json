@@ -43,13 +43,31 @@
     "programs": "교육 프로그램",
     "progress": "진도 현황",
     "schedule": "교육 일정",
+    "attendance": "출석 체크",
     "results": "결과 입력",
     "employees": "직원 관리",
-    "retraining": "재교육 대상"
+    "retraining": "재교육 대상",
+    "certificates": "이수증 발급",
+    "reports": "리포트",
+    "trainers": "강사 관리",
+    "trainingPlan": "연간 계획",
+    "auditLog": "감사 로그",
+    "notifications": "알림",
+    "evaluation": "효과성 평가",
+    "materials": "교육 자료",
+    "newTQC": {
+      "dashboard": "신입 대시보드",
+      "trainees": "교육생 관리",
+      "meetings": "미팅 관리",
+      "resignations": "퇴사 분석",
+      "settings": "설정"
+    }
   },
   "sidebar": {
     "mainMenu": "메인 메뉴",
+    "newTQC": "신입 TQC 교육",
     "management": "관리",
+    "admin": "관리자",
     "quickStats": "빠른 통계",
     "monthlyTrainings": "이번 달 교육",
     "passRate": "합격률",
@@ -85,6 +103,10 @@
   },
   "employee": {
     "title": "직원 관리",
+    "description": "직원 정보 및 교육 이력을 관리하세요",
+    "searchPlaceholder": "사번 또는 이름으로 검색...",
+    "list": "직원 목록",
+    "count": "{{count}}명의 직원",
     "id": "사번",
     "name": "이름",
     "department": "부서",
@@ -99,6 +121,13 @@
   },
   "program": {
     "title": "교육 프로그램",
+    "description": "교육 프로그램을 관리하세요",
+    "searchPlaceholder": "프로그램 코드 또는 이름으로 검색...",
+    "includeInactive": "비활성 포함",
+    "list": "프로그램 목록",
+    "count": "{{count}}개의 프로그램",
+    "viewDetail": "상세 보기",
+    "scoreUnit": "점",
     "code": "코드",
     "name": "프로그램명",
     "category": "분류",
@@ -184,5 +213,22 @@
     "loadError": "데이터를 불러올 수 없습니다",
     "confirmDeleteTitle": "삭제 확인",
     "editReasonRequired": "수정 사유를 입력해주세요"
+  },
+  "auth": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "loginDescription": "HWK Vietnam QIP 교육 관리 시스템",
+    "companyOnly": "화승 이메일 계정으로만 로그인할 수 있습니다.",
+    "support": "문제가 있으시면 IT 부서에 문의하세요.",
+    "loginSuccess": "로그인되었습니다.",
+    "loginError": "로그인에 실패했습니다.",
+    "logoutSuccess": "로그아웃되었습니다.",
+    "sessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요.",
+    "unauthorized": "권한이 없습니다.",
+    "profile": "프로필",
+    "role": "역할",
+    "admin": "관리자",
+    "trainer": "교육담당자",
+    "viewer": "조회자"
   }
 }

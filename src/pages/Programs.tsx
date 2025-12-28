@@ -127,7 +127,7 @@ export default function Programs() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('program.title')}</h1>
           <p className="text-muted-foreground">
-            교육 프로그램을 관리하세요
+            {t('program.description')}
           </p>
         </div>
         <Button>
@@ -143,7 +143,7 @@ export default function Programs() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="프로그램 코드 또는 이름으로 검색..."
+                placeholder={t('program.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -151,7 +151,7 @@ export default function Programs() {
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="카테고리" />
+                <SelectValue placeholder={t('program.category')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
@@ -169,7 +169,7 @@ export default function Programs() {
                 onCheckedChange={(checked) => setShowInactive(checked === true)}
               />
               <Label htmlFor="showInactive" className="text-sm">
-                비활성 포함
+                {t('program.includeInactive')}
               </Label>
             </div>
           </div>
@@ -179,8 +179,8 @@ export default function Programs() {
       {/* Programs Table */}
       <Card>
         <CardHeader>
-          <CardTitle>프로그램 목록</CardTitle>
-          <CardDescription>{programs.length}개의 프로그램</CardDescription>
+          <CardTitle>{t('program.list')}</CardTitle>
+          <CardDescription>{t('program.count', { count: programs.length })}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -242,7 +242,7 @@ export default function Programs() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      {program.passing_score}점
+                      {program.passing_score}{t('program.scoreUnit')}
                     </TableCell>
                     <TableCell className="text-center">
                       {program.duration_hours}{t('program.hours')}
@@ -267,7 +267,7 @@ export default function Programs() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>
                             <Eye className="h-4 w-4 mr-2" />
-                            상세 보기
+                            {t('program.viewDetail')}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Pencil className="h-4 w-4 mr-2" />
