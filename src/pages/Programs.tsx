@@ -77,7 +77,7 @@ export default function Programs() {
         type: 'success',
         title: t('messages.deleteSuccess'),
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: t('messages.deleteError'),

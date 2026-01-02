@@ -166,5 +166,82 @@ const PieChartRenderer = lazy(async () => {
   };
 });
 
-// Export Bar component for use with LazyBarChart
-export { Bar } from 'recharts';
+// Export Bar and Line components for use with LazyBarChart/LazyLineChart
+export { Bar, Line } from 'recharts';
+
+// Pre-built lazy LineChart component
+interface LazyLineChartProps {
+  data: unknown[];
+  height?: number;
+  children?: ReactNode;
+  xAxisKey?: string;
+  xAxisFormatter?: (value: string) => string;
+}
+
+export function LazyLineChart({
+  data,
+  height = 300,
+  children,
+  xAxisKey = 'name',
+  xAxisFormatter,
+}: LazyLineChartProps) {
+  return (
+    <Suspense fallback={<ChartSkeleton height={height} />}>
+      <LineChartRenderer
+        data={data}
+        height={height}
+        xAxisKey={xAxisKey}
+        xAxisFormatter={xAxisFormatter}
+      >
+        {children}
+      </LineChartRenderer>
+    </Suspense>
+  );
+}
+
+const LineChartRenderer = lazy(async () => {
+  const {
+    LineChart,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+  } = await import('recharts');
+
+  return {
+    default: function LineChartComponent({
+      data,
+      height,
+      children,
+      xAxisKey,
+      xAxisFormatter,
+    }: LazyLineChartProps & { children?: ReactNode }) {
+      return (
+        <div style={{ height }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} style={{ cursor: 'pointer' }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis
+                dataKey={xAxisKey}
+                tickFormatter={xAxisFormatter}
+                className="text-sm"
+              />
+              <YAxis className="text-sm" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                }}
+              />
+              <Legend />
+              {children}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    },
+  };
+});

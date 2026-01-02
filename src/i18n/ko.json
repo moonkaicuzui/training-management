@@ -23,7 +23,9 @@
     "program": "프로그램",
     "failDate": "불합격일",
     "score": "점수",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "tbd": "미정",
+    "count": "건"
   },
   "header": {
     "searchPlaceholder": "직원 ID 또는 이름으로 검색...",
@@ -52,6 +54,8 @@
     "trainers": "강사 관리",
     "trainingPlan": "연간 계획",
     "auditLog": "감사 로그",
+    "executive": "경영진 대시보드",
+    "audit": "감사 대응",
     "notifications": "알림",
     "evaluation": "효과성 평가",
     "materials": "교육 자료",
@@ -162,6 +166,14 @@
     "cancelled": "취소",
     "addSession": "교육 세션 추가",
     "attendees": "참석자"
+  },
+  "schedule": {
+    "today": "오늘",
+    "dayView": "일간",
+    "weekView": "주간",
+    "monthView": "월간",
+    "sessionsCount": "{{count}}건의 교육",
+    "noSessions": "예정된 교육이 없습니다"
   },
   "progress": {
     "title": "교육 진도 현황",

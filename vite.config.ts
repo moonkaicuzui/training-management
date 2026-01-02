@@ -52,6 +52,14 @@ export default defineConfig({
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority'],
           // 아이콘
           'vendor-icons': ['lucide-react'],
+          // Firebase (별도 청크로 분리하여 초기 로딩 최적화)
+          'vendor-firebase': [
+            'firebase/app',
+            'firebase/auth',
+            'firebase/firestore',
+          ],
+          // 상태 관리
+          'vendor-state': ['zustand', 'immer'],
         },
       },
     },

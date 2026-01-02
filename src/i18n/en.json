@@ -23,7 +23,9 @@
     "program": "Program",
     "failDate": "Fail Date",
     "score": "Score",
-    "retry": "Retry"
+    "retry": "Retry",
+    "tbd": "TBD",
+    "count": ""
   },
   "header": {
     "searchPlaceholder": "Search by employee ID or name...",
@@ -52,6 +54,8 @@
     "trainers": "Trainers",
     "trainingPlan": "Annual Plan",
     "auditLog": "Audit Log",
+    "executive": "Executive Dashboard",
+    "audit": "Audit Compliance",
     "notifications": "Notifications",
     "evaluation": "Evaluation",
     "materials": "Materials",
@@ -163,6 +167,14 @@
     "addSession": "Add Session",
     "attendees": "Attendees"
   },
+  "schedule": {
+    "today": "Today",
+    "dayView": "Day",
+    "weekView": "Week",
+    "monthView": "Month",
+    "sessionsCount": "{{count}} sessions",
+    "noSessions": "No scheduled sessions"
+  },
   "progress": {
     "title": "Training Progress",
     "viewByEmployee": "View by Employee",
@@ -213,5 +225,22 @@
     "loadError": "Failed to load data",
     "confirmDeleteTitle": "Confirm Delete",
     "editReasonRequired": "Please enter a reason for editing"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "loginDescription": "HWK Vietnam QIP Training Management System",
+    "companyOnly": "You can only login with HWK email account.",
+    "support": "If you have any issues, please contact IT department.",
+    "loginSuccess": "Successfully logged in.",
+    "loginError": "Failed to login.",
+    "logoutSuccess": "Successfully logged out.",
+    "sessionExpired": "Session expired. Please login again.",
+    "unauthorized": "You are not authorized.",
+    "profile": "Profile",
+    "role": "Role",
+    "admin": "Admin",
+    "trainer": "Trainer",
+    "viewer": "Viewer"
   }
 }

@@ -21,6 +21,8 @@ import type {
   NewTQCTrainingStage,
   NewTQCMeeting,
   NewTQCResignation,
+  ProgramChangeLog,
+  ResultEditLog,
 } from '@/types';
 
 // ========== Sample Employees (20 employees) ==========
@@ -2499,4 +2501,63 @@ export const newTQCResignationReasons: { value: string; label: string; labelVn: 
   { value: 'ABSENCE', label: 'Absence', labelVn: 'Vắng mặt' },
   { value: 'ACCIDENT', label: 'Accident', labelVn: 'Tai nạn' },
   { value: 'OTHER', label: 'Other', labelVn: 'Khác' },
+];
+
+// ========== Change Logs (Audit Trail) ==========
+
+/**
+ * Program Change Log - tracks all changes to training programs
+ * Supports CREATE, UPDATE, DELETE actions
+ */
+export const mockProgramChangeLogs: ProgramChangeLog[] = [
+  {
+    log_id: 'PCL-001',
+    program_code: 'WT-001',
+    action: 'CREATE',
+    changed_by: 'admin@hsvina.com',
+    before_data: null,
+    after_data: JSON.stringify({
+      program_code: 'WT-001',
+      program_name_ko: '작업장 정리정돈',
+      is_active: true,
+    }),
+    changed_at: '2024-01-15T09:00:00Z',
+  },
+  {
+    log_id: 'PCL-002',
+    program_code: 'WT-001',
+    action: 'UPDATE',
+    changed_by: 'trainer@hsvina.com',
+    before_data: JSON.stringify({
+      passing_score: 70,
+    }),
+    after_data: JSON.stringify({
+      passing_score: 75,
+    }),
+    changed_at: '2024-02-01T10:30:00Z',
+  },
+];
+
+/**
+ * Result Edit Log - tracks all edits to training results
+ * NO DELETE POLICY: Results can only be edited, never deleted
+ */
+export const mockResultEditLogs: ResultEditLog[] = [
+  {
+    log_id: 'REL-001',
+    result_id: 'RES-001',
+    before_data: JSON.stringify({
+      score: 65,
+      result: 'FAIL',
+      grade: 'C',
+    }),
+    after_data: JSON.stringify({
+      score: 75,
+      result: 'PASS',
+      grade: 'B',
+    }),
+    edit_reason: '점수 입력 오류 수정',
+    edited_by: 'trainer@hsvina.com',
+    edited_at: '2024-03-15T14:20:00Z',
+  },
 ];

@@ -23,7 +23,9 @@
     "program": "Chương trình",
     "failDate": "Ngày không đạt",
     "score": "Điểm",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "tbd": "Chưa xác định",
+    "count": ""
   },
   "header": {
     "searchPlaceholder": "Tìm kiếm theo mã hoặc tên nhân viên...",
@@ -52,6 +54,8 @@
     "trainers": "Giảng viên",
     "trainingPlan": "Kế hoạch năm",
     "auditLog": "Nhật ký",
+    "executive": "Bảng điều khiển lãnh đạo",
+    "audit": "Tuân thủ kiểm toán",
     "notifications": "Thông báo",
     "evaluation": "Đánh giá hiệu quả",
     "materials": "Tài liệu đào tạo",
@@ -163,6 +167,14 @@
     "addSession": "Thêm buổi đào tạo",
     "attendees": "Người tham gia"
   },
+  "schedule": {
+    "today": "Hôm nay",
+    "dayView": "Ngày",
+    "weekView": "Tuần",
+    "monthView": "Tháng",
+    "sessionsCount": "{{count}} buổi đào tạo",
+    "noSessions": "Không có buổi đào tạo nào"
+  },
   "progress": {
     "title": "Tiến độ đào tạo",
     "viewByEmployee": "Xem theo nhân viên",
@@ -213,5 +225,22 @@
     "loadError": "Không thể tải dữ liệu",
     "confirmDeleteTitle": "Xác nhận xóa",
     "editReasonRequired": "Vui lòng nhập lý do sửa đổi"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "loginDescription": "Hệ thống quản lý đào tạo QIP HWK Vietnam",
+    "companyOnly": "Bạn chỉ có thể đăng nhập bằng tài khoản email HWK.",
+    "support": "Nếu có vấn đề, vui lòng liên hệ bộ phận IT.",
+    "loginSuccess": "Đăng nhập thành công.",
+    "loginError": "Đăng nhập thất bại.",
+    "logoutSuccess": "Đăng xuất thành công.",
+    "sessionExpired": "Phiên đã hết hạn. Vui lòng đăng nhập lại.",
+    "unauthorized": "Bạn không có quyền truy cập.",
+    "profile": "Hồ sơ",
+    "role": "Vai trò",
+    "admin": "Quản trị viên",
+    "trainer": "Giảng viên",
+    "viewer": "Người xem"
   }
 }

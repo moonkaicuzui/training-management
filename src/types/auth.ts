@@ -107,6 +107,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
 export const ALLOWED_EMAIL_DOMAINS = [
   'hwaseung.com',
   'hwaseungvina.com',
+  'hsvina.com',
   // 개발/테스트용
   'gmail.com',
 ];
@@ -115,6 +116,7 @@ export const ALLOWED_EMAIL_DOMAINS = [
 export const ADMIN_EMAILS = [
   'admin@hwaseung.com',
   'qip.admin@hwaseungvina.com',
+  'ksmoon@hsvina.com',
   // 개발용
   'ksmoon@gmail.com',
 ];

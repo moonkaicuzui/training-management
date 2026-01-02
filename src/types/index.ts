@@ -382,3 +382,6 @@ export {
 
 // ========== New TQC (신입 TQC 교육) Types ==========
 export * from './newTqc';
+
+// ========== Curriculum & Competency Types ==========
+export * from './curriculum';

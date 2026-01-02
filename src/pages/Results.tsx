@@ -40,13 +40,13 @@ import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
-import type { ResultInput } from '@/types';
+import type { ResultInput, TrainingResult } from '@/types';
 
 interface ResultEntry {
   employee_id: string;
   employee_name: string;
   score: number | null;
-  result: 'PASS' | 'FAIL' | 'ABSENT';
+  result: TrainingResult;
   remarks: string;
   isDuplicate?: boolean; // 중복 여부 표시
 }
@@ -224,7 +224,7 @@ export default function Results() {
       setDuplicateDialogOpen(false);
       setDuplicates([]);
       setPendingResults([]);
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: t('messages.saveError'),
@@ -290,7 +290,7 @@ export default function Results() {
       setEditDialogOpen(false);
       setEditingResult(null);
       fetchResults({});
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: t('messages.saveError'),
@@ -433,7 +433,7 @@ export default function Results() {
                           <TableCell>
                             <Select
                               value={entry.result}
-                              onValueChange={(value) => handleResultChange(index, value as any)}
+                              onValueChange={(value) => handleResultChange(index, value as TrainingResult)}
                             >
                               <SelectTrigger className="w-[120px]">
                                 <SelectValue />
@@ -632,7 +632,7 @@ export default function Results() {
                     onValueChange={(value) =>
                       setEditingResult({
                         ...editingResult,
-                        result: value as any,
+                        result: value as TrainingResult,
                       })
                     }
                   >

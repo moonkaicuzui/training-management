@@ -476,8 +476,8 @@ export default function TrainersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {trainer.specializations.slice(0, 2).map((spec, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
+                        {trainer.specializations.slice(0, 2).map((spec) => (
+                          <Badge key={spec} variant="outline" className="text-xs">
                             {spec}
                           </Badge>
                         ))}

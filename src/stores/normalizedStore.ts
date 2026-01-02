@@ -873,7 +873,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           const programs = normalizeTrainingPrograms(rawData.programs);
 
           // Build matrix for efficient lookup
-          const matrix: Record<EmployeeId, Record<ProgramCode, NormalizedProgressCell>> = {} as any;
+          const matrix: Record<EmployeeId, Record<ProgramCode, NormalizedProgressCell>> = {} as Record<EmployeeId, Record<ProgramCode, NormalizedProgressCell>>;
           const cells: NormalizedProgressCell[] = [];
 
           for (const cell of rawData.cells) {

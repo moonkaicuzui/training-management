@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import DOMPurify from 'dompurify';
 import {
   Award,
   Download,
@@ -199,7 +200,7 @@ function CertificatePreview({ data, onClose }: { data: CertificateData; onClose:
           </style>
         </head>
         <body>
-          ${content.innerHTML}
+          ${DOMPurify.sanitize(content.innerHTML)}
         </body>
       </html>
     `);
@@ -311,12 +312,17 @@ export default function CertificatesPage() {
       .sort((a, b) => b.training_date.localeCompare(a.training_date));
   }, [searchQuery, selectedProgram]);
 
-  // 이수증 데이터 생성
-  const generateCertificateData = (result: TrainingResult): CertificateData => {
-    const year = new Date().getFullYear();
-    const sequence = Math.floor(Math.random() * 100000);
+  // 이수증 번호 카운터
+  const certificateCounterRef = useRef(0);
 
-    return {
+  // 이수증 발급 (이벤트 핸들러에서만 호출)
+  const handleIssueCertificate = useCallback((result: TrainingResult) => {
+    const year = new Date().getFullYear();
+    // 이벤트 핸들러에서만 호출되므로 Math.random 사용 안전
+    certificateCounterRef.current += 1;
+    const sequence = Date.now() % 100000 + certificateCounterRef.current;
+
+    const certData: CertificateData = {
       certificateNumber: `CERT-${year}-${String(sequence).padStart(6, '0')}`,
       employeeId: result.employee_id,
       employeeName: result.employee_name,
@@ -329,13 +335,8 @@ export default function CertificatesPage() {
       grade: result.grade,
       issueDate: format(new Date(), 'yyyy년 MM월 dd일'),
     };
-  };
-
-  // 이수증 발급
-  const handleIssueCertificate = (result: TrainingResult) => {
-    const certData = generateCertificateData(result);
     setSelectedCertificate(certData);
-  };
+  }, []);
 
   // 통계
   const stats = useMemo(() => {

@@ -56,7 +56,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 // Types
 interface EvaluationCriteria {
@@ -279,7 +278,7 @@ export default function Evaluation() {
     setShowDetailDialog(true);
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const exportData = filteredEvaluations.map(e => ({
       '평가 ID': e.id,
       '프로그램': e.programName,
@@ -292,6 +291,9 @@ export default function Evaluation() {
       '제출일': e.submittedAt.split('T')[0],
       '피드백': e.feedback,
     }));
+
+    // 동적 import로 xlsx 라이브러리 로드 (초기 번들 크기 감소)
+    const XLSX = await import('xlsx');
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();

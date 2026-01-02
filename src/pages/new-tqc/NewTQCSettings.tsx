@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Settings,
   Building,
@@ -37,6 +38,7 @@ import { NEW_TQC_TRAINERS, DEFAULT_TRAINING_STAGES } from '@/types/newTqc';
 import { format } from 'date-fns';
 
 export default function NewTQCSettings() {
+  const { toast } = useToast();
 
   const teams = useNewTQCTeams();
   const loading = useNewTQCLoading();
@@ -45,12 +47,35 @@ export default function NewTQCSettings() {
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
 
   useEffect(() => {
-    fetchTeams(true); // Include inactive teams
+    const loadTeams = async () => {
+      try {
+        await fetchTeams(true); // Include inactive teams
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: '데이터 로드 실패',
+          description: '팀 목록을 불러오는데 실패했습니다.',
+        });
+      }
+    };
+    loadTeams();
   }, []);
 
   const handleTeamActiveToggle = async (teamId: string, isActive: boolean) => {
-    await updateTeam({ team_id: teamId, is_active: isActive });
-    await fetchTeams(true);
+    try {
+      await updateTeam({ team_id: teamId, is_active: isActive });
+      await fetchTeams(true);
+      toast({
+        title: '상태 변경 완료',
+        description: `팀이 ${isActive ? '활성화' : '비활성화'}되었습니다.`,
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: '상태 변경 실패',
+        description: '팀 상태 변경에 실패했습니다.',
+      });
+    }
   };
 
   if (loading.teams && teams.length === 0) {
@@ -223,13 +248,13 @@ export default function NewTQCSettings() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {DEFAULT_TRAINING_STAGES.map((stageName, index) => (
+                {DEFAULT_TRAINING_STAGES.map((stageName, stageIndex) => (
                   <div
-                    key={index}
+                    key={stageName}
                     className="flex items-center gap-4 p-4 border rounded-lg"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                      {index + 1}
+                      {stageIndex + 1}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium">{stageName}</p>

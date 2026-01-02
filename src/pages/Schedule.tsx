@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Clock, MapPin, User, Users, MoreHorizontal, Pencil, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Clock, MapPin, User, Users, MoreHorizontal, Pencil, Trash2, Eye, ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,21 +35,42 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { cn } from '@/lib/utils';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+} from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
-import type { TrainingSession } from '@/types';
+import type { TrainingSession, SessionStatus } from '@/types';
+
+type ViewMode = 'day' | 'week' | 'month';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 ~ 19:00
 
 export default function Schedule() {
   const { t } = useTranslation();
   const { sessions, programs, loading, fetchSessions, fetchPrograms, createSession, cancelSession } = useTrainingStore();
   const { addToast, language } = useUIStore();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -78,24 +99,91 @@ export default function Schedule() {
 
   useEffect(() => {
     fetchSessions({
-      status: statusFilter !== 'all' ? statusFilter as any : undefined,
+      status: statusFilter !== 'all' ? statusFilter as SessionStatus : undefined,
     });
     fetchPrograms({});
   }, [statusFilter]);
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+  // Navigation handlers based on view mode
+  const handlePrev = () => {
+    switch (viewMode) {
+      case 'day':
+        setCurrentDate(subDays(currentDate, 1));
+        break;
+      case 'week':
+        setCurrentDate(subWeeks(currentDate, 1));
+        break;
+      case 'month':
+        setCurrentDate(subMonths(currentDate, 1));
+        break;
+    }
   };
 
-  const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+  const handleNext = () => {
+    switch (viewMode) {
+      case 'day':
+        setCurrentDate(addDays(currentDate, 1));
+        break;
+      case 'week':
+        setCurrentDate(addWeeks(currentDate, 1));
+        break;
+      case 'month':
+        setCurrentDate(addMonths(currentDate, 1));
+        break;
+    }
   };
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  // Calendar data calculations
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  // Week view data
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Get current period title based on view mode
+  const getPeriodTitle = () => {
+    switch (viewMode) {
+      case 'day':
+        return format(currentDate, 'yyyy년 M월 d일 (E)', { locale: getLocale() });
+      case 'week':
+        return `${format(weekStart, 'M월 d일', { locale: getLocale() })} - ${format(weekEnd, 'M월 d일', { locale: getLocale() })}`;
+      case 'month':
+        return format(currentDate, 'yyyy년 M월', { locale: getLocale() });
+    }
+  };
+
+  // Get sessions count for current period
+  const getCurrentPeriodSessionsCount = useMemo(() => {
+    switch (viewMode) {
+      case 'day':
+        return sessions.filter(s => isSameDay(new Date(s.session_date), currentDate)).length;
+      case 'week':
+        return sessions.filter(s => {
+          const date = new Date(s.session_date);
+          return date >= weekStart && date <= weekEnd;
+        }).length;
+      case 'month':
+        return sessions.filter(s => isSameMonth(new Date(s.session_date), currentDate)).length;
+    }
+  }, [sessions, currentDate, viewMode, weekStart, weekEnd]);
+
+  // Get sessions by hour for day/week view
+  const getSessionsForHour = (date: Date, hour: number) => {
+    return sessions.filter(session => {
+      if (!isSameDay(new Date(session.session_date), date)) return false;
+      const sessionHour = parseInt(session.session_time.split(':')[0], 10);
+      return sessionHour === hour;
+    });
+  };
 
   const getSessionsForDate = (date: Date) => {
     return sessions.filter((session) =>
@@ -153,7 +241,7 @@ export default function Schedule() {
         max_attendees: 20,
         notes: '',
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: t('messages.saveError'),
@@ -170,7 +258,7 @@ export default function Schedule() {
         type: 'success',
         title: '교육이 취소되었습니다',
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: '교육 취소에 실패했습니다',
@@ -206,84 +294,233 @@ export default function Schedule() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Calendar */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>
-                {format(currentMonth, 'yyyy년 M월', { locale: getLocale() })}
-              </CardTitle>
-              <CardDescription>
-                이번 달 교육 일정 {sessions.filter(s =>
-                  isSameMonth(new Date(s.session_date), currentMonth)
-                ).length}건
-              </CardDescription>
+          <CardHeader className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>{getPeriodTitle()}</CardTitle>
+                <CardDescription>
+                  {t('schedule.sessionsCount', { count: getCurrentPeriodSessionsCount })}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleToday}>
+                  {t('schedule.today')}
+                </Button>
+                <Button variant="outline" size="icon" onClick={handlePrev}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* View Mode Tabs */}
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="day" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('schedule.dayView')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="week" className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('schedule.weekView')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="month" className="flex items-center gap-2">
+                  <CalendarRange className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('schedule.monthView')}</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
-              {/* Weekday headers */}
-              {WEEKDAYS.map((day) => (
-                <div
-                  key={day}
-                  className="bg-background p-2 text-center text-sm font-medium text-muted-foreground"
-                >
-                  {day}
-                </div>
-              ))}
-
-              {/* Calendar days */}
-              {calendarDays.map((day, index) => {
-                const daySessions = getSessionsForDate(day);
-                const isCurrentMonth = isSameMonth(day, currentMonth);
-                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                const isToday = isSameDay(day, new Date());
-
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      bg-background p-2 min-h-[100px] cursor-pointer transition-colors
-                      ${!isCurrentMonth ? 'text-muted-foreground/50' : ''}
-                      ${isSelected ? 'ring-2 ring-primary ring-inset' : ''}
-                      ${isToday ? 'bg-primary/5' : ''}
-                      hover:bg-muted/50
-                    `}
-                    onClick={() => setSelectedDate(day)}
-                  >
-                    <div className={`text-sm font-medium mb-1 ${isToday ? 'text-primary' : ''}`}>
-                      {format(day, 'd')}
-                    </div>
-                    <div className="space-y-1">
-                      {daySessions.slice(0, 2).map((session) => (
+            {/* Day View */}
+            {viewMode === 'day' && (
+              <div className="space-y-2">
+                <div className="grid grid-cols-[60px_1fr] gap-2">
+                  {HOURS.map((hour) => {
+                    const hourSessions = getSessionsForHour(currentDate, hour);
+                    return (
+                      <div key={hour} className="contents">
+                        <div className="text-sm text-muted-foreground text-right pr-2 py-2">
+                          {hour.toString().padStart(2, '0')}:00
+                        </div>
                         <div
-                          key={session.session_id}
-                          className={`
-                            text-xs p-1 rounded truncate
-                            ${session.status === 'PLANNED' ? 'bg-primary/10 text-primary' : ''}
-                            ${session.status === 'COMPLETED' ? 'bg-status-pass/10 text-status-pass' : ''}
-                            ${session.status === 'CANCELLED' ? 'bg-destructive/10 text-destructive line-through' : ''}
-                          `}
+                          className={cn(
+                            'min-h-[60px] border-t py-2 px-2 rounded-r-lg transition-colors',
+                            hourSessions.length > 0 ? 'bg-muted/30' : 'hover:bg-muted/20'
+                          )}
                         >
-                          {session.program_code}
+                          {hourSessions.map((session) => (
+                            <div
+                              key={session.session_id}
+                              className={cn(
+                                'p-2 rounded-md mb-1 cursor-pointer transition-all hover:scale-[1.02]',
+                                session.status === 'PLANNED' && 'bg-primary/10 border-l-4 border-primary',
+                                session.status === 'COMPLETED' && 'bg-status-pass/10 border-l-4 border-status-pass',
+                                session.status === 'CANCELLED' && 'bg-destructive/10 border-l-4 border-destructive opacity-60'
+                              )}
+                              onClick={() => setSelectedSession(session)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium text-sm">{session.program_code}</div>
+                                <Badge variant={getStatusBadgeVariant(session.status)} className="text-xs">
+                                  {session.status === 'PLANNED' ? t('session.planned') :
+                                   session.status === 'COMPLETED' ? t('session.completed') :
+                                   t('session.cancelled')}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {session.session_time}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {session.location || t('common.tbd')}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                      {daySessions.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{daySessions.length - 2}건
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Week View */}
+            {viewMode === 'week' && (
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  {/* Weekday headers */}
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px bg-muted rounded-t-lg overflow-hidden">
+                    <div className="bg-background p-2" />
+                    {weekDays.map((day) => {
+                      const isToday = isSameDay(day, new Date());
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className={cn(
+                            'bg-background p-2 text-center',
+                            isToday && 'bg-primary/5'
+                          )}
+                        >
+                          <div className="text-xs text-muted-foreground">
+                            {format(day, 'E', { locale: getLocale() })}
+                          </div>
+                          <div className={cn(
+                            'text-lg font-semibold',
+                            isToday && 'text-primary'
+                          )}>
+                            {format(day, 'd')}
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                  {/* Time slots */}
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px bg-muted">
+                    {HOURS.map((hour) => (
+                      <div key={hour} className="contents">
+                        <div className="bg-background text-sm text-muted-foreground text-right pr-2 py-2">
+                          {hour.toString().padStart(2, '0')}:00
+                        </div>
+                        {weekDays.map((day) => {
+                          const hourSessions = getSessionsForHour(day, hour);
+                          const isToday = isSameDay(day, new Date());
+                          return (
+                            <div
+                              key={`${day.toISOString()}-${hour}`}
+                              className={cn(
+                                'bg-background min-h-[50px] p-1 transition-colors hover:bg-muted/50',
+                                isToday && 'bg-primary/5'
+                              )}
+                            >
+                              {hourSessions.map((session) => (
+                                <div
+                                  key={session.session_id}
+                                  className={cn(
+                                    'text-xs p-1 rounded truncate cursor-pointer mb-1',
+                                    session.status === 'PLANNED' && 'bg-primary/20 text-primary',
+                                    session.status === 'COMPLETED' && 'bg-status-pass/20 text-status-pass',
+                                    session.status === 'CANCELLED' && 'bg-destructive/20 text-destructive line-through'
+                                  )}
+                                  onClick={() => setSelectedSession(session)}
+                                  title={`${session.program_code} - ${session.session_time}`}
+                                >
+                                  {session.program_code}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Month View */}
+            {viewMode === 'month' && (
+              <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
+                {/* Weekday headers */}
+                {WEEKDAYS.map((day) => (
+                  <div
+                    key={day}
+                    className="bg-background p-2 text-center text-sm font-medium text-muted-foreground"
+                  >
+                    {day}
+                  </div>
+                ))}
+
+                {/* Calendar days */}
+                {calendarDays.map((day) => {
+                  const daySessions = getSessionsForDate(day);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const isSelected = selectedDate && isSameDay(day, selectedDate);
+                  const isToday = isSameDay(day, new Date());
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={cn(
+                        'bg-background p-2 min-h-[100px] cursor-pointer transition-colors hover:bg-muted/50',
+                        !isCurrentMonth && 'text-muted-foreground/50',
+                        isSelected && 'ring-2 ring-primary ring-inset',
+                        isToday && 'bg-primary/5'
+                      )}
+                      onClick={() => setSelectedDate(day)}
+                    >
+                      <div className={cn('text-sm font-medium mb-1', isToday && 'text-primary')}>
+                        {format(day, 'd')}
+                      </div>
+                      <div className="space-y-1">
+                        {daySessions.slice(0, 2).map((session) => (
+                          <div
+                            key={session.session_id}
+                            className={cn(
+                              'text-xs p-1 rounded truncate',
+                              session.status === 'PLANNED' && 'bg-primary/10 text-primary',
+                              session.status === 'COMPLETED' && 'bg-status-pass/10 text-status-pass',
+                              session.status === 'CANCELLED' && 'bg-destructive/10 text-destructive line-through'
+                            )}
+                          >
+                            {session.program_code}
+                          </div>
+                        ))}
+                        {daySessions.length > 2 && (
+                          <div className="text-xs text-muted-foreground">
+                            +{daySessions.length - 2}{t('common.count')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

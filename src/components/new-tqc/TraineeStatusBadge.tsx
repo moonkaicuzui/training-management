@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { NewTQCTraineeStatus, NewTQCMeetingStatus } from '@/types/newTqc';
 
@@ -27,7 +28,10 @@ const statusConfig: Record<
   },
 };
 
-export function TraineeStatusBadge({ status, className }: TraineeStatusBadgeProps) {
+export const TraineeStatusBadge = memo(function TraineeStatusBadge({
+  status,
+  className,
+}: TraineeStatusBadgeProps) {
   const config = statusConfig[status];
 
   return (
@@ -35,7 +39,7 @@ export function TraineeStatusBadge({ status, className }: TraineeStatusBadgeProp
       {config.label}
     </Badge>
   );
-}
+});
 
 // Color Blind 검사 결과 뱃지
 interface ColorBlindBadgeProps {
@@ -43,7 +47,10 @@ interface ColorBlindBadgeProps {
   className?: string;
 }
 
-export function ColorBlindBadge({ result, className }: ColorBlindBadgeProps) {
+export const ColorBlindBadge = memo(function ColorBlindBadge({
+  result,
+  className,
+}: ColorBlindBadgeProps) {
   if (result === null) {
     return (
       <Badge variant="secondary" className={className}>
@@ -57,7 +64,7 @@ export function ColorBlindBadge({ result, className }: ColorBlindBadgeProps) {
       {result === 'PASS' ? '정상' : '색맹'}
     </Badge>
   );
-}
+});
 
 // 미팅 상태 뱃지
 interface MeetingStatusBadgeProps {
@@ -65,25 +72,28 @@ interface MeetingStatusBadgeProps {
   className?: string;
 }
 
-export function MeetingStatusBadge({ status, className }: MeetingStatusBadgeProps) {
-  const config: Record<
-    NewTQCMeetingStatus,
-    { label: string; variant: 'default' | 'success' | 'destructive' | 'secondary' }
-  > = {
-    SCHEDULED: { label: '예정', variant: 'default' },
-    COMPLETED: { label: '완료', variant: 'success' },
-    MISSED: { label: '미실시', variant: 'destructive' },
-    RESCHEDULED: { label: '재조정', variant: 'secondary' },
-  };
+const meetingStatusConfig: Record<
+  NewTQCMeetingStatus,
+  { label: string; variant: 'default' | 'success' | 'destructive' | 'secondary' }
+> = {
+  SCHEDULED: { label: '예정', variant: 'default' },
+  COMPLETED: { label: '완료', variant: 'success' },
+  MISSED: { label: '미실시', variant: 'destructive' },
+  RESCHEDULED: { label: '재조정', variant: 'secondary' },
+};
 
-  const { label, variant } = config[status];
+export const MeetingStatusBadge = memo(function MeetingStatusBadge({
+  status,
+  className,
+}: MeetingStatusBadgeProps) {
+  const { label, variant } = meetingStatusConfig[status];
 
   return (
     <Badge variant={variant} className={className}>
       {label}
     </Badge>
   );
-}
+});
 
 // 교육 단계 상태 뱃지
 interface StageStatusBadgeProps {
@@ -91,21 +101,24 @@ interface StageStatusBadgeProps {
   className?: string;
 }
 
-export function StageStatusBadge({ status, className }: StageStatusBadgeProps) {
-  const config: Record<
-    'PENDING' | 'IN_PROGRESS' | 'COMPLETED',
-    { label: string; variant: 'default' | 'success' | 'secondary' }
-  > = {
-    PENDING: { label: '대기', variant: 'secondary' },
-    IN_PROGRESS: { label: '진행중', variant: 'default' },
-    COMPLETED: { label: '완료', variant: 'success' },
-  };
+const stageStatusConfig: Record<
+  'PENDING' | 'IN_PROGRESS' | 'COMPLETED',
+  { label: string; variant: 'default' | 'success' | 'secondary' }
+> = {
+  PENDING: { label: '대기', variant: 'secondary' },
+  IN_PROGRESS: { label: '진행중', variant: 'default' },
+  COMPLETED: { label: '완료', variant: 'success' },
+};
 
-  const { label, variant } = config[status];
+export const StageStatusBadge = memo(function StageStatusBadge({
+  status,
+  className,
+}: StageStatusBadgeProps) {
+  const { label, variant } = stageStatusConfig[status];
 
   return (
     <Badge variant={variant} className={className}>
       {label}
     </Badge>
   );
-}
+});

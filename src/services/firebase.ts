@@ -12,8 +12,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
 import {
   getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
@@ -39,8 +38,6 @@ const firebaseConfig = {
 
 // Initialize Firebase App (singleton pattern)
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
 let analytics: Analytics | null = null;
 
 // Check if Firebase is already initialized
@@ -51,10 +48,10 @@ if (getApps().length === 0) {
 }
 
 // Initialize Auth
-auth = getAuth(app);
+const auth: Auth = getAuth(app);
 
 // Initialize Firestore
-db = getFirestore(app);
+const db: Firestore = getFirestore(app);
 
 // Enable offline persistence for Firestore (optional but recommended)
 enableIndexedDbPersistence(db).catch((err) => {
@@ -74,43 +71,22 @@ isSupported().then((supported) => {
   }
 });
 
-// Google Auth Provider configuration
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
-
-// Allowed email domains for login
-const ALLOWED_DOMAINS = ['hwaseung.com', 'hwaseungvina.com', 'gmail.com'];
-
 // Admin email addresses
 const ADMIN_EMAILS = [
   'admin@hwaseung.com',
   'qip.admin@hwaseungvina.com',
-  'ksmoon@gmail.com'
+  'ksmoon@hsvina.com'
 ];
 
 /**
- * Sign in with Google popup
+ * Sign in with email and password
  */
-export const signInWithGoogle = async (): Promise<FirebaseUser> => {
+export const signInWithEmail = async (email: string, password: string): Promise<FirebaseUser> => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-
-    // Validate email domain
-    const email = user.email;
-    if (email) {
-      const domain = email.split('@')[1];
-      if (!ALLOWED_DOMAINS.includes(domain)) {
-        await firebaseSignOut(auth);
-        throw new Error(`Unauthorized domain: ${domain}. Only ${ALLOWED_DOMAINS.join(', ')} are allowed.`);
-      }
-    }
-
-    return user;
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
   } catch (error) {
-    console.error('Google sign-in error:', error);
+    console.error('Email sign-in error:', error);
     throw error;
   }
 };
@@ -158,5 +134,5 @@ export const subscribeToAuthState = (
 };
 
 // Export Firebase instances
-export { app, auth, db, analytics, googleProvider };
+export { app, auth, db, analytics };
 export type { FirebaseUser };

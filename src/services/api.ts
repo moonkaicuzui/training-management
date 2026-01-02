@@ -4,6 +4,11 @@
 // Enhanced with error handling, caching, and retry logic
 // ============================================================
 
+import {
+  calculateDashboardKPIs,
+  toDashboardStats,
+} from '@/utils/kpiCalculator';
+
 import type {
   Employee,
   EmployeeFilters,
@@ -23,6 +28,9 @@ import type {
   RetrainingTarget,
   ExpiringTraining,
   Grade,
+  ProgramChangeLog,
+  ResultEditLog,
+  ChangeAction,
   // New TQC Types
   NewTQCTeam,
   NewTQCTrainee,
@@ -52,6 +60,8 @@ import {
   mockPrograms,
   mockSessions,
   mockResults,
+  mockProgramChangeLogs,
+  mockResultEditLogs,
   // New TQC Mock Data
   mockNewTQCTeams,
   mockNewTQCTrainees,
@@ -126,6 +136,119 @@ export class NotFoundError extends ApiError {
     super(message, 'NOT_FOUND', 404);
     this.name = 'NotFoundError';
   }
+}
+
+// ========== Change Log Functions ==========
+
+let programLogCounter = mockProgramChangeLogs.length;
+let resultLogCounter = mockResultEditLogs.length;
+
+/**
+ * Generate unique log ID
+ */
+function generateLogId(prefix: 'PCL' | 'REL'): string {
+  const counter = prefix === 'PCL' ? ++programLogCounter : ++resultLogCounter;
+  return `${prefix}-${String(counter).padStart(3, '0')}`;
+}
+
+/**
+ * Log program changes (CREATE, UPDATE, DELETE)
+ * All program modifications are tracked for audit compliance
+ */
+function logProgramChange(
+  programCode: string,
+  action: ChangeAction,
+  beforeData: Partial<TrainingProgram> | null,
+  afterData: Partial<TrainingProgram> | null,
+  changedBy: string = 'system@hsvina.com'
+): ProgramChangeLog {
+  const log: ProgramChangeLog = {
+    log_id: generateLogId('PCL'),
+    program_code: programCode,
+    action,
+    changed_by: changedBy,
+    before_data: beforeData ? JSON.stringify(beforeData) : null,
+    after_data: afterData ? JSON.stringify(afterData) : null,
+    changed_at: new Date().toISOString(),
+  };
+
+  mockProgramChangeLogs.push(log);
+  console.log(`[AUDIT] Program ${action}: ${programCode}`, log);
+  return log;
+}
+
+/**
+ * Log result edits
+ * NO DELETE POLICY: Results can only be edited, never deleted
+ */
+function logResultEdit(
+  resultId: string,
+  beforeData: Partial<TrainingResultRecord>,
+  afterData: Partial<TrainingResultRecord>,
+  editReason: string,
+  editedBy: string = 'system@hsvina.com'
+): ResultEditLog {
+  const log: ResultEditLog = {
+    log_id: generateLogId('REL'),
+    result_id: resultId,
+    before_data: JSON.stringify(beforeData),
+    after_data: JSON.stringify(afterData),
+    edit_reason: editReason,
+    edited_by: editedBy,
+    edited_at: new Date().toISOString(),
+  };
+
+  mockResultEditLogs.push(log);
+  console.log(`[AUDIT] Result Edit: ${resultId}`, log);
+  return log;
+}
+
+/**
+ * Get program change logs with optional filtering
+ */
+export async function getProgramChangeLogs(
+  programCode?: string
+): Promise<ProgramChangeLog[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    if (programCode) {
+      return mockProgramChangeLogs.filter(log => log.program_code === programCode);
+    }
+    return [...mockProgramChangeLogs].sort(
+      (a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
+    );
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'getProgramChangeLogs', programCode }),
+  });
+  const data = await response.json();
+  return data.data;
+}
+
+/**
+ * Get result edit logs with optional filtering
+ */
+export async function getResultEditLogs(
+  resultId?: string
+): Promise<ResultEditLog[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+    if (resultId) {
+      return mockResultEditLogs.filter(log => log.result_id === resultId);
+    }
+    return [...mockResultEditLogs].sort(
+      (a, b) => new Date(b.edited_at).getTime() - new Date(a.edited_at).getTime()
+    );
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'getResultEditLogs', resultId }),
+  });
+  const data = await response.json();
+  return data.data;
 }
 
 // ========== Cache Implementation ==========
@@ -536,6 +659,10 @@ export async function createProgram(
       updated_at: now,
     };
     mockPrograms.push(newProgram);
+
+    // Log the creation
+    logProgramChange(program.program_code, 'CREATE', null, newProgram);
+
     return newProgram;
   }
 
@@ -556,11 +683,18 @@ export async function updateProgram(
     const index = mockPrograms.findIndex(p => p.program_code === code);
     if (index === -1) return null;
 
+    // Capture before state for logging
+    const beforeData = { ...mockPrograms[index] };
+
     mockPrograms[index] = {
       ...mockPrograms[index],
       ...updates,
       updated_at: new Date().toISOString(),
     };
+
+    // Log the update
+    logProgramChange(code, 'UPDATE', beforeData, mockPrograms[index]);
+
     return mockPrograms[index];
   }
 
@@ -573,17 +707,24 @@ export async function updateProgram(
 }
 
 export async function deleteProgram(code: string): Promise<boolean> {
-  // Soft delete - set is_active to false
+  // Soft delete - set is_active to false (NO DELETE POLICY)
   if (USE_MOCK_API) {
     await delay(MOCK_DELAY);
     const index = mockPrograms.findIndex(p => p.program_code === code);
     if (index === -1) return false;
+
+    // Capture before state for logging
+    const beforeData = { ...mockPrograms[index] };
 
     mockPrograms[index] = {
       ...mockPrograms[index],
       is_active: false,
       updated_at: new Date().toISOString(),
     };
+
+    // Log the soft delete as DELETE action
+    logProgramChange(code, 'DELETE', beforeData, mockPrograms[index]);
+
     return true;
   }
 
@@ -776,11 +917,14 @@ export async function recordResults(results: ResultInput[]): Promise<TrainingRes
 }
 
 export async function updateResult(update: ResultUpdate): Promise<TrainingResultRecord | null> {
-  // NOTE: This updates a result but also logs the change
+  // NOTE: This updates a result and logs the change (NO DELETE POLICY)
   if (USE_MOCK_API) {
     await delay(MOCK_DELAY);
     const index = mockResults.findIndex(r => r.result_id === update.result_id);
     if (index === -1) return null;
+
+    // Capture before state for logging
+    const beforeData = { ...mockResults[index] };
 
     const program = mockPrograms.find(
       p => p.program_code === mockResults[index].program_code
@@ -811,6 +955,14 @@ export async function updateResult(update: ResultUpdate): Promise<TrainingResult
       updated_by: 'current_user', // Would come from auth
     };
 
+    // Log the result edit with reason
+    logResultEdit(
+      update.result_id,
+      beforeData,
+      mockResults[index],
+      update.edit_reason || '결과 수정'
+    );
+
     return mockResults[index];
   }
 
@@ -828,31 +980,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   if (USE_MOCK_API) {
     await delay(MOCK_DELAY);
 
-    const activeEmployees = mockEmployees.filter(e => e.status === 'ACTIVE').length;
+    // Use accurate KPI calculation logic
+    // This considers:
+    // 1. target_positions - only count programs required for employee's position
+    // 2. validity_months - expired trainings don't count as completed
+    // 3. Individual completion rates - accurate per-employee calculation
+    const kpiResult = calculateDashboardKPIs(
+      mockEmployees,
+      mockPrograms,
+      mockResults
+    );
 
-    // Get current month's completed trainings
-    const now = new Date();
-    const currentMonth = now.toISOString().substring(0, 7); // YYYY-MM
-    const monthlyCompletions = mockResults.filter(
-      r => r.training_date.startsWith(currentMonth) && r.result === 'PASS'
-    ).length;
-
-    // Calculate overall completion rate
-    const totalExpectedTrainings = activeEmployees * mockPrograms.filter(p => p.is_active).length;
-    const totalPassedTrainings = mockResults.filter(r => r.result === 'PASS').length;
-    const overallCompletionRate = totalExpectedTrainings > 0
-      ? Math.round((totalPassedTrainings / totalExpectedTrainings) * 100)
-      : 0;
-
-    // Count employees needing retraining
-    const retrainingCount = mockResults.filter(r => r.needs_retraining).length;
-
-    return {
-      totalEmployees: activeEmployees,
-      monthlyCompletions,
-      overallCompletionRate: Math.min(overallCompletionRate, 100),
-      retrainingCount,
-    };
+    return toDashboardStats(kpiResult);
   }
 
   const params = new URLSearchParams({ action: 'getDashboardStats' });

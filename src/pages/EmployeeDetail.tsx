@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, User, Building, Calendar, Award } from 'lucide-react';
@@ -50,6 +50,13 @@ export default function EmployeeDetail() {
 
   const passedResults = employeeHistory.filter((r) => r.result === 'PASS');
   const failedResults = employeeHistory.filter((r) => r.result === 'FAIL');
+
+  // Calculate working years (memo to avoid impure Date.now() during render)
+  const workingYears = useMemo(() => {
+    const now = new Date();
+    const hireDate = new Date(selectedEmployee.hire_date);
+    return Math.floor((now.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+  }, [selectedEmployee.hire_date]);
   const avgScore =
     employeeHistory.filter((r) => r.score !== null).length > 0
       ? Math.round(
@@ -118,11 +125,7 @@ export default function EmployeeDetail() {
               {format(new Date(selectedEmployee.hire_date), 'yyyy-MM-dd')}
             </div>
             <p className="text-xs text-muted-foreground">
-              {Math.floor(
-                (Date.now() - new Date(selectedEmployee.hire_date).getTime()) /
-                  (1000 * 60 * 60 * 24 * 365)
-              )}
-              년 근무
+              {workingYears}년 근무
             </p>
           </CardContent>
         </Card>

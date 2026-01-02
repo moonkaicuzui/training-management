@@ -13,38 +13,41 @@ test.describe('Dashboard', () => {
   });
 
   test('should display dashboard title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /대시보드|Dashboard/i })).toBeVisible();
+    // Vietnamese: "Tổng quan" = Dashboard
+    await expect(page.getByRole('heading', { name: /Tổng quan|대시보드|Dashboard/i })).toBeVisible();
   });
 
   test('should display stats cards', async ({ page }) => {
-    // Wait for cards to load
-    await expect(page.locator('.card').first()).toBeVisible({ timeout: 10000 });
-
-    // Check for stat cards (at least the structure)
-    const cards = page.locator('[class*="card"]');
-    await expect(cards.first()).toBeVisible();
+    // Wait for stats cards to load - look for card with specific content
+    // Vietnamese: "Tổng nhân viên" = Total Employees
+    await expect(page.getByText(/Tổng nhân viên|총 직원|Total Employees/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('should display monthly training chart', async ({ page }) => {
-    // Look for chart container or section
-    await expect(page.getByText(/월별 교육|Monthly/i)).toBeVisible({ timeout: 10000 });
+    // Vietnamese: "Thống kê theo tháng" = Monthly Chart
+    await expect(page.getByText(/Thống kê theo tháng|월별 교육|Monthly/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('should display grade distribution', async ({ page }) => {
-    // Look for grade distribution section
-    await expect(page.getByText(/등급 분포|Grade/i)).toBeVisible({ timeout: 10000 });
+    // Vietnamese: "Phân bố xếp loại" = Grade Distribution
+    await expect(page.getByText(/Phân bố xếp loại|등급 분포|Grade/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display recent results table', async ({ page }) => {
-    // Look for recent results section
-    await expect(page.getByText(/최근|Recent/i).first()).toBeVisible({ timeout: 10000 });
+  test('should display retraining section', async ({ page }) => {
+    // Vietnamese: "Đào tạo lại" = Retraining
+    await expect(page.getByText(/Đào tạo lại|재교육|Retraining/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should have quick action buttons', async ({ page }) => {
-    // Look for quick actions section
-    const quickActions = page.getByText(/빠른 작업|Quick Actions/i);
-    if (await quickActions.isVisible()) {
-      await expect(quickActions).toBeVisible();
-    }
+    // Vietnamese: "Đăng ký đào tạo mới" = New Training button
+    // Vietnamese: "Nhập kết quả" = Enter Results button
+    const newTrainingBtn = page.getByRole('button', { name: /Đăng ký đào tạo mới|새 교육|New Training/i });
+    const enterResultsBtn = page.getByRole('button', { name: /Nhập kết quả|결과 입력|Enter Results/i });
+
+    // At least one of these should be visible
+    const hasNewTraining = await newTrainingBtn.isVisible().catch(() => false);
+    const hasEnterResults = await enterResultsBtn.isVisible().catch(() => false);
+
+    expect(hasNewTraining || hasEnterResults).toBeTruthy();
   });
 });

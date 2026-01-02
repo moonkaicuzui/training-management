@@ -22,6 +22,8 @@ import {
   UserMinus,
   Settings,
   CalendarDays,
+  Building2,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -108,6 +110,16 @@ const secondaryItems: NavItem[] = [
 ];
 
 const adminItems: NavItem[] = [
+  {
+    titleKey: 'nav.executive',
+    href: '/executive',
+    icon: Building2,
+  },
+  {
+    titleKey: 'nav.audit',
+    href: '/audit',
+    icon: Shield,
+  },
   {
     titleKey: 'nav.trainers',
     href: '/trainers',

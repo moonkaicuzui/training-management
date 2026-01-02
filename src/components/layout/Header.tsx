@@ -194,9 +194,9 @@ export function Header() {
                 {t('header.noNotifications')}
               </div>
             ) : (
-              retrainingTargets.slice(0, 5).map((target, index) => (
+              retrainingTargets.slice(0, 5).map((target) => (
                 <DropdownMenuItem
-                  key={index}
+                  key={`${target.employee.employee_id}-${target.program.program_code}`}
                   className="flex flex-col items-start cursor-pointer"
                   onClick={() => handleSelectEmployee(target.employee.employee_id)}
                 >

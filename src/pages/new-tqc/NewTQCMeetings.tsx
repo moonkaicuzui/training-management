@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import {
   Calendar,
   List,
@@ -34,6 +35,7 @@ import { ko } from 'date-fns/locale';
 
 export default function NewTQCMeetings() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const meetings = useNewTQCMeetings();
   const trainees = useNewTQCTrainees();
@@ -43,7 +45,15 @@ export default function NewTQCMeetings() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchMeetings(filters), fetchTrainees()]);
+      try {
+        await Promise.all([fetchMeetings(filters), fetchTrainees()]);
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: '데이터 로드 실패',
+          description: '미팅 데이터를 불러오는데 실패했습니다.',
+        });
+      }
     };
     fetchData();
   }, [filters]);
@@ -84,12 +94,24 @@ export default function NewTQCMeetings() {
   };
 
   const handleMeetingComplete = async (meetingId: string) => {
-    await updateMeeting({
-      meeting_id: meetingId,
-      status: 'COMPLETED',
-      completed_date: new Date().toISOString().split('T')[0],
-    });
-    await fetchMeetings(filters);
+    try {
+      await updateMeeting({
+        meeting_id: meetingId,
+        status: 'COMPLETED',
+        completed_date: new Date().toISOString().split('T')[0],
+      });
+      await fetchMeetings(filters);
+      toast({
+        title: '미팅 완료',
+        description: '미팅이 완료 처리되었습니다.',
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: '업데이트 실패',
+        description: '미팅 상태 변경에 실패했습니다.',
+      });
+    }
   };
 
   if (loading.meetings && meetings.length === 0) {

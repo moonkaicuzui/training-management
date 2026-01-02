@@ -219,12 +219,17 @@ export const useNewTQCStore = create<NewTQCState>()(
 
         try {
           await api.deleteNewTQCTeam(teamId);
+          // NO DELETE POLICY: Soft delete only - set is_active to false
           set(state => ({
-            teams: state.teams.filter(t => t.team_id !== teamId),
+            teams: state.teams.map(t =>
+              t.team_id === teamId
+                ? { ...t, is_active: false, updated_at: new Date().toISOString() }
+                : t
+            ),
             loading: { ...state.loading, saving: false },
           }));
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to delete team';
+          const message = error instanceof Error ? error.message : 'Failed to deactivate team';
           set({
             error: message,
             loading: { ...get().loading, saving: false },

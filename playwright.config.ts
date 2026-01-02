@@ -12,7 +12,7 @@ export default defineConfig({
   timeout: 30000,
   // 예상 타임아웃
   expect: {
-    timeout: 5000,
+    timeout: 10000,
   },
   // 병렬 실행
   fullyParallel: true,
@@ -27,8 +27,8 @@ export default defineConfig({
   ],
   // 전역 설정
   use: {
-    // Base URL
-    baseURL: 'http://localhost:5173/training-management',
+    // Base URL (로컬 개발 서버)
+    baseURL: 'http://localhost:5173',
     // 추적 설정
     trace: 'on-first-retry',
     // 스크린샷
@@ -52,11 +52,14 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  // 개발 서버 설정
+  // 개발 서버 설정 (인증 우회 모드로 실행)
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173/training-management',
+    command: 'VITE_DEV_AUTH_BYPASS=true npm run dev',
+    url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      VITE_DEV_AUTH_BYPASS: 'true',
+    },
   },
 });

@@ -13,7 +13,7 @@ import type {
 } from '@/types/auth';
 import { ROLE_PERMISSIONS, ALLOWED_EMAIL_DOMAINS, ADMIN_EMAILS } from '@/types/auth';
 import {
-  signInWithGoogle,
+  signInWithEmail,
   signOut as firebaseSignOut,
   subscribeToAuthState
 } from '@/services/firebase';
@@ -24,7 +24,7 @@ const AUTH_STORAGE_KEY = 'q-train-auth';
 
 interface AuthStore extends AuthState {
   // Actions
-  login: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => boolean;
   getPermissions: () => RolePermissions | null;
@@ -113,19 +113,12 @@ export const useAuthStore = create<AuthStore>()(
         return unsubscribe;
       },
 
-      // Login with Google via Firebase
-      login: async () => {
+      // Login with email and password via Firebase
+      login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
 
         try {
-          const firebaseUser = await signInWithGoogle();
-
-          // Validate email domain
-          if (firebaseUser.email && !isAllowedEmail(firebaseUser.email)) {
-            await firebaseSignOut();
-            throw new Error('허용되지 않은 이메일 도메인입니다.');
-          }
-
+          const firebaseUser = await signInWithEmail(email, password);
           const user = convertFirebaseUser(firebaseUser);
 
           set({
@@ -135,11 +128,23 @@ export const useAuthStore = create<AuthStore>()(
             error: null,
           });
         } catch (error) {
+          let errorMessage = '로그인 중 오류가 발생했습니다.';
+          if (error instanceof Error) {
+            if (error.message.includes('user-not-found')) {
+              errorMessage = '등록되지 않은 이메일입니다.';
+            } else if (error.message.includes('wrong-password') || error.message.includes('invalid-credential')) {
+              errorMessage = '비밀번호가 올바르지 않습니다.';
+            } else if (error.message.includes('invalid-email')) {
+              errorMessage = '이메일 형식이 올바르지 않습니다.';
+            } else {
+              errorMessage = error.message;
+            }
+          }
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
-            error: error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다.',
+            error: errorMessage,
           });
           throw error;
         }

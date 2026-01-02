@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Plus, Eye } from 'lucide-react';
@@ -14,14 +14,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,8 +22,10 @@ import {
 } from '@/components/ui/select';
 import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
+import { VirtualTable, type VirtualTableColumn } from '@/components/common/VirtualTable';
 import { departments, positions, buildings } from '@/data/mockData';
 import { format } from 'date-fns';
+import type { Employee, Department, Position, Building, EmployeeStatus } from '@/types';
 
 export default function Employees() {
   const { t } = useTranslation();
@@ -55,14 +49,85 @@ export default function Employees() {
   useEffect(() => {
     fetchEmployees({
       search: searchQuery || undefined,
-      department: departmentFilter !== 'all' ? departmentFilter as any : undefined,
-      position: positionFilter !== 'all' ? positionFilter as any : undefined,
-      building: buildingFilter !== 'all' ? buildingFilter as any : undefined,
-      status: statusFilter !== 'all' ? statusFilter as any : undefined,
+      department: departmentFilter !== 'all' ? departmentFilter as Department : undefined,
+      position: positionFilter !== 'all' ? positionFilter as Position : undefined,
+      building: buildingFilter !== 'all' ? buildingFilter as Building : undefined,
+      status: statusFilter !== 'all' ? statusFilter as EmployeeStatus : undefined,
     });
     // fetchEmployees는 Zustand store에서 제공하는 안정적인 함수이므로 의존성에서 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, departmentFilter, positionFilter, buildingFilter, statusFilter]);
+
+  // Define table columns for VirtualTable
+  const columns: VirtualTableColumn<Employee>[] = useMemo(() => [
+    {
+      key: 'employee_id',
+      header: t('employee.id'),
+      render: (employee) => (
+        <span className="font-mono font-medium">{employee.employee_id}</span>
+      ),
+    },
+    {
+      key: 'employee_name',
+      header: t('employee.name'),
+      render: (employee) => (
+        <span className="font-medium">{employee.employee_name}</span>
+      ),
+    },
+    {
+      key: 'department',
+      header: t('employee.department'),
+      render: (employee) => (
+        <Badge variant="outline">{employee.department}</Badge>
+      ),
+    },
+    {
+      key: 'position',
+      header: t('employee.position'),
+      render: (employee) => t(`position.${employee.position}`),
+    },
+    {
+      key: 'building',
+      header: t('employee.building'),
+      render: (employee) => t(`building.${employee.building}`),
+    },
+    {
+      key: 'line',
+      header: t('employee.line'),
+      render: (employee) => employee.line,
+    },
+    {
+      key: 'hire_date',
+      header: t('employee.hireDate'),
+      render: (employee) => format(new Date(employee.hire_date), 'yyyy-MM-dd'),
+    },
+    {
+      key: 'status',
+      header: t('common.status'),
+      render: (employee) => (
+        <Badge variant={employee.status === 'ACTIVE' ? 'success' : 'inactive'}>
+          {employee.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: t('common.actions'),
+      width: '80px',
+      render: (employee) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/employees/${employee.employee_id}`);
+          }}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      ),
+    },
+  ], [t, navigate]);
 
   if (loading) {
     return <PageLoading />;
@@ -150,71 +215,22 @@ export default function Employees() {
         </CardContent>
       </Card>
 
-      {/* Employees Table */}
+      {/* Employees Table with Virtual Scrolling */}
       <Card>
         <CardHeader>
           <CardTitle>{t('employee.list')}</CardTitle>
           <CardDescription>{t('employee.count', { count: employees.length })}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('employee.id')}</TableHead>
-                <TableHead>{t('employee.name')}</TableHead>
-                <TableHead>{t('employee.department')}</TableHead>
-                <TableHead>{t('employee.position')}</TableHead>
-                <TableHead>{t('employee.building')}</TableHead>
-                <TableHead>{t('employee.line')}</TableHead>
-                <TableHead>{t('employee.hireDate')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-                <TableHead className="w-[80px]">{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    {t('common.noData')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                employees.map((employee) => (
-                  <TableRow key={employee.employee_id}>
-                    <TableCell className="font-mono font-medium">
-                      {employee.employee_id}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {employee.employee_name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{employee.department}</Badge>
-                    </TableCell>
-                    <TableCell>{t(`position.${employee.position}`)}</TableCell>
-                    <TableCell>{t(`building.${employee.building}`)}</TableCell>
-                    <TableCell>{employee.line}</TableCell>
-                    <TableCell>
-                      {format(new Date(employee.hire_date), 'yyyy-MM-dd')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={employee.status === 'ACTIVE' ? 'success' : 'inactive'}>
-                        {employee.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate(`/employees/${employee.employee_id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <VirtualTable
+            data={employees}
+            columns={columns}
+            rowKey={(employee) => employee.employee_id}
+            maxHeight={600}
+            emptyMessage={t('common.noData')}
+            onRowClick={(employee) => navigate(`/employees/${employee.employee_id}`)}
+            virtualizationThreshold={50}
+          />
         </CardContent>
       </Card>
     </div>

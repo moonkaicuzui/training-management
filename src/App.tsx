@@ -30,6 +30,8 @@ const AuditLog = lazy(() => import('./pages/AuditLog'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Evaluation = lazy(() => import('./pages/Evaluation'));
 const Materials = lazy(() => import('./pages/Materials'));
+const ExecutiveDashboard = lazy(() => import('./pages/ExecutiveDashboard'));
+const AuditCompliance = lazy(() => import('./pages/AuditCompliance'));
 
 // New TQC (신입 TQC 교육) 페이지
 const NewTQCDashboard = lazy(() => import('./pages/new-tqc/NewTQCDashboard'));
@@ -165,6 +167,20 @@ function App() {
                   <Suspense fallback={<PageLoader />}>
                     <Materials />
                   </Suspense>
+                } />
+                <Route path="executive" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <ExecutiveDashboard />
+                    </Suspense>
+                  </DevProtectedRoute>
+                } />
+                <Route path="audit" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <AuditCompliance />
+                    </Suspense>
+                  </DevProtectedRoute>
                 } />
 
                 {/* New TQC (신입 TQC 교육) 라우트 */}

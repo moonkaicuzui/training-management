@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
   Edit,
@@ -33,10 +34,12 @@ import {
   useNewTQCActions,
 } from '@/stores/newTqcStore';
 import { format } from 'date-fns';
+import type { NewTQCColorBlindTestInput } from '@/types/newTqc';
 
 export default function NewTQCTraineeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const traineeDetails = useNewTQCSelectedTrainee();
   const teams = useNewTQCTeams();
@@ -51,10 +54,20 @@ export default function NewTQCTraineeDetail() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchTraineeDetail(id);
-      fetchTeams();
-    }
+    const loadData = async () => {
+      if (id) {
+        try {
+          await Promise.all([fetchTraineeDetail(id), fetchTeams()]);
+        } catch {
+          toast({
+            variant: 'destructive',
+            title: '데이터 로드 실패',
+            description: '교육생 정보를 불러오는데 실패했습니다.',
+          });
+        }
+      }
+    };
+    loadData();
   }, [id]);
 
   if (loading.traineeDetail || !traineeDetails) {
@@ -66,18 +79,42 @@ export default function NewTQCTraineeDetail() {
   const { stages, colorBlindTests, meetings } = traineeDetails;
   const team = teams.find((t) => t.team_id === trainee.team_id);
 
-  const handleColorBlindTest = async (input: any) => {
-    await createColorBlindTest(input);
-    if (id) await fetchTraineeDetail(id);
+  const handleColorBlindTest = async (input: NewTQCColorBlindTestInput) => {
+    try {
+      await createColorBlindTest(input);
+      if (id) await fetchTraineeDetail(id);
+      toast({
+        title: '색맹 검사 완료',
+        description: '검사 결과가 저장되었습니다.',
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: '저장 실패',
+        description: '색맹 검사 결과 저장에 실패했습니다.',
+      });
+    }
   };
 
   const handleMeetingComplete = async (meetingId: string) => {
-    await updateMeeting({
-      meeting_id: meetingId,
-      status: 'COMPLETED',
-      completed_date: new Date().toISOString().split('T')[0],
-    });
-    if (id) await fetchTraineeDetail(id);
+    try {
+      await updateMeeting({
+        meeting_id: meetingId,
+        status: 'COMPLETED',
+        completed_date: new Date().toISOString().split('T')[0],
+      });
+      if (id) await fetchTraineeDetail(id);
+      toast({
+        title: '미팅 완료',
+        description: '미팅이 완료 처리되었습니다.',
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: '업데이트 실패',
+        description: '미팅 상태 변경에 실패했습니다.',
+      });
+    }
   };
 
   return (

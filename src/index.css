@@ -68,4 +68,15 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* iOS Safe Area Support for Bottom Navigation */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Touch-friendly tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

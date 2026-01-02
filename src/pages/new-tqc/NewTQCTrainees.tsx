@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import {
   Plus,
   MoreHorizontal,
@@ -43,12 +44,13 @@ import {
   useNewTQCActions,
 } from '@/stores/newTqcStore';
 import { NEW_TQC_TRAINERS } from '@/types/newTqc';
-import type { NewTQCTrainee, NewTQCTraineeFilters as FiltersType } from '@/types/newTqc';
+import type { NewTQCTrainee, NewTQCTraineeFilters as FiltersType, NewTQCTraineeInput } from '@/types/newTqc';
 import { format } from 'date-fns';
 
 export default function NewTQCTrainees() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
 
   const trainees = useNewTQCTrainees();
   const teams = useNewTQCTeams();
@@ -83,7 +85,15 @@ export default function NewTQCTrainees() {
   // Fetch data
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchTeams(), fetchTrainees(filters)]);
+      try {
+        await Promise.all([fetchTeams(), fetchTrainees(filters)]);
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: '데이터 로드 실패',
+          description: '교육생 목록을 불러오는데 실패했습니다.',
+        });
+      }
     };
     fetchData();
   }, [filters]);
@@ -123,7 +133,7 @@ export default function NewTQCTrainees() {
     setSearchParams({});
   };
 
-  const handleCreateTrainee = async (data: any) => {
+  const handleCreateTrainee = async (data: NewTQCTraineeInput) => {
     await createTrainee(data);
     setFormDialogOpen(false);
     await fetchTrainees(filters);

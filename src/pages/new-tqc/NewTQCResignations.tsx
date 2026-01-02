@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import {
   UserMinus,
   Download,
@@ -52,6 +53,7 @@ const REASON_LABELS: Record<ResignationReason, string> = {
 };
 
 export default function NewTQCResignations() {
+  const { toast } = useToast();
   const resignations = useNewTQCResignations();
   const analysis = useNewTQCResignationAnalysis();
   const teams = useNewTQCTeams();
@@ -66,11 +68,19 @@ export default function NewTQCResignations() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([
-        fetchResignations(filters),
-        fetchResignationAnalysis(),
-        fetchTeams(),
-      ]);
+      try {
+        await Promise.all([
+          fetchResignations(filters),
+          fetchResignationAnalysis(),
+          fetchTeams(),
+        ]);
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: '데이터 로드 실패',
+          description: '퇴사 데이터를 불러오는데 실패했습니다.',
+        });
+      }
     };
     fetchData();
   }, [filters]);

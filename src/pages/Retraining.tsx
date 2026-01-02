@@ -221,8 +221,8 @@ export default function Retraining() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRetrainingTargets.map((target, index) => (
-                      <TableRow key={index}>
+                    {filteredRetrainingTargets.map((target) => (
+                      <TableRow key={`${target.employee.employee_id}-${target.program.program_code}`}>
                         <TableCell className="font-mono">
                           {target.employee.employee_id}
                         </TableCell>
@@ -300,8 +300,8 @@ export default function Retraining() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredExpiringTrainings.map((item, index) => (
-                      <TableRow key={index}>
+                    {filteredExpiringTrainings.map((item) => (
+                      <TableRow key={`${item.employee.employee_id}-${item.program.program_code}`}>
                         <TableCell className="font-mono">
                           {item.employee.employee_id}
                         </TableCell>

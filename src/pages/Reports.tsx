@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import * as XLSX from 'xlsx';
 import {
   Download,
   Users,
@@ -173,8 +172,8 @@ export default function ReportsPage() {
     );
   }, [selectedDepartment]);
 
-  // Excel 내보내기
-  const exportToExcel = (reportType: ReportType) => {
+  // Excel 내보내기 (동적 import로 번들 최적화)
+  const handleExportToExcel = useCallback(async (reportType: ReportType) => {
     let data: Record<string, unknown>[] = [];
     let filename = '';
 
@@ -224,6 +223,9 @@ export default function ReportsPage() {
         break;
     }
 
+    // 동적 import로 xlsx 라이브러리 로드 (초기 번들 크기 감소)
+    const XLSX = await import('xlsx');
+
     // 워크북 생성
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -237,7 +239,7 @@ export default function ReportsPage() {
 
     // 파일 다운로드
     XLSX.writeFile(wb, filename);
-  };
+  }, [departmentReports]);
 
   // 전체 통계
   const totalStats = useMemo(() => {
@@ -347,7 +349,7 @@ export default function ReportsPage() {
               직원별
             </TabsTrigger>
           </TabsList>
-          <Button onClick={() => exportToExcel(activeTab)}>
+          <Button onClick={() => handleExportToExcel(activeTab)}>
             <Download className="h-4 w-4 mr-2" />
             Excel 다운로드
           </Button>
@@ -474,7 +476,7 @@ export default function ReportsPage() {
                 <p className="text-muted-foreground mb-4">
                   직원별 상세 교육 현황은 Excel 파일로 다운로드하여 확인하세요.
                 </p>
-                <Button onClick={() => exportToExcel('employee')}>
+                <Button onClick={() => handleExportToExcel('employee')}>
                   <Download className="h-4 w-4 mr-2" />
                   직원별 현황 Excel 다운로드
                 </Button>

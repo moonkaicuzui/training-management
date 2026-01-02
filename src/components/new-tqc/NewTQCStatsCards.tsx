@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -19,10 +20,14 @@ interface NewTQCStatsCardsProps {
   isLoading?: boolean;
 }
 
-export function NewTQCStatsCards({ stats, isLoading }: NewTQCStatsCardsProps) {
+export const NewTQCStatsCards = memo(function NewTQCStatsCards({
+  stats,
+  isLoading,
+}: NewTQCStatsCardsProps) {
   const navigate = useNavigate();
 
-  const statItems = [
+  // useMemo로 statItems 배열 최적화
+  const statItems = useMemo(() => [
     {
       title: '교육중 인원',
       value: stats?.inTraining ?? 0,
@@ -71,13 +76,18 @@ export function NewTQCStatsCards({ stats, isLoading }: NewTQCStatsCardsProps) {
       bgColor: 'bg-yellow-500/10',
       link: '/new-tqc/trainees?color_blind=null',
     },
-  ];
+  ], [stats]);
+
+  // 클릭 핸들러 useCallback으로 최적화
+  const handleNavigate = useCallback((link: string) => {
+    navigate(link);
+  }, [navigate]);
 
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, index) => (
-          <Card key={index} className="animate-pulse">
+          <Card key={`skeleton-${index}`} className="animate-pulse">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 bg-muted rounded w-20" />
               <div className="h-8 w-8 bg-muted rounded-full" />
@@ -93,14 +103,14 @@ export function NewTQCStatsCards({ stats, isLoading }: NewTQCStatsCardsProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {statItems.map((stat, index) => (
+      {statItems.map((stat) => (
         <Card
-          key={index}
+          key={stat.link}
           className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 group"
-          onClick={() => navigate(stat.link)}
+          onClick={() => handleNavigate(stat.link)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && navigate(stat.link)}
+          onKeyDown={(e) => e.key === 'Enter' && handleNavigate(stat.link)}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
@@ -117,14 +127,14 @@ export function NewTQCStatsCards({ stats, isLoading }: NewTQCStatsCardsProps) {
       ))}
     </div>
   );
-}
+});
 
 // Team Stats card for dashboard
 interface TeamStatsProps {
   stats: NewTQCDashboardStats | null;
 }
 
-export function NewTQCTeamStats({ stats }: TeamStatsProps) {
+export const NewTQCTeamStats = memo(function NewTQCTeamStats({ stats }: TeamStatsProps) {
   if (!stats) return null;
 
   return (
@@ -173,14 +183,16 @@ export function NewTQCTeamStats({ stats }: TeamStatsProps) {
       </CardContent>
     </Card>
   );
-}
+});
 
 // Compact stats for sidebar or summary
 interface CompactStatsProps {
   stats: NewTQCDashboardStats | null;
 }
 
-export function NewTQCCompactStats({ stats }: CompactStatsProps) {
+export const NewTQCCompactStats = memo(function NewTQCCompactStats({
+  stats,
+}: CompactStatsProps) {
   if (!stats) return null;
 
   return (
@@ -215,4 +227,4 @@ export function NewTQCCompactStats({ stats }: CompactStatsProps) {
       </div>
     </div>
   );
-}
+});

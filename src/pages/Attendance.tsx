@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -105,17 +105,23 @@ export default function AttendancePage() {
   // 선택된 세션
   const selectedSession = useMemo(() => {
     if (!sessionId) return null;
-    const session = sampleSessions.find(s => s.session_id === sessionId);
-    if (session && Object.keys(attendanceData).length === 0) {
-      // 초기 출석 데이터 설정
+    return sampleSessions.find(s => s.session_id === sessionId) ?? null;
+  }, [sessionId]);
+
+  // 초기화 추적을 위한 ref
+  const initializedSessionRef = useRef<string | null>(null);
+
+  // 세션 변경 시 초기 출석 데이터 설정
+  useEffect(() => {
+    if (selectedSession && initializedSessionRef.current !== selectedSession.session_id) {
       const initial: Record<string, AttendanceStatus> = {};
-      session.attendees.forEach(emp => {
+      selectedSession.attendees.forEach(emp => {
         initial[emp.employee_id] = 'PRESENT';
       });
       setAttendanceData(initial);
+      initializedSessionRef.current = selectedSession.session_id;
     }
-    return session;
-  }, [sessionId, attendanceData]);
+  }, [selectedSession]);
 
   // 오늘 예정된 세션
   const todaySessions = useMemo(() => {
