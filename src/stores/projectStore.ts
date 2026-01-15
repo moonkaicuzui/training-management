@@ -1,0 +1,857 @@
+/**
+ * 프로젝트 관리 시스템 Zustand 스토어
+ *
+ * 팀원, 프로젝트, 과제, 메시지 상태 관리
+ */
+
+import { create } from 'zustand';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import type {
+  ProjectMember,
+  Project,
+  Task,
+  Message,
+  Category,
+  CalendarEvent,
+  CreateMemberInput,
+  UpdateMemberInput,
+  CreateTaskInput,
+  UpdateTaskInput,
+  CreateMessageInput,
+  ViewType,
+  TaskStatus,
+  TaskFilter,
+  Automation,
+} from '@/types/project';
+import * as projectService from '@/services/projectService';
+
+// ============================================================
+// Store Types
+// ============================================================
+
+interface ProjectStore {
+  // State
+  members: ProjectMember[];
+  projects: Project[];
+  tasks: Task[];
+  messages: Message[];
+  categories: Category[];
+  events: CalendarEvent[];
+  automations: Automation[];
+
+  // Current selections
+  currentProjectId: string | null;
+  currentTaskId: string | null;
+  currentMemberId: string | null;
+
+  // View settings
+  currentView: ViewType;
+  filters: TaskFilter[];
+
+  // Loading states
+  isLoading: boolean;
+  isMembersLoading: boolean;
+  isProjectsLoading: boolean;
+  isTasksLoading: boolean;
+  isMessagesLoading: boolean;
+  isAutomationsLoading: boolean;
+
+  // Error state
+  error: string | null;
+
+  // Subscription cleanup functions
+  unsubscribeFunctions: (() => void)[];
+
+  // Member Actions
+  fetchMembers: () => Promise<void>;
+  createMember: (input: CreateMemberInput) => Promise<ProjectMember>;
+  updateMember: (memberId: string, input: UpdateMemberInput) => Promise<void>;
+  deleteMember: (memberId: string) => Promise<void>;
+  subscribeMembersRealtime: () => void;
+
+  // Project Actions
+  fetchProjects: () => Promise<void>;
+  createProject: (name: string, description: string, members?: string[]) => Promise<Project>;
+  updateProject: (projectId: string, data: Partial<Project>) => Promise<void>;
+  selectProject: (projectId: string | null) => void;
+  subscribeProjectsRealtime: () => void;
+
+  // Task Actions
+  fetchTasksByProject: (projectId: string) => Promise<void>;
+  createTask: (input: CreateTaskInput) => Promise<Task>;
+  updateTask: (taskId: string, input: UpdateTaskInput) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  selectTask: (taskId: string | null) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
+  batchUpdateTaskStatus: (taskIds: string[], status: TaskStatus) => Promise<void>;
+  subscribeTasksRealtime: (projectId: string) => void;
+
+  // Message Actions
+  fetchMessagesByTask: (taskId: string) => Promise<void>;
+  createMessage: (input: CreateMessageInput) => Promise<Message>;
+  markMessageAsRead: (messageId: string) => Promise<void>;
+  resolveMessage: (messageId: string) => Promise<void>;
+  subscribeMessagesRealtime: (taskId: string) => void;
+
+  // Category Actions
+  fetchCategories: () => Promise<void>;
+  createCategory: (name: string, color: string, type: 'event' | 'task', icon?: string) => Promise<Category>;
+  updateCategory: (categoryId: string, data: Partial<Category>) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
+
+  // Event Actions
+  fetchEvents: (startDate: Date, endDate: Date) => Promise<void>;
+  fetchEventsByDateRange: (startDate: Date, endDate: Date) => Promise<void>;
+  createEvent: (data: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => Promise<CalendarEvent>;
+  updateEvent: (eventId: string, data: Partial<CalendarEvent>) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
+
+  // Automation Actions
+  fetchAutomationsByProject: (projectId: string) => Promise<void>;
+  createAutomation: (data: Omit<Automation, 'id' | 'createdAt' | 'updatedAt' | 'runCount' | 'lastRunAt'>) => Promise<Automation>;
+  updateAutomation: (automationId: string, data: Partial<Automation>) => Promise<void>;
+  deleteAutomation: (automationId: string) => Promise<void>;
+  toggleAutomation: (automationId: string) => Promise<void>;
+
+  // View Actions
+  setCurrentView: (view: ViewType) => void;
+  setFilters: (filters: TaskFilter[]) => void;
+  clearFilters: () => void;
+
+  // Utility Actions
+  getMemberById: (memberId: string) => ProjectMember | undefined;
+  getTaskById: (taskId: string) => Task | undefined;
+  getProjectById: (projectId: string) => Project | undefined;
+  getCurrentProject: () => Project | null;
+  getCurrentTask: () => Task | null;
+  getTasksByStatus: (status: TaskStatus) => Task[];
+  getAssignedTasks: (memberId: string) => Task[];
+  getUnreadMessagesCount: () => number;
+
+  // Cleanup
+  cleanup: () => void;
+  clearError: () => void;
+}
+
+// ============================================================
+// Store Implementation
+// ============================================================
+
+// 현재 사용자 ID 가져오기 (임시 - authStore에서 가져와야 함)
+const getCurrentUserId = (): string => {
+  // TODO: authStore에서 실제 사용자 ID 가져오기
+  const authData = localStorage.getItem('q-train-auth');
+  if (authData) {
+    try {
+      const parsed = JSON.parse(authData);
+      return parsed.state?.user?.id || 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+  return 'unknown';
+};
+
+export const useProjectStore = create<ProjectStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        // Initial State
+        members: [],
+        projects: [],
+        tasks: [],
+        messages: [],
+        categories: [],
+        events: [],
+        automations: [],
+
+        currentProjectId: null,
+        currentTaskId: null,
+        currentMemberId: null,
+
+        currentView: 'list',
+        filters: [],
+
+        isLoading: false,
+        isMembersLoading: false,
+        isProjectsLoading: false,
+        isTasksLoading: false,
+        isMessagesLoading: false,
+        isAutomationsLoading: false,
+
+        error: null,
+        unsubscribeFunctions: [],
+
+        // ============================================================
+        // Member Actions
+        // ============================================================
+
+        fetchMembers: async () => {
+          set({ isMembersLoading: true, error: null });
+          try {
+            const members = await projectService.getMembers();
+            set({ members, isMembersLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '팀원 목록을 불러오는데 실패했습니다.',
+              isMembersLoading: false,
+            });
+          }
+        },
+
+        createMember: async (input: CreateMemberInput) => {
+          set({ isLoading: true, error: null });
+          try {
+            const member = await projectService.createMember(input);
+            set((state) => ({
+              members: [...state.members, member],
+              isLoading: false,
+            }));
+            return member;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '팀원 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateMember: async (memberId: string, input: UpdateMemberInput) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateMember(memberId, input);
+            set((state) => ({
+              members: state.members.map((m) =>
+                m.id === memberId ? { ...m, ...input, updatedAt: new Date() } : m
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '팀원 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        deleteMember: async (memberId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.deactivateMember(memberId);
+            set((state) => ({
+              members: state.members.map((m) =>
+                m.id === memberId ? { ...m, status: 'inactive' } : m
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '팀원 삭제에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        subscribeMembersRealtime: () => {
+          const unsubscribe = projectService.subscribeMembersRealtime((members) => {
+            set({ members });
+          });
+          set((state) => ({
+            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
+          }));
+        },
+
+        // ============================================================
+        // Project Actions
+        // ============================================================
+
+        fetchProjects: async () => {
+          set({ isProjectsLoading: true, error: null });
+          try {
+            const projects = await projectService.getProjects();
+            set({ projects, isProjectsLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '프로젝트 목록을 불러오는데 실패했습니다.',
+              isProjectsLoading: false,
+            });
+          }
+        },
+
+        createProject: async (name: string, description: string, members: string[] = []) => {
+          set({ isLoading: true, error: null });
+          try {
+            const ownerId = getCurrentUserId();
+            const project = await projectService.createProject(name, description, ownerId, members);
+            set((state) => ({
+              projects: [...state.projects, project],
+              isLoading: false,
+            }));
+            return project;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '프로젝트 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateProject: async (projectId: string, data: Partial<Project>) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateProject(projectId, data);
+            set((state) => ({
+              projects: state.projects.map((p) =>
+                p.id === projectId ? { ...p, ...data, updatedAt: new Date() } : p
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '프로젝트 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        selectProject: (projectId: string | null) => {
+          set({ currentProjectId: projectId, currentTaskId: null, tasks: [], messages: [] });
+          if (projectId) {
+            get().fetchTasksByProject(projectId);
+            get().subscribeTasksRealtime(projectId);
+          }
+        },
+
+        subscribeProjectsRealtime: () => {
+          const unsubscribe = projectService.subscribeProjectsRealtime((projects) => {
+            set({ projects });
+          });
+          set((state) => ({
+            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
+          }));
+        },
+
+        // ============================================================
+        // Task Actions
+        // ============================================================
+
+        fetchTasksByProject: async (projectId: string) => {
+          set({ isTasksLoading: true, error: null });
+          try {
+            const tasks = await projectService.getTasksByProject(projectId);
+            set({ tasks, isTasksLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 목록을 불러오는데 실패했습니다.',
+              isTasksLoading: false,
+            });
+          }
+        },
+
+        createTask: async (input: CreateTaskInput) => {
+          set({ isLoading: true, error: null });
+          try {
+            const createdBy = getCurrentUserId();
+            const task = await projectService.createTask(input, createdBy);
+            set((state) => ({
+              tasks: [task, ...state.tasks],
+              isLoading: false,
+            }));
+            return task;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateTask: async (taskId: string, input: UpdateTaskInput) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateTask(taskId, input);
+            set((state) => ({
+              tasks: state.tasks.map((t) =>
+                t.id === taskId ? { ...t, ...input, updatedAt: new Date() } : t
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        deleteTask: async (taskId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.deleteTask(taskId);
+            set((state) => ({
+              tasks: state.tasks.filter((t) => t.id !== taskId),
+              currentTaskId: state.currentTaskId === taskId ? null : state.currentTaskId,
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 삭제에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        selectTask: (taskId: string | null) => {
+          set({ currentTaskId: taskId, messages: [] });
+          if (taskId) {
+            get().fetchMessagesByTask(taskId);
+            get().subscribeMessagesRealtime(taskId);
+          }
+        },
+
+        updateTaskStatus: async (taskId: string, status: TaskStatus) => {
+          await get().updateTask(taskId, { status });
+        },
+
+        batchUpdateTaskStatus: async (taskIds: string[], status: TaskStatus) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.batchUpdateTaskStatus(taskIds, status);
+            set((state) => ({
+              tasks: state.tasks.map((t) =>
+                taskIds.includes(t.id) ? { ...t, status, updatedAt: new Date() } : t
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 일괄 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        subscribeTasksRealtime: (projectId: string) => {
+          const unsubscribe = projectService.subscribeTasksRealtime(projectId, (tasks) => {
+            set({ tasks });
+          });
+          set((state) => ({
+            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
+          }));
+        },
+
+        // ============================================================
+        // Message Actions
+        // ============================================================
+
+        fetchMessagesByTask: async (taskId: string) => {
+          set({ isMessagesLoading: true, error: null });
+          try {
+            const messages = await projectService.getMessagesByTask(taskId);
+            set({ messages, isMessagesLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '메시지 목록을 불러오는데 실패했습니다.',
+              isMessagesLoading: false,
+            });
+          }
+        },
+
+        createMessage: async (input: CreateMessageInput) => {
+          set({ isLoading: true, error: null });
+          try {
+            const senderId = getCurrentUserId();
+            const message = await projectService.createMessage(input, senderId);
+            set((state) => ({
+              messages: [...state.messages, message],
+              isLoading: false,
+            }));
+            return message;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '메시지 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        markMessageAsRead: async (messageId: string) => {
+          try {
+            const userId = getCurrentUserId();
+            await projectService.markMessageAsRead(messageId, userId);
+            set((state) => ({
+              messages: state.messages.map((m) =>
+                m.id === messageId
+                  ? { ...m, readBy: { ...m.readBy, [userId]: new Date() } }
+                  : m
+              ),
+            }));
+          } catch (error) {
+            console.error('Failed to mark message as read:', error);
+          }
+        },
+
+        resolveMessage: async (messageId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            const resolvedBy = getCurrentUserId();
+            await projectService.resolveMessage(messageId, resolvedBy);
+            set((state) => ({
+              messages: state.messages.map((m) =>
+                m.id === messageId
+                  ? { ...m, isResolved: true, resolvedAt: new Date(), resolvedBy }
+                  : m
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '메시지 해결에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        subscribeMessagesRealtime: (taskId: string) => {
+          const unsubscribe = projectService.subscribeMessagesRealtime(taskId, (messages) => {
+            set({ messages });
+          });
+          set((state) => ({
+            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
+          }));
+        },
+
+        // ============================================================
+        // Category Actions
+        // ============================================================
+
+        fetchCategories: async () => {
+          set({ isLoading: true, error: null });
+          try {
+            const categories = await projectService.getCategories();
+            set({ categories, isLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '카테고리 목록을 불러오는데 실패했습니다.',
+              isLoading: false,
+            });
+          }
+        },
+
+        createCategory: async (name: string, color: string, type: 'event' | 'task', icon?: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            const category = await projectService.createCategory(name, color, type, icon);
+            set((state) => ({
+              categories: [...state.categories, category],
+              isLoading: false,
+            }));
+            return category;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '카테고리 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateCategory: async (categoryId: string, data: Partial<Category>) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateCategory(categoryId, data);
+            set((state) => ({
+              categories: state.categories.map((c) =>
+                c.id === categoryId ? { ...c, ...data, updatedAt: new Date() } : c
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        deleteCategory: async (categoryId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.deleteCategory(categoryId);
+            set((state) => ({
+              categories: state.categories.filter((c) => c.id !== categoryId),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        // ============================================================
+        // Event Actions
+        // ============================================================
+
+        fetchEvents: async (startDate: Date, endDate: Date) => {
+          set({ isLoading: true, error: null });
+          try {
+            const events = await projectService.getEventsByDateRange(startDate, endDate);
+            set({ events, isLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '일정 목록을 불러오는데 실패했습니다.',
+              isLoading: false,
+            });
+          }
+        },
+
+        fetchEventsByDateRange: async (startDate: Date, endDate: Date) => {
+          set({ isLoading: true, error: null });
+          try {
+            const events = await projectService.getEventsByDateRange(startDate, endDate);
+            set({ events, isLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '일정 목록을 불러오는데 실패했습니다.',
+              isLoading: false,
+            });
+          }
+        },
+
+        createEvent: async (data: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
+          set({ isLoading: true, error: null });
+          try {
+            const event = await projectService.createEvent(data);
+            set((state) => ({
+              events: [...state.events, event],
+              isLoading: false,
+            }));
+            return event;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '일정 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateEvent: async (eventId: string, data: Partial<CalendarEvent>) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateEvent(eventId, data);
+            set((state) => ({
+              events: state.events.map((e) =>
+                e.id === eventId ? { ...e, ...data, updatedAt: new Date() } : e
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '일정 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        deleteEvent: async (eventId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.deleteEvent(eventId);
+            set((state) => ({
+              events: state.events.filter((e) => e.id !== eventId),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '일정 삭제에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        // ============================================================
+        // Automation Actions
+        // ============================================================
+
+        fetchAutomationsByProject: async (projectId: string) => {
+          set({ isAutomationsLoading: true, error: null });
+          try {
+            const automations = await projectService.getAutomationsByProject(projectId);
+            set({ automations, isAutomationsLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '자동화 규칙을 불러오는데 실패했습니다.',
+              isAutomationsLoading: false,
+            });
+          }
+        },
+
+        createAutomation: async (data) => {
+          set({ isLoading: true, error: null });
+          try {
+            const automation = await projectService.createAutomation(data);
+            set((state) => ({
+              automations: [...state.automations, automation],
+              isLoading: false,
+            }));
+            return automation;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '자동화 규칙 생성에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        updateAutomation: async (automationId: string, data: Partial<Automation>) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.updateAutomation(automationId, data);
+            set((state) => ({
+              automations: state.automations.map((a) =>
+                a.id === automationId ? { ...a, ...data, updatedAt: new Date() } : a
+              ),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '자동화 규칙 수정에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        deleteAutomation: async (automationId: string) => {
+          set({ isLoading: true, error: null });
+          try {
+            await projectService.deleteAutomation(automationId);
+            set((state) => ({
+              automations: state.automations.filter((a) => a.id !== automationId),
+              isLoading: false,
+            }));
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '자동화 규칙 삭제에 실패했습니다.',
+              isLoading: false,
+            });
+            throw error;
+          }
+        },
+
+        toggleAutomation: async (automationId: string) => {
+          const automation = get().automations.find((a) => a.id === automationId);
+          if (!automation) return;
+          await get().updateAutomation(automationId, { isActive: !automation.isActive });
+        },
+
+        // ============================================================
+        // View Actions
+        // ============================================================
+
+        setCurrentView: (view: ViewType) => {
+          set({ currentView: view });
+        },
+
+        setFilters: (filters: TaskFilter[]) => {
+          set({ filters });
+        },
+
+        clearFilters: () => {
+          set({ filters: [] });
+        },
+
+        // ============================================================
+        // Utility Getters
+        // ============================================================
+
+        getMemberById: (memberId: string) => {
+          return get().members.find((m) => m.id === memberId);
+        },
+
+        getTaskById: (taskId: string) => {
+          return get().tasks.find((t) => t.id === taskId);
+        },
+
+        getProjectById: (projectId: string) => {
+          return get().projects.find((p) => p.id === projectId);
+        },
+
+        getCurrentProject: () => {
+          const { currentProjectId, projects } = get();
+          if (!currentProjectId) return null;
+          return projects.find((p) => p.id === currentProjectId) || null;
+        },
+
+        getCurrentTask: () => {
+          const { currentTaskId, tasks } = get();
+          if (!currentTaskId) return null;
+          return tasks.find((t) => t.id === currentTaskId) || null;
+        },
+
+        getTasksByStatus: (status: TaskStatus) => {
+          return get().tasks.filter((t) => t.status === status);
+        },
+
+        getAssignedTasks: (memberId: string) => {
+          return get().tasks.filter((t) => t.assignees.includes(memberId));
+        },
+
+        getUnreadMessagesCount: () => {
+          const userId = getCurrentUserId();
+          return get().messages.filter(
+            (m) => m.senderId !== userId && !m.readBy[userId]
+          ).length;
+        },
+
+        // ============================================================
+        // Cleanup
+        // ============================================================
+
+        cleanup: () => {
+          const { unsubscribeFunctions } = get();
+          unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+          set({
+            unsubscribeFunctions: [],
+            currentProjectId: null,
+            currentTaskId: null,
+            tasks: [],
+            messages: [],
+          });
+        },
+
+        clearError: () => {
+          set({ error: null });
+        },
+      }),
+      {
+        name: 'project-store',
+        storage: createJSONStorage(() => localStorage),
+        partialize: (state) => ({
+          currentProjectId: state.currentProjectId,
+          currentView: state.currentView,
+        }),
+      }
+    ),
+    { name: 'ProjectStore' }
+  )
+);
