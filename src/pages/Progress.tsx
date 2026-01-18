@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Download } from 'lucide-react';
@@ -107,27 +107,41 @@ export default function Progress() {
   const programs = progressMatrix?.programs || [];
   const matrix = progressMatrix?.matrix || {};
 
-  // Calculate stats
-  const totalCells = employees.length * programs.length;
-  let passCount = 0;
-  let failCount = 0;
-  let expiringCount = 0;
-  let expiredCount = 0;
+  // Memoize stats calculation to prevent recalculation on every render
+  // This is critical for large matrices (e.g., 490 employees × 50 programs = 24,500 cells)
+  const stats = useMemo(() => {
+    const totalCells = employees.length * programs.length;
+    let passCount = 0;
+    let failCount = 0;
+    let expiringCount = 0;
+    let expiredCount = 0;
 
-  Object.values(matrix).forEach((employeeData) => {
-    Object.values(employeeData).forEach((cell) => {
-      if (cell) {
-        switch (cell.status) {
-          case 'EXPIRED': expiredCount++; break;
-          case 'EXPIRING': expiringCount++; break;
-          case 'PASS': passCount++; break;
-          case 'FAIL': failCount++; break;
+    Object.values(matrix).forEach((employeeData) => {
+      Object.values(employeeData).forEach((cell) => {
+        if (cell) {
+          switch (cell.status) {
+            case 'EXPIRED': expiredCount++; break;
+            case 'EXPIRING': expiringCount++; break;
+            case 'PASS': passCount++; break;
+            case 'FAIL': failCount++; break;
+          }
         }
-      }
+      });
     });
-  });
 
-  const notTakenCount = totalCells - passCount - failCount - expiredCount - expiringCount;
+    const notTakenCount = totalCells - passCount - failCount - expiredCount - expiringCount;
+
+    return {
+      totalCells,
+      passCount,
+      failCount,
+      expiringCount,
+      expiredCount,
+      notTakenCount,
+    };
+  }, [employees.length, programs.length, matrix]);
+
+  const { passCount, failCount, expiringCount, expiredCount, notTakenCount } = stats;
 
   const handleCellClick = (
     employee: NormalizedEmployee,
@@ -145,7 +159,7 @@ export default function Progress() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('progress.title')}</h1>
           <p className="text-muted-foreground">
-            직원별 교육 이수 현황을 한눈에 확인하세요
+            {t('progress.description')}
           </p>
         </div>
         <Button variant="outline">
@@ -158,26 +172,26 @@ export default function Progress() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4 items-center">
-            <span className="text-sm font-medium">범례:</span>
+            <span className="text-sm font-medium">{t('progress.legend')}:</span>
             <div className="flex items-center gap-1.5">
               <span className="w-6 h-6 rounded flex items-center justify-center bg-status-pass/20 text-status-pass text-sm">✓</span>
-              <span className="text-sm">합격</span>
+              <span className="text-sm">{t('progress.pass')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-6 h-6 rounded flex items-center justify-center bg-destructive/20 text-destructive text-sm">✗</span>
-              <span className="text-sm">불합격</span>
+              <span className="text-sm">{t('progress.fail')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-6 h-6 rounded flex items-center justify-center bg-status-warning/20 text-status-warning text-sm">⚠</span>
-              <span className="text-sm">만료 임박</span>
+              <span className="text-sm">{t('progress.expiring')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-6 h-6 rounded flex items-center justify-center bg-status-expired/20 text-status-expired text-sm">⏰</span>
-              <span className="text-sm">만료됨</span>
+              <span className="text-sm">{t('progress.expired')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-6 h-6 rounded flex items-center justify-center bg-muted/50 text-muted-foreground text-sm">−</span>
-              <span className="text-sm">미이수</span>
+              <span className="text-sm">{t('progress.notTaken')}</span>
             </div>
           </div>
         </CardContent>
@@ -188,31 +202,31 @@ export default function Progress() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-status-pass">{passCount}</div>
-            <p className="text-xs text-muted-foreground">합격</p>
+            <p className="text-xs text-muted-foreground">{t('progress.pass')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-destructive">{failCount}</div>
-            <p className="text-xs text-muted-foreground">불합격</p>
+            <p className="text-xs text-muted-foreground">{t('progress.fail')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-status-warning">{expiringCount}</div>
-            <p className="text-xs text-muted-foreground">만료 임박</p>
+            <p className="text-xs text-muted-foreground">{t('progress.expiring')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-status-expired">{expiredCount}</div>
-            <p className="text-xs text-muted-foreground">만료됨</p>
+            <p className="text-xs text-muted-foreground">{t('progress.expired')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-muted-foreground">{notTakenCount}</div>
-            <p className="text-xs text-muted-foreground">미이수</p>
+            <p className="text-xs text-muted-foreground">{t('progress.notTaken')}</p>
           </CardContent>
         </Card>
       </div>

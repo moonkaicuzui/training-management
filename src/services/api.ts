@@ -8,6 +8,7 @@ import {
   calculateDashboardKPIs,
   toDashboardStats,
 } from '@/utils/kpiCalculator';
+import { logger } from '@/utils/logger';
 
 import type {
   Employee,
@@ -53,6 +54,9 @@ import type {
   NewTQCDashboardStats,
   NewTQCResignationAnalysis,
   NewTQCTraineeWithDetails,
+  // Attendance Types
+  BulkAttendanceInput,
+  Attendance,
 } from '@/types';
 
 import {
@@ -73,7 +77,9 @@ import {
 
 // ========== Configuration ==========
 
-const USE_MOCK_API = true; // Demo mode - using mock data for demonstration
+// Demo mode - using mock data for demonstration
+// Set VITE_USE_MOCK_API=true in .env for mock data, false for GAS API
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJM5WUGsjZEsQq6YcALTyTxJOsM9Diuqpk-sDswAuuWrf_/exec';
 
 // Simulate API delay for realistic UX
@@ -173,7 +179,7 @@ function logProgramChange(
   };
 
   mockProgramChangeLogs.push(log);
-  console.log(`[AUDIT] Program ${action}: ${programCode}`, log);
+  logger.log(`[AUDIT] Program ${action}: ${programCode}`, log);
   return log;
 }
 
@@ -199,7 +205,7 @@ function logResultEdit(
   };
 
   mockResultEditLogs.push(log);
-  console.log(`[AUDIT] Result Edit: ${resultId}`, log);
+  logger.log(`[AUDIT] Result Edit: ${resultId}`, log);
   return log;
 }
 
@@ -1166,6 +1172,40 @@ export async function getRetrainingTargets(): Promise<RetrainingTarget[]> {
     await delay(MOCK_DELAY);
 
     const targets: RetrainingTarget[] = [];
+    const now = new Date();
+    const EXPIRING_THRESHOLD_DAYS = 30;
+
+    // Helper function to determine retraining reason
+    const determineReason = (
+      result: TrainingResultRecord,
+      program: TrainingProgram
+    ): 'FAILED' | 'EXPIRED' | 'EXPIRING_SOON' => {
+      // If result is FAIL or ABSENT, reason is FAILED
+      if (result.result === 'FAIL' || result.result === 'ABSENT') {
+        return 'FAILED';
+      }
+
+      // For PASS results, check expiration
+      if (result.result === 'PASS' && program.validity_months) {
+        const resultDate = new Date(result.training_date);
+        const expDate = new Date(resultDate);
+        expDate.setMonth(expDate.getMonth() + program.validity_months);
+
+        const daysUntilExpiry = Math.ceil(
+          (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysUntilExpiry <= 0) {
+          return 'EXPIRED';
+        }
+        if (daysUntilExpiry <= EXPIRING_THRESHOLD_DAYS) {
+          return 'EXPIRING_SOON';
+        }
+      }
+
+      // Default to FAILED for needs_retraining cases
+      return 'FAILED';
+    };
 
     // Find employees with needs_retraining = true
     const retrainingResults = mockResults.filter(r => r.needs_retraining);
@@ -1187,7 +1227,7 @@ export async function getRetrainingTargets(): Promise<RetrainingTarget[]> {
           employee,
           program,
           lastResult: result,
-          reason: result.result === 'ABSENT' ? 'FAILED' : 'FAILED',
+          reason: determineReason(result, program),
           recommendedPrograms: retrainingPrograms.slice(0, 3),
         });
       }
@@ -1547,6 +1587,33 @@ export async function createNewTQCTrainee(input: NewTQCTraineeInput): Promise<Ne
         stage_name: stageName,
         stage_order: index + 1,
         status: 'PENDING',
+        updated_at: now,
+      });
+    });
+
+    // Auto-create scheduled meetings (1WEEK, 1MONTH, 3MONTH)
+    const meetingTypes: Array<'1WEEK' | '1MONTH' | '3MONTH'> = ['1WEEK', '1MONTH', '3MONTH'];
+
+    meetingTypes.forEach((type) => {
+      const meetingDate = new Date(startDate);
+      if (type === '1WEEK') {
+        meetingDate.setDate(meetingDate.getDate() + 7);
+      } else if (type === '1MONTH') {
+        meetingDate.setMonth(meetingDate.getMonth() + 1);
+      } else {
+        meetingDate.setMonth(meetingDate.getMonth() + 3);
+      }
+
+      const meetingId = `MTG-${traineeId.split('-')[2]}-${type}`;
+      mockNewTQCMeetings.push({
+        meeting_id: meetingId,
+        trainee_id: traineeId,
+        meeting_type: type,
+        scheduled_date: meetingDate.toISOString().split('T')[0],
+        status: 'SCHEDULED',
+        attendees: [input.trainer_id],
+        notes: undefined,
+        created_at: now,
         updated_at: now,
       });
     });
@@ -2110,5 +2177,44 @@ export async function getNewTQCUpcomingMeetings(days: number = 7): Promise<NewTQ
   });
   const response = await fetch(`${GAS_URL}?${params}`);
   const data = await response.json();
+  return data.data;
+}
+
+// ========== Attendance API ==========
+
+/**
+ * Save bulk attendance records for a session
+ * @param input Bulk attendance input with session_id and attendance records
+ * @returns Array of saved attendance records
+ */
+export async function saveBulkAttendance(input: BulkAttendanceInput): Promise<Attendance[]> {
+  if (USE_MOCK_API) {
+    await delay(MOCK_DELAY);
+
+    const now = new Date().toISOString();
+    const savedRecords: Attendance[] = input.attendances.map((record, index) => ({
+      attendance_id: `ATT-${Date.now()}-${index}`,
+      session_id: input.session_id,
+      employee_id: record.employee_id,
+      status: record.status,
+      notes: record.notes,
+      created_at: now,
+      updated_at: now,
+    }));
+
+    logger.log('Attendance saved (mock):', savedRecords.length, 'records');
+    return savedRecords;
+  }
+
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'saveBulkAttendance', data: input }),
+  });
+  const data = await response.json();
+
+  if (!data.success) {
+    throw new ApiError(data.error || 'Failed to save attendance', 'SAVE_ATTENDANCE_ERROR');
+  }
+
   return data.data;
 }

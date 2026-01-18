@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { logger } from '@/utils/logger';
 import {
   Users,
   Plus,
@@ -149,7 +150,7 @@ function TrainerFormDialog({
   });
 
   const handleSubmit = () => {
-    console.log('Submit trainer:', formData);
+    logger.log('Submit trainer:', formData);
     onClose();
   };
 

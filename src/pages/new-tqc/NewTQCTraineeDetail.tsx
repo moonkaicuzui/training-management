@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 import {
   ArrowLeft,
   Edit,
@@ -49,6 +50,8 @@ export default function NewTQCTraineeDetail() {
     fetchTeams,
     createColorBlindTest,
     updateMeeting,
+    updateTrainee,
+    updateTrainingStage,
   } = useNewTQCActions();
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -310,9 +313,33 @@ export default function NewTQCTraineeDetail() {
             <CardContent>
               <TrainingStageTimeline
                 stages={stages}
-                onStageClick={(stage) => {
-                  // TODO: Open stage edit dialog
-                  console.log('Stage clicked:', stage);
+                onStageClick={async (stage) => {
+                  // Cycle through stage statuses: PENDING -> IN_PROGRESS -> COMPLETED -> PENDING
+                  const statusOrder = ['PENDING', 'IN_PROGRESS', 'COMPLETED'] as const;
+                  const currentIndex = statusOrder.indexOf(stage.status);
+                  const nextStatus = statusOrder[(currentIndex + 1) % 3];
+
+                  try {
+                    await updateTrainingStage({
+                      stage_id: stage.stage_id,
+                      status: nextStatus,
+                    });
+                    toast({
+                      title: '교육 단계 업데이트',
+                      description: `${stage.stage_name} 단계가 ${nextStatus === 'COMPLETED' ? '완료' : nextStatus === 'IN_PROGRESS' ? '진행중' : '대기'}로 변경되었습니다.`,
+                    });
+                    // Refresh trainee detail
+                    if (id) {
+                      fetchTraineeDetail(id);
+                    }
+                  } catch (error) {
+                    logger.error('Failed to update stage:', error);
+                    toast({
+                      title: '오류',
+                      description: '교육 단계 업데이트에 실패했습니다.',
+                      variant: 'destructive',
+                    });
+                  }
                 }}
               />
             </CardContent>
@@ -349,9 +376,28 @@ export default function NewTQCTraineeDetail() {
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
         onSubmit={async (data) => {
-          // TODO: Implement update
-          console.log('Update trainee:', data);
-          setEditDialogOpen(false);
+          try {
+            await updateTrainee({
+              trainee_id: trainee.trainee_id,
+              ...data,
+            });
+            toast({
+              title: '교육생 정보 수정',
+              description: '교육생 정보가 수정되었습니다.',
+            });
+            setEditDialogOpen(false);
+            // Refresh trainee detail
+            if (id) {
+              fetchTraineeDetail(id);
+            }
+          } catch (error) {
+            logger.error('Failed to update trainee:', error);
+            toast({
+              title: '오류',
+              description: '교육생 정보 수정에 실패했습니다.',
+              variant: 'destructive',
+            });
+          }
         }}
         trainee={trainee}
         teams={teams}

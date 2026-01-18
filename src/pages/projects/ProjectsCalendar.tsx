@@ -4,7 +4,7 @@
  * react-big-calendar를 사용한 일정 관리
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useAuthStore } from '@/stores/authStore';
 import { CATEGORY_COLORS } from '@/types/project';
 import type { CalendarEvent } from '@/types/project';
 
@@ -90,21 +91,22 @@ export default function ProjectsCalendar() {
     deleteEvent,
     isLoading,
   } = useProjectStore();
+  const { user } = useAuthStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<View>('month');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>(defaultFormData);
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
 
   // 초기 데이터 로드
   useEffect(() => {
-    if (!initialized) {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
       fetchCategories();
-      setInitialized(true);
     }
-  }, [initialized, fetchCategories]);
+  }, [fetchCategories]);
 
   // 날짜 범위 변경 시 이벤트 로드
   useEffect(() => {
@@ -209,7 +211,7 @@ export default function ProjectsCalendar() {
           categoryId: formData.categoryId,
           location: formData.location || undefined,
           attendees: [],
-          createdBy: '', // TODO: 현재 사용자 ID
+          createdBy: user?.id || '',
         });
       }
       setIsDialogOpen(false);

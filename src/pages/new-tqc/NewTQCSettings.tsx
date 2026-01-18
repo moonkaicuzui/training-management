@@ -171,9 +171,7 @@ export default function NewTQCSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              // TODO: Open edit dialog
-                            }}
+                            onClick={() => setTeamDialogOpen(true)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>

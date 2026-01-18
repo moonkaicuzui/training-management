@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import { format } from 'date-fns';
 import {
   UserCheck,
@@ -40,6 +41,8 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { AttendanceStatus } from '@/types/attendance';
+import type { SessionId, EmployeeId } from '@/types/branded';
+import { saveBulkAttendance } from '@/services/api';
 
 // 로컬 타입 정의
 interface AttendeeRecord {
@@ -92,7 +95,7 @@ const sampleSessions: SessionWithAttendance[] = [
 ];
 
 export default function AttendancePage() {
-  useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session');
@@ -189,12 +192,28 @@ export default function AttendancePage() {
 
   // 출석 저장
   const handleSaveAttendance = async () => {
-    // TODO: API 호출로 출석 데이터 저장
-    console.log('Saving attendance:', {
-      session_id: selectedSession?.session_id,
-      attendance: attendanceData,
-    });
-    alert('출석이 저장되었습니다.');
+    if (!selectedSession) return;
+
+    try {
+      const attendances = Object.entries(attendanceData).map(([employeeId, status]) => ({
+        employee_id: employeeId as EmployeeId,
+        status,
+      }));
+
+      await saveBulkAttendance({
+        session_id: selectedSession.session_id as SessionId,
+        attendances,
+      });
+
+      logger.log('Attendance saved:', {
+        session_id: selectedSession.session_id,
+        count: attendances.length,
+      });
+      alert(t('messages.saveSuccess'));
+    } catch (error) {
+      logger.error('Failed to save attendance:', error);
+      alert(t('messages.saveError'));
+    }
   };
 
   // 세션 미선택 시 세션 목록 표시

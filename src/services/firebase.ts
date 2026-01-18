@@ -19,11 +19,37 @@ import {
 import type { Auth, User as FirebaseUser } from 'firebase/auth';
 import {
   getFirestore,
-  enableIndexedDbPersistence
+  enableIndexedDbPersistence,
+  runTransaction,
+  writeBatch,
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  Timestamp,
+  serverTimestamp,
+  onSnapshot,
+  startAfter,
 } from 'firebase/firestore';
-import type { Firestore } from 'firebase/firestore';
+import type {
+  Firestore,
+  Transaction,
+  WriteBatch,
+  DocumentReference,
+  CollectionReference,
+  DocumentData,
+  QueryConstraint,
+} from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import type { Analytics } from 'firebase/analytics';
+import { logger } from '@/utils/logger';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -57,10 +83,10 @@ const db: Firestore = getFirestore(app);
 enableIndexedDbPersistence(db).catch((err) => {
   if (err.code === 'failed-precondition') {
     // Multiple tabs open, persistence can only be enabled in one tab at a time
-    console.warn('Firestore persistence failed: Multiple tabs open');
+    logger.warn('Firestore persistence failed: Multiple tabs open');
   } else if (err.code === 'unimplemented') {
     // Browser doesn't support persistence
-    console.warn('Firestore persistence not supported by browser');
+    logger.warn('Firestore persistence not supported by browser');
   }
 });
 
@@ -86,7 +112,7 @@ export const signInWithEmail = async (email: string, password: string): Promise<
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
   } catch (error) {
-    console.error('Email sign-in error:', error);
+    logger.error('Email sign-in error:', error);
     throw error;
   }
 };
@@ -98,7 +124,7 @@ export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth);
   } catch (error) {
-    console.error('Sign out error:', error);
+    logger.error('Sign out error:', error);
     throw error;
   }
 };
@@ -133,6 +159,198 @@ export const subscribeToAuthState = (
   return onAuthStateChanged(auth, callback);
 };
 
+// ============================================================
+// Firestore Transaction & Batch Utilities
+// ============================================================
+
+/**
+ * Execute a Firestore transaction
+ * Use for atomic read-write operations that need consistency
+ */
+export const executeTransaction = async <T>(
+  updateFunction: (transaction: Transaction) => Promise<T>
+): Promise<T> => {
+  return runTransaction(db, updateFunction);
+};
+
+/**
+ * Create a new write batch for atomic multi-document writes
+ */
+export const createBatch = (): WriteBatch => {
+  return writeBatch(db);
+};
+
+/**
+ * Get a document reference
+ */
+export const getDocRef = (
+  collectionName: string,
+  docId: string
+): DocumentReference<DocumentData> => {
+  return doc(db, collectionName, docId);
+};
+
+/**
+ * Get a collection reference
+ */
+export const getCollectionRef = (
+  collectionName: string
+): CollectionReference<DocumentData> => {
+  return collection(db, collectionName);
+};
+
+/**
+ * Batch create multiple documents atomically
+ * @param items Array of { collection, id, data } objects
+ */
+export const batchCreate = async (
+  items: Array<{ collection: string; id: string; data: DocumentData }>
+): Promise<void> => {
+  const batch = writeBatch(db);
+
+  items.forEach(({ collection: collectionName, id, data }) => {
+    const docRef = doc(db, collectionName, id);
+    batch.set(docRef, {
+      ...data,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+};
+
+/**
+ * Batch update multiple documents atomically
+ * @param items Array of { collection, id, data } objects
+ */
+export const batchUpdate = async (
+  items: Array<{ collection: string; id: string; data: Partial<DocumentData> }>
+): Promise<void> => {
+  const batch = writeBatch(db);
+
+  items.forEach(({ collection: collectionName, id, data }) => {
+    const docRef = doc(db, collectionName, id);
+    batch.update(docRef, {
+      ...data,
+      updated_at: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+};
+
+/**
+ * Create a trainee with stages and meetings atomically
+ * This ensures all related documents are created together or none at all
+ */
+export const createTraineeWithRelations = async (
+  trainee: DocumentData,
+  stages: Array<{ id: string; data: DocumentData }>,
+  meetings: Array<{ id: string; data: DocumentData }>
+): Promise<void> => {
+  const batch = writeBatch(db);
+  const now = serverTimestamp();
+
+  // Create trainee document
+  const traineeRef = doc(db, 'trainees', trainee.trainee_id);
+  batch.set(traineeRef, { ...trainee, created_at: now, updated_at: now });
+
+  // Create stage documents
+  stages.forEach(({ id, data }) => {
+    const stageRef = doc(db, 'training_stages', id);
+    batch.set(stageRef, { ...data, updated_at: now });
+  });
+
+  // Create meeting documents
+  meetings.forEach(({ id, data }) => {
+    const meetingRef = doc(db, 'meetings', id);
+    batch.set(meetingRef, { ...data, created_at: now, updated_at: now });
+  });
+
+  await batch.commit();
+};
+
+/**
+ * Update training result with edit log atomically
+ * Ensures result update and log creation happen together
+ */
+export const updateResultWithLog = async (
+  resultId: string,
+  resultData: Partial<DocumentData>,
+  logData: DocumentData
+): Promise<void> => {
+  return runTransaction(db, async (transaction) => {
+    const resultRef = doc(db, 'training_results', resultId);
+    const resultSnap = await transaction.get(resultRef);
+
+    if (!resultSnap.exists()) {
+      throw new Error(`Training result ${resultId} not found`);
+    }
+
+    // Update the result
+    transaction.update(resultRef, {
+      ...resultData,
+      updated_at: serverTimestamp(),
+    });
+
+    // Create the edit log
+    const logRef = doc(collection(db, 'result_edit_logs'));
+    transaction.set(logRef, {
+      ...logData,
+      result_id: resultId,
+      previous_data: resultSnap.data(),
+      created_at: serverTimestamp(),
+    });
+  });
+};
+
+/**
+ * Create retraining entry with status update atomically
+ */
+export const createRetrainingWithStatusUpdate = async (
+  retrainingData: DocumentData,
+  employeeId: string
+): Promise<void> => {
+  const batch = writeBatch(db);
+  const now = serverTimestamp();
+
+  // Create retraining entry
+  const retrainingRef = doc(collection(db, 'retraining_targets'));
+  batch.set(retrainingRef, { ...retrainingData, created_at: now });
+
+  // Update employee's retraining status if needed
+  const employeeRef = doc(db, 'employees', employeeId);
+  batch.update(employeeRef, {
+    needs_retraining: true,
+    updated_at: now,
+  });
+
+  await batch.commit();
+};
+
 // Export Firebase instances
 export { app, auth, db, analytics };
 export type { FirebaseUser };
+
+// Export Firestore utilities
+export {
+  runTransaction,
+  writeBatch,
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  Timestamp,
+  serverTimestamp,
+  onSnapshot,
+  startAfter,
+};
+export type { Transaction, WriteBatch, DocumentReference, CollectionReference, DocumentData, QueryConstraint };

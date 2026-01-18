@@ -65,11 +65,19 @@
       "meetings": "미팅 관리",
       "resignations": "퇴사 분석",
       "settings": "설정"
+    },
+    "projects": {
+      "dashboard": "프로젝트 대시보드",
+      "members": "팀원 관리",
+      "tasks": "과제 관리",
+      "calendar": "캘린더",
+      "settings": "설정"
     }
   },
   "sidebar": {
     "mainMenu": "메인 메뉴",
     "newTQC": "신입 TQC 교육",
+    "projects": "프로젝트 관리",
     "management": "관리",
     "admin": "관리자",
     "quickStats": "빠른 통계",
@@ -177,11 +185,15 @@
   },
   "progress": {
     "title": "교육 진도 현황",
+    "description": "직원별 교육 이수 현황을 한눈에 확인하세요",
     "viewByEmployee": "직원별 보기",
     "viewByProgram": "프로그램별 보기",
     "notTaken": "미이수",
     "expiring": "만료 임박",
-    "expired": "만료됨"
+    "expired": "만료됨",
+    "legend": "범례",
+    "pass": "합격",
+    "fail": "불합격"
   },
   "retraining": {
     "title": "재교육 대상자",

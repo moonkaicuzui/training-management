@@ -23,7 +23,7 @@ import {
   PlayCircle,
 } from 'lucide-react';
 import { TASK_STATUS_COLORS } from '@/types/project';
-import type { Automation, TriggerType, ActionType, TaskStatus } from '@/types/project';
+import type { Automation, TaskStatus } from '@/types/project';
 import {
   getTriggerIcon,
   getActionIcon,
@@ -264,20 +264,26 @@ export default function AutomationList({
                         실행 액션
                       </h5>
                       <div className="space-y-2">
-                        {automation.actions.map((action, index) => (
-                          <div key={index} className="text-muted-foreground">
-                            <span className="font-medium text-foreground">{index + 1}. {getActionLabel(action.type)}</span>
-                            {action.params.status && typeof action.params.status === 'string' && (
-                              <p className="ml-4">→ 상태: {STATUS_LABELS[action.params.status as TaskStatus]}</p>
-                            )}
-                            {action.params.message && (
-                              <p className="ml-4">→ 메시지: "{action.params.message}"</p>
-                            )}
-                            {action.params.daysToExtend && (
-                              <p className="ml-4">→ {action.params.daysToExtend}일 연장</p>
-                            )}
-                          </div>
-                        ))}
+                        {automation.actions.map((action, index) => {
+                          const status = action.params.status as TaskStatus | undefined;
+                          const message = action.params.message as string | undefined;
+                          const daysToExtend = action.params.daysToExtend as number | undefined;
+
+                          return (
+                            <div key={index} className="text-muted-foreground">
+                              <span className="font-medium text-foreground">{index + 1}. {getActionLabel(action.type)}</span>
+                              {status && (
+                                <p className="ml-4">→ 상태: {STATUS_LABELS[status]}</p>
+                              )}
+                              {message && (
+                                <p className="ml-4">→ 메시지: "{message}"</p>
+                              )}
+                              {daysToExtend && (
+                                <p className="ml-4">→ {daysToExtend}일 연장</p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

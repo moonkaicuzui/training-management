@@ -4,7 +4,7 @@
  * 팀원 CRUD, 상태 관리, 통계 표시
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,15 +105,15 @@ export default function ProjectsMembers() {
     position: '',
     phone: '',
   });
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!initialized) {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
       fetchMembers();
       subscribeMembersRealtime();
-      setInitialized(true);
     }
-  }, [initialized, fetchMembers, subscribeMembersRealtime]);
+  }, [fetchMembers, subscribeMembersRealtime]);
 
   // 필터링된 팀원 목록
   const filteredMembers = members.filter((member) => {

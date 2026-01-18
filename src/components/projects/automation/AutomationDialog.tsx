@@ -31,7 +31,7 @@ import {
   Trash2,
   AlertCircle,
 } from 'lucide-react';
-import type { Automation, TriggerType, ActionType, TaskStatus } from '@/types/project';
+import type { Automation, ActionType, TaskStatus } from '@/types/project';
 import {
   TRIGGER_OPTIONS,
   ACTION_OPTIONS,

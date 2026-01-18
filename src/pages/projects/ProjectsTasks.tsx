@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,7 +147,7 @@ export default function ProjectsTasks() {
     members,
   } = useProjectStore();
 
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
   const [timelineDate, setTimelineDate] = useState(new Date());
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<TaskStatus | null>(null);
@@ -243,7 +244,7 @@ export default function ProjectsTasks() {
       });
     } else {
       // 새 과제 생성은 createTask 사용 (추후 구현)
-      console.log('New task would be created:', taskFormData);
+      logger.log('New task would be created:', taskFormData);
     }
     setIsDialogOpen(false);
     setSelectedTask(null);
@@ -253,7 +254,7 @@ export default function ProjectsTasks() {
   const handleDeleteTask = useCallback(async () => {
     if (selectedTask && confirm('이 과제를 삭제하시겠습니까?')) {
       // deleteTask 함수 호출 (추후 구현)
-      console.log('Task would be deleted:', selectedTask.id);
+      logger.log('Task would be deleted:', selectedTask.id);
       setIsDialogOpen(false);
       setSelectedTask(null);
     }
@@ -347,10 +348,11 @@ export default function ProjectsTasks() {
   }, []);
 
   useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      // Initialization logic can be added here if needed
     }
-  }, [initialized]);
+  }, []);
 
   // 과제 선택 시 메시지 로드
   useEffect(() => {

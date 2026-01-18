@@ -24,6 +24,8 @@ import {
   CalendarDays,
   Building2,
   Shield,
+  FolderKanban,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -137,6 +139,35 @@ const adminItems: NavItem[] = [
   },
 ];
 
+// 프로젝트 관리 (품질 부서 협업 시스템) 메뉴
+const projectItems: NavItem[] = [
+  {
+    titleKey: 'nav.projects.dashboard',
+    href: '/projects/dashboard',
+    icon: FolderKanban,
+  },
+  {
+    titleKey: 'nav.projects.members',
+    href: '/projects/members',
+    icon: Users,
+  },
+  {
+    titleKey: 'nav.projects.tasks',
+    href: '/projects/tasks',
+    icon: CheckCircle2,
+  },
+  {
+    titleKey: 'nav.projects.calendar',
+    href: '/projects/calendar',
+    icon: CalendarDays,
+  },
+  {
+    titleKey: 'nav.projects.settings',
+    href: '/projects/settings',
+    icon: Settings,
+  },
+];
+
 // New TQC (신입 TQC 교육) 메뉴
 const newTQCItems: NavItem[] = [
   {
@@ -246,6 +277,35 @@ export function Sidebar() {
             </h2>
             <nav className="space-y-1">
               {newTQCItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {t(item.titleKey)}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* 프로젝트 관리 (품질 부서 협업 시스템) Section */}
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+              {t('sidebar.projects')}
+            </h2>
+            <nav className="space-y-1">
+              {projectItems.map((item) => (
                 <NavLink
                   key={item.href}
                   to={item.href}

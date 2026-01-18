@@ -309,7 +309,7 @@ export interface NormalizedExpiringTraining {
  * Convert legacy TrainingProgram to normalized version
  */
 export const normalizeTrainingProgram = (
-  program: any
+  program: TrainingProgram
 ): NormalizedTrainingProgram => {
   return {
     ...program,
@@ -331,7 +331,7 @@ export const normalizeTrainingProgram = (
  */
 export const denormalizeTrainingProgram = (
   program: NormalizedTrainingProgram
-): any => {
+): TrainingProgram => {
   return {
     ...program,
     tags: [...program.tags],
@@ -348,6 +348,7 @@ export const denormalizeTrainingProgram = (
 
 import type {
   Employee,
+  TrainingProgram,
   TrainingSession,
   TrainingResultRecord,
 } from './index';
@@ -446,7 +447,7 @@ export const normalizeEmployees = (
  * Batch normalize programs
  */
 export const normalizeTrainingPrograms = (
-  programs: any[]
+  programs: TrainingProgram[]
 ): NormalizedTrainingProgram[] => {
   return programs.map(normalizeTrainingProgram);
 };

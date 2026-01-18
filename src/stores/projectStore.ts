@@ -24,6 +24,7 @@ import type {
   Automation,
 } from '@/types/project';
 import * as projectService from '@/services/projectService';
+import { useAuthStore } from '@/stores/authStore';
 
 // ============================================================
 // Store Types
@@ -137,19 +138,10 @@ interface ProjectStore {
 // Store Implementation
 // ============================================================
 
-// 현재 사용자 ID 가져오기 (임시 - authStore에서 가져와야 함)
+// 현재 사용자 ID 가져오기
 const getCurrentUserId = (): string => {
-  // TODO: authStore에서 실제 사용자 ID 가져오기
-  const authData = localStorage.getItem('q-train-auth');
-  if (authData) {
-    try {
-      const parsed = JSON.parse(authData);
-      return parsed.state?.user?.id || 'unknown';
-    } catch {
-      return 'unknown';
-    }
-  }
-  return 'unknown';
+  const user = useAuthStore.getState().user;
+  return user?.id || 'unknown';
 };
 
 export const useProjectStore = create<ProjectStore>()(

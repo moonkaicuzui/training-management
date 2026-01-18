@@ -11,6 +11,7 @@ import {
   Calendar,
   Filter,
   FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -241,6 +242,69 @@ export default function ReportsPage() {
     XLSX.writeFile(wb, filename);
   }, [departmentReports]);
 
+  // PDF 내보내기 (html2canvas 방식으로 한글/베트남어 지원)
+  const handleExportToPDF = useCallback(async (reportType: ReportType) => {
+    // 동적 import로 한글 지원 PDF 함수 로드
+    const { exportTableToPDFWithUnicode } = await import('@/utils/pdfExport');
+
+    let title = '';
+    let filename = '';
+    let columns: Array<{ header: string; dataKey: string }> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any[] = [];
+
+    switch (reportType) {
+      case 'department':
+        title = '부서별 교육 현황 리포트';
+        filename = `부서별_교육현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        columns = [
+          { header: '부서', dataKey: 'department' },
+          { header: '직원 수', dataKey: 'totalEmployees' },
+          { header: '완료 교육', dataKey: 'completedTrainings' },
+          { header: '미완료', dataKey: 'pendingTrainings' },
+          { header: '이수율(%)', dataKey: 'completionRate' },
+          { header: '평균 점수', dataKey: 'averageScore' },
+          { header: '합격률(%)', dataKey: 'passRate' },
+        ];
+        data = departmentReports;
+        break;
+
+      case 'program':
+        title = '프로그램별 현황 리포트';
+        filename = `프로그램별_현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        columns = [
+          { header: '코드', dataKey: 'program_code' },
+          { header: '프로그램명', dataKey: 'program_name' },
+          { header: '총 세션', dataKey: 'totalSessions' },
+          { header: '교육 인원', dataKey: 'totalTrainees' },
+          { header: '합격', dataKey: 'passCount' },
+          { header: '불합격', dataKey: 'failCount' },
+          { header: '합격률(%)', dataKey: 'passRate' },
+          { header: '평균 점수', dataKey: 'averageScore' },
+        ];
+        data = sampleProgramReports;
+        break;
+
+      case 'employee':
+        title = '직원별 교육 현황 리포트';
+        filename = `직원별_교육현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        columns = [
+          { header: '사번', dataKey: 'employee_id' },
+          { header: '이름', dataKey: 'employee_name' },
+          { header: '부서', dataKey: 'department' },
+          { header: '직책', dataKey: 'position' },
+          { header: '건물', dataKey: 'building' },
+          { header: '라인', dataKey: 'line' },
+          { header: '이수', dataKey: 'passCount' },
+          { header: '총계', dataKey: 'totalCount' },
+        ];
+        data = sampleEmployees;
+        break;
+    }
+
+    await exportTableToPDFWithUnicode(data, columns, { title, filename, orientation: 'landscape' });
+  }, [departmentReports]);
+
   // 전체 통계
   const totalStats = useMemo(() => {
     const totalEmployees = sampleEmployees.length;
@@ -349,10 +413,16 @@ export default function ReportsPage() {
               직원별
             </TabsTrigger>
           </TabsList>
-          <Button onClick={() => handleExportToExcel(activeTab)}>
-            <Download className="h-4 w-4 mr-2" />
-            Excel 다운로드
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleExportToPDF(activeTab)}>
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Button onClick={() => handleExportToExcel(activeTab)}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+          </div>
         </div>
 
         {/* 부서별 리포트 */}
@@ -472,14 +542,20 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <FileSpreadsheet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <Download className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  직원별 상세 교육 현황은 Excel 파일로 다운로드하여 확인하세요.
+                  직원별 상세 교육 현황을 다운로드하세요.
                 </p>
-                <Button onClick={() => handleExportToExcel('employee')}>
-                  <Download className="h-4 w-4 mr-2" />
-                  직원별 현황 Excel 다운로드
-                </Button>
+                <div className="flex justify-center gap-2">
+                  <Button variant="outline" onClick={() => handleExportToPDF('employee')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF 다운로드
+                  </Button>
+                  <Button onClick={() => handleExportToExcel('employee')}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel 다운로드
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

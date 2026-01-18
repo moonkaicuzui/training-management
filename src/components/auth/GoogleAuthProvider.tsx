@@ -5,6 +5,7 @@
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import type { ReactNode } from 'react';
+import { logger } from '@/utils/logger';
 
 interface GoogleAuthProviderProps {
   children: ReactNode;
@@ -15,7 +16,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export function GoogleAuthProviderWrapper({ children }: GoogleAuthProviderProps) {
   if (!GOOGLE_CLIENT_ID) {
-    console.warn('VITE_GOOGLE_CLIENT_ID is not set. Authentication will not work.');
+    logger.warn('VITE_GOOGLE_CLIENT_ID is not set. Authentication will not work.');
     // 개발 환경에서는 인증 없이 진행 가능
     return <>{children}</>;
   }

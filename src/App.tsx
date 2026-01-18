@@ -41,6 +41,13 @@ const NewTQCMeetings = lazy(() => import('./pages/new-tqc/NewTQCMeetings'));
 const NewTQCResignations = lazy(() => import('./pages/new-tqc/NewTQCResignations'));
 const NewTQCSettings = lazy(() => import('./pages/new-tqc/NewTQCSettings'));
 
+// 프로젝트 관리 (품질 부서 협업 시스템) 페이지
+const ProjectsDashboard = lazy(() => import('./pages/projects/ProjectsDashboard'));
+const ProjectsMembers = lazy(() => import('./pages/projects/ProjectsMembers'));
+const ProjectsTasks = lazy(() => import('./pages/projects/ProjectsTasks'));
+const ProjectsCalendar = lazy(() => import('./pages/projects/ProjectsCalendar'));
+const ProjectsSettings = lazy(() => import('./pages/projects/ProjectsSettings'));
+
 // 로딩 컴포넌트
 function PageLoader() {
   return (
@@ -219,6 +226,36 @@ function App() {
                   <Route path="settings" element={
                     <Suspense fallback={<PageLoader />}>
                       <NewTQCSettings />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* 프로젝트 관리 (품질 부서 협업 시스템) 라우트 */}
+                <Route path="projects">
+                  <Route index element={<Navigate to="/projects/dashboard" replace />} />
+                  <Route path="dashboard" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjectsDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="members" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjectsMembers />
+                    </Suspense>
+                  } />
+                  <Route path="tasks" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjectsTasks />
+                    </Suspense>
+                  } />
+                  <Route path="calendar" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjectsCalendar />
+                    </Suspense>
+                  } />
+                  <Route path="settings" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjectsSettings />
                     </Suspense>
                   } />
                 </Route>

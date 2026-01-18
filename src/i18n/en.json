@@ -65,11 +65,19 @@
       "meetings": "Meetings",
       "resignations": "Resignations",
       "settings": "Settings"
+    },
+    "projects": {
+      "dashboard": "Project Dashboard",
+      "members": "Team Members",
+      "tasks": "Tasks",
+      "calendar": "Calendar",
+      "settings": "Settings"
     }
   },
   "sidebar": {
     "mainMenu": "Main Menu",
     "newTQC": "New TQC Training",
+    "projects": "Project Management",
     "management": "Management",
     "admin": "Administration",
     "quickStats": "Quick Stats",
@@ -177,11 +185,15 @@
   },
   "progress": {
     "title": "Training Progress",
+    "description": "View employee training progress at a glance",
     "viewByEmployee": "View by Employee",
     "viewByProgram": "View by Program",
     "notTaken": "Not Taken",
     "expiring": "Expiring Soon",
-    "expired": "Expired"
+    "expired": "Expired",
+    "legend": "Legend",
+    "pass": "Pass",
+    "fail": "Fail"
   },
   "retraining": {
     "title": "Retraining",

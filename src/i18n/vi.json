@@ -65,11 +65,19 @@
       "meetings": "Cuộc họp",
       "resignations": "Phân tích nghỉ việc",
       "settings": "Cài đặt"
+    },
+    "projects": {
+      "dashboard": "Tổng quan dự án",
+      "members": "Quản lý nhóm",
+      "tasks": "Quản lý nhiệm vụ",
+      "calendar": "Lịch",
+      "settings": "Cài đặt"
     }
   },
   "sidebar": {
     "mainMenu": "Menu chính",
     "newTQC": "Đào tạo TQC mới",
+    "projects": "Quản lý dự án",
     "management": "Quản lý",
     "admin": "Quản trị",
     "quickStats": "Thống kê nhanh",
@@ -177,11 +185,15 @@
   },
   "progress": {
     "title": "Tiến độ đào tạo",
+    "description": "Xem tổng quan tiến độ đào tạo của nhân viên",
     "viewByEmployee": "Xem theo nhân viên",
     "viewByProgram": "Xem theo chương trình",
     "notTaken": "Chưa học",
     "expiring": "Sắp hết hạn",
-    "expired": "Đã hết hạn"
+    "expired": "Đã hết hạn",
+    "legend": "Chú thích",
+    "pass": "Đạt",
+    "fail": "Không đạt"
   },
   "retraining": {
     "title": "Đào tạo lại",

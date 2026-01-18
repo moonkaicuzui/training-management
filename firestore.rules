@@ -12,12 +12,29 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
     }
 
+    // 트레이너 확인
+    function isTrainer() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'TRAINER' ||
+         isAdmin());
+    }
+
     // 허용된 이메일 도메인 확인
     function hasAllowedDomain() {
       let email = request.auth.token.email;
       return email.matches('.*@hwaseung\\.com$') ||
              email.matches('.*@hwaseungvina\\.com$') ||
              email.matches('.*@gmail\\.com$');
+    }
+
+    // 데이터 검증: 필수 필드 확인
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // 타임스탬프 검증
+    function hasValidTimestamp(field) {
+      return request.resource.data[field] is timestamp;
     }
 
     // 직원 정보
@@ -44,7 +61,11 @@ service cloud.firestore {
     // 교육 결과 - 삭제 금지 (감사 추적)
     match /trainingResults/{resultId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      // 트레이너 또는 관리자만 생성/수정 가능
+      allow create: if (isTrainer() || isAdmin()) &&
+                      hasAllowedDomain() &&
+                      hasRequiredFields(['employee_id', 'session_id', 'result']);
+      allow update: if (isTrainer() || isAdmin()) && hasAllowedDomain();
       allow delete: if false;  // 삭제 불가 - 감사 추적 필수
     }
 

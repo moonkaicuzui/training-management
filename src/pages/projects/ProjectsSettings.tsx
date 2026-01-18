@@ -4,7 +4,7 @@
  * 카테고리 관리, 자동화 규칙, 프로젝트 설정
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,9 +36,11 @@ import {
   FolderCog,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useAuthStore } from '@/stores/authStore';
 import { CATEGORY_COLORS } from '@/types/project';
 import type { Category, Automation } from '@/types/project';
 import { AutomationList, AutomationDialog } from '@/components/projects/automation';
+import type { AutomationFormData } from '@/components/projects/automation/constants';
 
 export default function ProjectsSettings() {
   const {
@@ -59,7 +61,9 @@ export default function ProjectsSettings() {
     currentProjectId,
   } = useProjectStore();
 
-  const [initialized, setInitialized] = useState(false);
+  const { user } = useAuthStore();
+
+  const initializedRef = useRef(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
@@ -74,15 +78,15 @@ export default function ProjectsSettings() {
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
 
   useEffect(() => {
-    if (!initialized) {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
       fetchCategories();
       // 현재 프로젝트가 있으면 자동화 규칙 로드
       if (currentProjectId) {
         fetchAutomationsByProject(currentProjectId);
       }
-      setInitialized(true);
     }
-  }, [initialized, fetchCategories, fetchAutomationsByProject, currentProjectId]);
+  }, [fetchCategories, fetchAutomationsByProject, currentProjectId]);
 
   // 폼 초기화
   const resetForm = () => {
@@ -149,19 +153,40 @@ export default function ProjectsSettings() {
   }, []);
 
   // 자동화 저장
-  const handleSaveAutomation = useCallback(async (automation: Automation) => {
-    if (!currentProjectId) return;
+  const handleSaveAutomation = useCallback(async (data: AutomationFormData, isEdit: boolean) => {
+    if (!currentProjectId || !user) return;
 
     try {
-      if (selectedAutomation) {
+      // AutomationFormData를 Automation 형식으로 변환
+      const automationData = {
+        name: data.name,
+        description: data.description,
+        trigger: {
+          type: data.triggerType,
+          conditions: data.triggerConditions.fromStatus || data.triggerConditions.toStatus || data.triggerConditions.progressThreshold
+            ? [
+                ...(data.triggerConditions.fromStatus ? [{ field: 'fromStatus' as const, operator: 'equals' as const, value: data.triggerConditions.fromStatus }] : []),
+                ...(data.triggerConditions.toStatus ? [{ field: 'toStatus' as const, operator: 'equals' as const, value: data.triggerConditions.toStatus }] : []),
+                ...(data.triggerConditions.progressThreshold ? [{ field: 'progress' as const, operator: 'greater_than' as const, value: data.triggerConditions.progressThreshold }] : []),
+              ]
+            : undefined,
+          schedule: data.triggerConditions.daysBefore
+            ? { daysBefore: data.triggerConditions.daysBefore }
+            : undefined,
+        },
+        actions: data.actions,
+      };
+
+      if (isEdit && selectedAutomation) {
         // 수정
-        await updateAutomation(selectedAutomation.id, automation);
+        await updateAutomation(selectedAutomation.id, automationData);
       } else {
         // 생성
         await createAutomation({
-          ...automation,
+          ...automationData,
           projectId: currentProjectId,
           isActive: false,
+          createdBy: user.id,
         });
       }
       setIsAutomationDialogOpen(false);
@@ -169,7 +194,7 @@ export default function ProjectsSettings() {
     } catch {
       // 에러는 스토어에서 처리
     }
-  }, [currentProjectId, selectedAutomation, createAutomation, updateAutomation]);
+  }, [currentProjectId, user, selectedAutomation, createAutomation, updateAutomation]);
 
   // 자동화 삭제
   const handleDeleteAutomation = useCallback(async (automationId: string) => {
@@ -183,9 +208,11 @@ export default function ProjectsSettings() {
     if (!currentProjectId) return;
 
     try {
+      // id 및 메타데이터를 제외한 속성만 복사
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, createdAt, updatedAt, runCount, lastRunAt, ...automationData } = automation;
       await createAutomation({
-        ...automation,
-        id: undefined as unknown as string, // 새 ID 생성
+        ...automationData,
         name: `${automation.name} (복사본)`,
         projectId: currentProjectId,
         isActive: false,
