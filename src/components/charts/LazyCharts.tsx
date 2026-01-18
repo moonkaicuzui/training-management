@@ -1,10 +1,11 @@
 /**
  * Lazy-loaded Chart Components
  * Recharts 라이브러리를 동적으로 로드하여 초기 번들 크기 감소
+ *
+ * Props 기반 API로 정적 recharts import 제거 - 번들 최적화
  */
 
 import { lazy, Suspense } from 'react';
-import type { ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
 // Chart loading skeleton
@@ -19,11 +20,30 @@ function ChartSkeleton({ height = 300 }: { height?: number }) {
   );
 }
 
+// Bar configuration type
+export interface BarConfig {
+  dataKey: string;
+  name?: string;
+  fill?: string;
+  radius?: [number, number, number, number];
+  stackId?: string;
+}
+
+// Line configuration type
+export interface LineConfig {
+  dataKey: string;
+  name?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  type?: 'linear' | 'monotone' | 'step' | 'stepBefore' | 'stepAfter';
+  dot?: boolean;
+}
+
 // Pre-built lazy BarChart component
 interface LazyBarChartProps {
   data: unknown[];
   height?: number;
-  children?: ReactNode;
+  bars: BarConfig[];
   xAxisKey?: string;
   xAxisFormatter?: (value: string) => string;
 }
@@ -31,7 +51,7 @@ interface LazyBarChartProps {
 export function LazyBarChart({
   data,
   height = 300,
-  children,
+  bars,
   xAxisKey = 'name',
   xAxisFormatter,
 }: LazyBarChartProps) {
@@ -40,11 +60,10 @@ export function LazyBarChart({
       <BarChartRenderer
         data={data}
         height={height}
+        bars={bars}
         xAxisKey={xAxisKey}
         xAxisFormatter={xAxisFormatter}
-      >
-        {children}
-      </BarChartRenderer>
+      />
     </Suspense>
   );
 }
@@ -52,6 +71,7 @@ export function LazyBarChart({
 const BarChartRenderer = lazy(async () => {
   const {
     BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -64,10 +84,10 @@ const BarChartRenderer = lazy(async () => {
     default: function BarChartComponent({
       data,
       height,
-      children,
+      bars,
       xAxisKey,
       xAxisFormatter,
-    }: LazyBarChartProps & { children?: ReactNode }) {
+    }: LazyBarChartProps) {
       return (
         <div style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -87,7 +107,16 @@ const BarChartRenderer = lazy(async () => {
                 }}
               />
               <Legend />
-              {children}
+              {bars.map((bar) => (
+                <Bar
+                  key={bar.dataKey}
+                  dataKey={bar.dataKey}
+                  name={bar.name}
+                  fill={bar.fill || '#8884d8'}
+                  radius={bar.radius}
+                  stackId={bar.stackId}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -166,14 +195,11 @@ const PieChartRenderer = lazy(async () => {
   };
 });
 
-// Export Bar and Line components for use with LazyBarChart/LazyLineChart
-export { Bar, Line } from 'recharts';
-
 // Pre-built lazy LineChart component
 interface LazyLineChartProps {
   data: unknown[];
   height?: number;
-  children?: ReactNode;
+  lines: LineConfig[];
   xAxisKey?: string;
   xAxisFormatter?: (value: string) => string;
 }
@@ -181,7 +207,7 @@ interface LazyLineChartProps {
 export function LazyLineChart({
   data,
   height = 300,
-  children,
+  lines,
   xAxisKey = 'name',
   xAxisFormatter,
 }: LazyLineChartProps) {
@@ -190,11 +216,10 @@ export function LazyLineChart({
       <LineChartRenderer
         data={data}
         height={height}
+        lines={lines}
         xAxisKey={xAxisKey}
         xAxisFormatter={xAxisFormatter}
-      >
-        {children}
-      </LineChartRenderer>
+      />
     </Suspense>
   );
 }
@@ -202,6 +227,7 @@ export function LazyLineChart({
 const LineChartRenderer = lazy(async () => {
   const {
     LineChart,
+    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -214,10 +240,10 @@ const LineChartRenderer = lazy(async () => {
     default: function LineChartComponent({
       data,
       height,
-      children,
+      lines,
       xAxisKey,
       xAxisFormatter,
-    }: LazyLineChartProps & { children?: ReactNode }) {
+    }: LazyLineChartProps) {
       return (
         <div style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -237,7 +263,17 @@ const LineChartRenderer = lazy(async () => {
                 }}
               />
               <Legend />
-              {children}
+              {lines.map((line) => (
+                <Line
+                  key={line.dataKey}
+                  type={line.type || 'monotone'}
+                  dataKey={line.dataKey}
+                  name={line.name}
+                  stroke={line.stroke || '#8884d8'}
+                  strokeWidth={line.strokeWidth || 2}
+                  dot={line.dot !== false}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </div>

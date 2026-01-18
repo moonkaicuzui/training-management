@@ -129,8 +129,8 @@ export default defineConfig({
             '@radix-ui/react-scroll-area',
             '@radix-ui/react-separator',
           ],
-          // 차트 라이브러리
-          'vendor-charts': ['recharts'],
+          // 차트 라이브러리는 LazyCharts에서 동적 import로 처리
+          // 'vendor-charts': ['recharts'],
           // i18n
           'vendor-i18n': ['i18next', 'react-i18next'],
           // 유틸리티
@@ -157,7 +157,7 @@ export default defineConfig({
       'react',
       'react-dom',
       'react-router-dom',
-      'recharts',
+      // recharts는 LazyCharts에서 동적 import로 처리
       'i18next',
       'react-i18next',
       'lucide-react',

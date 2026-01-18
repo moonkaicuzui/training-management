@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { LazyBarChart, LazyPieChart, Bar } from '@/components/charts/LazyCharts';
+import { LazyBarChart, LazyPieChart } from '@/components/charts/LazyCharts';
 import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -222,10 +222,11 @@ export default function Dashboard() {
                 height={300}
                 xAxisKey="month"
                 xAxisFormatter={(value) => value.substring(5)}
-              >
-                <Bar dataKey="planned" name={t('dashboard.planned')} fill="#93C5FD" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completed" name={t('dashboard.completed')} fill="#1E40AF" radius={[4, 4, 0, 0]} />
-              </LazyBarChart>
+                bars={[
+                  { dataKey: 'planned', name: t('dashboard.planned'), fill: '#93C5FD', radius: [4, 4, 0, 0] },
+                  { dataKey: 'completed', name: t('dashboard.completed'), fill: '#1E40AF', radius: [4, 4, 0, 0] },
+                ]}
+              />
             )}
           </CardContent>
         </Card>

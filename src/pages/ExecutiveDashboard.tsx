@@ -36,8 +36,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   LazyBarChart,
   LazyLineChart,
-  Bar,
-  Line,
 } from '@/components/charts/LazyCharts';
 import type { ExecutiveKPI, BenchmarkMetric } from '@/types/executive';
 
@@ -557,20 +555,11 @@ export default function ExecutiveDashboard() {
                   height={300}
                   xAxisKey="period"
                   xAxisFormatter={(v) => v}
-                >
-                  <Bar
-                    dataKey="cost"
-                    name="교육 비용 ($)"
-                    fill="#EF4444"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="benefit"
-                    name="효과 ($)"
-                    fill="#10B981"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </LazyBarChart>
+                  bars={[
+                    { dataKey: 'cost', name: '교육 비용 ($)', fill: '#EF4444', radius: [4, 4, 0, 0] },
+                    { dataKey: 'benefit', name: '효과 ($)', fill: '#10B981', radius: [4, 4, 0, 0] },
+                  ]}
+                />
               </CardContent>
             </Card>
 
@@ -677,15 +666,14 @@ export default function ExecutiveDashboard() {
               <CardDescription>교육 투자 대비 효과</CardDescription>
             </CardHeader>
             <CardContent>
-              <LazyLineChart data={roiChartData} height={350} xAxisKey="period">
-                <Line
-                  type="monotone"
-                  dataKey="roi"
-                  name="ROI (%)"
-                  stroke="#8B5CF6"
-                  strokeWidth={3}
-                />
-              </LazyLineChart>
+              <LazyLineChart
+                data={roiChartData}
+                height={350}
+                xAxisKey="period"
+                lines={[
+                  { type: 'monotone', dataKey: 'roi', name: 'ROI (%)', stroke: '#8B5CF6', strokeWidth: 3 },
+                ]}
+              />
             </CardContent>
           </Card>
 

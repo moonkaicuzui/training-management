@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { LazyPieChart, LazyBarChart, Bar } from '@/components/charts/LazyCharts';
+import { LazyPieChart, LazyBarChart } from '@/components/charts/LazyCharts';
 import type { NewTQCResignationAnalysis, ResignationReason } from '@/types/newTqc';
 
 const REASON_LABELS: Record<ResignationReason, string> = {
@@ -139,9 +139,10 @@ export function ResignationByTeamChart({ analysis, isLoading }: ResignationByTea
           <LazyBarChart
             data={chartData}
             height={300}
-          >
-            <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-          </LazyBarChart>
+            bars={[
+              { dataKey: 'count', fill: '#3B82F6', radius: [4, 4, 0, 0] },
+            ]}
+          />
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             퇴사 데이터가 없습니다.
@@ -191,9 +192,10 @@ export function ResignationByMonthChart({ analysis, isLoading }: ResignationByMo
           <LazyBarChart
             data={chartData}
             height={300}
-          >
-            <Bar dataKey="count" fill="#EF4444" radius={[4, 4, 0, 0]} />
-          </LazyBarChart>
+            bars={[
+              { dataKey: 'count', fill: '#EF4444', radius: [4, 4, 0, 0] },
+            ]}
+          />
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             퇴사 데이터가 없습니다.
