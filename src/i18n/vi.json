@@ -72,12 +72,17 @@
       "tasks": "Quản lý nhiệm vụ",
       "calendar": "Lịch",
       "settings": "Cài đặt"
+    },
+    "capa": {
+      "dashboard": "Quản lý CAPA",
+      "new": "Tạo CAPA mới"
     }
   },
   "sidebar": {
     "mainMenu": "Menu chính",
     "newTQC": "Đào tạo TQC mới",
     "projects": "Quản lý dự án",
+    "capa": "CAPA",
     "management": "Quản lý",
     "admin": "Quản trị",
     "quickStats": "Thống kê nhanh",

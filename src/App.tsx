@@ -48,6 +48,11 @@ const ProjectsTasks = lazy(() => import('./pages/projects/ProjectsTasks'));
 const ProjectsCalendar = lazy(() => import('./pages/projects/ProjectsCalendar'));
 const ProjectsSettings = lazy(() => import('./pages/projects/ProjectsSettings'));
 
+// CAPA (Corrective and Preventive Action) 페이지
+const CAPADashboard = lazy(() => import('./pages/capa/CAPADashboard'));
+const CAPAForm = lazy(() => import('./pages/capa/CAPAForm'));
+const CAPADetail = lazy(() => import('./pages/capa/CAPADetail'));
+
 // 로딩 컴포넌트
 function PageLoader() {
   return (
@@ -256,6 +261,30 @@ function App() {
                   <Route path="settings" element={
                     <Suspense fallback={<PageLoader />}>
                       <ProjectsSettings />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* CAPA (Corrective and Preventive Action) 라우트 */}
+                <Route path="capa">
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <CAPADashboard />
+                    </Suspense>
+                  } />
+                  <Route path="new" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <CAPAForm />
+                    </Suspense>
+                  } />
+                  <Route path=":id" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <CAPADetail />
+                    </Suspense>
+                  } />
+                  <Route path=":id/edit" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <CAPAForm />
                     </Suspense>
                   } />
                 </Route>

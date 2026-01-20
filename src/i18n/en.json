@@ -72,12 +72,17 @@
       "tasks": "Tasks",
       "calendar": "Calendar",
       "settings": "Settings"
+    },
+    "capa": {
+      "dashboard": "CAPA Management",
+      "new": "New CAPA"
     }
   },
   "sidebar": {
     "mainMenu": "Main Menu",
     "newTQC": "New TQC Training",
     "projects": "Project Management",
+    "capa": "CAPA",
     "management": "Management",
     "admin": "Administration",
     "quickStats": "Quick Stats",

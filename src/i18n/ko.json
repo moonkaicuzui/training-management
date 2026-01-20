@@ -72,12 +72,17 @@
       "tasks": "과제 관리",
       "calendar": "캘린더",
       "settings": "설정"
+    },
+    "capa": {
+      "dashboard": "CAPA 관리",
+      "new": "새 CAPA 등록"
     }
   },
   "sidebar": {
     "mainMenu": "메인 메뉴",
     "newTQC": "신입 TQC 교육",
     "projects": "프로젝트 관리",
+    "capa": "시정/예방 조치",
     "management": "관리",
     "admin": "관리자",
     "quickStats": "빠른 통계",

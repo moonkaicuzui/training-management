@@ -385,3 +385,6 @@ export * from './newTqc';
 
 // ========== Curriculum & Competency Types ==========
 export * from './curriculum';
+
+// ========== CAPA (Corrective and Preventive Action) Types ==========
+export * from './capa';
