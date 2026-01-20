@@ -44,6 +44,15 @@ export default function EmployeeDetail() {
     }
   }, [id]);
 
+  // Calculate working years (memo to avoid impure Date.now() during render)
+  // Moved before conditional return to maintain hooks order
+  const workingYears = useMemo(() => {
+    if (!selectedEmployee?.hire_date) return 0;
+    const now = new Date();
+    const hireDate = new Date(selectedEmployee.hire_date);
+    return Math.floor((now.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+  }, [selectedEmployee?.hire_date]);
+
   if (loading.employees || !selectedEmployee) {
     return <PageLoading />;
   }
@@ -51,12 +60,6 @@ export default function EmployeeDetail() {
   const passedResults = employeeHistory.filter((r) => r.result === 'PASS');
   const failedResults = employeeHistory.filter((r) => r.result === 'FAIL');
 
-  // Calculate working years (memo to avoid impure Date.now() during render)
-  const workingYears = useMemo(() => {
-    const now = new Date();
-    const hireDate = new Date(selectedEmployee.hire_date);
-    return Math.floor((now.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
-  }, [selectedEmployee.hire_date]);
   const avgScore =
     employeeHistory.filter((r) => r.score !== null).length > 0
       ? Math.round(

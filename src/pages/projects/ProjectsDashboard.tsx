@@ -4,7 +4,7 @@
  * 프로젝트 현황, 긴급 알림, 팀 성과, 최근 활동 표시
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,17 +49,18 @@ export default function ProjectsDashboard() {
     subscribeProjectsRealtime,
   } = useProjectStore();
 
-  const [initialized, setInitialized] = useState(false);
+  // Use ref to prevent double initialization (anti-pattern fix)
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!initialized) {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
       fetchMembers();
       fetchProjects();
       subscribeMembersRealtime();
       subscribeProjectsRealtime();
-      setInitialized(true);
     }
-  }, [initialized, fetchMembers, fetchProjects, subscribeMembersRealtime, subscribeProjectsRealtime]);
+  }, [fetchMembers, fetchProjects, subscribeMembersRealtime, subscribeProjectsRealtime]);
 
   // 통계 계산
   const activeMembers = members.filter((m) => m.status === 'active');
@@ -93,7 +94,9 @@ export default function ProjectsDashboard() {
 
   const isLoading = isMembersLoading || isProjectsLoading;
 
-  if (isLoading && members.length === 0) {
+  // Show loading only if actively fetching AND no data loaded yet
+  // Skip if already initialized to prevent infinite loading when Firestore is unavailable
+  if (!initializedRef.current && isLoading && members.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">

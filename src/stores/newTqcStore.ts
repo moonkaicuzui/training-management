@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import type {
   NewTQCTeam,
   NewTQCTrainee,
@@ -665,37 +666,40 @@ export const useNewTQCMeetingFilters = () => useNewTQCStore(state => state.meeti
 export const useNewTQCResignationFilters = () => useNewTQCStore(state => state.resignationFilters);
 
 // Actions selectors (to avoid re-renders on state changes)
+// Using useShallow to properly memoize the selector and prevent infinite re-renders
 export const useNewTQCActions = () =>
-  useNewTQCStore(state => ({
-    // Teams
-    fetchTeams: state.fetchTeams,
-    createTeam: state.createTeam,
-    updateTeam: state.updateTeam,
-    deleteTeam: state.deleteTeam,
-    // Trainees
-    fetchTrainees: state.fetchTrainees,
-    fetchTraineeDetail: state.fetchTraineeDetail,
-    setTraineeFilters: state.setTraineeFilters,
-    createTrainee: state.createTrainee,
-    updateTrainee: state.updateTrainee,
-    clearSelectedTrainee: state.clearSelectedTrainee,
-    // Color Blind
-    createColorBlindTest: state.createColorBlindTest,
-    // Stages
-    updateTrainingStage: state.updateTrainingStage,
-    // Meetings
-    fetchMeetings: state.fetchMeetings,
-    fetchUpcomingMeetings: state.fetchUpcomingMeetings,
-    setMeetingFilters: state.setMeetingFilters,
-    createMeeting: state.createMeeting,
-    updateMeeting: state.updateMeeting,
-    // Resignations
-    fetchResignations: state.fetchResignations,
-    fetchResignationAnalysis: state.fetchResignationAnalysis,
-    setResignationFilters: state.setResignationFilters,
-    createResignation: state.createResignation,
-    // Dashboard
-    fetchDashboardStats: state.fetchDashboardStats,
-    // Error
-    clearError: state.clearError,
-  }));
+  useNewTQCStore(
+    useShallow(state => ({
+      // Teams
+      fetchTeams: state.fetchTeams,
+      createTeam: state.createTeam,
+      updateTeam: state.updateTeam,
+      deleteTeam: state.deleteTeam,
+      // Trainees
+      fetchTrainees: state.fetchTrainees,
+      fetchTraineeDetail: state.fetchTraineeDetail,
+      setTraineeFilters: state.setTraineeFilters,
+      createTrainee: state.createTrainee,
+      updateTrainee: state.updateTrainee,
+      clearSelectedTrainee: state.clearSelectedTrainee,
+      // Color Blind
+      createColorBlindTest: state.createColorBlindTest,
+      // Stages
+      updateTrainingStage: state.updateTrainingStage,
+      // Meetings
+      fetchMeetings: state.fetchMeetings,
+      fetchUpcomingMeetings: state.fetchUpcomingMeetings,
+      setMeetingFilters: state.setMeetingFilters,
+      createMeeting: state.createMeeting,
+      updateMeeting: state.updateMeeting,
+      // Resignations
+      fetchResignations: state.fetchResignations,
+      fetchResignationAnalysis: state.fetchResignationAnalysis,
+      setResignationFilters: state.setResignationFilters,
+      createResignation: state.createResignation,
+      // Dashboard
+      fetchDashboardStats: state.fetchDashboardStats,
+      // Error
+      clearError: state.clearError,
+    }))
+  );

@@ -24,4 +24,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+export { Button }
+// Note: buttonVariants is available from './button.variants' for direct import

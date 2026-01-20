@@ -308,17 +308,17 @@ export default function Progress() {
               {t('common.noData')}
             </div>
           ) : (
-            <ScrollArea className="w-full">
-              <div className="min-w-max">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="sticky left-0 z-20 bg-background border p-2 text-left min-w-[150px]">
-                        직원
-                      </th>
-                      {programs.map((program) => (
-                        <TooltipProvider key={program.program_code}>
-                          <Tooltip>
+            <TooltipProvider delayDuration={300}>
+              <ScrollArea className="w-full">
+                <div className="min-w-max">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="sticky left-0 z-20 bg-background border p-2 text-left min-w-[150px]">
+                          직원
+                        </th>
+                        {programs.map((program) => (
+                          <Tooltip key={program.program_code}>
                             <TooltipTrigger asChild>
                               <th className="border p-2 text-center min-w-[60px] cursor-help">
                                 <div className="text-xs font-medium">
@@ -333,10 +333,9 @@ export default function Progress() {
                               </p>
                             </TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>
-                      ))}
-                    </tr>
-                  </thead>
+                        ))}
+                      </tr>
+                    </thead>
                   <tbody>
                     {employees.map((employee) => (
                       <tr key={employee.employee_id}>
@@ -375,9 +374,10 @@ export default function Progress() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
-            </ScrollArea>
+                  </table>
+                </div>
+              </ScrollArea>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
