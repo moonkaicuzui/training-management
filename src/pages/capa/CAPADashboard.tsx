@@ -266,7 +266,7 @@ export default function CAPADashboard() {
                 />
               </div>
               <Select
-                value={filters.status?.[0] || 'all'}
+                value={filters.status && filters.status.length > 0 ? filters.status[0] : 'all'}
                 onValueChange={handleStatusFilter}
               >
                 <SelectTrigger className="w-[130px]">
