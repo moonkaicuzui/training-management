@@ -111,20 +111,22 @@ export default function AttendancePage() {
     return sampleSessions.find(s => s.session_id === sessionId) ?? null;
   }, [sessionId]);
 
-  // 초기화 추적을 위한 ref
-  const initializedSessionRef = useRef<string | null>(null);
-
   // 세션 변경 시 초기 출석 데이터 설정
+  // useEffect에서 ref를 사용하여 불필요한 재실행 방지
+  const lastSessionIdRef = useRef<string | null>(null);
+  const currentSessionId = selectedSession?.session_id ?? null;
+
   useEffect(() => {
-    if (selectedSession && initializedSessionRef.current !== selectedSession.session_id) {
+    if (currentSessionId && lastSessionIdRef.current !== currentSessionId && selectedSession) {
       const initial: Record<string, AttendanceStatus> = {};
       selectedSession.attendees.forEach(emp => {
         initial[emp.employee_id] = 'PRESENT';
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 세션 전환 시 한 번만 실행
       setAttendanceData(initial);
-      initializedSessionRef.current = selectedSession.session_id;
+      lastSessionIdRef.current = currentSessionId;
     }
-  }, [selectedSession]);
+  }, [currentSessionId, selectedSession]);
 
   // 오늘 예정된 세션
   const todaySessions = useMemo(() => {
@@ -221,8 +223,8 @@ export default function AttendancePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">출석 체크</h1>
-          <p className="text-muted-foreground">교육 세션별 출석을 관리합니다</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('attendance.title')}</h1>
+          <p className="text-muted-foreground">{t('attendance.description')}</p>
         </div>
 
         {/* 오늘 세션 */}
@@ -231,9 +233,9 @@ export default function AttendancePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
-                오늘 예정된 교육
+                {t('attendance.todayScheduled')}
               </CardTitle>
-              <CardDescription>{todaySessions.length}개의 세션이 오늘 예정되어 있습니다</CardDescription>
+              <CardDescription>{t('attendance.todaySessionCount', { count: todaySessions.length })}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -251,7 +253,7 @@ export default function AttendancePage() {
                       <p className="font-medium truncate">{session.program_name}</p>
                       <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{session.attendees.length}명 예정</span>
+                        <span>{t('attendance.attendeesExpected', { count: session.attendees.length })}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -264,20 +266,20 @@ export default function AttendancePage() {
         {/* 전체 세션 목록 */}
         <Card>
           <CardHeader>
-            <CardTitle>예정된 교육 세션</CardTitle>
-            <CardDescription>출석을 체크할 세션을 선택하세요</CardDescription>
+            <CardTitle>{t('attendance.scheduledSessions')}</CardTitle>
+            <CardDescription>{t('attendance.selectSessionDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>날짜</TableHead>
-                  <TableHead>시간</TableHead>
-                  <TableHead>프로그램</TableHead>
-                  <TableHead>강사</TableHead>
-                  <TableHead>장소</TableHead>
-                  <TableHead>예정 인원</TableHead>
-                  <TableHead>액션</TableHead>
+                  <TableHead>{t('attendance.date')}</TableHead>
+                  <TableHead>{t('attendance.time')}</TableHead>
+                  <TableHead>{t('common.program')}</TableHead>
+                  <TableHead>{t('training.trainer')}</TableHead>
+                  <TableHead>{t('training.location')}</TableHead>
+                  <TableHead>{t('attendance.expectedCount')}</TableHead>
+                  <TableHead>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -294,7 +296,7 @@ export default function AttendancePage() {
                     <TableCell>{session.trainer_name}</TableCell>
                     <TableCell>{session.location}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{session.attendees.length}명</Badge>
+                      <Badge variant="secondary">{t('attendance.countPeople', { count: session.attendees.length })}</Badge>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -302,7 +304,7 @@ export default function AttendancePage() {
                         onClick={() => navigate(`/attendance?session=${session.session_id}`)}
                       >
                         <UserCheck className="h-4 w-4 mr-1" />
-                        출석 체크
+                        {t('attendance.checkAttendance')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -325,7 +327,7 @@ export default function AttendancePage() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">출석 체크</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t('attendance.title')}</h1>
             <p className="text-muted-foreground">
               {selectedSession.program_name} - {selectedSession.session_date} {selectedSession.session_time}
             </p>
@@ -333,7 +335,7 @@ export default function AttendancePage() {
         </div>
         <Button onClick={handleSaveAttendance}>
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          출석 저장
+          {t('attendance.saveAttendance')}
         </Button>
       </div>
 
@@ -343,35 +345,35 @@ export default function AttendancePage() {
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
             <p className="text-2xl font-bold">{attendanceStats.total}</p>
-            <p className="text-xs text-muted-foreground">전체</p>
+            <p className="text-xs text-muted-foreground">{t('attendance.total')}</p>
           </CardContent>
         </Card>
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-4 text-center">
             <UserCheck className="h-6 w-6 mx-auto mb-2 text-green-600" />
             <p className="text-2xl font-bold text-green-700">{attendanceStats.present}</p>
-            <p className="text-xs text-green-600">출석</p>
+            <p className="text-xs text-green-600">{t('attendance.present')}</p>
           </CardContent>
         </Card>
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4 text-center">
             <UserX className="h-6 w-6 mx-auto mb-2 text-red-600" />
             <p className="text-2xl font-bold text-red-700">{attendanceStats.absent}</p>
-            <p className="text-xs text-red-600">결석</p>
+            <p className="text-xs text-red-600">{t('attendance.absent')}</p>
           </CardContent>
         </Card>
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="p-4 text-center">
             <Clock className="h-6 w-6 mx-auto mb-2 text-yellow-600" />
             <p className="text-2xl font-bold text-yellow-700">{attendanceStats.late}</p>
-            <p className="text-xs text-yellow-600">지각</p>
+            <p className="text-xs text-yellow-600">{t('attendance.late')}</p>
           </CardContent>
         </Card>
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4 text-center">
             <AlertCircle className="h-6 w-6 mx-auto mb-2 text-blue-600" />
             <p className="text-2xl font-bold text-blue-700">{attendanceStats.excused}</p>
-            <p className="text-xs text-blue-600">사유결석</p>
+            <p className="text-xs text-blue-600">{t('attendance.excused')}</p>
           </CardContent>
         </Card>
       </div>
@@ -383,7 +385,7 @@ export default function AttendancePage() {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="이름 또는 사번 검색..."
+                placeholder={t('attendance.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -392,21 +394,21 @@ export default function AttendancePage() {
             {selectedEmployees.size > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  {selectedEmployees.size}명 선택됨
+                  {t('attendance.selectedCount', { count: selectedEmployees.size })}
                 </span>
                 <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as AttendanceStatus)}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PRESENT">출석</SelectItem>
-                    <SelectItem value="ABSENT">결석</SelectItem>
-                    <SelectItem value="LATE">지각</SelectItem>
-                    <SelectItem value="EXCUSED">사유결석</SelectItem>
+                    <SelectItem value="PRESENT">{t('attendance.present')}</SelectItem>
+                    <SelectItem value="ABSENT">{t('attendance.absent')}</SelectItem>
+                    <SelectItem value="LATE">{t('attendance.late')}</SelectItem>
+                    <SelectItem value="EXCUSED">{t('attendance.excused')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button size="sm" onClick={handleBulkStatusChange}>
-                  일괄 적용
+                  {t('attendance.bulkApply')}
                 </Button>
               </div>
             )}
@@ -426,12 +428,12 @@ export default function AttendancePage() {
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>사번</TableHead>
-                <TableHead>이름</TableHead>
-                <TableHead>부서</TableHead>
-                <TableHead>직책</TableHead>
-                <TableHead>출석 상태</TableHead>
-                <TableHead>빠른 체크</TableHead>
+                <TableHead>{t('employee.id')}</TableHead>
+                <TableHead>{t('employee.name')}</TableHead>
+                <TableHead>{t('employee.department')}</TableHead>
+                <TableHead>{t('employee.position')}</TableHead>
+                <TableHead>{t('attendance.attendanceStatus')}</TableHead>
+                <TableHead>{t('attendance.quickCheck')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -458,10 +460,10 @@ export default function AttendancePage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PRESENT">출석</SelectItem>
-                        <SelectItem value="ABSENT">결석</SelectItem>
-                        <SelectItem value="LATE">지각</SelectItem>
-                        <SelectItem value="EXCUSED">사유결석</SelectItem>
+                        <SelectItem value="PRESENT">{t('attendance.present')}</SelectItem>
+                        <SelectItem value="ABSENT">{t('attendance.absent')}</SelectItem>
+                        <SelectItem value="LATE">{t('attendance.late')}</SelectItem>
+                        <SelectItem value="EXCUSED">{t('attendance.excused')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Save, Pencil, History, AlertTriangle } from 'lucide-react';
+import { ExportDropdown } from '@/components/common/ExportDropdown';
+import { useExport } from '@/hooks/useExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +68,7 @@ export default function Results() {
   const { t } = useTranslation();
   const { sessions, programs, employees, results, loading, fetchSessions, fetchPrograms, fetchEmployees, fetchResults, recordResults, updateResult } = useTrainingStore();
   const { addToast } = useUIStore();
+  const { exporting, exportExcel, exportPDF } = useExport();
 
   const [selectedSession, setSelectedSession] = useState<string>('');
   const [resultEntries, setResultEntries] = useState<ResultEntry[]>([]);
@@ -111,6 +114,7 @@ export default function Results() {
           remarks: '',
         };
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 세션 선택 시 결과 엔트리 초기화
       setResultEntries(entries);
     } else {
       setResultEntries([]);
@@ -217,7 +221,7 @@ export default function Results() {
       addToast({
         type: 'success',
         title: t('messages.saveSuccess'),
-        description: `${resultsToSave.length}건의 결과가 저장되었습니다`,
+        description: t('results.savedCount', { count: resultsToSave.length }),
       });
       setSelectedSession('');
       setResultEntries([]);
@@ -241,8 +245,8 @@ export default function Results() {
     if (nonDuplicateResults.length === 0) {
       addToast({
         type: 'error',
-        title: '저장할 결과 없음',
-        description: '모든 결과가 이미 입력되어 있습니다.',
+        title: t('results.noDuplicateResults'),
+        description: t('results.allAlreadyEntered'),
       });
       setDuplicateDialogOpen(false);
       return;
@@ -251,8 +255,8 @@ export default function Results() {
     await saveResults(nonDuplicateResults);
     addToast({
       type: 'info',
-      title: '중복 제외 저장',
-      description: `${duplicates.length}건의 중복 결과가 제외되었습니다.`,
+      title: t('results.savedExcludingDuplicates'),
+      description: t('results.duplicatesExcluded', { count: duplicates.length }),
     });
   };
 
@@ -318,9 +322,9 @@ export default function Results() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('nav.results')}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('results.pageTitle')}</h1>
           <p className="text-muted-foreground">
-            교육 결과를 입력하고 관리하세요. 결과는 삭제할 수 없습니다.
+            {t('results.pageDescription')}
           </p>
         </div>
       </div>
@@ -328,29 +332,29 @@ export default function Results() {
       {/* Session Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>결과 입력</CardTitle>
+          <CardTitle>{t('results.inputTitle')}</CardTitle>
           <CardDescription>
-            교육 세션을 선택하고 참석자들의 결과를 입력하세요
+            {t('results.inputDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <Label>교육 세션 선택</Label>
+                <Label>{t('results.selectSession')}</Label>
                 <Select value={selectedSession} onValueChange={setSelectedSession}>
                   <SelectTrigger>
-                    <SelectValue placeholder="세션을 선택하세요" />
+                    <SelectValue placeholder={t('results.selectSessionPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {plannedSessions.length === 0 ? (
                       <SelectItem value="none" disabled>
-                        결과 입력 가능한 세션이 없습니다
+                        {t('results.noAvailableSession')}
                       </SelectItem>
                     ) : (
                       plannedSessions.map((s) => (
                         <SelectItem key={s.session_id} value={s.session_id}>
-                          {format(new Date(s.session_date), 'yyyy-MM-dd')} | {s.program_code} | {s.attendees.length}명
+                          {format(new Date(s.session_date), 'yyyy-MM-dd')} | {s.program_code} | {t('results.attendeeCount', { count: s.attendees.length })}
                         </SelectItem>
                       ))
                     )}
@@ -363,20 +367,20 @@ export default function Results() {
               <div className="p-4 bg-muted rounded-lg">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">프로그램</p>
+                    <p className="text-muted-foreground">{t('results.programLabel')}</p>
                     <p className="font-medium">{program.program_name}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">날짜</p>
+                    <p className="text-muted-foreground">{t('results.dateLabel')}</p>
                     <p className="font-medium">{format(new Date(session.session_date), 'yyyy-MM-dd')}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">합격 점수</p>
-                    <p className="font-medium">{program.passing_score}점 이상</p>
+                    <p className="text-muted-foreground">{t('results.passingScoreLabel')}</p>
+                    <p className="font-medium">{t('results.passingScoreValue', { score: program.passing_score })}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">참석자</p>
-                    <p className="font-medium">{session.attendees.length}명</p>
+                    <p className="text-muted-foreground">{t('results.attendeesLabel')}</p>
+                    <p className="font-medium">{t('results.attendeeCount', { count: session.attendees.length })}</p>
                   </div>
                 </div>
               </div>
@@ -387,12 +391,12 @@ export default function Results() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[120px]">사번</TableHead>
-                      <TableHead>이름</TableHead>
-                      <TableHead className="w-[100px] text-center">점수</TableHead>
-                      <TableHead className="w-[100px] text-center">등급</TableHead>
-                      <TableHead className="w-[150px] text-center">결과</TableHead>
-                      <TableHead>비고</TableHead>
+                      <TableHead className="w-[120px]">{t('results.employeeId')}</TableHead>
+                      <TableHead>{t('results.name')}</TableHead>
+                      <TableHead className="w-[100px] text-center">{t('training.score')}</TableHead>
+                      <TableHead className="w-[100px] text-center">{t('training.grade')}</TableHead>
+                      <TableHead className="w-[150px] text-center">{t('training.result')}</TableHead>
+                      <TableHead>{t('training.notes')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -410,7 +414,7 @@ export default function Results() {
                               value={entry.score ?? ''}
                               onChange={(e) => handleScoreChange(index, e.target.value)}
                               className="w-20 text-center"
-                              placeholder="점수"
+                              placeholder={t('results.scorePlaceholder')}
                             />
                           </TableCell>
                           <TableCell className="text-center">
@@ -449,7 +453,7 @@ export default function Results() {
                             <Input
                               value={entry.remarks}
                               onChange={(e) => handleRemarksChange(index, e.target.value)}
-                              placeholder="비고"
+                              placeholder={t('results.remarksPlaceholder')}
                             />
                           </TableCell>
                         </TableRow>
@@ -461,7 +465,7 @@ export default function Results() {
                 <div className="flex justify-end">
                   <Button onClick={handleSaveResults}>
                     <Save className="h-4 w-4 mr-2" />
-                    결과 저장
+                    {t('results.saveResults')}
                   </Button>
                 </div>
               </>
@@ -469,7 +473,7 @@ export default function Results() {
 
             {selectedSession && resultEntries.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                이 세션에 등록된 참석자가 없습니다
+                {t('results.noAttendees')}
               </div>
             )}
           </div>
@@ -481,16 +485,16 @@ export default function Results() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle>최근 결과</CardTitle>
+              <CardTitle>{t('results.recentTitle')}</CardTitle>
               <CardDescription>
-                입력된 교육 결과 목록 (수정 가능, 삭제 불가)
+                {t('results.recentDescription')}
               </CardDescription>
             </div>
             <div className="flex gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="검색..."
+                  placeholder={t('results.searchPlaceholder')}
                   className="pl-8 w-[200px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -507,6 +511,29 @@ export default function Results() {
                   <SelectItem value="ABSENT">{t('training.absent')}</SelectItem>
                 </SelectContent>
               </Select>
+              <ExportDropdown
+                onExportExcel={() =>
+                  exportExcel(filteredResults as unknown as Record<string, unknown>[], {
+                    sheetName: 'Results',
+                    filename: 'training-results',
+                  })
+                }
+                onExportPDF={() =>
+                  exportPDF(
+                    filteredResults as unknown as Record<string, unknown>[],
+                    [
+                      { header: t('training.date'), dataKey: 'training_date' },
+                      { header: t('employee.id'), dataKey: 'employee_id' },
+                      { header: t('common.program'), dataKey: 'program_code' },
+                      { header: t('training.score'), dataKey: 'score' },
+                      { header: t('training.grade'), dataKey: 'grade' },
+                      { header: t('training.result'), dataKey: 'result' },
+                    ],
+                    { title: t('nav.results'), filename: 'training-results' }
+                  )
+                }
+                loading={exporting}
+              />
             </div>
           </div>
         </CardHeader>
@@ -524,8 +551,8 @@ export default function Results() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('training.date')}</TableHead>
-                  <TableHead>사번</TableHead>
-                  <TableHead>프로그램</TableHead>
+                  <TableHead>{t('results.employeeId')}</TableHead>
+                  <TableHead>{t('results.programLabel')}</TableHead>
                   <TableHead className="text-center">{t('training.score')}</TableHead>
                   <TableHead className="text-center">{t('training.grade')}</TableHead>
                   <TableHead className="text-center">{t('training.result')}</TableHead>
@@ -544,7 +571,7 @@ export default function Results() {
                       <Badge variant="outline">{result.program_code}</Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {result.score !== null ? `${result.score}점` : '-'}
+                      {result.score !== null ? t('results.scoreWithUnit', { score: result.score }) : '-'}
                     </TableCell>
                     <TableCell className="text-center">
                       {result.grade && (
@@ -602,16 +629,16 @@ export default function Results() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>결과 수정</DialogTitle>
+            <DialogTitle>{t('results.editTitle')}</DialogTitle>
             <DialogDescription>
-              수정 사유를 반드시 입력해야 합니다. 수정 이력은 기록됩니다.
+              {t('results.editDescription')}
             </DialogDescription>
           </DialogHeader>
           {editingResult && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>점수</Label>
+                  <Label>{t('training.score')}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -626,7 +653,7 @@ export default function Results() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>결과</Label>
+                  <Label>{t('training.result')}</Label>
                   <Select
                     value={editingResult.result}
                     onValueChange={(value) =>
@@ -648,7 +675,7 @@ export default function Results() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>비고</Label>
+                <Label>{t('training.notes')}</Label>
                 <Input
                   value={editingResult.remarks}
                   onChange={(e) =>
@@ -660,7 +687,7 @@ export default function Results() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-destructive">수정 사유 *</Label>
+                <Label className="text-destructive">{t('results.editReasonLabel')}</Label>
                 <Textarea
                   value={editingResult.editReason}
                   onChange={(e) =>
@@ -669,7 +696,7 @@ export default function Results() {
                       editReason: e.target.value,
                     })
                   }
-                  placeholder="수정 사유를 입력하세요 (필수)"
+                  placeholder={t('results.editReasonPlaceholder')}
                   className="min-h-[80px]"
                 />
               </div>
@@ -681,7 +708,7 @@ export default function Results() {
             </Button>
             <Button onClick={handleSaveEdit}>
               <History className="h-4 w-4 mr-2" />
-              수정 저장
+              {t('results.saveEdit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -693,10 +720,10 @@ export default function Results() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="h-5 w-5" />
-              중복 결과 감지
+              {t('results.duplicateDetected')}
             </DialogTitle>
             <DialogDescription>
-              다음 직원들은 이미 같은 날짜에 같은 프로그램의 결과가 입력되어 있습니다.
+              {t('results.duplicateDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -710,14 +737,14 @@ export default function Results() {
                   {dup.employee_name} ({dup.employee_id})
                 </div>
                 <div className="text-sm text-amber-700 mt-1">
-                  기존 결과: {format(new Date(dup.existingResult.training_date), 'yyyy-MM-dd')} |{' '}
-                  {dup.existingResult.score !== null ? `${dup.existingResult.score}점` : '-'} |{' '}
+                  {t('results.existingResult')}: {format(new Date(dup.existingResult.training_date), 'yyyy-MM-dd')} |{' '}
+                  {dup.existingResult.score !== null ? t('results.scoreWithUnit', { score: dup.existingResult.score }) : '-'} |{' '}
                   {dup.existingResult.result === 'PASS'
                     ? t('training.pass')
                     : dup.existingResult.result === 'FAIL'
                     ? t('training.fail')
                     : t('training.absent')}
-                  {dup.existingResult.grade && ` | ${dup.existingResult.grade}등급`}
+                  {dup.existingResult.grade && ` | ${dup.existingResult.grade} ${t('results.gradeUnit')}`}
                 </div>
               </div>
             ))}
@@ -725,11 +752,10 @@ export default function Results() {
 
           <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
             <p>
-              <strong>저장 진행</strong>: 중복된 {duplicates.length}건을 제외하고{' '}
-              {pendingResults.length - duplicates.length}건만 저장합니다.
+              {t('results.duplicateExplanation', { duplicateCount: duplicates.length, saveCount: pendingResults.length - duplicates.length })}
             </p>
             <p className="mt-1">
-              기존 결과를 수정하려면 '최근 결과' 목록에서 수정 버튼을 사용하세요.
+              {t('results.duplicateEditHint')}
             </p>
           </div>
 
@@ -742,7 +768,7 @@ export default function Results() {
               disabled={pendingResults.length - duplicates.length === 0}
             >
               <Save className="h-4 w-4 mr-2" />
-              중복 제외하고 저장 ({pendingResults.length - duplicates.length}건)
+              {t('results.saveExcludingDuplicates', { count: pendingResults.length - duplicates.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

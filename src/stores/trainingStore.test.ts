@@ -6,16 +6,12 @@
  * [TDE 🎓] Training Domain Expert
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import type {
   Employee,
   TrainingProgram,
   TrainingSession,
   TrainingResultRecord,
-  DashboardStats,
-  ProgressMatrixData,
-  RetrainingTarget,
-  ExpiringTraining,
 } from '@/types';
 
 // ========== Mock Data ==========

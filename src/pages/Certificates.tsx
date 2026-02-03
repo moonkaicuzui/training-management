@@ -156,6 +156,7 @@ const samplePrograms: ProgramOption[] = [
 
 // 이수증 미리보기 컴포넌트
 function CertificatePreview({ data, onClose }: { data: CertificateData; onClose: () => void }) {
+  const { t } = useTranslation();
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -218,18 +219,18 @@ function CertificatePreview({ data, onClose }: { data: CertificateData; onClose:
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
-            교육 이수증 미리보기
+            {t('certificates.previewTitle')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mb-4">
           <Button onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />
-            인쇄
+            {t('certificates.print')}
           </Button>
           <Button variant="outline" onClick={handlePrint}>
             <Download className="h-4 w-4 mr-2" />
-            PDF 저장
+            {t('certificates.savePdf')}
           </Button>
         </div>
 
@@ -240,46 +241,46 @@ function CertificatePreview({ data, onClose }: { data: CertificateData; onClose:
         >
           <div className="certificate">
             <p className="text-2xl font-bold text-primary mb-2">Q-TRAIN</p>
-            <p className="text-sm text-muted-foreground">HWK Vietnam 품질 교육 관리 시스템</p>
+            <p className="text-sm text-muted-foreground">{t('certificates.certOrgName')}</p>
 
-            <h1 className="text-4xl font-bold my-8 text-primary">교 육 이 수 증</h1>
-            <p className="text-lg text-muted-foreground mb-8">Certificate of Completion</p>
+            <h1 className="text-4xl font-bold my-8 text-primary">{t('certificates.certTitle')}</h1>
+            <p className="text-lg text-muted-foreground mb-8">{t('certificates.certSubtitle')}</p>
 
             <div className="my-8">
-              <p className="text-lg mb-4">아래 직원은 다음의 교육 과정을 성공적으로 이수하였음을 증명합니다.</p>
+              <p className="text-lg mb-4">{t('certificates.certBody')}</p>
               <p className="text-3xl font-bold my-6">{data.employeeName}</p>
               <p className="text-muted-foreground">{data.department} / {data.position}</p>
             </div>
 
             <div className="flex justify-center gap-12 my-8">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">교육 프로그램</p>
+                <p className="text-sm text-muted-foreground">{t('certificates.certProgram')}</p>
                 <p className="text-lg font-bold">{data.programName}</p>
                 <Badge variant="outline" className="mt-1">{data.programCode}</Badge>
               </div>
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">교육 일자</p>
+                <p className="text-sm text-muted-foreground">{t('certificates.certDate')}</p>
                 <p className="text-lg font-bold">{data.trainingDate}</p>
               </div>
               {data.score !== null && (
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">취득 점수</p>
-                  <p className="text-lg font-bold">{data.score}점</p>
+                  <p className="text-sm text-muted-foreground">{t('certificates.certScore')}</p>
+                  <p className="text-lg font-bold">{data.score}{t('certificates.certScoreUnit')}</p>
                   {data.grade && <Badge className="mt-1">{data.grade}</Badge>}
                 </div>
               )}
             </div>
 
             <div className="mt-12 pt-8 border-t">
-              <p className="text-lg">발급일: {data.issueDate}</p>
+              <p className="text-lg">{t('certificates.certIssueDate')} {data.issueDate}</p>
               <div className="mt-8">
                 <p className="text-sm text-muted-foreground">HWK Vietnam QIP Team</p>
-                <p className="mt-2 font-bold">교육팀장</p>
+                <p className="mt-2 font-bold">{t('certificates.certManager')}</p>
               </div>
             </div>
 
             <p className="text-xs text-muted-foreground mt-8">
-              이수증 번호: {data.certificateNumber}
+              {t('certificates.certNumber')} {data.certificateNumber}
             </p>
           </div>
         </div>
@@ -289,7 +290,7 @@ function CertificatePreview({ data, onClose }: { data: CertificateData; onClose:
 }
 
 export default function CertificatesPage() {
-  useTranslation();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
@@ -354,8 +355,8 @@ export default function CertificatesPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">교육 이수증</h1>
-          <p className="text-muted-foreground">교육 이수증 발급 및 관리</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('certificates.title')}</h1>
+          <p className="text-muted-foreground">{t('certificates.description')}</p>
         </div>
       </div>
 
@@ -369,7 +370,7 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalEligible}</p>
-                <p className="text-xs text-muted-foreground">발급 가능 건수</p>
+                <p className="text-xs text-muted-foreground">{t('certificates.issuableCount')}</p>
               </div>
             </div>
           </CardContent>
@@ -382,7 +383,7 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalPrograms}</p>
-                <p className="text-xs text-muted-foreground">교육 프로그램</p>
+                <p className="text-xs text-muted-foreground">{t('certificates.trainingPrograms')}</p>
               </div>
             </div>
           </CardContent>
@@ -395,7 +396,7 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.uniqueEmployees}</p>
-                <p className="text-xs text-muted-foreground">이수 직원 수</p>
+                <p className="text-xs text-muted-foreground">{t('certificates.completedEmployees')}</p>
               </div>
             </div>
           </CardContent>
@@ -408,7 +409,7 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.thisMonthCount}</p>
-                <p className="text-xs text-muted-foreground">이번 달 이수</p>
+                <p className="text-xs text-muted-foreground">{t('certificates.thisMonthCompleted')}</p>
               </div>
             </div>
           </CardContent>
@@ -422,7 +423,7 @@ export default function CertificatesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="이름 또는 사번으로 검색..."
+                placeholder={t('certificates.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

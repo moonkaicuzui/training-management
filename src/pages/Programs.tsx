@@ -4,6 +4,8 @@ import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ExportDropdown } from '@/components/common/ExportDropdown';
+import { useExport } from '@/hooks/useExport';
 import {
   Card,
   CardContent,
@@ -53,6 +55,7 @@ export default function Programs() {
   const { t } = useTranslation();
   const { programs, loading, fetchPrograms, deleteProgram } = useTrainingStore();
   const { addToast, language } = useUIStore();
+  const { exporting, exportExcel, exportPDF } = useExport();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -130,10 +133,35 @@ export default function Programs() {
             {t('program.description')}
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('program.addProgram')}
-        </Button>
+        <div className="flex gap-2">
+          <ExportDropdown
+            onExportExcel={() =>
+              exportExcel(programs as unknown as Record<string, unknown>[], {
+                sheetName: 'Programs',
+                filename: 'programs',
+              })
+            }
+            onExportPDF={() =>
+              exportPDF(
+                programs as unknown as Record<string, unknown>[],
+                [
+                  { header: t('program.code'), dataKey: 'program_code' },
+                  { header: t('program.name'), dataKey: 'program_name' },
+                  { header: t('program.category'), dataKey: 'category' },
+                  { header: t('program.passingScore'), dataKey: 'passing_score' },
+                  { header: t('program.duration'), dataKey: 'duration_hours' },
+                  { header: t('program.validity'), dataKey: 'validity_months' },
+                ],
+                { title: t('program.title'), filename: 'programs' }
+              )
+            }
+            loading={exporting}
+          />
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('program.addProgram')}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

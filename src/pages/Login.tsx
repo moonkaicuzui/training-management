@@ -59,7 +59,7 @@ export default function Login() {
           </div>
           <CardTitle className="text-2xl font-bold">Q-TRAIN</CardTitle>
           <CardDescription>
-            {t('auth.loginDescription', 'HWK Vietnam QIP 교육 관리 시스템')}
+            {t('auth.loginDescription')}
           </CardDescription>
         </CardHeader>
 
@@ -75,7 +75,7 @@ export default function Login() {
           {/* 이메일/비밀번호 로그인 폼 */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.email', '이메일')}</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,7 +88,7 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password', '비밀번호')}</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -109,19 +109,19 @@ export default function Login() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {t('common.loading', '로딩 중...')}
+                  {t('common.loading')}
                 </>
               ) : (
-                t('auth.login', '로그인')
+                t('auth.login')
               )}
             </Button>
           </form>
 
           {/* 안내 문구 */}
           <div className="text-center text-sm text-muted-foreground space-y-1">
-            <p>{t('auth.companyOnly', '등록된 계정으로만 로그인할 수 있습니다.')}</p>
+            <p>{t('auth.companyOnly')}</p>
             <p className="text-xs">
-              {t('auth.support', '문제가 있으시면 IT 부서에 문의하세요.')}
+              {t('auth.support')}
             </p>
           </div>
 

@@ -2,7 +2,7 @@
  * 자동화 규칙 추가/수정 다이얼로그 컴포넌트
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,6 +52,33 @@ interface AutomationDialogProps {
   isLoading?: boolean;
 }
 
+// 편집 모드일 때 초기 폼 데이터 계산
+function getInitialFormData(automation: Automation | null | undefined): AutomationFormData {
+  if (!automation) {
+    return DEFAULT_AUTOMATION_FORM;
+  }
+
+  const fromStatusCondition = automation.trigger.conditions?.find(c => c.field === 'fromStatus');
+  const toStatusCondition = automation.trigger.conditions?.find(c => c.field === 'toStatus');
+  const progressCondition = automation.trigger.conditions?.find(c => c.field === 'progress');
+
+  return {
+    name: automation.name,
+    description: automation.description || '',
+    triggerType: automation.trigger.type,
+    triggerConditions: {
+      fromStatus: fromStatusCondition?.value as TaskStatus | undefined,
+      toStatus: toStatusCondition?.value as TaskStatus | undefined,
+      daysBefore: automation.trigger.schedule?.daysBefore,
+      progressThreshold: progressCondition?.value as number | undefined,
+    },
+    actions: automation.actions.map(a => ({
+      type: a.type,
+      params: a.params as { status?: TaskStatus; message?: string; daysToExtend?: number },
+    })),
+  };
+}
+
 export default function AutomationDialog({
   open,
   onOpenChange,
@@ -59,35 +86,22 @@ export default function AutomationDialog({
   onSave,
   isLoading = false,
 }: AutomationDialogProps) {
-  const [formData, setFormData] = useState<AutomationFormData>(DEFAULT_AUTOMATION_FORM);
+  // 초기값 계산 (메모이제이션)
+  const initialFormData = useMemo(
+    () => getInitialFormData(automation),
+    [automation]
+  );
 
-  // 편집 모드일 때 폼 데이터 초기화
-  useEffect(() => {
-    if (automation) {
-      // Automation 타입에서 폼 데이터로 변환
-      const fromStatusCondition = automation.trigger.conditions?.find(c => c.field === 'fromStatus');
-      const toStatusCondition = automation.trigger.conditions?.find(c => c.field === 'toStatus');
-      const progressCondition = automation.trigger.conditions?.find(c => c.field === 'progress');
+  const [formData, setFormData] = useState<AutomationFormData>(initialFormData);
 
-      setFormData({
-        name: automation.name,
-        description: automation.description || '',
-        triggerType: automation.trigger.type,
-        triggerConditions: {
-          fromStatus: fromStatusCondition?.value as TaskStatus | undefined,
-          toStatus: toStatusCondition?.value as TaskStatus | undefined,
-          daysBefore: automation.trigger.schedule?.daysBefore,
-          progressThreshold: progressCondition?.value as number | undefined,
-        },
-        actions: automation.actions.map(a => ({
-          type: a.type,
-          params: a.params as { status?: TaskStatus; message?: string; daysToExtend?: number },
-        })),
-      });
-    } else {
-      setFormData(DEFAULT_AUTOMATION_FORM);
-    }
-  }, [automation, open]);
+  // automation이 변경될 때 폼 리셋 (key prop 대신 사용)
+  const automationId = automation?.id ?? 'new';
+  const [lastAutomationId, setLastAutomationId] = useState(automationId);
+
+  if (automationId !== lastAutomationId) {
+    setFormData(getInitialFormData(automation));
+    setLastAutomationId(automationId);
+  }
 
   // 액션 추가
   const addAction = useCallback((actionType: ActionType) => {

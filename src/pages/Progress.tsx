@@ -99,10 +99,6 @@ export default function Progress() {
     });
   }, [buildingFilter, departmentFilter, positionFilter, categoryFilter, fetchProgressMatrix]);
 
-  if (loading) {
-    return <PageLoading />;
-  }
-
   const employees = progressMatrix?.employees || [];
   const programs = progressMatrix?.programs || [];
   const matrix = progressMatrix?.matrix || {};
@@ -151,6 +147,10 @@ export default function Progress() {
     const cell = employeeMatrix?.[program.program_code as ProgramCode];
     setSelectedCell({ employee, program, cell });
   };
+
+  if (loading) {
+    return <PageLoading />;
+  }
 
   return (
     <div className="space-y-6">
@@ -297,9 +297,9 @@ export default function Progress() {
       {/* Progress Matrix */}
       <Card>
         <CardHeader>
-          <CardTitle>교육 진도 매트릭스</CardTitle>
+          <CardTitle>{t('progress.matrixTitle')}</CardTitle>
           <CardDescription>
-            {employees.length}명의 직원 × {programs.length}개의 프로그램
+            {t('progress.matrixDescription', { employees: employees.length, programs: programs.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -315,7 +315,7 @@ export default function Progress() {
                     <thead>
                       <tr>
                         <th className="sticky left-0 z-20 bg-background border p-2 text-left min-w-[150px]">
-                          직원
+                          {t('progress.employee')}
                         </th>
                         {programs.map((program) => (
                           <Tooltip key={program.program_code}>
@@ -329,7 +329,7 @@ export default function Progress() {
                             <TooltipContent>
                               <p className="font-medium">{program.program_name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {t(`category.${program.category}`)} · {program.passing_score}점 이상
+                                {t(`category.${program.category}`)} · {t('progress.passingScoreAbove', { score: program.passing_score })}
                               </p>
                             </TooltipContent>
                           </Tooltip>
@@ -386,7 +386,7 @@ export default function Progress() {
       <Dialog open={!!selectedCell} onOpenChange={() => setSelectedCell(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>교육 이력 상세</DialogTitle>
+            <DialogTitle>{t('progress.historyDetail')}</DialogTitle>
             <DialogDescription>
               {selectedCell?.employee.employee_name} - {selectedCell?.program.program_name}
             </DialogDescription>
@@ -394,14 +394,14 @@ export default function Progress() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">직원</p>
+                <p className="text-sm text-muted-foreground">{t('progress.employee')}</p>
                 <p className="font-medium">{selectedCell?.employee.employee_name}</p>
                 <p className="text-sm text-muted-foreground">
                   {selectedCell?.employee.employee_id}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">프로그램</p>
+                <p className="text-sm text-muted-foreground">{t('common.program')}</p>
                 <p className="font-medium">{selectedCell?.program.program_code}</p>
                 <p className="text-sm text-muted-foreground">
                   {selectedCell?.program.program_name}
@@ -412,7 +412,7 @@ export default function Progress() {
             {selectedCell?.cell ? (
               <div className="space-y-3 pt-4 border-t">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">최근 결과</span>
+                  <span className="text-sm text-muted-foreground">{t('progress.latestResult')}</span>
                   <Badge
                     variant={
                       selectedCell.cell.last_result === 'PASS'
@@ -431,13 +431,13 @@ export default function Progress() {
                 </div>
                 {selectedCell.cell.last_score !== null && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">점수</span>
-                    <span className="font-medium">{selectedCell.cell.last_score}점</span>
+                    <span className="text-sm text-muted-foreground">{t('training.score')}</span>
+                    <span className="font-medium">{selectedCell.cell.last_score}{t('program.scoreUnit')}</span>
                   </div>
                 )}
                 {selectedCell.cell.last_grade && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">등급</span>
+                    <span className="text-sm text-muted-foreground">{t('training.grade')}</span>
                     <Badge
                       variant={
                         selectedCell.cell.last_grade === 'AA'
@@ -455,7 +455,7 @@ export default function Progress() {
                 )}
                 {selectedCell.cell.last_training_date && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">교육일</span>
+                    <span className="text-sm text-muted-foreground">{t('training.date')}</span>
                     <span>
                       {format(new Date(selectedCell.cell.last_training_date), 'yyyy-MM-dd')}
                     </span>
@@ -463,7 +463,7 @@ export default function Progress() {
                 )}
                 {selectedCell.cell.expiration_date && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">만료일</span>
+                    <span className="text-sm text-muted-foreground">{t('progress.expirationDate')}</span>
                     <span
                       className={
                         selectedCell.cell.status === 'EXPIRED'
@@ -474,19 +474,19 @@ export default function Progress() {
                       }
                     >
                       {format(new Date(selectedCell.cell.expiration_date), 'yyyy-MM-dd')}
-                      {selectedCell.cell.status === 'EXPIRED' && ' (만료됨)'}
-                      {selectedCell.cell.status === 'EXPIRING' && ' (만료 임박)'}
+                      {selectedCell.cell.status === 'EXPIRED' && ` ${t('progress.statusExpired')}`}
+                      {selectedCell.cell.status === 'EXPIRING' && ` ${t('progress.statusExpiring')}`}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">총 이수 횟수</span>
-                  <span>{selectedCell.cell.completion_count}회</span>
+                  <span className="text-sm text-muted-foreground">{t('progress.totalCompletions')}</span>
+                  <span>{t('progress.completionCount', { count: selectedCell.cell.completion_count })}</span>
                 </div>
               </div>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                교육 이력이 없습니다
+                {t('progress.noHistory')}
               </div>
             )}
 
@@ -497,9 +497,9 @@ export default function Progress() {
                   navigate(`/employees/${selectedCell?.employee.employee_id}`)
                 }
               >
-                직원 상세
+                {t('progress.employeeDetail')}
               </Button>
-              <Button onClick={() => setSelectedCell(null)}>닫기</Button>
+              <Button onClick={() => setSelectedCell(null)}>{t('common.close')}</Button>
             </div>
           </div>
         </DialogContent>

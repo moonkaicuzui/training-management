@@ -160,7 +160,7 @@ const sampleEmployees = [
 ];
 
 export default function ReportsPage() {
-  useTranslation();
+  const { t } = useTranslation();
 
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('6months');
@@ -181,44 +181,44 @@ export default function ReportsPage() {
     switch (reportType) {
       case 'department':
         data = departmentReports.map((r) => ({
-          '부서': r.department,
-          '직원 수': r.totalEmployees,
-          '완료 교육': r.completedTrainings,
-          '미완료': r.pendingTrainings,
-          '이수율(%)': r.completionRate,
-          '평균 점수': r.averageScore,
-          '합격률(%)': r.passRate,
+          [t('reports.exportDepartment')]: r.department,
+          [t('reports.exportEmployeeCount')]: r.totalEmployees,
+          [t('reports.exportCompleted')]: r.completedTrainings,
+          [t('reports.exportIncomplete')]: r.pendingTrainings,
+          [t('reports.exportCompletionRate')]: r.completionRate,
+          [t('reports.exportAvgScore')]: r.averageScore,
+          [t('reports.exportPassRate')]: r.passRate,
         }));
         filename = `부서별_교육현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
 
       case 'program':
         data = sampleProgramReports.map((r) => ({
-          '프로그램 코드': r.program_code,
-          '프로그램명': r.program_name,
-          '총 세션': r.totalSessions,
-          '교육 인원': r.totalTrainees,
-          '합격': r.passCount,
-          '불합격': r.failCount,
-          '합격률(%)': r.passRate,
-          '평균 점수': r.averageScore,
-          '재교육 필요': r.retrainingCount,
+          [t('reports.exportProgramCode')]: r.program_code,
+          [t('reports.exportProgramName')]: r.program_name,
+          [t('reports.exportSessionCount')]: r.totalSessions,
+          [t('reports.exportTraineeCount')]: r.totalTrainees,
+          [t('reports.exportPass')]: r.passCount,
+          [t('reports.exportFail')]: r.failCount,
+          [t('reports.exportPassRate')]: r.passRate,
+          [t('reports.exportAvgScore')]: r.averageScore,
+          [t('reports.exportRetraining')]: r.retrainingCount,
         }));
         filename = `프로그램별_현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
 
       case 'employee':
         data = sampleEmployees.map((emp) => ({
-          '사번': emp.employee_id,
-          '이름': emp.employee_name,
-          '부서': emp.department,
-          '직책': emp.position,
-          '건물': emp.building,
-          '라인': emp.line,
-          '입사일': emp.hire_date,
-          '상태': emp.status,
-          '교육 이수 건수': emp.passCount,
-          '총 교육 건수': emp.totalCount,
+          [t('reports.exportEmployeeId')]: emp.employee_id,
+          [t('reports.exportName')]: emp.employee_name,
+          [t('reports.exportDepartment')]: emp.department,
+          [t('reports.exportPosition')]: emp.position,
+          [t('reports.exportBuilding')]: emp.building,
+          [t('reports.exportLine')]: emp.line,
+          [t('reports.exportHireDate')]: emp.hire_date,
+          [t('reports.exportStatus')]: emp.status,
+          [t('reports.exportTrainingCompleted')]: emp.passCount,
+          [t('reports.exportTotalTrainings')]: emp.totalCount,
         }));
         filename = `직원별_교육현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
@@ -240,7 +240,7 @@ export default function ReportsPage() {
 
     // 파일 다운로드
     XLSX.writeFile(wb, filename);
-  }, [departmentReports]);
+  }, [departmentReports, t]);
 
   // PDF 내보내기 (html2canvas 방식으로 한글/베트남어 지원)
   const handleExportToPDF = useCallback(async (reportType: ReportType) => {
@@ -321,8 +321,8 @@ export default function ReportsPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">리포트</h1>
-          <p className="text-muted-foreground">교육 현황 분석 및 데이터 내보내기</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('reports.title')}</h1>
+          <p className="text-muted-foreground">{t('reports.description')}</p>
         </div>
         <div className="flex gap-2">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -331,10 +331,10 @@ export default function ReportsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1month">1개월</SelectItem>
-              <SelectItem value="3months">3개월</SelectItem>
-              <SelectItem value="6months">6개월</SelectItem>
-              <SelectItem value="1year">1년</SelectItem>
+              <SelectItem value="1month">{t('reports.period1Month')}</SelectItem>
+              <SelectItem value="3months">{t('reports.period3Months')}</SelectItem>
+              <SelectItem value="6months">{t('reports.period6Months')}</SelectItem>
+              <SelectItem value="1year">{t('reports.period1Year')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -350,7 +350,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalStats.totalEmployees}</p>
-                <p className="text-xs text-muted-foreground">전체 직원</p>
+                <p className="text-xs text-muted-foreground">{t('reports.totalEmployees')}</p>
               </div>
             </div>
           </CardContent>
@@ -363,7 +363,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalStats.totalTrainings}</p>
-                <p className="text-xs text-muted-foreground">총 교육 건수</p>
+                <p className="text-xs text-muted-foreground">{t('reports.totalTrainings')}</p>
               </div>
             </div>
           </CardContent>
@@ -376,7 +376,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalStats.passRate}%</p>
-                <p className="text-xs text-muted-foreground">평균 합격률</p>
+                <p className="text-xs text-muted-foreground">{t('reports.avgPassRate')}</p>
               </div>
             </div>
           </CardContent>
@@ -389,7 +389,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalStats.activePrograms}</p>
-                <p className="text-xs text-muted-foreground">활성 프로그램</p>
+                <p className="text-xs text-muted-foreground">{t('reports.activePrograms')}</p>
               </div>
             </div>
           </CardContent>
@@ -402,15 +402,15 @@ export default function ReportsPage() {
           <TabsList>
             <TabsTrigger value="department" className="gap-2">
               <Building2 className="h-4 w-4" />
-              부서별
+              {t('reports.byDepartment')}
             </TabsTrigger>
             <TabsTrigger value="program" className="gap-2">
               <GraduationCap className="h-4 w-4" />
-              프로그램별
+              {t('reports.byProgram')}
             </TabsTrigger>
             <TabsTrigger value="employee" className="gap-2">
               <Users className="h-4 w-4" />
-              직원별
+              {t('reports.byEmployee')}
             </TabsTrigger>
           </TabsList>
           <div className="flex gap-2">
@@ -430,8 +430,8 @@ export default function ReportsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>부서별 교육 현황</CardTitle>
-                <CardDescription>부서별 교육 이수율 및 성과 분석</CardDescription>
+                <CardTitle>{t('reports.deptTitle')}</CardTitle>
+                <CardDescription>{t('reports.deptDescription')}</CardDescription>
               </div>
               <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                 <SelectTrigger className="w-40">
@@ -439,7 +439,7 @@ export default function ReportsPage() {
                   <SelectValue placeholder="부서 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">전체 부서</SelectItem>
+                  <SelectItem value="all">{t('reports.allDepartments')}</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.value} value={dept.value}>
                       {dept.label}
@@ -452,13 +452,13 @@ export default function ReportsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>부서</TableHead>
-                    <TableHead className="text-right">직원 수</TableHead>
-                    <TableHead className="text-right">완료 교육</TableHead>
-                    <TableHead className="text-right">미완료</TableHead>
-                    <TableHead className="text-right">이수율</TableHead>
-                    <TableHead className="text-right">평균 점수</TableHead>
-                    <TableHead className="text-right">합격률</TableHead>
+                    <TableHead>{t('reports.colDepartment')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colEmployeeCount')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colCompleted')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colIncomplete')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colCompletionRate')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colAvgScore')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colPassRate')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -491,21 +491,21 @@ export default function ReportsPage() {
         <TabsContent value="program">
           <Card>
             <CardHeader>
-              <CardTitle>프로그램별 교육 현황</CardTitle>
-              <CardDescription>교육 프로그램별 참여율 및 합격률 분석</CardDescription>
+              <CardTitle>{t('reports.progTitle')}</CardTitle>
+              <CardDescription>{t('reports.progDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>프로그램 코드</TableHead>
-                    <TableHead>프로그램명</TableHead>
-                    <TableHead className="text-right">세션 수</TableHead>
-                    <TableHead className="text-right">교육 인원</TableHead>
-                    <TableHead className="text-right">합격</TableHead>
-                    <TableHead className="text-right">불합격</TableHead>
-                    <TableHead className="text-right">합격률</TableHead>
-                    <TableHead className="text-right">평균 점수</TableHead>
+                    <TableHead>{t('reports.colProgramCode')}</TableHead>
+                    <TableHead>{t('reports.colProgramName')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colSessionCount')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colTraineeCount')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colPass')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colFail')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colPassRate')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colAvgScore')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -537,23 +537,23 @@ export default function ReportsPage() {
         <TabsContent value="employee">
           <Card>
             <CardHeader>
-              <CardTitle>직원별 교육 현황</CardTitle>
-              <CardDescription>개인별 교육 이수 현황 (Excel 다운로드로 전체 데이터 확인)</CardDescription>
+              <CardTitle>{t('reports.empTitle')}</CardTitle>
+              <CardDescription>{t('reports.empDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
                 <Download className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  직원별 상세 교육 현황을 다운로드하세요.
+                  {t('reports.empDownloadHint')}
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" onClick={() => handleExportToPDF('employee')}>
                     <FileText className="h-4 w-4 mr-2" />
-                    PDF 다운로드
+                    {t('reports.pdfDownload')}
                   </Button>
                   <Button onClick={() => handleExportToExcel('employee')}>
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Excel 다운로드
+                    {t('reports.excelDownload')}
                   </Button>
                 </div>
               </div>

@@ -83,7 +83,7 @@ export default function Retraining() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('retraining.title')}</h1>
           <p className="text-muted-foreground">
-            재교육이 필요한 직원과 만료 예정인 교육을 관리하세요
+            {t('retraining.pageDescription')}
           </p>
         </div>
         <Button variant="outline">
@@ -96,29 +96,29 @@ export default function Retraining() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">재교육 필요</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('retraining.needsRetraining')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {retrainingTargets.length}명
+              {t('retraining.countPeople', { count: retrainingTargets.length })}
             </div>
             <p className="text-xs text-muted-foreground">
-              불합격으로 인한 재교육 대상자
+              {t('retraining.failedDescription')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">만료 예정</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('retraining.expiringSoon')}</CardTitle>
             <Clock className="h-4 w-4 text-status-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-status-warning">
-              {expiringTrainings.length}건
+              {t('retraining.countItems', { count: expiringTrainings.length })}
             </div>
             <p className="text-xs text-muted-foreground">
-              30일 이내 만료 예정 교육
+              {t('retraining.expiringDescription')}
             </p>
           </CardContent>
         </Card>
@@ -131,7 +131,7 @@ export default function Retraining() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="사번, 이름, 프로그램 검색..."
+                placeholder={t('retraining.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -185,11 +185,11 @@ export default function Retraining() {
         <TabsList>
           <TabsTrigger value="failed">
             <AlertTriangle className="h-4 w-4 mr-2" />
-            불합격 재교육 ({filteredRetrainingTargets.length})
+            {t('retraining.failedTab', { count: filteredRetrainingTargets.length })}
           </TabsTrigger>
           <TabsTrigger value="expiring">
             <Clock className="h-4 w-4 mr-2" />
-            만료 예정 ({filteredExpiringTrainings.length})
+            {t('retraining.expiringTab', { count: filteredExpiringTrainings.length })}
           </TabsTrigger>
         </TabsList>
 
@@ -198,25 +198,25 @@ export default function Retraining() {
             <CardHeader>
               <CardTitle>{t('retraining.failed')}</CardTitle>
               <CardDescription>
-                불합격으로 인해 재교육이 필요한 직원 목록
+                {t('retraining.failedListDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {filteredRetrainingTargets.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  재교육이 필요한 직원이 없습니다
+                  {t('retraining.noRetrainingNeeded')}
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>사번</TableHead>
+                      <TableHead>{t('employee.id')}</TableHead>
                       <TableHead>{t('employee.name')}</TableHead>
                       <TableHead>{t('employee.building')}</TableHead>
                       <TableHead>{t('employee.department')}</TableHead>
-                      <TableHead>프로그램</TableHead>
-                      <TableHead>불합격일</TableHead>
-                      <TableHead className="text-center">점수</TableHead>
+                      <TableHead>{t('common.program')}</TableHead>
+                      <TableHead>{t('common.failDate')}</TableHead>
+                      <TableHead className="text-center">{t('common.score')}</TableHead>
                       <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -259,7 +259,7 @@ export default function Retraining() {
                             size="sm"
                             onClick={() => navigate(`/employees/${target.employee.employee_id}`)}
                           >
-                            상세
+                            {t('retraining.detail')}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -276,26 +276,26 @@ export default function Retraining() {
             <CardHeader>
               <CardTitle>{t('progress.expiring')}</CardTitle>
               <CardDescription>
-                30일 이내에 교육 유효기간이 만료되는 직원 목록
+                {t('retraining.expiringListDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {filteredExpiringTrainings.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  만료 예정인 교육이 없습니다
+                  {t('retraining.noExpiringTrainings')}
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>사번</TableHead>
+                      <TableHead>{t('employee.id')}</TableHead>
                       <TableHead>{t('employee.name')}</TableHead>
                       <TableHead>{t('employee.building')}</TableHead>
                       <TableHead>{t('employee.department')}</TableHead>
-                      <TableHead>프로그램</TableHead>
-                      <TableHead>교육일</TableHead>
-                      <TableHead>만료일</TableHead>
-                      <TableHead>남은 일수</TableHead>
+                      <TableHead>{t('common.program')}</TableHead>
+                      <TableHead>{t('retraining.trainingDate')}</TableHead>
+                      <TableHead>{t('retraining.expirationDate')}</TableHead>
+                      <TableHead>{t('retraining.daysRemaining')}</TableHead>
                       <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -334,7 +334,7 @@ export default function Retraining() {
                           <Badge
                             variant={item.daysUntilExpiry <= 7 ? 'destructive' : 'warning'}
                           >
-                            {item.daysUntilExpiry}일
+                            {t('retraining.daysCount', { days: item.daysUntilExpiry })}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -343,7 +343,7 @@ export default function Retraining() {
                             size="sm"
                             onClick={() => navigate(`/employees/${item.employee.employee_id}`)}
                           >
-                            상세
+                            {t('retraining.detail')}
                           </Button>
                         </TableCell>
                       </TableRow>

@@ -195,6 +195,109 @@ const PieChartRenderer = lazy(async () => {
   };
 });
 
+// Pre-built lazy AreaChart component
+interface LazyAreaChartProps {
+  data: unknown[];
+  height?: number;
+  areas: Array<{
+    dataKey: string;
+    name?: string;
+    stroke?: string;
+    fill?: string;
+    type?: 'linear' | 'monotone';
+  }>;
+  xAxisKey?: string;
+  xAxisFormatter?: (value: string) => string;
+  showGrid?: boolean;
+  showLegend?: boolean;
+}
+
+export function LazyAreaChart({
+  data,
+  height = 300,
+  areas,
+  xAxisKey = 'name',
+  xAxisFormatter,
+  showGrid = true,
+  showLegend = true,
+}: LazyAreaChartProps) {
+  return (
+    <Suspense fallback={<ChartSkeleton height={height} />}>
+      <AreaChartRenderer
+        data={data}
+        height={height}
+        areas={areas}
+        xAxisKey={xAxisKey}
+        xAxisFormatter={xAxisFormatter}
+        showGrid={showGrid}
+        showLegend={showLegend}
+      />
+    </Suspense>
+  );
+}
+
+const AreaChartRenderer = lazy(async () => {
+  const {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+  } = await import('recharts');
+
+  return {
+    default: function AreaChartComponent({
+      data,
+      height,
+      areas,
+      xAxisKey,
+      xAxisFormatter,
+      showGrid,
+      showLegend,
+    }: LazyAreaChartProps) {
+      return (
+        <div style={{ height, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={1} debounce={50}>
+            <AreaChart data={data} style={{ cursor: 'pointer' }}>
+              {showGrid && (
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              )}
+              <XAxis
+                dataKey={xAxisKey}
+                tickFormatter={xAxisFormatter}
+                className="text-sm"
+              />
+              <YAxis className="text-sm" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                }}
+              />
+              {showLegend && <Legend />}
+              {areas.map((area) => (
+                <Area
+                  key={area.dataKey}
+                  type={area.type || 'monotone'}
+                  dataKey={area.dataKey}
+                  name={area.name}
+                  stroke={area.stroke || '#8884d8'}
+                  fill={area.fill || '#8884d8'}
+                  fillOpacity={0.1}
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    },
+  };
+});
+
 // Pre-built lazy LineChart component
 interface LazyLineChartProps {
   data: unknown[];

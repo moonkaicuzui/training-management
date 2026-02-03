@@ -18,7 +18,6 @@ import {
   type CAPAPriority,
   type CAPASource,
   type CAPAType,
-  type CAPA,
   type CAPAInput,
   type CAPAUpdate,
   type CAPAStageUpdate,

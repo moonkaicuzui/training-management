@@ -216,7 +216,7 @@ const getFileIconColor = (type: TrainingMaterial['type']) => {
 };
 
 export default function Materials() {
-  useTranslation();
+  const { t } = useTranslation();
   const [folders] = useState<MaterialFolder[]>(generateSampleFolders);
   const [materials, setMaterials] = useState<TrainingMaterial[]>(generateSampleMaterials);
   const [searchTerm, setSearchTerm] = useState('');
@@ -287,7 +287,7 @@ export default function Materials() {
 
   const getBreadcrumbs = () => {
     const breadcrumbs: { id: string | null; name: string }[] = [
-      { id: null, name: '모든 자료' }
+      { id: null, name: t('materials.allFiles') }
     ];
 
     if (currentFolderId) {
@@ -311,19 +311,19 @@ export default function Materials() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">교육 자료 관리</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('materials.title')}</h1>
           <p className="text-muted-foreground">
-            교육 프로그램 관련 자료를 중앙에서 관리합니다
+            {t('materials.description')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowNewFolderDialog(true)}>
             <FolderPlus className="mr-2 h-4 w-4" />
-            새 폴더
+            {t('materials.newFolder')}
           </Button>
           <Button onClick={() => setShowUploadDialog(true)}>
             <Upload className="mr-2 h-4 w-4" />
-            파일 업로드
+            {t('materials.uploadFile')}
           </Button>
         </div>
       </div>
@@ -332,20 +332,20 @@ export default function Materials() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">전체 파일</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('materials.totalFiles')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalFiles}</div>
             <p className="text-xs text-muted-foreground">
-              {folders.length}개 폴더
+              {t('materials.folderCount', { count: folders.length })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">저장 용량</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('materials.storageUsed')}</CardTitle>
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -356,26 +356,26 @@ export default function Materials() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">즐겨찾기</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('materials.favorites')}</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{starredCount}</div>
             <p className="text-xs text-muted-foreground">
-              자주 사용하는 자료
+              {t('materials.favoritesDesc')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">최근 업로드</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('materials.recentUploads')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{recentUploads}</div>
             <p className="text-xs text-muted-foreground">
-              최근 7일간
+              {t('materials.recentUploadsDesc')}
             </p>
           </CardContent>
         </Card>
@@ -384,10 +384,10 @@ export default function Materials() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="files">파일 탐색</TabsTrigger>
-          <TabsTrigger value="starred">즐겨찾기</TabsTrigger>
-          <TabsTrigger value="recent">최근 업로드</TabsTrigger>
-          <TabsTrigger value="programs">프로그램별</TabsTrigger>
+          <TabsTrigger value="files">{t('materials.tabBrowse')}</TabsTrigger>
+          <TabsTrigger value="starred">{t('materials.tabFavorites')}</TabsTrigger>
+          <TabsTrigger value="recent">{t('materials.tabRecent')}</TabsTrigger>
+          <TabsTrigger value="programs">{t('materials.tabPrograms')}</TabsTrigger>
         </TabsList>
 
         {/* Files Tab */}
@@ -418,7 +418,7 @@ export default function Materials() {
                     <div className="relative">
                       <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="파일명, 태그 검색..."
+                        placeholder={t('materials.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-8"
@@ -430,12 +430,12 @@ export default function Materials() {
                       <SelectValue placeholder="파일 유형" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 유형</SelectItem>
-                      <SelectItem value="document">문서</SelectItem>
-                      <SelectItem value="video">동영상</SelectItem>
-                      <SelectItem value="image">이미지</SelectItem>
-                      <SelectItem value="archive">압축파일</SelectItem>
-                      <SelectItem value="other">기타</SelectItem>
+                      <SelectItem value="all">{t('materials.allTypes')}</SelectItem>
+                      <SelectItem value="document">{t('materials.typeDocument')}</SelectItem>
+                      <SelectItem value="video">{t('materials.typeVideo')}</SelectItem>
+                      <SelectItem value="image">{t('materials.typeImage')}</SelectItem>
+                      <SelectItem value="archive">{t('materials.typeArchive')}</SelectItem>
+                      <SelectItem value="other">{t('materials.typeOther')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

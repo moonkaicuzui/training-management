@@ -61,7 +61,7 @@ import type { TrainingSession, SessionStatus } from '@/types';
 
 type ViewMode = 'day' | 'week' | 'month';
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEKDAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 ~ 19:00
 
 export default function Schedule() {
@@ -151,13 +151,14 @@ export default function Schedule() {
 
   // Get current period title based on view mode
   const getPeriodTitle = () => {
+    const locale = getLocale();
     switch (viewMode) {
       case 'day':
-        return format(currentDate, 'yyyy년 M월 d일 (E)', { locale: getLocale() });
+        return format(currentDate, 'PPP (E)', { locale });
       case 'week':
-        return `${format(weekStart, 'M월 d일', { locale: getLocale() })} - ${format(weekEnd, 'M월 d일', { locale: getLocale() })}`;
+        return `${format(weekStart, 'MMM d', { locale })} - ${format(weekEnd, 'MMM d', { locale })}`;
       case 'month':
-        return format(currentDate, 'yyyy년 M월', { locale: getLocale() });
+        return format(currentDate, 'yyyy MMMM', { locale });
     }
   };
 
@@ -208,7 +209,7 @@ export default function Schedule() {
     if (!formData.program_code || !formData.session_date) {
       addToast({
         type: 'error',
-        title: '필수 정보를 입력해주세요',
+        title: t('schedule.requiredFieldsError'),
       });
       return;
     }
@@ -256,12 +257,12 @@ export default function Schedule() {
       await cancelSession(sessionToCancel);
       addToast({
         type: 'success',
-        title: '교육이 취소되었습니다',
+        title: t('schedule.cancelSuccess'),
       });
     } catch {
       addToast({
         type: 'error',
-        title: '교육 취소에 실패했습니다',
+        title: t('schedule.cancelError'),
       });
     } finally {
       setCancelDialogOpen(false);
@@ -282,7 +283,7 @@ export default function Schedule() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('session.title')}</h1>
           <p className="text-muted-foreground">
-            교육 일정을 관리하고 참석자를 등록하세요
+            {t('schedule.pageDescription')}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
@@ -466,14 +467,18 @@ export default function Schedule() {
             {viewMode === 'month' && (
               <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
                 {/* Weekday headers */}
-                {WEEKDAYS.map((day) => (
-                  <div
-                    key={day}
-                    className="bg-background p-2 text-center text-sm font-medium text-muted-foreground"
-                  >
-                    {day}
-                  </div>
-                ))}
+                {WEEKDAY_KEYS.map((key, index) => {
+                  // Use date-fns to get locale-aware weekday abbreviations
+                  const refDate = new Date(2024, 0, 7 + index); // 2024-01-07 is Sunday
+                  return (
+                    <div
+                      key={key}
+                      className="bg-background p-2 text-center text-sm font-medium text-muted-foreground"
+                    >
+                      {format(refDate, 'EEEEE', { locale: getLocale() })}
+                    </div>
+                  );
+                })}
 
                 {/* Calendar days */}
                 {calendarDays.map((day) => {
@@ -529,21 +534,21 @@ export default function Schedule() {
           <CardHeader>
             <CardTitle>
               {selectedDate
-                ? format(selectedDate, 'M월 d일 (E)', { locale: getLocale() })
-                : '날짜를 선택하세요'}
+                ? format(selectedDate, 'PPP', { locale: getLocale() })
+                : t('schedule.selectDate')}
             </CardTitle>
             <CardDescription>
-              {selectedDateSessions.length}건의 교육
+              {t('schedule.sessionsCount', { count: selectedDateSessions.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!selectedDate ? (
               <div className="text-center py-8 text-muted-foreground">
-                캘린더에서 날짜를 클릭하세요
+                {t('schedule.clickCalendar')}
               </div>
             ) : selectedDateSessions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                예정된 교육이 없습니다
+                {t('schedule.noSessions')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -570,7 +575,7 @@ export default function Schedule() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSelectedSession(session)}>
                             <Eye className="h-4 w-4 mr-2" />
-                            상세 보기
+                            {t('schedule.viewDetail')}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Pencil className="h-4 w-4 mr-2" />
@@ -587,7 +592,7 @@ export default function Schedule() {
                                 }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                교육 취소
+                                {t('schedule.cancelSession')}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -602,15 +607,15 @@ export default function Schedule() {
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        <span>{session.location || '미정'}</span>
+                        <span>{session.location || t('common.tbd')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <User className="h-4 w-4" />
-                        <span>{session.trainer || '미정'}</span>
+                        <span>{session.trainer || t('common.tbd')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{session.attendees.length} / {session.max_attendees}명</span>
+                        <span>{t('schedule.attendeesCount', { current: session.attendees.length, max: session.max_attendees })}</span>
                       </div>
                     </div>
 
@@ -632,14 +637,14 @@ export default function Schedule() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>전체 교육 일정</CardTitle>
+              <CardTitle>{t('schedule.allSchedule')}</CardTitle>
               <CardDescription>
-                예정된 모든 교육 세션
+                {t('schedule.allSessions')}
               </CardDescription>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="상태" />
+                <SelectValue placeholder={t('schedule.statusPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
@@ -690,7 +695,7 @@ export default function Schedule() {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {session.location || '미정'}
+                          {session.location || t('common.tbd')}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
@@ -704,7 +709,7 @@ export default function Schedule() {
                     size="sm"
                     onClick={() => setSelectedSession(session)}
                   >
-                    상세
+                    {t('schedule.detail')}
                   </Button>
                 </div>
               ))}
@@ -719,18 +724,18 @@ export default function Schedule() {
           <DialogHeader>
             <DialogTitle>{t('session.addSession')}</DialogTitle>
             <DialogDescription>
-              새로운 교육 세션을 생성합니다
+              {t('schedule.createDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>프로그램 *</Label>
+              <Label>{t('schedule.programRequired')}</Label>
               <Select
                 value={formData.program_code}
                 onValueChange={(value) => setFormData({ ...formData, program_code: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="프로그램 선택" />
+                  <SelectValue placeholder={t('schedule.programPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {programs.filter(p => p.is_active).map((program) => (
@@ -743,7 +748,7 @@ export default function Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>교육 날짜 *</Label>
+                <Label>{t('schedule.dateRequired')}</Label>
                 <Input
                   type="date"
                   value={formData.session_date}
@@ -751,7 +756,7 @@ export default function Schedule() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>교육 시간</Label>
+                <Label>{t('schedule.time')}</Label>
                 <Input
                   type="time"
                   value={formData.session_time}
@@ -760,23 +765,23 @@ export default function Schedule() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>강사</Label>
+              <Label>{t('schedule.trainerLabel')}</Label>
               <Input
                 value={formData.trainer}
                 onChange={(e) => setFormData({ ...formData, trainer: e.target.value })}
-                placeholder="강사명"
+                placeholder={t('schedule.trainerPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>장소</Label>
+              <Label>{t('schedule.locationLabel')}</Label>
               <Input
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="교육 장소"
+                placeholder={t('schedule.locationPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>최대 참석자 수</Label>
+              <Label>{t('schedule.maxAttendees')}</Label>
               <Input
                 type="number"
                 value={formData.max_attendees}
@@ -784,11 +789,11 @@ export default function Schedule() {
               />
             </div>
             <div className="space-y-2">
-              <Label>메모</Label>
+              <Label>{t('schedule.memo')}</Label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="추가 메모"
+                placeholder={t('schedule.memoPlaceholder')}
               />
             </div>
           </div>
@@ -807,9 +812,9 @@ export default function Schedule() {
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>교육 취소</DialogTitle>
+            <DialogTitle>{t('schedule.cancelTitle')}</DialogTitle>
             <DialogDescription>
-              이 교육 세션을 취소하시겠습니까? 참석자들에게 알림이 전송됩니다.
+              {t('schedule.cancelDescription')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -817,7 +822,7 @@ export default function Schedule() {
               {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleCancelSession}>
-              교육 취소
+              {t('schedule.confirmCancel')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -827,7 +832,7 @@ export default function Schedule() {
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>교육 상세 정보</DialogTitle>
+            <DialogTitle>{t('schedule.detailTitle')}</DialogTitle>
             <DialogDescription>
               {selectedSession?.program_code}
             </DialogDescription>
@@ -836,13 +841,13 @@ export default function Schedule() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">프로그램</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.programLabel')}</p>
                   <p className="font-medium">
                     {programs.find(p => p.program_code === selectedSession.program_code)?.program_name || selectedSession.program_code}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">상태</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.statusLabel')}</p>
                   <Badge variant={getStatusBadgeVariant(selectedSession.status)}>
                     {selectedSession.status === 'PLANNED' ? t('session.planned') :
                      selectedSession.status === 'COMPLETED' ? t('session.completed') :
@@ -852,42 +857,42 @@ export default function Schedule() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">날짜</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.dateLabel')}</p>
                   <p className="font-medium">
-                    {format(new Date(selectedSession.session_date), 'yyyy년 M월 d일 (E)', { locale: getLocale() })}
+                    {format(new Date(selectedSession.session_date), 'PPP (E)', { locale: getLocale() })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">시간</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.timeLabel')}</p>
                   <p className="font-medium">{selectedSession.session_time}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">강사</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.trainerDetailLabel')}</p>
                   <p className="font-medium">{selectedSession.trainer || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">장소</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.locationDetailLabel')}</p>
                   <p className="font-medium">{selectedSession.location || '-'}</p>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">참석자</p>
+                <p className="text-sm text-muted-foreground">{t('schedule.attendeesLabel')}</p>
                 <p className="font-medium">
-                  {selectedSession.attendees.length} / {selectedSession.max_attendees}명
+                  {t('schedule.attendeesCount', { current: selectedSession.attendees.length, max: selectedSession.max_attendees })}
                 </p>
               </div>
               {selectedSession.notes && (
                 <div>
-                  <p className="text-sm text-muted-foreground">메모</p>
+                  <p className="text-sm text-muted-foreground">{t('schedule.memoLabel')}</p>
                   <p>{selectedSession.notes}</p>
                 </div>
               )}
             </div>
           )}
           <DialogFooter>
-            <Button onClick={() => setSelectedSession(null)}>닫기</Button>
+            <Button onClick={() => setSelectedSession(null)}>{t('common.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

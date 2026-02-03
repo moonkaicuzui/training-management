@@ -128,18 +128,19 @@ const NotificationIcon = ({ type }: { type: NotificationType }) => {
 
 // 우선순위 배지
 const PriorityBadge = ({ priority }: { priority: NotificationPriority }) => {
+  const { t } = useTranslation();
   const config: Record<NotificationPriority, { label: string; variant: 'default' | 'secondary' | 'warning' | 'destructive' }> = {
-    LOW: { label: '낮음', variant: 'secondary' },
-    MEDIUM: { label: '보통', variant: 'default' },
-    HIGH: { label: '높음', variant: 'warning' },
-    URGENT: { label: '긴급', variant: 'destructive' },
+    LOW: { label: t('notificationPage.priorityLow'), variant: 'secondary' },
+    MEDIUM: { label: t('notificationPage.priorityMedium'), variant: 'default' },
+    HIGH: { label: t('notificationPage.priorityHigh'), variant: 'warning' },
+    URGENT: { label: t('notificationPage.priorityUrgent'), variant: 'destructive' },
   };
   const { label, variant } = config[priority];
   return <Badge variant={variant}>{label}</Badge>;
 };
 
 export default function NotificationsPage() {
-  useTranslation();
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>(generateSampleNotifications);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -225,17 +226,17 @@ export default function NotificationsPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">알림 센터</h1>
-          <p className="text-muted-foreground">교육 일정 및 시스템 알림 관리</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('notificationPage.title')}</h1>
+          <p className="text-muted-foreground">{t('notificationPage.description')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setSettingsDialogOpen(true)}>
             <Settings className="h-4 w-4 mr-2" />
-            알림 설정
+            {t('notificationPage.settings')}
           </Button>
           <Button onClick={handleMarkAllAsRead} disabled={stats.unread === 0}>
             <MailOpen className="h-4 w-4 mr-2" />
-            모두 읽음 처리
+            {t('notificationPage.markAllRead')}
           </Button>
         </div>
       </div>
@@ -250,7 +251,7 @@ export default function NotificationsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">전체 알림</p>
+                <p className="text-xs text-muted-foreground">{t('notificationPage.totalNotifications')}</p>
               </div>
             </div>
           </CardContent>
@@ -263,7 +264,7 @@ export default function NotificationsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.unread}</p>
-                <p className="text-xs text-muted-foreground">읽지 않음</p>
+                <p className="text-xs text-muted-foreground">{t('notificationPage.unread')}</p>
               </div>
             </div>
           </CardContent>
@@ -276,7 +277,7 @@ export default function NotificationsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.urgent}</p>
-                <p className="text-xs text-muted-foreground">긴급 알림</p>
+                <p className="text-xs text-muted-foreground">{t('notificationPage.urgent')}</p>
               </div>
             </div>
           </CardContent>
@@ -289,7 +290,7 @@ export default function NotificationsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.today}</p>
-                <p className="text-xs text-muted-foreground">오늘 알림</p>
+                <p className="text-xs text-muted-foreground">{t('notificationPage.todayNotifications')}</p>
               </div>
             </div>
           </CardContent>
@@ -303,7 +304,7 @@ export default function NotificationsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="알림 검색..."
+                placeholder={t('notificationPage.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -314,13 +315,13 @@ export default function NotificationsPage() {
                 <SelectValue placeholder="유형" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 유형</SelectItem>
-                <SelectItem value="TRAINING_REMINDER">교육 일정</SelectItem>
-                <SelectItem value="EXPIRY_WARNING">만료 임박</SelectItem>
-                <SelectItem value="RETRAINING_REQUIRED">재교육 필요</SelectItem>
-                <SelectItem value="RESULT_AVAILABLE">결과 확인</SelectItem>
-                <SelectItem value="CERTIFICATE_READY">이수증 발급</SelectItem>
-                <SelectItem value="SYSTEM">시스템</SelectItem>
+                <SelectItem value="all">{t('notificationPage.allTypes')}</SelectItem>
+                <SelectItem value="TRAINING_REMINDER">{t('notificationPage.typeSchedule')}</SelectItem>
+                <SelectItem value="EXPIRY_WARNING">{t('notificationPage.typeExpiring')}</SelectItem>
+                <SelectItem value="RETRAINING_REQUIRED">{t('notificationPage.typeRetraining')}</SelectItem>
+                <SelectItem value="RESULT_AVAILABLE">{t('notificationPage.typeResult')}</SelectItem>
+                <SelectItem value="CERTIFICATE_READY">{t('notificationPage.typeCertificate')}</SelectItem>
+                <SelectItem value="SYSTEM">{t('notificationPage.typeSystem')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
@@ -328,11 +329,11 @@ export default function NotificationsPage() {
                 <SelectValue placeholder="우선순위" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="URGENT">긴급</SelectItem>
-                <SelectItem value="HIGH">높음</SelectItem>
-                <SelectItem value="MEDIUM">보통</SelectItem>
-                <SelectItem value="LOW">낮음</SelectItem>
+                <SelectItem value="all">{t('notificationPage.priorityAll')}</SelectItem>
+                <SelectItem value="URGENT">{t('notificationPage.priorityUrgent')}</SelectItem>
+                <SelectItem value="HIGH">{t('notificationPage.priorityHigh')}</SelectItem>
+                <SelectItem value="MEDIUM">{t('notificationPage.priorityMedium')}</SelectItem>
+                <SelectItem value="LOW">{t('notificationPage.priorityLow')}</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center gap-2">
@@ -340,7 +341,7 @@ export default function NotificationsPage() {
                 checked={showUnreadOnly}
                 onCheckedChange={setShowUnreadOnly}
               />
-              <Label>읽지 않은 알림만</Label>
+              <Label>{t('notificationPage.unreadOnly')}</Label>
             </div>
           </div>
         </CardContent>
@@ -352,15 +353,15 @@ export default function NotificationsPage() {
           <CardContent className="p-3">
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {selectedNotifications.size}개 선택됨
+                {t('notificationPage.selectedCount', { count: selectedNotifications.size })}
               </span>
               <Button size="sm" variant="outline" onClick={handleMarkSelectedAsRead}>
                 <MailOpen className="h-4 w-4 mr-1" />
-                읽음 처리
+                {t('notificationPage.markRead')}
               </Button>
               <Button size="sm" variant="outline" onClick={handleDeleteSelected}>
                 <Trash2 className="h-4 w-4 mr-1" />
-                삭제
+                {t('common.delete')}
               </Button>
             </div>
           </CardContent>
@@ -370,9 +371,9 @@ export default function NotificationsPage() {
       {/* 알림 목록 */}
       <Card>
         <CardHeader>
-          <CardTitle>알림 목록</CardTitle>
+          <CardTitle>{t('notificationPage.notificationList')}</CardTitle>
           <CardDescription>
-            총 {filteredNotifications.length}건의 알림
+            {t('notificationPage.totalCount', { count: filteredNotifications.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -385,12 +386,12 @@ export default function NotificationsPage() {
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>유형</TableHead>
-                <TableHead>제목</TableHead>
-                <TableHead>우선순위</TableHead>
-                <TableHead>일시</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead className="text-right">액션</TableHead>
+                <TableHead>{t('notificationPage.colType')}</TableHead>
+                <TableHead>{t('notificationPage.colTitle')}</TableHead>
+                <TableHead>{t('notificationPage.colPriority')}</TableHead>
+                <TableHead>{t('notificationPage.colDate')}</TableHead>
+                <TableHead>{t('notificationPage.colStatus')}</TableHead>
+                <TableHead className="text-right">{t('notificationPage.colActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -398,7 +399,7 @@ export default function NotificationsPage() {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    알림이 없습니다
+                    {t('notificationPage.emptyState')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -444,9 +445,9 @@ export default function NotificationsPage() {
                     </TableCell>
                     <TableCell>
                       {notification.is_read ? (
-                        <Badge variant="secondary">읽음</Badge>
+                        <Badge variant="secondary">{t('notificationPage.statusRead')}</Badge>
                       ) : (
-                        <Badge variant="default">새 알림</Badge>
+                        <Badge variant="default">{t('notificationPage.statusNew')}</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -481,17 +482,17 @@ export default function NotificationsPage() {
       <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>알림 설정</DialogTitle>
+            <DialogTitle>{t('notificationPage.settingsTitle')}</DialogTitle>
             <DialogDescription>
-              알림 수신 방법과 유형을 설정합니다
+              {t('notificationPage.settingsDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             <div className="space-y-4">
-              <h4 className="font-medium">수신 방법</h4>
+              <h4 className="font-medium">{t('notificationPage.receiveMethod')}</h4>
               <div className="flex items-center justify-between">
-                <Label htmlFor="email">이메일 알림</Label>
+                <Label htmlFor="email">{t('notificationPage.emailNotification')}</Label>
                 <Switch
                   id="email"
                   checked={settings.emailNotifications}
@@ -501,7 +502,7 @@ export default function NotificationsPage() {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="inapp">앱 내 알림</Label>
+                <Label htmlFor="inapp">{t('notificationPage.inAppNotification')}</Label>
                 <Switch
                   id="inapp"
                   checked={settings.inAppNotifications}
@@ -513,9 +514,9 @@ export default function NotificationsPage() {
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">알림 유형</h4>
+              <h4 className="font-medium">{t('notificationPage.notificationType')}</h4>
               <div className="flex items-center justify-between">
-                <Label htmlFor="training">교육 일정 알림</Label>
+                <Label htmlFor="training">{t('notificationPage.scheduleNotification')}</Label>
                 <Switch
                   id="training"
                   checked={settings.trainingReminder}
@@ -525,7 +526,7 @@ export default function NotificationsPage() {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="expiry">만료 임박 알림</Label>
+                <Label htmlFor="expiry">{t('notificationPage.expiringNotification')}</Label>
                 <Switch
                   id="expiry"
                   checked={settings.expiryWarning}
@@ -535,7 +536,7 @@ export default function NotificationsPage() {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="retraining">재교육 필요 알림</Label>
+                <Label htmlFor="retraining">{t('notificationPage.retrainingNotification')}</Label>
                 <Switch
                   id="retraining"
                   checked={settings.retrainingRequired}
@@ -547,7 +548,7 @@ export default function NotificationsPage() {
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">리마인더 시기</h4>
+              <h4 className="font-medium">{t('notificationPage.reminderTiming')}</h4>
               <p className="text-sm text-muted-foreground">
                 교육 시작 전 알림을 받을 시기를 선택하세요
               </p>
@@ -566,7 +567,7 @@ export default function NotificationsPage() {
                       }));
                     }}
                   >
-                    {days}일 전
+                    {t('notificationPage.daysBefore', { days })}
                   </Badge>
                 ))}
               </div>

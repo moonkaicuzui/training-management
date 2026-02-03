@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ExportDropdown } from '@/components/common/ExportDropdown';
+import { useExport } from '@/hooks/useExport';
 import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { VirtualTable, type VirtualTableColumn } from '@/components/common/VirtualTable';
@@ -32,6 +34,7 @@ export default function Employees() {
   const navigate = useNavigate();
   const { employees, loading } = useEmployeesData();
   const fetchEmployees = useNormalizedTrainingStore((state) => state.fetchEmployees);
+  const { exporting, exportExcel, exportPDF } = useExport();
 
   // URL 기반 필터 상태 관리
   const { filters, setFilter } = useUrlFilters({
@@ -143,10 +146,35 @@ export default function Employees() {
             {t('employee.description')}
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('employee.addEmployee')}
-        </Button>
+        <div className="flex gap-2">
+          <ExportDropdown
+            onExportExcel={() =>
+              exportExcel(employees as unknown as Record<string, unknown>[], {
+                sheetName: 'Employees',
+                filename: 'employees',
+              })
+            }
+            onExportPDF={() =>
+              exportPDF(
+                employees as unknown as Record<string, unknown>[],
+                [
+                  { header: t('employee.id'), dataKey: 'employee_id' },
+                  { header: t('employee.name'), dataKey: 'employee_name' },
+                  { header: t('employee.department'), dataKey: 'department' },
+                  { header: t('employee.position'), dataKey: 'position' },
+                  { header: t('employee.building'), dataKey: 'building' },
+                  { header: t('common.status'), dataKey: 'status' },
+                ],
+                { title: t('employee.title'), filename: 'employees' }
+              )
+            }
+            loading={exporting}
+          />
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('employee.addEmployee')}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

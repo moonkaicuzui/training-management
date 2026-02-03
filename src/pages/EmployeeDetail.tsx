@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, User, Building, Calendar, Award } from 'lucide-react';
@@ -37,21 +37,32 @@ export default function EmployeeDetail() {
     fetchEmployeeHistory,
   } = useTrainingStore();
 
+  // 데이터 로드 함수 메모이제이션
+  const loadEmployeeData = useCallback((employeeId: string) => {
+    fetchEmployee(employeeId);
+    fetchEmployeeHistory(employeeId);
+  }, [fetchEmployee, fetchEmployeeHistory]);
+
+  // 이전 ID 추적으로 불필요한 재로드 방지
+  const prevIdRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (id) {
-      fetchEmployee(id);
-      fetchEmployeeHistory(id);
+    if (id && id !== prevIdRef.current) {
+      prevIdRef.current = id;
+      loadEmployeeData(id);
     }
-  }, [id]);
+  }, [id, loadEmployeeData]);
 
   // Calculate working years (memo to avoid impure Date.now() during render)
   // Moved before conditional return to maintain hooks order
+  // 의존성 일관성 수정: selectedEmployee.hire_date 사용
+  const hireDate = selectedEmployee?.hire_date;
   const workingYears = useMemo(() => {
-    if (!selectedEmployee?.hire_date) return 0;
+    if (!hireDate) return 0;
     const now = new Date();
-    const hireDate = new Date(selectedEmployee.hire_date);
-    return Math.floor((now.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
-  }, [selectedEmployee?.hire_date]);
+    const hireDateObj = new Date(hireDate);
+    return Math.floor((now.getTime() - hireDateObj.getTime()) / (1000 * 60 * 60 * 24 * 365));
+  }, [hireDate]);
 
   if (loading.employees || !selectedEmployee) {
     return <PageLoading />;
@@ -128,14 +139,14 @@ export default function EmployeeDetail() {
               {format(new Date(selectedEmployee.hire_date), 'yyyy-MM-dd')}
             </div>
             <p className="text-xs text-muted-foreground">
-              {workingYears}년 근무
+              {t('employee.yearsWorking', { years: workingYears })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">교육 이수</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('employee.trainingCompletion')}</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -146,7 +157,7 @@ export default function EmployeeDetail() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              합격률{' '}
+              {t('employee.passRate')}{' '}
               {employeeHistory.length > 0
                 ? Math.round((passedResults.length / employeeHistory.length) * 100)
                 : 0}
@@ -157,11 +168,11 @@ export default function EmployeeDetail() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">평균 점수</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('employee.avgScore')}</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{avgScore}점</div>
+            <div className="text-xl font-bold">{t('employee.scoreUnit', { score: avgScore })}</div>
             <div className="flex gap-1 mt-1">
               {Object.entries(gradeDistribution).map(([grade, count]) => (
                 <Badge
@@ -190,18 +201,18 @@ export default function EmployeeDetail() {
         <CardHeader>
           <CardTitle>{t('employee.trainingHistory')}</CardTitle>
           <CardDescription>
-            모든 교육 이력이 표시됩니다. 이 데이터는 삭제할 수 없습니다.
+            {t('employee.historyDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">
             <TabsList>
-              <TabsTrigger value="all">전체 ({employeeHistory.length})</TabsTrigger>
+              <TabsTrigger value="all">{t('employee.allTab', { count: employeeHistory.length })}</TabsTrigger>
               <TabsTrigger value="pass">
-                합격 ({passedResults.length})
+                {t('employee.passTab', { count: passedResults.length })}
               </TabsTrigger>
               <TabsTrigger value="fail">
-                불합격 ({failedResults.length})
+                {t('employee.failTab', { count: failedResults.length })}
               </TabsTrigger>
             </TabsList>
 
@@ -243,7 +254,7 @@ function TrainingHistoryTable({
       <TableHeader>
         <TableRow>
           <TableHead>{t('training.date')}</TableHead>
-          <TableHead>프로그램</TableHead>
+          <TableHead>{t('common.program')}</TableHead>
           <TableHead className="text-center">{t('training.score')}</TableHead>
           <TableHead className="text-center">{t('training.grade')}</TableHead>
           <TableHead className="text-center">{t('training.result')}</TableHead>
@@ -261,7 +272,7 @@ function TrainingHistoryTable({
               <Badge variant="outline">{result.program_code}</Badge>
             </TableCell>
             <TableCell className="text-center font-medium">
-              {result.score !== null ? `${result.score}점` : '-'}
+              {result.score !== null ? t('employee.scoreUnit', { score: result.score }) : '-'}
             </TableCell>
             <TableCell className="text-center">
               {result.grade && (

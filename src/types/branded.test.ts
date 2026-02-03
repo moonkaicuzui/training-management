@@ -22,7 +22,9 @@ describe('Branded Types', () => {
     it('should return false for invalid formats', () => {
       expect(isEmployeeId('')).toBe(false);
       expect(isEmployeeId('123')).toBe(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(isEmployeeId(null as any)).toBe(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(isEmployeeId(undefined as any)).toBe(false);
     });
   });

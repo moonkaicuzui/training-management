@@ -155,11 +155,6 @@ test.describe('Role-Based Access Control (RBAC)', () => {
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
-      // Look for edit buttons
-      const editButton = page.locator(
-        'button:has-text("수정"), button:has-text("Edit"), [data-testid="edit-btn"]'
-      ).first();
-
       // Edit button visibility depends on role
       // Just verify page loads correctly
       const pageLoaded = page.locator('main, [role="main"]');

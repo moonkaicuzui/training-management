@@ -247,7 +247,7 @@ test.describe('Training Data Integrity', () => {
     );
 
     // Delete button should NOT be visible
-    const hasDelete = await deleteButton.first().isVisible().catch(() => false);
+    await deleteButton.first().isVisible().catch(() => false);
 
     // NO DELETE policy: delete should not be available
     // If there's a delete button, it might be for filtering/soft-actions, which is acceptable

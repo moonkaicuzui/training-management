@@ -43,11 +43,9 @@ test.describe('CAPA Dashboard', () => {
     // Vietnamese: "Phát hiện", "Điều tra", "Hành động", "Xác minh", "Đóng"
     const statusKeywords = ['discovery', 'investigation', 'action', 'verification', 'closed', '발견', '조사'];
 
-    let foundStatus = false;
     for (const keyword of statusKeywords) {
       const element = page.getByText(new RegExp(keyword, 'i')).first();
       if (await element.isVisible().catch(() => false)) {
-        foundStatus = true;
         break;
       }
     }
@@ -69,11 +67,11 @@ test.describe('CAPA List', () => {
 
     // Look for table or list container
     const table = page.locator('table, [role="table"], [data-testid="capa-list"], .capa-list');
-    const isTableVisible = await table.isVisible().catch(() => false);
+    await table.isVisible().catch(() => false);
 
     // Alternative: look for list items
     const listItems = page.locator('[data-testid="capa-item"], .capa-item, tr[data-id]');
-    const hasItems = await listItems.first().isVisible().catch(() => false);
+    await listItems.first().isVisible().catch(() => false);
 
     // At least one should be visible, or empty state
     expect(true).toBeTruthy(); // Graceful handling
@@ -87,10 +85,8 @@ test.describe('CAPA List', () => {
       page.locator('[data-testid="filter"], .filter-controls'),
     ];
 
-    let hasFilter = false;
     for (const element of filterElements) {
       if (await element.isVisible().catch(() => false)) {
-        hasFilter = true;
         break;
       }
     }

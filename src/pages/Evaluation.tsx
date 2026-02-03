@@ -199,7 +199,7 @@ const generateProgramStats = (evaluations: TrainingEvaluation[]): ProgramStats[]
 };
 
 export default function Evaluation() {
-  useTranslation();
+  const { t } = useTranslation();
   const [evaluations] = useState<TrainingEvaluation[]>(generateSampleEvaluations);
   const [programStats] = useState<ProgramStats[]>(() => generateProgramStats(evaluations));
   const [searchTerm, setSearchTerm] = useState('');
@@ -229,11 +229,11 @@ export default function Evaluation() {
   const pendingCount = evaluations.filter(e => e.status === 'pending').length;
 
   const getTypeLabel = (type: TrainingEvaluation['evaluationType']) => {
-    const labels = {
-      reaction: '반응 평가',
-      learning: '학습 평가',
-      behavior: '행동 평가',
-      results: '결과 평가',
+    const labels: Record<string, string> = {
+      reaction: t('evaluation.typeReaction'),
+      learning: t('evaluation.typeLearning'),
+      behavior: t('evaluation.typeBehavior'),
+      results: t('evaluation.typeResults'),
     };
     return labels[type];
   };
@@ -249,10 +249,10 @@ export default function Evaluation() {
   };
 
   const getStatusLabel = (status: TrainingEvaluation['status']) => {
-    const labels = {
-      pending: '대기',
-      submitted: '제출완료',
-      reviewed: '검토완료',
+    const labels: Record<string, string> = {
+      pending: t('evaluation.statusPending'),
+      submitted: t('evaluation.statusSubmitted'),
+      reviewed: t('evaluation.statusReviewed'),
     };
     return labels[status];
   };
@@ -280,16 +280,16 @@ export default function Evaluation() {
 
   const handleExportExcel = async () => {
     const exportData = filteredEvaluations.map(e => ({
-      '평가 ID': e.id,
-      '프로그램': e.programName,
-      '교육일': e.sessionDate,
-      '참가자': e.employeeName,
-      '부서': e.department,
-      '평가 유형': getTypeLabel(e.evaluationType),
-      '평균 점수': e.overallScore,
-      '상태': getStatusLabel(e.status),
-      '제출일': e.submittedAt.split('T')[0],
-      '피드백': e.feedback,
+      [t('evaluation.exportId')]: e.id,
+      [t('evaluation.programCol')]: e.programName,
+      [t('evaluation.exportTrainingDate')]: e.sessionDate,
+      [t('evaluation.participantCol')]: e.employeeName,
+      [t('evaluation.departmentCol')]: e.department,
+      [t('evaluation.exportType')]: getTypeLabel(e.evaluationType),
+      [t('evaluation.exportAvgScore')]: e.overallScore,
+      [t('evaluation.statusCol')]: getStatusLabel(e.status),
+      [t('evaluation.submittedDate')]: e.submittedAt.split('T')[0],
+      [t('evaluation.exportFeedback')]: e.feedback,
     }));
 
     // 동적 import로 xlsx 라이브러리 로드 (초기 번들 크기 감소)
@@ -297,7 +297,7 @@ export default function Evaluation() {
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '교육 평가');
+    XLSX.utils.book_append_sheet(wb, ws, t('evaluation.sheetName'));
     XLSX.writeFile(wb, `training_evaluations_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
@@ -322,19 +322,19 @@ export default function Evaluation() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">교육 효과성 평가</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('evaluation.title')}</h1>
           <p className="text-muted-foreground">
-            Kirkpatrick 4단계 모델 기반 교육 효과 측정
+            {t('evaluation.description')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportExcel}>
             <Download className="mr-2 h-4 w-4" />
-            엑셀 다운로드
+            {t('evaluation.exportExcel')}
           </Button>
           <Button onClick={() => setShowNewEvaluationDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            새 평가
+            {t('evaluation.newEvaluation')}
           </Button>
         </div>
       </div>
@@ -343,20 +343,20 @@ export default function Evaluation() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">전체 평가</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('evaluation.totalEvaluations')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalEvaluations}</div>
             <p className="text-xs text-muted-foreground">
-              {submittedCount}건 제출 완료
+              {t('evaluation.submittedCount', { count: submittedCount })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">평균 점수</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('evaluation.avgScore')}</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -369,7 +369,7 @@ export default function Evaluation() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">응답률</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('evaluation.responseRate')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -385,13 +385,13 @@ export default function Evaluation() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">대기 중</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('evaluation.pending')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
             <p className="text-xs text-muted-foreground">
-              평가 대기 건수
+              {t('evaluation.pendingCount')}
             </p>
           </CardContent>
         </Card>
@@ -400,10 +400,10 @@ export default function Evaluation() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">개요</TabsTrigger>
-          <TabsTrigger value="evaluations">평가 목록</TabsTrigger>
-          <TabsTrigger value="programs">프로그램별 분석</TabsTrigger>
-          <TabsTrigger value="criteria">평가 기준</TabsTrigger>
+          <TabsTrigger value="overview">{t('evaluation.overviewTab')}</TabsTrigger>
+          <TabsTrigger value="evaluations">{t('evaluation.evaluationsTab')}</TabsTrigger>
+          <TabsTrigger value="programs">{t('evaluation.programsTab')}</TabsTrigger>
+          <TabsTrigger value="criteria">{t('evaluation.criteriaTab')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -414,10 +414,10 @@ export default function Evaluation() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="h-5 w-5" />
-                  Kirkpatrick 4단계 평가
+                  {t('evaluation.kirkpatrickTitle')}
                 </CardTitle>
                 <CardDescription>
-                  교육 효과성 측정을 위한 4단계 모델
+                  {t('evaluation.kirkpatrickDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -425,7 +425,7 @@ export default function Evaluation() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ThumbsUp className="h-4 w-4 text-blue-500" />
-                      <span>Level 1: 반응 (Reaction)</span>
+                      <span>{t('evaluation.level1')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">4.2</span>
@@ -435,7 +435,7 @@ export default function Evaluation() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-green-500" />
-                      <span>Level 2: 학습 (Learning)</span>
+                      <span>{t('evaluation.level2')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">3.9</span>
@@ -445,7 +445,7 @@ export default function Evaluation() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-yellow-500" />
-                      <span>Level 3: 행동 (Behavior)</span>
+                      <span>{t('evaluation.level3')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">3.5</span>
@@ -455,7 +455,7 @@ export default function Evaluation() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Award className="h-4 w-4 text-purple-500" />
-                      <span>Level 4: 결과 (Results)</span>
+                      <span>{t('evaluation.level4')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">3.8</span>
@@ -471,7 +471,7 @@ export default function Evaluation() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  최근 평가
+                  {t('evaluation.recentEvaluations')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -503,7 +503,7 @@ export default function Evaluation() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ThumbsUp className="h-5 w-5 text-green-500" />
-                  최고 평가 프로그램
+                  {t('evaluation.topPrograms')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -528,7 +528,7 @@ export default function Evaluation() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ThumbsDown className="h-5 w-5 text-red-500" />
-                  개선 필요 프로그램
+                  {t('evaluation.needsImprovement')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -561,7 +561,7 @@ export default function Evaluation() {
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="프로그램, 참가자, 부서 검색..."
+                      placeholder={t('evaluation.searchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-8"
@@ -570,25 +570,25 @@ export default function Evaluation() {
                 </div>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="평가 유형" />
+                    <SelectValue placeholder={t('evaluation.typeFilter')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 유형</SelectItem>
-                    <SelectItem value="reaction">반응 평가</SelectItem>
-                    <SelectItem value="learning">학습 평가</SelectItem>
-                    <SelectItem value="behavior">행동 평가</SelectItem>
-                    <SelectItem value="results">결과 평가</SelectItem>
+                    <SelectItem value="all">{t('evaluation.allTypes')}</SelectItem>
+                    <SelectItem value="reaction">{t('evaluation.typeReaction')}</SelectItem>
+                    <SelectItem value="learning">{t('evaluation.typeLearning')}</SelectItem>
+                    <SelectItem value="behavior">{t('evaluation.typeBehavior')}</SelectItem>
+                    <SelectItem value="results">{t('evaluation.typeResults')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="상태" />
+                    <SelectValue placeholder={t('evaluation.statusFilter')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="pending">대기</SelectItem>
-                    <SelectItem value="submitted">제출완료</SelectItem>
-                    <SelectItem value="reviewed">검토완료</SelectItem>
+                    <SelectItem value="all">{t('evaluation.allStatuses')}</SelectItem>
+                    <SelectItem value="pending">{t('evaluation.statusPending')}</SelectItem>
+                    <SelectItem value="submitted">{t('evaluation.statusSubmitted')}</SelectItem>
+                    <SelectItem value="reviewed">{t('evaluation.statusReviewed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -601,14 +601,14 @@ export default function Evaluation() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>프로그램</TableHead>
-                    <TableHead>참가자</TableHead>
-                    <TableHead>부서</TableHead>
-                    <TableHead>평가 유형</TableHead>
-                    <TableHead>점수</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>제출일</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+                    <TableHead>{t('evaluation.programCol')}</TableHead>
+                    <TableHead>{t('evaluation.participantCol')}</TableHead>
+                    <TableHead>{t('evaluation.departmentCol')}</TableHead>
+                    <TableHead>{t('evaluation.typeCol')}</TableHead>
+                    <TableHead>{t('evaluation.scoreCol')}</TableHead>
+                    <TableHead>{t('evaluation.statusCol')}</TableHead>
+                    <TableHead>{t('evaluation.submittedDate')}</TableHead>
+                    <TableHead className="text-right">{t('evaluation.actionsCol')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -657,9 +657,9 @@ export default function Evaluation() {
         <TabsContent value="programs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>프로그램별 평가 분석</CardTitle>
+              <CardTitle>{t('evaluation.programAnalysis')}</CardTitle>
               <CardDescription>
-                각 교육 프로그램의 효과성을 Kirkpatrick 모델 기준으로 분석합니다
+                {t('evaluation.programAnalysisDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -676,7 +676,7 @@ export default function Evaluation() {
                         <div>
                           <p className="font-medium">{program.programName}</p>
                           <p className="text-sm text-muted-foreground">
-                            {program.totalEvaluations}건 평가 · 응답률 {program.completionRate}%
+                            {t('evaluation.evaluationCount', { count: program.totalEvaluations, rate: program.completionRate })}
                           </p>
                         </div>
                       </div>
@@ -694,28 +694,28 @@ export default function Evaluation() {
                         <div className="grid gap-4 md:grid-cols-4">
                           <div className="text-center p-4 bg-background rounded-lg">
                             <ThumbsUp className="h-6 w-6 mx-auto text-blue-500 mb-2" />
-                            <p className="text-sm text-muted-foreground">반응</p>
+                            <p className="text-sm text-muted-foreground">{t('evaluation.reaction')}</p>
                             <p className={`text-xl font-bold ${getScoreColor(program.reactionScore)}`}>
                               {program.reactionScore || '-'}
                             </p>
                           </div>
                           <div className="text-center p-4 bg-background rounded-lg">
                             <BarChart3 className="h-6 w-6 mx-auto text-green-500 mb-2" />
-                            <p className="text-sm text-muted-foreground">학습</p>
+                            <p className="text-sm text-muted-foreground">{t('evaluation.learning')}</p>
                             <p className={`text-xl font-bold ${getScoreColor(program.learningScore)}`}>
                               {program.learningScore || '-'}
                             </p>
                           </div>
                           <div className="text-center p-4 bg-background rounded-lg">
                             <TrendingUp className="h-6 w-6 mx-auto text-yellow-500 mb-2" />
-                            <p className="text-sm text-muted-foreground">행동</p>
+                            <p className="text-sm text-muted-foreground">{t('evaluation.behavior')}</p>
                             <p className={`text-xl font-bold ${getScoreColor(program.behaviorScore)}`}>
                               {program.behaviorScore || '-'}
                             </p>
                           </div>
                           <div className="text-center p-4 bg-background rounded-lg">
                             <Award className="h-6 w-6 mx-auto text-purple-500 mb-2" />
-                            <p className="text-sm text-muted-foreground">결과</p>
+                            <p className="text-sm text-muted-foreground">{t('evaluation.results')}</p>
                             <p className={`text-xl font-bold ${getScoreColor(program.resultsScore)}`}>
                               {program.resultsScore || '-'}
                             </p>
@@ -734,19 +734,19 @@ export default function Evaluation() {
         <TabsContent value="criteria" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>평가 기준 관리</CardTitle>
+              <CardTitle>{t('evaluation.criteriaManagement')}</CardTitle>
               <CardDescription>
-                교육 평가에 사용되는 평가 기준과 가중치를 관리합니다
+                {t('evaluation.criteriaManagementDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>평가 항목</TableHead>
-                    <TableHead>설명</TableHead>
-                    <TableHead>가중치</TableHead>
-                    <TableHead>평균 점수</TableHead>
+                    <TableHead>{t('evaluation.criteriaItem')}</TableHead>
+                    <TableHead>{t('evaluation.criteriaDescription')}</TableHead>
+                    <TableHead>{t('evaluation.criteriaWeight')}</TableHead>
+                    <TableHead>{t('evaluation.criteriaAvgScore')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -779,7 +779,7 @@ export default function Evaluation() {
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>평가 상세</DialogTitle>
+            <DialogTitle>{t('evaluation.detailTitle')}</DialogTitle>
             <DialogDescription>
               {selectedEvaluation?.programName} - {selectedEvaluation?.employeeName}
             </DialogDescription>
@@ -788,29 +788,29 @@ export default function Evaluation() {
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="text-muted-foreground">프로그램</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.programLabel')}</Label>
                   <p className="font-medium">{selectedEvaluation.programName}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">교육일</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.trainingDateLabel')}</Label>
                   <p className="font-medium">{selectedEvaluation.sessionDate}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">참가자</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.participantLabel')}</Label>
                   <p className="font-medium">{selectedEvaluation.employeeName}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">부서</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.departmentLabel')}</Label>
                   <p className="font-medium">{selectedEvaluation.department}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">평가 유형</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.typeLabel')}</Label>
                   <Badge variant={getTypeBadgeVariant(selectedEvaluation.evaluationType)}>
                     {getTypeLabel(selectedEvaluation.evaluationType)}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">상태</Label>
+                  <Label className="text-muted-foreground">{t('evaluation.statusLabel')}</Label>
                   <Badge variant={getStatusBadgeVariant(selectedEvaluation.status)}>
                     {getStatusLabel(selectedEvaluation.status)}
                   </Badge>
@@ -818,7 +818,7 @@ export default function Evaluation() {
               </div>
 
               <div>
-                <Label className="text-muted-foreground mb-2 block">평가 응답</Label>
+                <Label className="text-muted-foreground mb-2 block">{t('evaluation.responsesLabel')}</Label>
                 <div className="space-y-3">
                   {selectedEvaluation.responses.map((response) => {
                     const criteria = evaluationCriteria.find(c => c.id === response.criteriaId);
@@ -833,14 +833,14 @@ export default function Evaluation() {
               </div>
 
               <div>
-                <Label className="text-muted-foreground">종합 점수</Label>
+                <Label className="text-muted-foreground">{t('evaluation.overallScore')}</Label>
                 <div className="mt-2">
                   {renderStars(selectedEvaluation.overallScore)}
                 </div>
               </div>
 
               <div>
-                <Label className="text-muted-foreground">피드백</Label>
+                <Label className="text-muted-foreground">{t('evaluation.feedbackLabel')}</Label>
                 <p className="mt-1 p-3 bg-muted rounded-lg">
                   {selectedEvaluation.feedback}
                 </p>
@@ -849,7 +849,7 @@ export default function Evaluation() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
-              닫기
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -859,18 +859,18 @@ export default function Evaluation() {
       <Dialog open={showNewEvaluationDialog} onOpenChange={setShowNewEvaluationDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>새 평가 생성</DialogTitle>
+            <DialogTitle>{t('evaluation.createTitle')}</DialogTitle>
             <DialogDescription>
-              교육 프로그램에 대한 새 평가를 생성합니다
+              {t('evaluation.createDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>프로그램 선택</Label>
+                <Label>{t('evaluation.selectProgram')}</Label>
                 <Select>
                   <SelectTrigger>
-                    <SelectValue placeholder="프로그램 선택" />
+                    <SelectValue placeholder={t('evaluation.selectProgram')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prg1">품질관리 기초</SelectItem>
@@ -880,25 +880,25 @@ export default function Evaluation() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>평가 유형</Label>
+                <Label>{t('evaluation.typeLabel')}</Label>
                 <Select>
                   <SelectTrigger>
-                    <SelectValue placeholder="평가 유형 선택" />
+                    <SelectValue placeholder={t('evaluation.selectType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="reaction">반응 평가</SelectItem>
-                    <SelectItem value="learning">학습 평가</SelectItem>
-                    <SelectItem value="behavior">행동 평가</SelectItem>
-                    <SelectItem value="results">결과 평가</SelectItem>
+                    <SelectItem value="reaction">{t('evaluation.typeReaction')}</SelectItem>
+                    <SelectItem value="learning">{t('evaluation.typeLearning')}</SelectItem>
+                    <SelectItem value="behavior">{t('evaluation.typeBehavior')}</SelectItem>
+                    <SelectItem value="results">{t('evaluation.typeResults')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>대상 세션</Label>
+              <Label>{t('evaluation.targetSession')}</Label>
               <Select>
                 <SelectTrigger>
-                  <SelectValue placeholder="세션 선택" />
+                  <SelectValue placeholder={t('evaluation.selectSession')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ses1">2024-01-15 오전 세션</SelectItem>
@@ -909,24 +909,24 @@ export default function Evaluation() {
             <div className="space-y-2">
               <Label>
                 <Calendar className="inline h-4 w-4 mr-1" />
-                마감일
+                {t('evaluation.deadline')}
               </Label>
               <Input type="date" />
             </div>
             <div className="space-y-2">
-              <Label>안내 메시지</Label>
+              <Label>{t('evaluation.message')}</Label>
               <Textarea
-                placeholder="평가 참여 안내 메시지를 입력하세요..."
+                placeholder={t('evaluation.messagePlaceholder')}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewEvaluationDialog(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={() => setShowNewEvaluationDialog(false)}>
-              평가 생성
+              {t('evaluation.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -67,7 +67,7 @@ const initialFormData: FormData = {
 };
 
 export default function CAPAForm() {
-  const { t: _t } = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
@@ -88,6 +88,7 @@ export default function CAPAForm() {
   // Populate form when editing
   useEffect(() => {
     if (currentCAPA && isEditing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 편집 모드 초기화
       setFormData({
         title: currentCAPA.title,
         description: currentCAPA.description,

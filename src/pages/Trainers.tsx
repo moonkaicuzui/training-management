@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
 import {
   Users,
@@ -137,6 +138,7 @@ function TrainerFormDialog({
   onClose: () => void;
   trainer?: TrainerWithStats | null;
 }) {
+  const { t } = useTranslation();
   const isEdit = !!trainer;
   const [formData, setFormData] = useState({
     trainer_name: trainer?.trainer_name || '',
@@ -158,24 +160,24 @@ function TrainerFormDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? '강사 정보 수정' : '신규 강사 등록'}</DialogTitle>
+          <DialogTitle>{isEdit ? t('trainers.editTrainer') : t('trainers.addTrainer')}</DialogTitle>
           <DialogDescription>
-            {isEdit ? '강사 정보를 수정합니다.' : '새로운 강사를 등록합니다.'}
+            {isEdit ? t('trainers.editDescription') : t('trainers.addDescription')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>강사명 *</Label>
+              <Label>{t('trainers.nameRequired')}</Label>
               <Input
                 value={formData.trainer_name}
                 onChange={(e) => setFormData({ ...formData, trainer_name: e.target.value })}
-                placeholder="강사 이름"
+                placeholder={t('trainers.namePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>유형 *</Label>
+              <Label>{t('trainers.typeRequired')}</Label>
               <Select
                 value={formData.trainer_type}
                 onValueChange={(value: TrainerType) => setFormData({ ...formData, trainer_type: value })}
@@ -184,8 +186,8 @@ function TrainerFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INTERNAL">내부 강사</SelectItem>
-                  <SelectItem value="EXTERNAL">외부 강사</SelectItem>
+                  <SelectItem value="INTERNAL">{t('trainers.internal')}</SelectItem>
+                  <SelectItem value="EXTERNAL">{t('trainers.external')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -193,13 +195,13 @@ function TrainerFormDialog({
 
           {formData.trainer_type === 'INTERNAL' ? (
             <div className="space-y-2">
-              <Label>소속 부서</Label>
+              <Label>{t('trainers.department')}</Label>
               <Select
                 value={formData.department}
                 onValueChange={(value) => setFormData({ ...formData, department: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="부서 선택" />
+                  <SelectValue placeholder={t('trainers.departmentPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="QIP">QIP</SelectItem>
@@ -211,28 +213,28 @@ function TrainerFormDialog({
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>소속 회사</Label>
+              <Label>{t('trainers.company')}</Label>
               <Input
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                placeholder="소속 회사명"
+                placeholder={t('trainers.companyPlaceholder')}
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label>전문 분야 (쉼표로 구분)</Label>
+            <Label>{t('trainers.specialty')}</Label>
             <Textarea
               value={formData.specializations}
               onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
-              placeholder="품질관리, SPC, 검사기법"
+              placeholder={t('trainers.specialtyPlaceholder')}
               rows={2}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>이메일</Label>
+              <Label>{t('trainers.email')}</Label>
               <Input
                 type="email"
                 value={formData.email}
@@ -241,7 +243,7 @@ function TrainerFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>연락처</Label>
+              <Label>{t('trainers.phone')}</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -251,21 +253,21 @@ function TrainerFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>자격증 (쉼표로 구분)</Label>
+            <Label>{t('trainers.certifications')}</Label>
             <Input
               value={formData.certifications}
               onChange={(e) => setFormData({ ...formData, certifications: e.target.value })}
-              placeholder="자격증 또는 인증 정보"
+              placeholder={t('trainers.certificationsPlaceholder')}
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            취소
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit}>
-            {isEdit ? '수정' : '등록'}
+            {isEdit ? t('common.edit') : t('trainers.register')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -274,6 +276,7 @@ function TrainerFormDialog({
 }
 
 export default function TrainersPage() {
+  const { t } = useTranslation();
   const [trainers] = useState<TrainerWithStats[]>(sampleTrainers);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -320,12 +323,12 @@ export default function TrainersPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">강사 관리</h1>
-          <p className="text-muted-foreground">교육 강사 등록 및 관리</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('trainers.title')}</h1>
+          <p className="text-muted-foreground">{t('trainers.description')}</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="h-4 w-4 mr-2" />
-          신규 강사 등록
+          {t('trainers.addTrainer')}
         </Button>
       </div>
 
@@ -339,7 +342,7 @@ export default function TrainersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">전체 강사</p>
+                <p className="text-xs text-muted-foreground">{t('trainers.totalTrainers')}</p>
               </div>
             </div>
           </CardContent>
@@ -352,7 +355,7 @@ export default function TrainersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.internal}</p>
-                <p className="text-xs text-muted-foreground">내부 강사</p>
+                <p className="text-xs text-muted-foreground">{t('trainers.internalTrainers')}</p>
               </div>
             </div>
           </CardContent>
@@ -365,7 +368,7 @@ export default function TrainersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.external}</p>
-                <p className="text-xs text-muted-foreground">외부 강사</p>
+                <p className="text-xs text-muted-foreground">{t('trainers.externalTrainers')}</p>
               </div>
             </div>
           </CardContent>
@@ -378,7 +381,7 @@ export default function TrainersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.active}</p>
-                <p className="text-xs text-muted-foreground">활성 강사</p>
+                <p className="text-xs text-muted-foreground">{t('trainers.activeTrainers')}</p>
               </div>
             </div>
           </CardContent>
@@ -392,7 +395,7 @@ export default function TrainersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="강사명 또는 전문분야 검색..."
+                placeholder={t('trainers.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -400,22 +403,22 @@ export default function TrainersPage() {
             </div>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="유형" />
+                <SelectValue placeholder={t('trainers.type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 유형</SelectItem>
-                <SelectItem value="INTERNAL">내부 강사</SelectItem>
-                <SelectItem value="EXTERNAL">외부 강사</SelectItem>
+                <SelectItem value="all">{t('trainers.allTypes')}</SelectItem>
+                <SelectItem value="INTERNAL">{t('trainers.internalTrainers')}</SelectItem>
+                <SelectItem value="EXTERNAL">{t('trainers.externalTrainers')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="상태" />
+                <SelectValue placeholder={t('common.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 상태</SelectItem>
-                <SelectItem value="ACTIVE">활성</SelectItem>
-                <SelectItem value="INACTIVE">비활성</SelectItem>
+                <SelectItem value="all">{t('trainers.allStatuses')}</SelectItem>
+                <SelectItem value="ACTIVE">{t('common.active')}</SelectItem>
+                <SelectItem value="INACTIVE">{t('common.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -425,24 +428,24 @@ export default function TrainersPage() {
       {/* 강사 목록 */}
       <Card>
         <CardHeader>
-          <CardTitle>강사 목록</CardTitle>
+          <CardTitle>{t('trainers.trainerList')}</CardTitle>
           <CardDescription>
-            등록된 강사 {filteredTrainers.length}명
+            {t('trainers.registeredCount', { count: filteredTrainers.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>강사명</TableHead>
-                <TableHead>유형</TableHead>
-                <TableHead>소속</TableHead>
-                <TableHead>전문분야</TableHead>
-                <TableHead>연락처</TableHead>
-                <TableHead>교육횟수</TableHead>
-                <TableHead>평점</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead className="text-right">액션</TableHead>
+                <TableHead>{t('trainers.trainerName')}</TableHead>
+                <TableHead>{t('trainers.type')}</TableHead>
+                <TableHead>{t('trainers.affiliation')}</TableHead>
+                <TableHead>{t('trainers.specialty')}</TableHead>
+                <TableHead>{t('trainers.phone')}</TableHead>
+                <TableHead>{t('trainers.sessionCount')}</TableHead>
+                <TableHead>{t('trainers.rating')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -450,7 +453,7 @@ export default function TrainersPage() {
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    등록된 강사가 없습니다
+                    {t('trainers.emptyState')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -469,7 +472,7 @@ export default function TrainersPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={trainer.trainer_type === 'INTERNAL' ? 'default' : 'secondary'}>
-                        {trainer.trainer_type === 'INTERNAL' ? '내부' : '외부'}
+                        {trainer.trainer_type === 'INTERNAL' ? t('trainers.internalShort') : t('trainers.externalShort')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -506,7 +509,7 @@ export default function TrainersPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      {trainer.total_sessions || 0}회
+                      {trainer.total_sessions || 0}{t('trainers.sessionUnit')}
                     </TableCell>
                     <TableCell>
                       {trainer.average_rating && (
@@ -518,7 +521,7 @@ export default function TrainersPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={trainer.status === 'ACTIVE' ? 'success' : 'secondary'}>
-                        {trainer.status === 'ACTIVE' ? '활성' : '비활성'}
+                        {trainer.status === 'ACTIVE' ? t('common.active') : t('common.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -531,16 +534,16 @@ export default function TrainersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(trainer)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            수정
+                            {t('common.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <FileText className="h-4 w-4 mr-2" />
-                            교육 이력
+                            {t('trainers.trainingHistory')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
-                            삭제
+                            {t('common.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

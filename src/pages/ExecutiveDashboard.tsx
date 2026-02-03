@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useCallback, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TrendingUp,
   TrendingDown,
@@ -133,6 +134,7 @@ const benchmarkData: BenchmarkMetric[] = [
 
 // KPI 카드 컴포넌트
 const KPICard = memo(function KPICard({ kpi }: { kpi: ExecutiveKPI }) {
+  const { t } = useTranslation();
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     'completion-rate': Award,
     'qualification-rate': Users,
@@ -173,8 +175,7 @@ const KPICard = memo(function KPICard({ kpi }: { kpi: ExecutiveKPI }) {
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-muted-foreground">
-            목표: {kpi.target}
-            {kpi.unit}
+            {t('executive.kpiTarget', { target: kpi.target, unit: kpi.unit })}
           </span>
           {getTrendBadge()}
         </div>
@@ -190,6 +191,7 @@ const BenchmarkItem = memo(function BenchmarkItem({
 }: {
   metric: BenchmarkMetric;
 }) {
+  const { t } = useTranslation();
   const achievementRate = Math.min(100, (metric.current / metric.target) * 100);
   const vsIndustry = metric.lowerIsBetter
     ? metric.industryAvg - metric.current
@@ -215,13 +217,12 @@ const BenchmarkItem = memo(function BenchmarkItem({
                   : 'destructive'
             }
           >
-            {status === 'achieved' ? '달성' : status === 'on-track' ? '진행중' : '미달'}
+            {status === 'achieved' ? t('executive.benchStatusAchieved') : status === 'on-track' ? t('executive.benchStatusInProgress') : t('executive.benchStatusBelow')}
           </Badge>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">
-            목표: {metric.target}
-            {metric.unit}
+            {t('executive.kpiTarget', { target: metric.target, unit: metric.unit })}
           </span>
           <span className="font-bold text-lg">
             {metric.current}

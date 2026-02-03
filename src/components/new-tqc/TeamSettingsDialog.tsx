@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -179,34 +179,40 @@ interface TeamFormDialogProps {
   isSaving?: boolean;
 }
 
-function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDialogProps) {
-  const isEdit = !!team;
-  const [formData, setFormData] = useState<NewTQCTeamInput>({
+// 초기 폼 데이터 계산 함수
+function getInitialTeamFormData(team: NewTQCTeam | null): NewTQCTeamInput {
+  if (team) {
+    return {
+      team_name: team.team_name,
+      team_name_vn: team.team_name_vn,
+      factory: team.factory,
+      line: team.line,
+    };
+  }
+  return {
     team_name: '',
     team_name_vn: undefined,
     factory: undefined,
     line: undefined,
-  });
+  };
+}
+
+function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDialogProps) {
+  const isEdit = !!team;
+
+  // 초기값으로 폼 데이터 설정
+  const [formData, setFormData] = useState<NewTQCTeamInput>(() => getInitialTeamFormData(team));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (team) {
-      setFormData({
-        team_name: team.team_name,
-        team_name_vn: team.team_name_vn,
-        factory: team.factory,
-        line: team.line,
-      });
-    } else {
-      setFormData({
-        team_name: '',
-        team_name_vn: undefined,
-        factory: undefined,
-        line: undefined,
-      });
-    }
+  // team이 변경될 때 폼 리셋 (useEffect 대신 조건부 상태 업데이트 사용)
+  const teamId = team?.team_id ?? 'new';
+  const [lastTeamId, setLastTeamId] = useState(teamId);
+
+  if (teamId !== lastTeamId) {
+    setFormData(getInitialTeamFormData(team));
     setErrors({});
-  }, [team, open]);
+    setLastTeamId(teamId);
+  }
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};

@@ -29,6 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LazyBarChart, LazyPieChart } from '@/components/charts/LazyCharts';
+import { KPICard } from '@/components/dashboard/KPICard';
 import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -62,11 +63,14 @@ export default function Dashboard() {
   const expiringTrainings = derived.retraining.expiring;
 
   const [error, setError] = useState<string | null>(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
+  // 초기 데이터 로드 (한 번만 실행)
   useEffect(() => {
-    const fetchAllData = async () => {
+    if (isDataLoaded) return;
+
+    const loadData = async () => {
       try {
-        setError(null);
         // 병렬로 모든 데이터 가져오기 (성능 개선)
         await Promise.all([
           fetchDashboardStats(),
@@ -75,12 +79,15 @@ export default function Dashboard() {
           fetchRetrainingTargets(),
           fetchExpiringTrainings(30),
         ]);
+        setIsDataLoaded(true);
       } catch (err) {
         console.error('Dashboard data fetch error:', err);
         setError(t('messages.loadError'));
       }
     };
-    fetchAllData();
+
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading.views.dashboard) {
@@ -100,7 +107,11 @@ export default function Dashboard() {
     );
   }
 
-  const stats = [
+  // Generate sparkline data from monthly data
+  const completionSparkline = monthlyData.map((m) => m.completed);
+  const plannedSparkline = monthlyData.map((m) => m.planned);
+
+  const kpiCards = [
     {
       title: t('dashboard.totalEmployees'),
       value: dashboardStats?.totalEmployees ?? 0,
@@ -108,7 +119,8 @@ export default function Dashboard() {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       link: '/employees',
-      trend: null, // Could add month-over-month change
+      trend: null as number | null,
+      sparklineData: undefined as number[] | undefined,
     },
     {
       title: t('dashboard.monthlyCompletions'),
@@ -117,7 +129,8 @@ export default function Dashboard() {
       color: 'text-status-pass',
       bgColor: 'bg-status-pass/10',
       link: '/results',
-      trend: null,
+      trend: null as number | null,
+      sparklineData: completionSparkline.length > 1 ? completionSparkline : undefined,
     },
     {
       title: t('dashboard.completionRate'),
@@ -126,7 +139,8 @@ export default function Dashboard() {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       link: '/results',
-      trend: null,
+      trend: null as number | null,
+      sparklineData: plannedSparkline.length > 1 ? plannedSparkline : undefined,
     },
     {
       title: t('dashboard.retrainingNeeded'),
@@ -135,7 +149,8 @@ export default function Dashboard() {
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
       link: '/retraining',
-      trend: null,
+      trend: null as number | null,
+      sparklineData: undefined as number[] | undefined,
     },
   ];
 
@@ -161,35 +176,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* KPI Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <Card
+        {kpiCards.map((stat, index) => (
+          <KPICard
             key={index}
-            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 group"
-            onClick={() => navigate(stat.link)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && navigate(stat.link)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-full ${stat.bgColor} group-hover:scale-110 transition-transform`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              {stat.trend !== null && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  <span className={stat.trend > 0 ? 'text-status-pass' : 'text-destructive'}>
-                    {stat.trend > 0 ? '↑' : '↓'} {Math.abs(stat.trend)}%
-                  </span>
-                  {' '}{t('dashboard.fromLastMonth')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            bgColor={stat.bgColor}
+            link={stat.link}
+            trend={stat.trend}
+            sparklineData={stat.sparklineData}
+          />
         ))}
       </div>
 

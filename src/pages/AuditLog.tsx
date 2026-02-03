@@ -110,6 +110,7 @@ function LogDetailDialog({
   onClose: () => void;
   log: AuditLogEntry | null;
 }) {
+  const { t } = useTranslation();
   if (!log) return null;
 
   return (
@@ -118,10 +119,10 @@ function LogDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            감사 로그 상세
+            {t('auditLog.detailTitle')}
           </DialogTitle>
           <DialogDescription>
-            로그 ID: {log.log_id}
+            {t('auditLog.logId')}: {log.log_id}
           </DialogDescription>
         </DialogHeader>
 
@@ -129,12 +130,12 @@ function LogDetailDialog({
           {/* 기본 정보 */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">기본 정보</CardTitle>
+              <CardTitle className="text-sm">{t('auditLog.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">작업 유형</p>
+                  <p className="text-muted-foreground">{t('auditLog.actionType')}</p>
                   <Badge variant={
                     log.action === 'CREATE' ? 'success' :
                     log.action === 'UPDATE' ? 'warning' :
@@ -144,23 +145,23 @@ function LogDetailDialog({
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">대상 유형</p>
+                  <p className="text-muted-foreground">{t('auditLog.entityType')}</p>
                   <p className="font-medium">{log.entity_type}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">대상 ID</p>
+                  <p className="text-muted-foreground">{t('auditLog.targetId')}</p>
                   <p className="font-mono">{log.entity_id}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">작업자</p>
+                  <p className="text-muted-foreground">{t('auditLog.operatorLabel')}</p>
                   <p className="font-medium">{log.changed_by}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">작업 일시</p>
+                  <p className="text-muted-foreground">{t('auditLog.operatedAt')}</p>
                   <p>{format(new Date(log.changed_at), 'yyyy-MM-dd HH:mm:ss')}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">IP 주소</p>
+                  <p className="text-muted-foreground">{t('auditLog.ipAddress')}</p>
                   <p className="font-mono">{log.ip_address || '-'}</p>
                 </div>
               </div>
@@ -171,7 +172,7 @@ function LogDetailDialog({
           {log.reason && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">변경 사유</CardTitle>
+                <CardTitle className="text-sm">{t('auditLog.changeReason')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm">{log.reason}</p>
@@ -183,16 +184,16 @@ function LogDetailDialog({
           {(log.before_data || log.after_data) && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">변경 내역</CardTitle>
+                <CardTitle className="text-sm">{t('auditLog.changeHistory')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="after">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="before" disabled={!log.before_data}>
-                      변경 전
+                      {t('auditLog.beforeChange')}
                     </TabsTrigger>
                     <TabsTrigger value="after" disabled={!log.after_data}>
-                      변경 후
+                      {t('auditLog.afterChange')}
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="before" className="mt-2">
@@ -214,7 +215,7 @@ function LogDetailDialog({
           {log.user_agent && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">클라이언트 정보</CardTitle>
+                <CardTitle className="text-sm">{t('auditLog.clientInfo')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground break-all">{log.user_agent}</p>
@@ -228,7 +229,7 @@ function LogDetailDialog({
 }
 
 export default function AuditLogPage() {
-  useTranslation();
+  const { t } = useTranslation();
   const [logs] = useState<AuditLogEntry[]>(generateSampleLogs);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntityType, setSelectedEntityType] = useState<string>('all');
@@ -311,12 +312,12 @@ export default function AuditLogPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">감사 로그</h1>
-          <p className="text-muted-foreground">시스템 활동 및 변경 이력 조회</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('auditLog.title')}</h1>
+          <p className="text-muted-foreground">{t('auditLog.description')}</p>
         </div>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
-          로그 내보내기
+          {t('auditLog.exportLogs')}
         </Button>
       </div>
 
@@ -330,7 +331,7 @@ export default function AuditLogPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">전체 활동</p>
+                <p className="text-xs text-muted-foreground">{t('auditLog.totalActivities')}</p>
               </div>
             </div>
           </CardContent>
@@ -343,7 +344,7 @@ export default function AuditLogPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.creates}</p>
-                <p className="text-xs text-muted-foreground">생성</p>
+                <p className="text-xs text-muted-foreground">{t('auditLog.created')}</p>
               </div>
             </div>
           </CardContent>
@@ -356,7 +357,7 @@ export default function AuditLogPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.updates}</p>
-                <p className="text-xs text-muted-foreground">수정</p>
+                <p className="text-xs text-muted-foreground">{t('auditLog.updated')}</p>
               </div>
             </div>
           </CardContent>
@@ -369,7 +370,7 @@ export default function AuditLogPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.deletes}</p>
-                <p className="text-xs text-muted-foreground">삭제</p>
+                <p className="text-xs text-muted-foreground">{t('auditLog.deleted')}</p>
               </div>
             </div>
           </CardContent>
@@ -382,7 +383,7 @@ export default function AuditLogPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.uniqueUsers}</p>
-                <p className="text-xs text-muted-foreground">활동 사용자</p>
+                <p className="text-xs text-muted-foreground">{t('auditLog.activeUsers')}</p>
               </div>
             </div>
           </CardContent>
@@ -396,7 +397,7 @@ export default function AuditLogPage() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="로그 ID, 대상 ID, 사용자로 검색..."
+                placeholder={t('auditLog.searchPlaceholder')}
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -404,38 +405,38 @@ export default function AuditLogPage() {
             </div>
             <Select value={selectedEntityType} onValueChange={setSelectedEntityType}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="대상 유형" />
+                <SelectValue placeholder={t('auditLog.entityType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 유형</SelectItem>
-                <SelectItem value="PROGRAM">프로그램</SelectItem>
-                <SelectItem value="RESULT">교육 결과</SelectItem>
-                <SelectItem value="SESSION">교육 세션</SelectItem>
-                <SelectItem value="EMPLOYEE">직원</SelectItem>
+                <SelectItem value="all">{t('auditLog.allEntityTypes')}</SelectItem>
+                <SelectItem value="PROGRAM">{t('auditLog.entityProgram')}</SelectItem>
+                <SelectItem value="RESULT">{t('auditLog.entityResult')}</SelectItem>
+                <SelectItem value="SESSION">{t('auditLog.entitySession')}</SelectItem>
+                <SelectItem value="EMPLOYEE">{t('auditLog.entityEmployee')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedAction} onValueChange={setSelectedAction}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="작업 유형" />
+                <SelectValue placeholder={t('auditLog.actionType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 작업</SelectItem>
-                <SelectItem value="CREATE">생성</SelectItem>
-                <SelectItem value="UPDATE">수정</SelectItem>
-                <SelectItem value="DELETE">삭제</SelectItem>
-                <SelectItem value="VIEW">조회</SelectItem>
-                <SelectItem value="EXPORT">내보내기</SelectItem>
+                <SelectItem value="all">{t('auditLog.allActions')}</SelectItem>
+                <SelectItem value="CREATE">{t('auditLog.actionCreate')}</SelectItem>
+                <SelectItem value="UPDATE">{t('auditLog.actionUpdate')}</SelectItem>
+                <SelectItem value="DELETE">{t('auditLog.actionDelete')}</SelectItem>
+                <SelectItem value="VIEW">{t('auditLog.actionRead')}</SelectItem>
+                <SelectItem value="EXPORT">{t('auditLog.actionExport')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="기간" />
+                <SelectValue placeholder={t('auditLog.dateTime')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">최근 1일</SelectItem>
-                <SelectItem value="7">최근 7일</SelectItem>
-                <SelectItem value="30">최근 30일</SelectItem>
-                <SelectItem value="90">최근 90일</SelectItem>
+                <SelectItem value="1">{t('auditLog.last1Day')}</SelectItem>
+                <SelectItem value="7">{t('auditLog.last7Days')}</SelectItem>
+                <SelectItem value="30">{t('auditLog.last30Days')}</SelectItem>
+                <SelectItem value="90">{t('auditLog.last90Days')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -445,23 +446,23 @@ export default function AuditLogPage() {
       {/* 로그 목록 */}
       <Card>
         <CardHeader>
-          <CardTitle>활동 로그</CardTitle>
+          <CardTitle>{t('auditLog.title')}</CardTitle>
           <CardDescription>
-            조회된 로그 {filteredLogs.length}건
+            {t('auditLog.filteredCount', { count: filteredLogs.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>로그 ID</TableHead>
-                <TableHead>작업</TableHead>
-                <TableHead>대상</TableHead>
-                <TableHead>대상 ID</TableHead>
-                <TableHead>작업자</TableHead>
-                <TableHead>일시</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead className="text-right">상세</TableHead>
+                <TableHead>{t('auditLog.logId')}</TableHead>
+                <TableHead>{t('auditLog.action')}</TableHead>
+                <TableHead>{t('auditLog.target')}</TableHead>
+                <TableHead>{t('auditLog.targetId')}</TableHead>
+                <TableHead>{t('auditLog.operator')}</TableHead>
+                <TableHead>{t('auditLog.dateTime')}</TableHead>
+                <TableHead>{t('auditLog.ipAddress')}</TableHead>
+                <TableHead className="text-right">{t('auditLog.detailButton')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -469,7 +470,7 @@ export default function AuditLogPage() {
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    조회된 로그가 없습니다
+                    {t('auditLog.emptyState')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -516,7 +517,7 @@ export default function AuditLogPage() {
                         onClick={() => handleViewDetail(log)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        상세
+                        {t('auditLog.detailButton')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -528,10 +529,10 @@ export default function AuditLogPage() {
           {filteredLogs.length > 50 && (
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                {filteredLogs.length - 50}개의 추가 로그가 있습니다
+                {t('auditLog.moreLogsCount', { count: filteredLogs.length - 50 })}
               </p>
               <Button variant="outline" className="mt-2">
-                더 보기
+                {t('auditLog.loadMore')}
               </Button>
             </div>
           )}

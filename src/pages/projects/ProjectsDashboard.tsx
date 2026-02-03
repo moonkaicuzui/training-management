@@ -4,7 +4,7 @@
  * 프로젝트 현황, 긴급 알림, 팀 성과, 최근 활동 표시
  */
 
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,12 +80,12 @@ export default function ProjectsDashboard() {
 
   // 긴급 과제 (마감 3일 이내 또는 지연)
   const urgentTasks = useMemo(() => {
-    const now = Date.now();
+    const now = new Date();
     return tasks.filter((task) => {
       if (task.status === 'delayed_start' || task.status === 'delayed_complete') return true;
       if (task.dueDate) {
         const dueDate = task.dueDate instanceof Date ? task.dueDate : task.dueDate.toDate();
-        const daysUntilDue = Math.ceil((dueDate.getTime() - now) / (1000 * 60 * 60 * 24));
+        const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         return daysUntilDue <= 3 && daysUntilDue >= 0 && task.status !== 'done';
       }
       return false;
@@ -95,8 +95,7 @@ export default function ProjectsDashboard() {
   const isLoading = isMembersLoading || isProjectsLoading;
 
   // Show loading only if actively fetching AND no data loaded yet
-  // Skip if already initialized to prevent infinite loading when Firestore is unavailable
-  if (!initializedRef.current && isLoading && members.length === 0) {
+  if (isLoading && members.length === 0 && projects.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">

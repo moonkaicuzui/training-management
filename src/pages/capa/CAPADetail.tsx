@@ -75,7 +75,7 @@ function formatDate(date: Date | Timestamp | undefined): string {
 }
 
 export default function CAPADetail() {
-  const { t: _t } = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const initializedRef = useRef(false);
