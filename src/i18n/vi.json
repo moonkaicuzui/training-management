@@ -676,7 +676,7 @@
     "type": "Loại",
     "affiliation": "Đơn vị",
     "sessionCount": "Số buổi",
-    "sessionUnit": "",
+    "sessionUnit": "buổi",
     "rating": "Đánh giá",
     "emptyState": "Chưa có giảng viên nào",
     "trainingHistory": "Lịch sử đào tạo",
