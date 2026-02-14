@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
 import {
@@ -40,6 +41,7 @@ import type { NewTQCColorBlindTestInput } from '@/types/newTqc';
 export default function NewTQCTraineeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const traineeDetails = useNewTQCSelectedTrainee();
@@ -64,8 +66,8 @@ export default function NewTQCTraineeDetail() {
         } catch {
           toast({
             variant: 'destructive',
-            title: '데이터 로드 실패',
-            description: '교육생 정보를 불러오는데 실패했습니다.',
+            title: t('newTqc.traineeDetail.loadError'),
+            description: t('newTqc.traineeDetail.loadErrorDesc'),
           });
         }
       }
@@ -87,14 +89,14 @@ export default function NewTQCTraineeDetail() {
       await createColorBlindTest(input);
       if (id) await fetchTraineeDetail(id);
       toast({
-        title: '색맹 검사 완료',
-        description: '검사 결과가 저장되었습니다.',
+        title: t('newTqc.traineeDetail.colorBlindSuccess'),
+        description: t('newTqc.traineeDetail.colorBlindSuccessDesc'),
       });
     } catch {
       toast({
         variant: 'destructive',
-        title: '저장 실패',
-        description: '색맹 검사 결과 저장에 실패했습니다.',
+        title: t('newTqc.traineeDetail.colorBlindError'),
+        description: t('newTqc.traineeDetail.colorBlindErrorDesc'),
       });
     }
   };
@@ -108,14 +110,14 @@ export default function NewTQCTraineeDetail() {
       });
       if (id) await fetchTraineeDetail(id);
       toast({
-        title: '미팅 완료',
-        description: '미팅이 완료 처리되었습니다.',
+        title: t('newTqc.traineeDetail.meetingComplete'),
+        description: t('newTqc.traineeDetail.meetingCompleteDesc'),
       });
     } catch {
       toast({
         variant: 'destructive',
-        title: '업데이트 실패',
-        description: '미팅 상태 변경에 실패했습니다.',
+        title: t('newTqc.traineeDetail.meetingUpdateError'),
+        description: t('newTqc.traineeDetail.meetingUpdateErrorDesc'),
       });
     }
   };
@@ -133,13 +135,13 @@ export default function NewTQCTraineeDetail() {
             <TraineeStatusBadge status={trainee.status} />
           </div>
           <p className="text-muted-foreground">
-            {team?.team_name || trainee.team_id} • {trainee.trainer_id} 트레이너 • {trainee.start_week}주차
+            {team?.team_name || trainee.team_id} • {trainee.trainer_id} {t('newTqc.traineeDetail.trainerLabel')} • {t('newTqc.traineeDetail.weekLabel', { week: trainee.start_week })}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
-            수정
+            {t('newTqc.traineeDetail.edit')}
           </Button>
           {trainee.status === 'IN_TRAINING' && (
             <Button
@@ -147,7 +149,7 @@ export default function NewTQCTraineeDetail() {
               onClick={() => navigate(`/new-tqc/trainees/${id}/resign`)}
             >
               <UserMinus className="h-4 w-4 mr-2" />
-              퇴사 처리
+              {t('newTqc.traineeDetail.processResign')}
             </Button>
           )}
         </div>
@@ -155,10 +157,10 @@ export default function NewTQCTraineeDetail() {
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="overview">개요</TabsTrigger>
-          <TabsTrigger value="training">교육 진행</TabsTrigger>
-          <TabsTrigger value="meetings">미팅</TabsTrigger>
-          <TabsTrigger value="colorblind">Color Blind 검사</TabsTrigger>
+          <TabsTrigger value="overview">{t('newTqc.traineeDetail.tabOverview')}</TabsTrigger>
+          <TabsTrigger value="training">{t('newTqc.traineeDetail.tabTraining')}</TabsTrigger>
+          <TabsTrigger value="meetings">{t('newTqc.traineeDetail.tabMeetings')}</TabsTrigger>
+          <TabsTrigger value="colorblind">{t('newTqc.traineeDetail.tabColorBlind')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -167,34 +169,34 @@ export default function NewTQCTraineeDetail() {
             {/* Basic Info Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">기본 정보</CardTitle>
+                <CardTitle className="text-lg">{t('newTqc.traineeDetail.basicInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">이름</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.name')}</p>
                     <p className="font-medium">{trainee.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">사번</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.employeeId')}</p>
                     <p className="font-medium">{trainee.employee_id || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">배치예정팀</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.assignedTeam')}</p>
                     <p className="font-medium">{team?.team_name || trainee.team_id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">담당 트레이너</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.assignedTrainer')}</p>
                     <p className="font-medium">{trainee.trainer_id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">시작일</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.startDate')}</p>
                     <p className="font-medium">
-                      {format(new Date(trainee.start_date), 'yyyy-MM-dd')} ({trainee.start_week}주차)
+                      {format(new Date(trainee.start_date), 'yyyy-MM-dd')} ({t('newTqc.traineeDetail.weekLabel', { week: trainee.start_week })})
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">소개자</p>
+                    <p className="text-sm text-muted-foreground">{t('newTqc.traineeDetail.introducer')}</p>
                     <p className="font-medium">{trainee.introducer || '-'}</p>
                   </div>
                 </div>
@@ -202,7 +204,7 @@ export default function NewTQCTraineeDetail() {
                 <Separator />
 
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Color Blind 상태</p>
+                  <p className="text-sm text-muted-foreground mb-2">{t('newTqc.traineeDetail.colorBlindStatus')}</p>
                   <ColorBlindBadge result={trainee.color_blind_status} />
                 </div>
               </CardContent>
@@ -211,9 +213,9 @@ export default function NewTQCTraineeDetail() {
             {/* Progress Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">교육 진행률</CardTitle>
+                <CardTitle className="text-lg">{t('newTqc.traineeDetail.trainingProgress')}</CardTitle>
                 <CardDescription>
-                  전체 교육 과정 진행 현황
+                  {t('newTqc.traineeDetail.trainingProgressDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -256,19 +258,19 @@ export default function NewTQCTraineeDetail() {
                       <p className="text-2xl font-bold text-status-pass">
                         {stages.filter((s) => s.status === 'COMPLETED').length}
                       </p>
-                      <p className="text-xs text-muted-foreground">완료</p>
+                      <p className="text-xs text-muted-foreground">{t('newTqc.traineeDetail.completed')}</p>
                     </div>
                     <div className="p-2 bg-primary/10 rounded-lg">
                       <p className="text-2xl font-bold text-primary">
                         {stages.filter((s) => s.status === 'IN_PROGRESS').length}
                       </p>
-                      <p className="text-xs text-muted-foreground">진행중</p>
+                      <p className="text-xs text-muted-foreground">{t('newTqc.traineeDetail.inProgress')}</p>
                     </div>
                     <div className="p-2 bg-muted rounded-lg">
                       <p className="text-2xl font-bold text-muted-foreground">
                         {stages.filter((s) => s.status === 'PENDING').length}
                       </p>
-                      <p className="text-xs text-muted-foreground">대기</p>
+                      <p className="text-xs text-muted-foreground">{t('newTqc.traineeDetail.pending')}</p>
                     </div>
                   </div>
                 </div>
@@ -281,7 +283,7 @@ export default function NewTQCTraineeDetail() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                미팅 일정
+                {t('newTqc.traineeDetail.meetingSchedule')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -304,10 +306,10 @@ export default function NewTQCTraineeDetail() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                교육 단계
+                {t('newTqc.traineeDetail.trainingStages')}
               </CardTitle>
               <CardDescription>
-                교육 진행 단계별 현황입니다. 클릭하여 상태를 변경할 수 있습니다.
+                {t('newTqc.traineeDetail.trainingStagesDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -324,9 +326,10 @@ export default function NewTQCTraineeDetail() {
                       stage_id: stage.stage_id,
                       status: nextStatus,
                     });
+                    const statusLabel = nextStatus === 'COMPLETED' ? t('newTqc.traineeDetail.completed') : nextStatus === 'IN_PROGRESS' ? t('newTqc.traineeDetail.inProgress') : t('newTqc.traineeDetail.pending');
                     toast({
-                      title: '교육 단계 업데이트',
-                      description: `${stage.stage_name} 단계가 ${nextStatus === 'COMPLETED' ? '완료' : nextStatus === 'IN_PROGRESS' ? '진행중' : '대기'}로 변경되었습니다.`,
+                      title: t('newTqc.traineeDetail.stageUpdated'),
+                      description: t('newTqc.traineeDetail.stageUpdatedTo', { stage: stage.stage_name, status: statusLabel }),
                     });
                     // Refresh trainee detail
                     if (id) {
@@ -335,8 +338,8 @@ export default function NewTQCTraineeDetail() {
                   } catch (error) {
                     logger.error('Failed to update stage:', error);
                     toast({
-                      title: '오류',
-                      description: '교육 단계 업데이트에 실패했습니다.',
+                      title: t('newTqc.traineeDetail.error'),
+                      description: t('newTqc.traineeDetail.stageUpdateErrorDesc'),
                       variant: 'destructive',
                     });
                   }
@@ -382,8 +385,8 @@ export default function NewTQCTraineeDetail() {
               ...data,
             });
             toast({
-              title: '교육생 정보 수정',
-              description: '교육생 정보가 수정되었습니다.',
+              title: t('newTqc.traineeDetail.traineeUpdated'),
+              description: t('newTqc.traineeDetail.traineeUpdatedDesc'),
             });
             setEditDialogOpen(false);
             // Refresh trainee detail
@@ -393,8 +396,8 @@ export default function NewTQCTraineeDetail() {
           } catch (error) {
             logger.error('Failed to update trainee:', error);
             toast({
-              title: '오류',
-              description: '교육생 정보 수정에 실패했습니다.',
+              title: t('newTqc.traineeDetail.error'),
+              description: t('newTqc.traineeDetail.traineeUpdateErrorDesc'),
               variant: 'destructive',
             });
           }

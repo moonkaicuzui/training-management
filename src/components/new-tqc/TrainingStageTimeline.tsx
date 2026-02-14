@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Circle, Clock, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NewTQCTrainingStage } from '@/types/newTqc';
@@ -38,6 +39,7 @@ export function TrainingStageTimeline({
   className,
   onStageClick,
 }: TrainingStageTimelineProps) {
+  const { t } = useTranslation();
   // Sort stages by order
   const sortedStages = [...stages].sort((a, b) => a.stage_order - b.stage_order);
 
@@ -84,7 +86,7 @@ export function TrainingStageTimeline({
               </h4>
               {stage.status === 'IN_PROGRESS' && (
                 <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                  진행중
+                  {t('newTqc.stages.inProgress')}
                 </span>
               )}
             </div>
@@ -94,13 +96,13 @@ export function TrainingStageTimeline({
               {stage.start_date && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  시작: {format(new Date(stage.start_date), 'yyyy-MM-dd')}
+                  {t('newTqc.stages.startDate', { date: format(new Date(stage.start_date), 'yyyy-MM-dd') })}
                 </span>
               )}
               {stage.end_date && (
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  완료: {format(new Date(stage.end_date), 'yyyy-MM-dd')}
+                  {t('newTqc.stages.endDate', { date: format(new Date(stage.end_date), 'yyyy-MM-dd') })}
                 </span>
               )}
             </div>

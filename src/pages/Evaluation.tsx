@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TrainingEvaluation } from '@/services/evaluationService';
+import * as api from '@/services/api';
 import {
   Card,
   CardContent,
@@ -57,35 +59,12 @@ import {
   ChevronUp,
 } from 'lucide-react';
 
-// Types
+// UI-only types
 interface EvaluationCriteria {
   id: string;
   name: string;
   weight: number;
   description: string;
-}
-
-interface EvaluationResponse {
-  criteriaId: string;
-  score: number;
-  comment?: string;
-}
-
-interface TrainingEvaluation {
-  id: string;
-  programId: string;
-  programName: string;
-  sessionId: string;
-  sessionDate: string;
-  employeeId: string;
-  employeeName: string;
-  department: string;
-  evaluationType: 'reaction' | 'learning' | 'behavior' | 'results';
-  responses: EvaluationResponse[];
-  overallScore: number;
-  feedback: string;
-  submittedAt: string;
-  status: 'pending' | 'submitted' | 'reviewed';
 }
 
 interface ProgramStats {
@@ -100,7 +79,6 @@ interface ProgramStats {
   resultsScore: number;
 }
 
-// Sample Data
 const evaluationCriteria: EvaluationCriteria[] = [
   { id: 'c1', name: '교육 내용 적합성', weight: 20, description: '업무와의 관련성 및 실용성' },
   { id: 'c2', name: '강사 전문성', weight: 20, description: '강사의 지식과 전달력' },
@@ -110,98 +88,11 @@ const evaluationCriteria: EvaluationCriteria[] = [
   { id: 'c6', name: '업무 적용 가능성', weight: 15, description: '실제 업무 적용 가능성' },
 ];
 
-const generateSampleEvaluations = (): TrainingEvaluation[] => {
-  const programs = [
-    { id: 'PRG001', name: '품질관리 기초' },
-    { id: 'PRG002', name: '안전교육 정기' },
-    { id: 'PRG003', name: '리더십 향상' },
-    { id: 'PRG004', name: '프로세스 개선' },
-    { id: 'PRG005', name: '고객서비스 교육' },
-  ];
-
-  const employees = [
-    { id: 'EMP001', name: '김철수', dept: '품질관리부' },
-    { id: 'EMP002', name: '이영희', dept: '생산부' },
-    { id: 'EMP003', name: '박민수', dept: '영업부' },
-    { id: 'EMP004', name: '정수진', dept: 'R&D' },
-    { id: 'EMP005', name: '최동훈', dept: '인사부' },
-  ];
-
-  const types: TrainingEvaluation['evaluationType'][] = ['reaction', 'learning', 'behavior', 'results'];
-  const statuses: TrainingEvaluation['status'][] = ['pending', 'submitted', 'reviewed'];
-  const evaluations: TrainingEvaluation[] = [];
-
-  for (let i = 0; i < 50; i++) {
-    const program = programs[i % programs.length];
-    const employee = employees[i % employees.length];
-    const responses = evaluationCriteria.map(c => ({
-      criteriaId: c.id,
-      score: Math.floor(Math.random() * 3) + 3, // 3-5 score
-      comment: Math.random() > 0.7 ? '좋은 교육이었습니다.' : undefined,
-    }));
-    const overallScore = responses.reduce((sum, r) => sum + r.score, 0) / responses.length;
-
-    evaluations.push({
-      id: `EVAL${String(i + 1).padStart(4, '0')}`,
-      programId: program.id,
-      programName: program.name,
-      sessionId: `SES${String(Math.floor(i / 5) + 1).padStart(4, '0')}`,
-      sessionDate: new Date(2024, Math.floor(i / 10), (i % 28) + 1).toISOString().split('T')[0],
-      employeeId: employee.id,
-      employeeName: employee.name,
-      department: employee.dept,
-      evaluationType: types[i % types.length],
-      responses,
-      overallScore: Math.round(overallScore * 10) / 10,
-      feedback: '전반적으로 유익한 교육이었습니다.',
-      submittedAt: new Date(2024, Math.floor(i / 10), (i % 28) + 2).toISOString(),
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-    });
-  }
-
-  return evaluations;
-};
-
-const generateProgramStats = (evaluations: TrainingEvaluation[]): ProgramStats[] => {
-  const programMap = new Map<string, TrainingEvaluation[]>();
-
-  evaluations.forEach(e => {
-    const existing = programMap.get(e.programId) || [];
-    existing.push(e);
-    programMap.set(e.programId, existing);
-  });
-
-  return Array.from(programMap.entries()).map(([programId, evals]) => {
-    const programName = evals[0].programName;
-    const totalEvaluations = evals.length;
-    const averageScore = evals.reduce((sum, e) => sum + e.overallScore, 0) / totalEvaluations;
-    const submitted = evals.filter(e => e.status !== 'pending').length;
-
-    const byType = (type: TrainingEvaluation['evaluationType']) => {
-      const typeEvals = evals.filter(e => e.evaluationType === type);
-      return typeEvals.length > 0
-        ? typeEvals.reduce((sum, e) => sum + e.overallScore, 0) / typeEvals.length
-        : 0;
-    };
-
-    return {
-      programId,
-      programName,
-      totalEvaluations,
-      averageScore: Math.round(averageScore * 10) / 10,
-      completionRate: Math.round((submitted / totalEvaluations) * 100),
-      reactionScore: Math.round(byType('reaction') * 10) / 10,
-      learningScore: Math.round(byType('learning') * 10) / 10,
-      behaviorScore: Math.round(byType('behavior') * 10) / 10,
-      resultsScore: Math.round(byType('results') * 10) / 10,
-    };
-  });
-};
-
 export default function Evaluation() {
   const { t } = useTranslation();
-  const [evaluations] = useState<TrainingEvaluation[]>(generateSampleEvaluations);
-  const [programStats] = useState<ProgramStats[]>(() => generateProgramStats(evaluations));
+  const [evaluations, setEvaluations] = useState<TrainingEvaluation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -210,6 +101,63 @@ export default function Evaluation() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showNewEvaluationDialog, setShowNewEvaluationDialog] = useState(false);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.getEvaluations();
+      setEvaluations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load evaluations');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const programStats = useMemo((): ProgramStats[] => {
+    const statsMap = new Map<string, {
+      programId: string;
+      programName: string;
+      scores: number[];
+      types: Record<string, number[]>;
+    }>();
+
+    evaluations.forEach((e) => {
+      if (!statsMap.has(e.programId)) {
+        statsMap.set(e.programId, {
+          programId: e.programId,
+          programName: e.programName,
+          scores: [],
+          types: { reaction: [], learning: [], behavior: [], results: [] },
+        });
+      }
+      const stat = statsMap.get(e.programId)!;
+      stat.scores.push(e.overallScore);
+      if (stat.types[e.evaluationType]) {
+        stat.types[e.evaluationType].push(e.overallScore);
+      }
+    });
+
+    return Array.from(statsMap.values()).map((s) => {
+      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+      return {
+        programId: s.programId,
+        programName: s.programName,
+        totalEvaluations: s.scores.length,
+        averageScore: Math.round(avg(s.scores) * 10) / 10,
+        completionRate: Math.round((s.scores.filter(sc => sc >= 60).length / Math.max(s.scores.length, 1)) * 100),
+        reactionScore: Math.round(avg(s.types.reaction) * 10) / 10,
+        learningScore: Math.round(avg(s.types.learning) * 10) / 10,
+        behaviorScore: Math.round(avg(s.types.behavior) * 10) / 10,
+        resultsScore: Math.round(avg(s.types.results) * 10) / 10,
+      };
+    });
+  }, [evaluations]);
 
   // Filter evaluations
   const filteredEvaluations = evaluations.filter(e => {
@@ -225,7 +173,7 @@ export default function Evaluation() {
   // Calculate statistics
   const totalEvaluations = evaluations.length;
   const submittedCount = evaluations.filter(e => e.status !== 'pending').length;
-  const averageScore = evaluations.reduce((sum, e) => sum + e.overallScore, 0) / totalEvaluations;
+  const averageScore = totalEvaluations > 0 ? evaluations.reduce((sum, e) => sum + e.overallScore, 0) / totalEvaluations : 0;
   const pendingCount = evaluations.filter(e => e.status === 'pending').length;
 
   const getTypeLabel = (type: TrainingEvaluation['evaluationType']) => {
@@ -339,6 +287,18 @@ export default function Evaluation() {
         </div>
       </div>
 
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>재시도</Button>
+        </div>
+      )}
+
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -374,10 +334,10 @@ export default function Evaluation() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round((submittedCount / totalEvaluations) * 100)}%
+              {totalEvaluations > 0 ? Math.round((submittedCount / totalEvaluations) * 100) : 0}%
             </div>
             <Progress
-              value={(submittedCount / totalEvaluations) * 100}
+              value={totalEvaluations > 0 ? (submittedCount / totalEvaluations) * 100 : 0}
               className="mt-2"
             />
           </CardContent>

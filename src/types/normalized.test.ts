@@ -14,9 +14,9 @@ describe('Normalization Functions', () => {
       const legacy: Employee = {
         employee_id: 'EMP001',
         employee_name: 'John Doe',
-        department: 'QIP',
-        position: 'TQC',
-        building: 'BUILDING_A_F1',
+        department: 'ASSEMBLY',
+        position: 'QIP_TQC',
+        building: 'BUILDING_A1',
         line: 'L1',
         hire_date: '2024-01-15',
         status: 'ACTIVE',
@@ -27,9 +27,9 @@ describe('Normalization Functions', () => {
 
       expect(normalized.employee_id).toBe('EMP001');
       expect(normalized.employee_name).toBe('John Doe');
-      expect(normalized.department).toBe('QIP');
-      expect(normalized.position).toBe('TQC');
-      expect(normalized.building).toBe('BUILDING_A_F1');
+      expect(normalized.department).toBe('ASSEMBLY');
+      expect(normalized.position).toBe('QIP_TQC');
+      expect(normalized.building).toBe('BUILDING_A1');
       expect(normalized.line).toBe('L1');
       expect(normalized.hire_date).toBe('2024-01-15');
       expect(normalized.status).toBe('ACTIVE');
@@ -39,8 +39,8 @@ describe('Normalization Functions', () => {
       const legacy: Employee = {
         employee_id: 'EMP002',
         employee_name: 'Jane Smith',
-        department: 'PRODUCTION',
-        position: 'RQC',
+        department: 'STITCHING',
+        position: 'QIP_RQC',
         building: 'BUILDING_C',
         line: 'L5',
         hire_date: '2023-06-01',
@@ -71,7 +71,7 @@ describe('Normalization Functions', () => {
         program_name_kr: 'QIP 기본 교육',
         category: 'QIP',
         tags: ['basic', 'required'],
-        target_positions: ['TQC', 'RQC'],
+        target_positions: ['QIP_TQC', 'QIP_RQC'],
         evaluation_type: 'SCORE',
         passing_score: 80,
         grade_aa: 95,
@@ -90,7 +90,7 @@ describe('Normalization Functions', () => {
       expect(normalized.program_name).toBe('Basic QIP Training');
       expect(normalized.grade_thresholds).toEqual({ aa: 95, a: 90, b: 80 });
       expect(normalized.tags).toContain('basic');
-      expect(normalized.target_positions).toContain('TQC');
+      expect(normalized.target_positions).toContain('QIP_TQC');
       expect(normalized.is_active).toBe(true);
     });
 
@@ -102,7 +102,7 @@ describe('Normalization Functions', () => {
         program_name_kr: '생산 교육',
         category: 'PRODUCTION',
         tags: ['production'],
-        target_positions: ['TQC'],
+        target_positions: ['QIP_TQC'],
         evaluation_type: 'PASS_FAIL',
         passing_score: 70,
         grade_aa: 95,
@@ -211,9 +211,9 @@ describe('Normalization Functions', () => {
         {
           employee_id: 'EMP001',
           employee_name: 'John Doe',
-          department: 'QIP',
-          position: 'TQC',
-          building: 'BUILDING_A_F1',
+          department: 'ASSEMBLY',
+          position: 'QIP_TQC',
+          building: 'BUILDING_A1',
           line: 'L1',
           hire_date: '2024-01-15',
           status: 'ACTIVE',
@@ -222,8 +222,8 @@ describe('Normalization Functions', () => {
         {
           employee_id: 'EMP002',
           employee_name: 'Jane Smith',
-          department: 'PRODUCTION',
-          position: 'RQC',
+          department: 'STITCHING',
+          position: 'QIP_RQC',
           building: 'BUILDING_C',
           line: 'L5',
           hire_date: '2023-06-01',

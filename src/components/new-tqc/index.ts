@@ -46,3 +46,4 @@ export {
 // Form Dialogs
 export { TraineeFormDialog } from './TraineeFormDialog';
 export { TeamSettingsDialog, TeamActiveToggle } from './TeamSettingsDialog';
+export { ResignationFormDialog } from './ResignationFormDialog';

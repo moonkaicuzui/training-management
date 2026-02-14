@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import {
   Settings,
@@ -38,6 +39,7 @@ import { NEW_TQC_TRAINERS, DEFAULT_TRAINING_STAGES } from '@/types/newTqc';
 import { format } from 'date-fns';
 
 export default function NewTQCSettings() {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const teams = useNewTQCTeams();
@@ -53,8 +55,8 @@ export default function NewTQCSettings() {
       } catch {
         toast({
           variant: 'destructive',
-          title: '데이터 로드 실패',
-          description: '팀 목록을 불러오는데 실패했습니다.',
+          title: t('newTqc.settings.loadError'),
+          description: t('newTqc.settings.loadErrorDesc'),
         });
       }
     };
@@ -66,14 +68,14 @@ export default function NewTQCSettings() {
       await updateTeam({ team_id: teamId, is_active: isActive });
       await fetchTeams(true);
       toast({
-        title: '상태 변경 완료',
-        description: `팀이 ${isActive ? '활성화' : '비활성화'}되었습니다.`,
+        title: t('newTqc.settings.statusChanged'),
+        description: isActive ? t('newTqc.settings.statusActivated') : t('newTqc.settings.statusDeactivated'),
       });
     } catch {
       toast({
         variant: 'destructive',
-        title: '상태 변경 실패',
-        description: '팀 상태 변경에 실패했습니다.',
+        title: t('newTqc.settings.statusChangeFailed'),
+        description: t('newTqc.settings.statusChangeError'),
       });
     }
   };
@@ -87,9 +89,9 @@ export default function NewTQCSettings() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">설정</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newTqc.settings.title')}</h1>
           <p className="text-muted-foreground">
-            신입 TQC 교육 모듈 설정 관리
+            {t('newTqc.settings.description')}
           </p>
         </div>
       </div>
@@ -98,15 +100,15 @@ export default function NewTQCSettings() {
         <TabsList>
           <TabsTrigger value="teams" className="gap-2">
             <Building className="h-4 w-4" />
-            팀 관리
+            {t('newTqc.settings.teamManagement')}
           </TabsTrigger>
           <TabsTrigger value="trainers" className="gap-2">
             <User className="h-4 w-4" />
-            트레이너
+            {t('newTqc.settings.trainers')}
           </TabsTrigger>
           <TabsTrigger value="stages" className="gap-2">
             <Settings className="h-4 w-4" />
-            교육 단계
+            {t('newTqc.settings.trainingStages')}
           </TabsTrigger>
         </TabsList>
 
@@ -117,28 +119,28 @@ export default function NewTQCSettings() {
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Building className="h-5 w-5" />
-                  배치예정팀 관리
+                  {t('newTqc.settings.teamManagementTitle')}
                 </CardTitle>
                 <CardDescription>
-                  교육생 배치 예정 팀을 관리합니다.
+                  {t('newTqc.settings.teamManagementDesc')}
                 </CardDescription>
               </div>
               <Button onClick={() => setTeamDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                팀 추가
+                {t('newTqc.settings.addTeam')}
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>팀 이름</TableHead>
-                    <TableHead>베트남어</TableHead>
-                    <TableHead>공장</TableHead>
-                    <TableHead>라인</TableHead>
-                    <TableHead className="text-center">상태</TableHead>
-                    <TableHead>생성일</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+                    <TableHead>{t('newTqc.settings.teamName')}</TableHead>
+                    <TableHead>{t('newTqc.settings.vietnameseName')}</TableHead>
+                    <TableHead>{t('newTqc.settings.factory')}</TableHead>
+                    <TableHead>{t('newTqc.settings.line')}</TableHead>
+                    <TableHead className="text-center">{t('common.status')}</TableHead>
+                    <TableHead>{t('newTqc.settings.createdDate')}</TableHead>
+                    <TableHead className="text-right">{t('newTqc.settings.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -159,7 +161,7 @@ export default function NewTQCSettings() {
                             }
                           />
                           <span className="text-sm">
-                            {team.is_active ? '활성' : '비활성'}
+                            {team.is_active ? t('newTqc.settings.active') : t('newTqc.settings.inactive')}
                           </span>
                         </div>
                       </TableCell>
@@ -180,7 +182,7 @@ export default function NewTQCSettings() {
                             size="sm"
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
-                              if (confirm(`'${team.team_name}' 팀을 삭제하시겠습니까?`)) {
+                              if (confirm(t('newTqc.settings.confirmDelete', { name: team.team_name }))) {
                                 deleteTeam(team.team_id);
                               }
                             }}
@@ -203,10 +205,10 @@ export default function NewTQCSettings() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-5 w-5" />
-                트레이너 목록
+                {t('newTqc.settings.trainerList')}
               </CardTitle>
               <CardDescription>
-                신입 교육 담당 트레이너 명단입니다.
+                {t('newTqc.settings.trainerListDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -219,14 +221,14 @@ export default function NewTQCSettings() {
                       </div>
                       <div>
                         <p className="font-medium">{trainer}</p>
-                        <p className="text-sm text-muted-foreground">트레이너</p>
+                        <p className="text-sm text-muted-foreground">{t('newTqc.settings.trainerLabel')}</p>
                       </div>
                     </div>
                   </Card>
                 ))}
               </div>
               <p className="text-sm text-muted-foreground mt-4">
-                ※ 트레이너 관리는 별도 시스템에서 진행됩니다.
+                {t('newTqc.settings.trainerNote')}
               </p>
             </CardContent>
           </Card>
@@ -238,10 +240,10 @@ export default function NewTQCSettings() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                기본 교육 단계
+                {t('newTqc.settings.defaultStages')}
               </CardTitle>
               <CardDescription>
-                신입 교육생에게 적용되는 기본 교육 단계입니다.
+                {t('newTqc.settings.defaultStagesDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -257,15 +259,15 @@ export default function NewTQCSettings() {
                     <div className="flex-1">
                       <p className="font-medium">{stageName}</p>
                       <p className="text-sm text-muted-foreground">
-                        기본 교육 단계
+                        {t('newTqc.settings.defaultStages')}
                       </p>
                     </div>
-                    <Badge variant="outline">1주</Badge>
+                    <Badge variant="outline">{t('newTqc.settings.weekDuration')}</Badge>
                   </div>
                 ))}
               </div>
               <p className="text-sm text-muted-foreground mt-4">
-                ※ 교육 단계 수정은 관리자에게 문의하세요.
+                {t('newTqc.settings.stagesNote')}
               </p>
             </CardContent>
           </Card>

@@ -155,6 +155,9 @@ export interface NormalizedTrainingResultRecord {
   result: TrainingResult;
   needs_retraining: boolean;
 
+  // Attempt tracking
+  test_attempt?: number;  // 1st/2nd/3rd attempt tracking
+
   // Metadata
   evaluated_by: string;  // User who evaluated
   remarks: string;
@@ -426,6 +429,7 @@ export const normalizeTrainingResult = (
     grade: result.grade,
     result: result.result,
     needs_retraining: result.needs_retraining,
+    test_attempt: result.test_attempt,
     evaluated_by: result.evaluated_by,
     remarks: result.remarks,
     created_at: unsafeISODateTime(result.created_at),

@@ -66,15 +66,15 @@ interface ProgramReport {
 
 // 샘플 부서 목록
 const departments = [
-  { value: 'QIP', label: 'QIP' },
-  { value: 'Production', label: 'Production' },
-  { value: 'Quality', label: 'Quality' },
+  { value: 'ASSEMBLY', label: 'Assembly' },
+  { value: 'STITCHING', label: 'Stitching' },
+  { value: 'QA', label: 'QA' },
 ];
 
 // 샘플 부서별 리포트 데이터
 const sampleDepartmentReports: DepartmentReport[] = [
   {
-    department: 'QIP',
+    department: 'ASSEMBLY',
     totalEmployees: 25,
     completedTrainings: 120,
     pendingTrainings: 15,
@@ -83,7 +83,7 @@ const sampleDepartmentReports: DepartmentReport[] = [
     passRate: 92,
   },
   {
-    department: 'Production',
+    department: 'STITCHING',
     totalEmployees: 150,
     completedTrainings: 580,
     pendingTrainings: 45,
@@ -92,7 +92,7 @@ const sampleDepartmentReports: DepartmentReport[] = [
     passRate: 88,
   },
   {
-    department: 'Quality',
+    department: 'QA',
     totalEmployees: 35,
     completedTrainings: 175,
     pendingTrainings: 10,
@@ -152,11 +152,11 @@ const sampleProgramReports: ProgramReport[] = [
 
 // 샘플 직원 데이터
 const sampleEmployees = [
-  { employee_id: 'EMP-001', employee_name: '홍길동', department: 'QIP', position: 'TQC', building: 'A', line: 'L1', hire_date: '2022-03-15', status: 'ACTIVE', passCount: 8, totalCount: 8 },
-  { employee_id: 'EMP-002', employee_name: '김철수', department: 'QIP', position: 'RQC', building: 'A', line: 'L2', hire_date: '2021-06-20', status: 'ACTIVE', passCount: 12, totalCount: 13 },
-  { employee_id: 'EMP-003', employee_name: '이영희', department: 'Production', position: 'Line Leader', building: 'B', line: 'L1', hire_date: '2020-01-10', status: 'ACTIVE', passCount: 15, totalCount: 15 },
-  { employee_id: 'EMP-004', employee_name: '박지성', department: 'Production', position: 'Operator', building: 'B', line: 'L2', hire_date: '2023-02-01', status: 'ACTIVE', passCount: 5, totalCount: 6 },
-  { employee_id: 'EMP-005', employee_name: '손흥민', department: 'Quality', position: 'Inspector', building: 'C', line: 'L1', hire_date: '2019-11-15', status: 'ACTIVE', passCount: 20, totalCount: 20 },
+  { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC', building: 'A', line: 'L1', hire_date: '2022-03-15', status: 'ACTIVE', passCount: 8, totalCount: 8 },
+  { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC', building: 'A', line: 'L2', hire_date: '2021-06-20', status: 'ACTIVE', passCount: 12, totalCount: 13 },
+  { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER', building: 'B', line: 'L1', hire_date: '2020-01-10', status: 'ACTIVE', passCount: 15, totalCount: 15 },
+  { employee_id: 'EMP-004', employee_name: '박지성', department: 'STITCHING', position: 'PRO_WORKER', building: 'B', line: 'L2', hire_date: '2023-02-01', status: 'ACTIVE', passCount: 5, totalCount: 6 },
+  { employee_id: 'EMP-005', employee_name: '손흥민', department: 'QA', position: 'QIP_QA', building: 'C', line: 'L1', hire_date: '2019-11-15', status: 'ACTIVE', passCount: 20, totalCount: 20 },
 ];
 
 export default function ReportsPage() {

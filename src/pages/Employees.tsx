@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Plus, Eye } from 'lucide-react';
@@ -6,6 +6,7 @@ import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -20,21 +21,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ExportDropdown } from '@/components/common/ExportDropdown';
 import { useExport } from '@/hooks/useExport';
 import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
+import { useTrainingStore } from '@/stores/trainingStore';
+import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { VirtualTable, type VirtualTableColumn } from '@/components/common/VirtualTable';
-import { departments, positions, buildings } from '@/data/mockData';
+import { departments, positions, buildings } from '@/data/constants';
 import { format } from 'date-fns';
 import type { Employee, Department, Position, Building, EmployeeStatus } from '@/types';
+
+const emptyEmployeeForm = {
+  employee_id: '',
+  employee_name: '',
+  department: 'ASSEMBLY' as Department,
+  position: 'QIP_TQC' as Position,
+  building: 'BUILDING_A' as Building,
+  line: '',
+  hire_date: new Date().toISOString().split('T')[0],
+  status: 'ACTIVE' as EmployeeStatus,
+};
 
 export default function Employees() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { employees, loading } = useEmployeesData();
   const fetchEmployees = useNormalizedTrainingStore((state) => state.fetchEmployees);
+  const { createEmployee } = useTrainingStore();
+  const { addToast } = useUIStore();
   const { exporting, exportExcel, exportPDF } = useExport();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState(emptyEmployeeForm);
 
   // URL 기반 필터 상태 관리
   const { filters, setFilter } = useUrlFilters({
@@ -60,6 +86,22 @@ export default function Employees() {
     // fetchEmployees는 Zustand store에서 제공하는 안정적인 함수이므로 의존성에서 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, departmentFilter, positionFilter, buildingFilter, statusFilter]);
+
+  const handleCreateEmployee = async () => {
+    if (!formData.employee_id || !formData.employee_name) {
+      addToast({ type: 'error', title: t('messages.requiredFields') });
+      return;
+    }
+    try {
+      await createEmployee(formData);
+      addToast({ type: 'success', title: t('messages.saveSuccess') });
+      setCreateDialogOpen(false);
+      setFormData(emptyEmployeeForm);
+      fetchEmployees({});
+    } catch {
+      addToast({ type: 'error', title: t('messages.saveError') });
+    }
+  };
 
   // Define table columns for VirtualTable
   const columns: VirtualTableColumn<Employee>[] = useMemo(() => [
@@ -170,7 +212,7 @@ export default function Employees() {
             }
             loading={exporting}
           />
-          <Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('employee.addEmployee')}
           </Button>
@@ -261,6 +303,115 @@ export default function Employees() {
           />
         </CardContent>
       </Card>
+
+      {/* Create Employee Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('employee.addEmployee')}</DialogTitle>
+            <DialogDescription>{t('employee.createDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('employee.id')} *</Label>
+                <Input
+                  value={formData.employee_id}
+                  onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+                  placeholder="618030XXX"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('employee.name')} *</Label>
+                <Input
+                  value={formData.employee_name}
+                  onChange={(e) => setFormData({ ...formData, employee_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('employee.department')}</Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(v) => setFormData({ ...formData, department: v as Department })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.value} value={dept.value}>{dept.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('employee.position')}</Label>
+                <Select
+                  value={formData.position}
+                  onValueChange={(v) => setFormData({ ...formData, position: v as Position })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions.map((pos) => (
+                      <SelectItem key={pos.value} value={pos.value}>
+                        {t(`position.${pos.value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('employee.building')}</Label>
+                <Select
+                  value={formData.building}
+                  onValueChange={(v) => setFormData({ ...formData, building: v as Building })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map((bldg) => (
+                      <SelectItem key={bldg.value} value={bldg.value}>
+                        {t(`building.${bldg.value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('employee.line')}</Label>
+                <Input
+                  value={formData.line}
+                  onChange={(e) => setFormData({ ...formData, line: e.target.value })}
+                  placeholder="LINE 1-1"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('employee.hireDate')}</Label>
+              <Input
+                type="date"
+                value={formData.hire_date}
+                onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleCreateEmployee}>
+              {t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

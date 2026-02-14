@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Users,
@@ -7,6 +8,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Settings,
+  RotateCcw,
 } from 'lucide-react';
 import {
   Card,
@@ -33,6 +35,7 @@ import {
 } from '@/stores/newTqcStore';
 
 export default function NewTQCDashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const dashboardStats = useNewTQCDashboardStats();
@@ -56,6 +59,9 @@ export default function NewTQCDashboard() {
     return <PageLoading />;
   }
 
+  // Get trainees who failed the final test and need re-training
+  const failedTrainees = trainees.filter(t => t.final_result === 'FAIL');
+
   // Get recently added trainees (last 5)
   const recentTrainees = [...trainees]
     .filter((t) => t.status === 'IN_TRAINING')
@@ -67,19 +73,19 @@ export default function NewTQCDashboard() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">신입 TQC 교육</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newTqc.dashboard.title')}</h1>
           <p className="text-muted-foreground">
-            신입 교육생 관리 및 교육 현황 대시보드
+            {t('newTqc.dashboard.description')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => navigate('/new-tqc/trainees/new')}>
             <Plus className="h-4 w-4 mr-2" />
-            교육생 등록
+            {t('newTqc.dashboard.registerTrainee')}
           </Button>
           <Button variant="outline" onClick={() => navigate('/new-tqc/settings')}>
             <Settings className="h-4 w-4 mr-2" />
-            설정
+            {t('newTqc.dashboard.settings')}
           </Button>
         </div>
       </div>
@@ -95,16 +101,16 @@ export default function NewTQCDashboard() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                최근 등록 교육생
+                {t('newTqc.dashboard.recentTrainees')}
               </CardTitle>
-              <CardDescription>최근 등록된 신입 교육생</CardDescription>
+              <CardDescription>{t('newTqc.dashboard.recentTraineesDesc')}</CardDescription>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/new-tqc/trainees')}
             >
-              전체보기
+              {t('common.viewAll')}
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </CardHeader>
@@ -127,7 +133,7 @@ export default function NewTQCDashboard() {
                         <span>•</span>
                         <span>{trainee.trainer_id}</span>
                         <span>•</span>
-                        <span>{trainee.start_week}주차</span>
+                        <span>{t('newTqc.dashboard.weekLabel', { week: trainee.start_week })}</span>
                       </div>
                     </div>
                     <div className="w-24">
@@ -144,13 +150,13 @@ export default function NewTQCDashboard() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>등록된 교육생이 없습니다.</p>
+                <p>{t('newTqc.dashboard.noTrainees')}</p>
                 <Button
                   variant="link"
                   size="sm"
                   onClick={() => navigate('/new-tqc/trainees/new')}
                 >
-                  교육생 등록하기
+                  {t('newTqc.dashboard.registerTrainee')}
                 </Button>
               </div>
             )}
@@ -163,16 +169,16 @@ export default function NewTQCDashboard() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                예정된 미팅
+                {t('newTqc.dashboard.upcomingMeetings')}
               </CardTitle>
-              <CardDescription>7일 이내 예정된 미팅</CardDescription>
+              <CardDescription>{t('newTqc.dashboard.upcomingMeetingsDesc')}</CardDescription>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/new-tqc/meetings')}
             >
-              전체보기
+              {t('common.viewAll')}
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </CardHeader>
@@ -190,7 +196,7 @@ export default function NewTQCDashboard() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>예정된 미팅이 없습니다.</p>
+                <p>{t('newTqc.dashboard.noMeetings')}</p>
               </div>
             )}
           </CardContent>
@@ -204,9 +210,9 @@ export default function NewTQCDashboard() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
-              주의 필요 항목
+              {t('newTqc.dashboard.alertItems')}
             </CardTitle>
-            <CardDescription>조치가 필요한 항목들</CardDescription>
+            <CardDescription>{t('newTqc.dashboard.alertItemsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -221,9 +227,30 @@ export default function NewTQCDashboard() {
                       <AlertTriangle className="h-4 w-4 text-yellow-600" />
                     </div>
                     <div>
-                      <p className="font-medium">Color Blind 검사 필요</p>
+                      <p className="font-medium">{t('newTqc.dashboard.colorBlindRequired')}</p>
                       <p className="text-sm text-muted-foreground">
-                        {dashboardStats.colorBlindPending}명의 교육생이 검사를 받지 않았습니다.
+                        {t('newTqc.dashboard.colorBlindPending', { count: dashboardStats.colorBlindPending })}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Failed trainees needing re-training */}
+              {failedTrainees.length > 0 && (
+                <div
+                  className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/20 rounded-lg cursor-pointer hover:bg-red-500/20 transition-colors"
+                  onClick={() => navigate('/new-tqc/final-result')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-500/20 rounded-full">
+                      <RotateCcw className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{t('newTqc.dashboard.retrainingRequired')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t('newTqc.dashboard.retrainingCount', { count: failedTrainees.length })}
                       </p>
                     </div>
                   </div>
@@ -232,9 +259,9 @@ export default function NewTQCDashboard() {
               )}
 
               {/* No alerts */}
-              {(!dashboardStats || dashboardStats.colorBlindPending === 0) && (
+              {(!dashboardStats || (dashboardStats.colorBlindPending === 0 && failedTrainees.length === 0)) && (
                 <div className="text-center py-6 text-muted-foreground">
-                  <p>현재 주의가 필요한 항목이 없습니다.</p>
+                  <p>{t('newTqc.dashboard.noAlerts')}</p>
                 </div>
               )}
             </div>

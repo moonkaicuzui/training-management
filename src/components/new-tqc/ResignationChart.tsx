@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -9,15 +10,15 @@ import {
 import { LazyPieChart, LazyBarChart } from '@/components/charts/LazyCharts';
 import type { NewTQCResignationAnalysis, ResignationReason } from '@/types/newTqc';
 
-const REASON_LABELS: Record<ResignationReason, string> = {
-  HEALTH_ISSUE: '건강 문제',
-  FAMILY_MATTERS: '가정 사정',
-  DISTANCE: '출퇴근 거리',
-  LOW_SALARY: '급여 불만',
-  JOB_CHANGE: '이직',
-  ABSENCE: '무단 결근',
-  ACCIDENT: '사고',
-  OTHER: '기타',
+const REASON_KEYS: Record<ResignationReason, string> = {
+  HEALTH_ISSUE: 'newTqc.resignations.reasons.healthIssue',
+  FAMILY_MATTERS: 'newTqc.resignations.reasons.familyMatters',
+  DISTANCE: 'newTqc.resignations.reasons.distance',
+  LOW_SALARY: 'newTqc.resignations.reasons.lowSalary',
+  JOB_CHANGE: 'newTqc.resignations.reasons.jobChange',
+  ABSENCE: 'newTqc.resignations.reasons.absence',
+  ACCIDENT: 'newTqc.resignations.reasons.accident',
+  OTHER: 'newTqc.resignations.reasons.other',
 };
 
 const REASON_COLORS: Record<ResignationReason, string> = {
@@ -37,6 +38,17 @@ interface ResignationChartProps {
 }
 
 export function ResignationPieChart({ analysis, isLoading }: ResignationChartProps) {
+  const { t } = useTranslation();
+
+  // Build translated reason labels
+  const reasonLabels = useMemo(() => {
+    const labels: Record<ResignationReason, string> = {} as Record<ResignationReason, string>;
+    for (const [key, i18nKey] of Object.entries(REASON_KEYS)) {
+      labels[key as ResignationReason] = t(i18nKey);
+    }
+    return labels;
+  }, [t]);
+
   // Calculate total resignations from byReason array
   const totalResignations = useMemo(() => {
     if (!analysis) return 0;
@@ -48,25 +60,25 @@ export function ResignationPieChart({ analysis, isLoading }: ResignationChartPro
     if (!analysis) return [];
 
     return analysis.byReason.map((item) => ({
-      grade: REASON_LABELS[item.reason],
+      grade: reasonLabels[item.reason],
       count: item.count,
     }));
-  }, [analysis]);
+  }, [analysis, reasonLabels]);
 
   // Create colors map for pie chart
   const colors = useMemo(() => {
     const colorMap: Record<string, string> = {};
-    Object.entries(REASON_LABELS).forEach(([key, label]) => {
+    Object.entries(reasonLabels).forEach(([key, label]) => {
       colorMap[label] = REASON_COLORS[key as ResignationReason];
     });
     return colorMap;
-  }, []);
+  }, [reasonLabels]);
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">퇴사 사유 분석</CardTitle>
+          <CardTitle className="text-lg">{t('newTqc.charts.reasonAnalysis')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
           <div className="animate-pulse bg-muted rounded-full w-48 h-48" />
@@ -78,9 +90,9 @@ export function ResignationPieChart({ analysis, isLoading }: ResignationChartPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">퇴사 사유 분석</CardTitle>
+        <CardTitle className="text-lg">{t('newTqc.charts.reasonAnalysis')}</CardTitle>
         <CardDescription>
-          총 {totalResignations}명 퇴사
+          {t('newTqc.charts.totalResigned', { count: totalResignations })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -92,7 +104,7 @@ export function ResignationPieChart({ analysis, isLoading }: ResignationChartPro
           />
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            퇴사 데이터가 없습니다.
+            {t('newTqc.charts.noData')}
           </div>
         )}
       </CardContent>
@@ -106,6 +118,8 @@ interface ResignationByTeamChartProps {
 }
 
 export function ResignationByTeamChart({ analysis, isLoading }: ResignationByTeamChartProps) {
+  const { t } = useTranslation();
+
   const chartData = useMemo(() => {
     if (!analysis) return [];
 
@@ -119,7 +133,7 @@ export function ResignationByTeamChart({ analysis, isLoading }: ResignationByTea
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">팀별 퇴사 현황</CardTitle>
+          <CardTitle className="text-lg">{t('newTqc.charts.teamAnalysis')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
           <div className="animate-pulse bg-muted rounded w-full h-48" />
@@ -131,8 +145,8 @@ export function ResignationByTeamChart({ analysis, isLoading }: ResignationByTea
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">팀별 퇴사 현황</CardTitle>
-        <CardDescription>배치예정팀별 퇴사 인원</CardDescription>
+        <CardTitle className="text-lg">{t('newTqc.charts.teamAnalysis')}</CardTitle>
+        <CardDescription>{t('newTqc.charts.teamDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
@@ -145,7 +159,7 @@ export function ResignationByTeamChart({ analysis, isLoading }: ResignationByTea
           />
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            퇴사 데이터가 없습니다.
+            {t('newTqc.charts.noData')}
           </div>
         )}
       </CardContent>
@@ -159,6 +173,8 @@ interface ResignationByMonthChartProps {
 }
 
 export function ResignationByMonthChart({ analysis, isLoading }: ResignationByMonthChartProps) {
+  const { t } = useTranslation();
+
   const chartData = useMemo(() => {
     if (!analysis) return [];
 
@@ -172,7 +188,7 @@ export function ResignationByMonthChart({ analysis, isLoading }: ResignationByMo
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">월별 퇴사 추이</CardTitle>
+          <CardTitle className="text-lg">{t('newTqc.charts.monthlyTrend')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
           <div className="animate-pulse bg-muted rounded w-full h-48" />
@@ -184,8 +200,8 @@ export function ResignationByMonthChart({ analysis, isLoading }: ResignationByMo
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">월별 퇴사 추이</CardTitle>
-        <CardDescription>최근 6개월 퇴사 현황</CardDescription>
+        <CardTitle className="text-lg">{t('newTqc.charts.monthlyTrend')}</CardTitle>
+        <CardDescription>{t('newTqc.charts.monthlyDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
@@ -198,7 +214,7 @@ export function ResignationByMonthChart({ analysis, isLoading }: ResignationByMo
           />
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            퇴사 데이터가 없습니다.
+            {t('newTqc.charts.noData')}
           </div>
         )}
       </CardContent>
@@ -212,6 +228,17 @@ interface ResignationStatsProps {
 }
 
 export function ResignationStats({ analysis }: ResignationStatsProps) {
+  const { t } = useTranslation();
+
+  // Build translated reason labels
+  const reasonLabels = useMemo(() => {
+    const labels: Record<ResignationReason, string> = {} as Record<ResignationReason, string>;
+    for (const [key, i18nKey] of Object.entries(REASON_KEYS)) {
+      labels[key as ResignationReason] = t(i18nKey);
+    }
+    return labels;
+  }, [t]);
+
   // Calculate total resignations from byReason array
   const totalResignations = useMemo(() => {
     if (!analysis) return 0;
@@ -225,35 +252,35 @@ export function ResignationStats({ analysis }: ResignationStatsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            총 퇴사자 수
+            {t('newTqc.charts.totalCount')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalResignations}명</div>
+          <div className="text-2xl font-bold">{t('newTqc.charts.countPeople', { count: totalResignations })}</div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            평균 교육 기간
+            {t('newTqc.charts.avgDuration')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{analysis.averageTrainingDays}일</div>
+          <div className="text-2xl font-bold">{t('newTqc.charts.daysCount', { count: analysis.averageTrainingDays })}</div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            주요 퇴사 사유
+            {t('newTqc.charts.topReason')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
             {analysis.byReason.length > 0
-              ? REASON_LABELS[analysis.byReason[0].reason]
+              ? reasonLabels[analysis.byReason[0].reason]
               : '-'}
           </div>
         </CardContent>

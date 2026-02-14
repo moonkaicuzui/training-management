@@ -1,0 +1,224 @@
+/**
+ * Notification Firebase Service
+ *
+ * Firestore CRUD operations for 'notifications' and 'notificationSettings' collections.
+ */
+
+import {
+  db,
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  serverTimestamp,
+  writeBatch,
+  Timestamp,
+} from '@/services/firebase';
+import type { Notification, NotificationType, NotificationPriority } from '@/types/notification';
+
+// ============================================================
+// Collection Names
+// ============================================================
+
+const NOTIFICATIONS_COLLECTION = 'notifications';
+const SETTINGS_COLLECTION = 'notificationSettings';
+
+// ============================================================
+// Settings Type
+// ============================================================
+
+export interface NotificationSettingsData {
+  emailNotifications: boolean;
+  inAppNotifications: boolean;
+  trainingReminder: boolean;
+  expiryWarning: boolean;
+  retrainingRequired: boolean;
+  reminderDays: number[];
+}
+
+// ============================================================
+// Filter Type
+// ============================================================
+
+export interface NotificationQueryFilters {
+  type?: NotificationType;
+  priority?: NotificationPriority;
+  isRead?: boolean;
+  search?: string;
+}
+
+// ============================================================
+// Helper Functions
+// ============================================================
+
+const convertTimestampToString = (
+  timestamp: Timestamp | string | undefined
+): string => {
+  if (!timestamp) return '';
+  if (timestamp instanceof Timestamp) {
+    return timestamp.toDate().toISOString();
+  }
+  return timestamp;
+};
+
+const docToNotification = (docId: string, data: Record<string, unknown>): Notification => {
+  return {
+    notification_id: (data.notification_id as string) || docId,
+    type: (data.type as NotificationType) || 'SYSTEM',
+    priority: (data.priority as NotificationPriority) || 'LOW',
+    title: (data.title as string) || '',
+    message: (data.message as string) || '',
+    recipient_id: (data.recipient_id as string) || undefined,
+    recipient_type: (data.recipient_type as Notification['recipient_type']) || 'EMPLOYEE',
+    related_entity: data.related_entity as Notification['related_entity'] | undefined,
+    is_read: (data.is_read as boolean) || false,
+    created_at: convertTimestampToString(data.created_at as Timestamp | string | undefined),
+    expires_at: (data.expires_at as string) || undefined,
+  };
+};
+
+// ============================================================
+// Notification Read Operations
+// ============================================================
+
+export const getNotifications = async (
+  userId?: string,
+  filters?: NotificationQueryFilters
+): Promise<Notification[]> => {
+  const constraints = [];
+
+  if (userId) {
+    constraints.push(where('recipient_id', '==', userId));
+  }
+
+  constraints.push(orderBy('created_at', 'desc'));
+
+  const q = query(collection(db, NOTIFICATIONS_COLLECTION), ...constraints);
+  const snapshot = await getDocs(q);
+
+  let results = snapshot.docs.map((d) =>
+    docToNotification(d.id, d.data() as Record<string, unknown>)
+  );
+
+  // Client-side filters
+  if (filters?.type) {
+    results = results.filter((n) => n.type === filters.type);
+  }
+  if (filters?.priority) {
+    results = results.filter((n) => n.priority === filters.priority);
+  }
+  if (filters?.isRead !== undefined) {
+    results = results.filter((n) => n.is_read === filters.isRead);
+  }
+  if (filters?.search) {
+    const searchLower = filters.search.toLowerCase();
+    results = results.filter(
+      (n) =>
+        n.title.toLowerCase().includes(searchLower) ||
+        n.message.toLowerCase().includes(searchLower)
+    );
+  }
+
+  return results;
+};
+
+// ============================================================
+// Notification Write Operations
+// ============================================================
+
+export const createNotification = async (
+  data: Omit<Notification, 'created_at'>
+): Promise<Notification> => {
+  const docRef = doc(db, NOTIFICATIONS_COLLECTION, data.notification_id);
+  const now = serverTimestamp();
+
+  await setDoc(docRef, {
+    ...data,
+    created_at: now,
+  });
+
+  return {
+    ...data,
+    created_at: new Date().toISOString(),
+  };
+};
+
+export const markAsRead = async (id: string): Promise<void> => {
+  const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+  await updateDoc(docRef, {
+    is_read: true,
+  });
+};
+
+export const markAllAsRead = async (userId: string): Promise<void> => {
+  const q = query(
+    collection(db, NOTIFICATIONS_COLLECTION),
+    where('recipient_id', '==', userId),
+    where('is_read', '==', false)
+  );
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return;
+
+  const BATCH_SIZE = 500;
+  const docs = snapshot.docs;
+
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const chunk = docs.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+
+    for (const d of chunk) {
+      batch.update(d.ref, { is_read: true });
+    }
+
+    await batch.commit();
+  }
+};
+
+export const deleteNotification = async (id: string): Promise<void> => {
+  const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+  await deleteDoc(docRef);
+};
+
+export const batchDeleteNotifications = async (ids: string[]): Promise<void> => {
+  const BATCH_SIZE = 500;
+
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const chunk = ids.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+
+    for (const id of chunk) {
+      const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+      batch.delete(docRef);
+    }
+
+    await batch.commit();
+  }
+};
+
+// ============================================================
+// Settings Operations
+// ============================================================
+
+export const getSettings = async (
+  userId: string
+): Promise<NotificationSettingsData | null> => {
+  const docRef = doc(db, SETTINGS_COLLECTION, userId);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) return null;
+  return docSnap.data() as NotificationSettingsData;
+};
+
+export const updateSettings = async (
+  userId: string,
+  data: Partial<NotificationSettingsData>
+): Promise<void> => {
+  const docRef = doc(db, SETTINGS_COLLECTION, userId);
+  await setDoc(docRef, data, { merge: true });
+};

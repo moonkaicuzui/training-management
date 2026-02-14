@@ -34,7 +34,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProgressMatrixData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { buildings, departments, positions, categories } from '@/data/mockData';
+import { buildings, departments, positions, categories } from '@/data/constants';
 import { format } from 'date-fns';
 import type {
   NormalizedProgressCell,

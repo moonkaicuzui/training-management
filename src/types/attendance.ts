@@ -5,7 +5,7 @@
 
 import type { EmployeeId, SessionId } from './branded';
 
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | 'ABSENT_WITH_REASON';
 
 export interface Attendance {
   attendance_id: string;
@@ -32,6 +32,7 @@ export interface AttendanceSummary {
   total_expected: number;
   present: number;
   absent: number;
+  absent_with_reason: number;
   late: number;
   excused: number;
   attendance_rate: number; // percentage
@@ -52,6 +53,7 @@ export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, { ko: string; en
   ABSENT: { ko: '결석', en: 'Absent', vi: 'Vắng mặt' },
   LATE: { ko: '지각', en: 'Late', vi: 'Đến muộn' },
   EXCUSED: { ko: '사유결석', en: 'Excused', vi: 'Có phép' },
+  ABSENT_WITH_REASON: { ko: '결석 (사유있음)', en: 'Absent (with reason)', vi: 'Vắng (có lý do)' },
 };
 
 // 출석 상태 색상
@@ -60,4 +62,5 @@ export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
   ABSENT: 'bg-red-100 text-red-800 border-red-200',
   LATE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   EXCUSED: 'bg-blue-100 text-blue-800 border-blue-200',
+  ABSENT_WITH_REASON: 'bg-orange-100 text-orange-800 border-orange-200',
 };

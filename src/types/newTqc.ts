@@ -79,10 +79,18 @@ export interface NewTQCTrainee {
   start_week: number;
   start_date: string;
   expected_end_date?: string;
+  training_end_date?: string; // Auto-calculated: start_date + 1 month
   introducer?: string;
+  building?: string; // Building A-E, B3
+  working_area?: string; // 16 working areas
   status: NewTQCTraineeStatus;
   color_blind_status: ColorBlindTestResult | null;
   progress_percentage: number;
+  final_test_score?: number;
+  final_grade?: string;
+  final_result?: 'PASS' | 'FAIL';
+  certificate_issued?: boolean;
+  certificate_date?: string;
   meeting_1week_date?: string;
   meeting_1month_date?: string;
   meeting_3month_date?: string;
@@ -218,6 +226,8 @@ export interface NewTQCTraineeInput {
   team_id: string;
   trainer_id: string;
   start_date: string;
+  building?: string;
+  working_area?: string;
   introducer?: string;
   notes?: string;
 }

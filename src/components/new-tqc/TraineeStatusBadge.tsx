@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import type { NewTQCTraineeStatus, NewTQCMeetingStatus } from '@/types/newTqc';
 
@@ -7,36 +8,30 @@ interface TraineeStatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<
+const statusVariant: Record<
   NewTQCTraineeStatus,
-  { label: string; labelVi: string; variant: 'default' | 'success' | 'destructive' | 'secondary' }
+  'default' | 'success' | 'destructive' | 'secondary'
 > = {
-  IN_TRAINING: {
-    label: '교육중',
-    labelVi: 'Đang đào tạo',
-    variant: 'default',
-  },
-  COMPLETED: {
-    label: '교육완료',
-    labelVi: 'Hoàn thành',
-    variant: 'success',
-  },
-  RESIGNED: {
-    label: '퇴사',
-    labelVi: 'Đã nghỉ',
-    variant: 'destructive',
-  },
+  IN_TRAINING: 'default',
+  COMPLETED: 'success',
+  RESIGNED: 'destructive',
+};
+
+const statusI18nKey: Record<NewTQCTraineeStatus, string> = {
+  IN_TRAINING: 'newTqc.status.inTraining',
+  COMPLETED: 'newTqc.status.completed',
+  RESIGNED: 'newTqc.status.resigned',
 };
 
 export const TraineeStatusBadge = memo(function TraineeStatusBadge({
   status,
   className,
 }: TraineeStatusBadgeProps) {
-  const config = statusConfig[status];
+  const { t } = useTranslation();
 
   return (
-    <Badge variant={config.variant} className={className}>
-      {config.label}
+    <Badge variant={statusVariant[status]} className={className}>
+      {t(statusI18nKey[status])}
     </Badge>
   );
 });
@@ -51,17 +46,19 @@ export const ColorBlindBadge = memo(function ColorBlindBadge({
   result,
   className,
 }: ColorBlindBadgeProps) {
+  const { t } = useTranslation();
+
   if (result === null) {
     return (
       <Badge variant="secondary" className={className}>
-        미검사
+        {t('newTqc.colorBlind.notTested')}
       </Badge>
     );
   }
 
   return (
     <Badge variant={result === 'PASS' ? 'success' : 'destructive'} className={className}>
-      {result === 'PASS' ? '정상' : '색맹'}
+      {result === 'PASS' ? t('newTqc.colorBlind.pass') : t('newTqc.colorBlind.fail')}
     </Badge>
   );
 });
@@ -72,25 +69,32 @@ interface MeetingStatusBadgeProps {
   className?: string;
 }
 
-const meetingStatusConfig: Record<
+const meetingStatusVariant: Record<
   NewTQCMeetingStatus,
-  { label: string; variant: 'default' | 'success' | 'destructive' | 'secondary' }
+  'default' | 'success' | 'destructive' | 'secondary'
 > = {
-  SCHEDULED: { label: '예정', variant: 'default' },
-  COMPLETED: { label: '완료', variant: 'success' },
-  MISSED: { label: '미실시', variant: 'destructive' },
-  RESCHEDULED: { label: '재조정', variant: 'secondary' },
+  SCHEDULED: 'default',
+  COMPLETED: 'success',
+  MISSED: 'destructive',
+  RESCHEDULED: 'secondary',
+};
+
+const meetingStatusI18nKey: Record<NewTQCMeetingStatus, string> = {
+  SCHEDULED: 'newTqc.meetingStatus.scheduled',
+  COMPLETED: 'newTqc.meetingStatus.completed',
+  MISSED: 'newTqc.meetingStatus.missed',
+  RESCHEDULED: 'newTqc.meetingStatus.rescheduled',
 };
 
 export const MeetingStatusBadge = memo(function MeetingStatusBadge({
   status,
   className,
 }: MeetingStatusBadgeProps) {
-  const { label, variant } = meetingStatusConfig[status];
+  const { t } = useTranslation();
 
   return (
-    <Badge variant={variant} className={className}>
-      {label}
+    <Badge variant={meetingStatusVariant[status]} className={className}>
+      {t(meetingStatusI18nKey[status])}
     </Badge>
   );
 });
@@ -101,24 +105,30 @@ interface StageStatusBadgeProps {
   className?: string;
 }
 
-const stageStatusConfig: Record<
+const stageStatusVariant: Record<
   'PENDING' | 'IN_PROGRESS' | 'COMPLETED',
-  { label: string; variant: 'default' | 'success' | 'secondary' }
+  'default' | 'success' | 'secondary'
 > = {
-  PENDING: { label: '대기', variant: 'secondary' },
-  IN_PROGRESS: { label: '진행중', variant: 'default' },
-  COMPLETED: { label: '완료', variant: 'success' },
+  PENDING: 'secondary',
+  IN_PROGRESS: 'default',
+  COMPLETED: 'success',
+};
+
+const stageStatusI18nKey: Record<'PENDING' | 'IN_PROGRESS' | 'COMPLETED', string> = {
+  PENDING: 'newTqc.stageStatus.pending',
+  IN_PROGRESS: 'newTqc.stageStatus.inProgress',
+  COMPLETED: 'newTqc.stageStatus.completed',
 };
 
 export const StageStatusBadge = memo(function StageStatusBadge({
   status,
   className,
 }: StageStatusBadgeProps) {
-  const { label, variant } = stageStatusConfig[status];
+  const { t } = useTranslation();
 
   return (
-    <Badge variant={variant} className={className}>
-      {label}
+    <Badge variant={stageStatusVariant[status]} className={className}>
+      {t(stageStatusI18nKey[status])}
     </Badge>
   );
 });

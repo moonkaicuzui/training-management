@@ -39,6 +39,8 @@ const NewTQCTrainees = lazy(() => import('./pages/new-tqc/NewTQCTrainees'));
 const NewTQCTraineeDetail = lazy(() => import('./pages/new-tqc/NewTQCTraineeDetail'));
 const NewTQCMeetings = lazy(() => import('./pages/new-tqc/NewTQCMeetings'));
 const NewTQCResignations = lazy(() => import('./pages/new-tqc/NewTQCResignations'));
+const NewTQCFinalResult = lazy(() => import('./pages/new-tqc/NewTQCFinalResult'));
+const NewTQCCertificates = lazy(() => import('./pages/new-tqc/NewTQCCertificates'));
 const NewTQCSettings = lazy(() => import('./pages/new-tqc/NewTQCSettings'));
 
 // 프로젝트 관리 (품질 부서 협업 시스템) 페이지
@@ -221,6 +223,16 @@ function App() {
                   <Route path="meetings" element={
                     <Suspense fallback={<PageLoader />}>
                       <NewTQCMeetings />
+                    </Suspense>
+                  } />
+                  <Route path="final-result" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <NewTQCFinalResult />
+                    </Suspense>
+                  } />
+                  <Route path="certificates" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <NewTQCCertificates />
                     </Suspense>
                   } />
                   <Route path="resignations" element={

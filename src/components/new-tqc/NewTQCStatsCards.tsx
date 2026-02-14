@@ -1,5 +1,6 @@
 import { memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Users,
   GraduationCap,
@@ -25,11 +26,12 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
   isLoading,
 }: NewTQCStatsCardsProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // useMemo로 statItems 배열 최적화
   const statItems = useMemo(() => [
     {
-      title: '교육중 인원',
+      title: t('newTqc.stats.inTraining'),
       value: stats?.inTraining ?? 0,
       icon: Users,
       color: 'text-primary',
@@ -37,7 +39,7 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
       link: '/new-tqc/trainees?status=IN_TRAINING',
     },
     {
-      title: '전체 교육생',
+      title: t('newTqc.stats.totalTrainees'),
       value: stats?.totalTrainees ?? 0,
       icon: GraduationCap,
       color: 'text-status-pass',
@@ -45,7 +47,7 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
       link: '/new-tqc/trainees',
     },
     {
-      title: '교육 완료',
+      title: t('newTqc.stats.completed'),
       value: stats?.completed ?? 0,
       icon: GraduationCap,
       color: 'text-blue-500',
@@ -53,7 +55,7 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
       link: '/new-tqc/trainees?status=COMPLETED',
     },
     {
-      title: '퇴사',
+      title: t('newTqc.stats.resigned'),
       value: stats?.resigned ?? 0,
       icon: UserMinus,
       color: 'text-destructive',
@@ -61,7 +63,7 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
       link: '/new-tqc/resignations',
     },
     {
-      title: '예정된 미팅',
+      title: t('newTqc.stats.scheduledMeetings'),
       value: stats?.meetingsPending ?? 0,
       icon: Calendar,
       color: 'text-orange-500',
@@ -69,14 +71,14 @@ export const NewTQCStatsCards = memo(function NewTQCStatsCards({
       link: '/new-tqc/meetings',
     },
     {
-      title: '색맹 검사 필요',
+      title: t('newTqc.stats.colorBlindTest'),
       value: stats?.colorBlindPending ?? 0,
       icon: AlertTriangle,
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
       link: '/new-tqc/trainees?color_blind=null',
     },
-  ], [stats]);
+  ], [stats, t]);
 
   // 클릭 핸들러 useCallback으로 최적화
   const handleNavigate = useCallback((link: string) => {
@@ -135,6 +137,8 @@ interface TeamStatsProps {
 }
 
 export const NewTQCTeamStats = memo(function NewTQCTeamStats({ stats }: TeamStatsProps) {
+  const { t } = useTranslation();
+
   if (!stats) return null;
 
   return (
@@ -142,13 +146,13 @@ export const NewTQCTeamStats = memo(function NewTQCTeamStats({ stats }: TeamStat
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <GraduationCap className="h-5 w-5" />
-          교육 현황 요약
+          {t('newTqc.stats.summary')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">평균 진행률</span>
+            <span className="text-muted-foreground">{t('newTqc.stats.avgProgress')}</span>
             <span className="font-bold">{stats.averageProgress}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2">
@@ -161,22 +165,22 @@ export const NewTQCTeamStats = memo(function NewTQCTeamStats({ stats }: TeamStat
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div className="text-center p-3 bg-status-pass/10 rounded-lg">
               <p className="text-2xl font-bold text-status-pass">{stats.completed}</p>
-              <p className="text-xs text-muted-foreground">완료</p>
+              <p className="text-xs text-muted-foreground">{t('newTqc.stats.completed')}</p>
             </div>
             <div className="text-center p-3 bg-destructive/10 rounded-lg">
               <p className="text-2xl font-bold text-destructive">{stats.resigned}</p>
-              <p className="text-xs text-muted-foreground">퇴사</p>
+              <p className="text-xs text-muted-foreground">{t('newTqc.stats.resigned')}</p>
             </div>
           </div>
 
           <div className="pt-2 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">퇴사율</span>
+              <span className="text-muted-foreground">{t('newTqc.stats.resignRate')}</span>
               <span className="font-medium">{stats.resignationRate}%</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">이번주 미팅</span>
-              <span className="font-medium">{stats.meetingsThisWeek}건</span>
+              <span className="text-muted-foreground">{t('newTqc.stats.meetingsThisWeek')}</span>
+              <span className="font-medium">{t('newTqc.stats.count', { count: stats.meetingsThisWeek })}</span>
             </div>
           </div>
         </div>
@@ -193,6 +197,8 @@ interface CompactStatsProps {
 export const NewTQCCompactStats = memo(function NewTQCCompactStats({
   stats,
 }: CompactStatsProps) {
+  const { t } = useTranslation();
+
   if (!stats) return null;
 
   return (
@@ -200,28 +206,28 @@ export const NewTQCCompactStats = memo(function NewTQCCompactStats({
       <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <Users className="h-5 w-5 text-primary" />
         <div>
-          <p className="text-xs text-muted-foreground">교육중</p>
+          <p className="text-xs text-muted-foreground">{t('newTqc.stats.inProgress')}</p>
           <p className="text-lg font-bold">{stats.inTraining}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <GraduationCap className="h-5 w-5 text-status-pass" />
         <div>
-          <p className="text-xs text-muted-foreground">완료</p>
+          <p className="text-xs text-muted-foreground">{t('newTqc.stats.completed')}</p>
           <p className="text-lg font-bold">{stats.completed}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <Calendar className="h-5 w-5 text-orange-500" />
         <div>
-          <p className="text-xs text-muted-foreground">예정 미팅</p>
+          <p className="text-xs text-muted-foreground">{t('newTqc.stats.scheduledMeetings')}</p>
           <p className="text-lg font-bold">{stats.meetingsPending}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <UserMinus className="h-5 w-5 text-destructive" />
         <div>
-          <p className="text-xs text-muted-foreground">퇴사</p>
+          <p className="text-xs text-muted-foreground">{t('newTqc.stats.resigned')}</p>
           <p className="text-lg font-bold">{stats.resigned}</p>
         </div>
       </div>

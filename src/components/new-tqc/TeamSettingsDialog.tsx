@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ export function TeamSettingsDialog({
   onUpdateTeam,
   onDeleteTeam,
 }: TeamSettingsDialogProps) {
+  const { t } = useTranslation();
   const [editingTeam, setEditingTeam] = useState<NewTQCTeam | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,10 +52,10 @@ export function TeamSettingsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            팀 설정 관리
+            {t('newTqc.settings.teamSettingsTitle')}
           </DialogTitle>
           <DialogDescription>
-            배치예정팀 목록을 관리합니다. 팀 추가, 수정, 삭제가 가능합니다.
+            {t('newTqc.settings.teamSettingsDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -63,19 +65,19 @@ export function TeamSettingsDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>팀 이름</TableHead>
-                  <TableHead>베트남어</TableHead>
-                  <TableHead>공장</TableHead>
-                  <TableHead>라인</TableHead>
-                  <TableHead className="text-center">상태</TableHead>
-                  <TableHead className="text-right">작업</TableHead>
+                  <TableHead>{t('newTqc.settings.teamName')}</TableHead>
+                  <TableHead>{t('newTqc.settings.vietnameseName')}</TableHead>
+                  <TableHead>{t('newTqc.settings.factory')}</TableHead>
+                  <TableHead>{t('newTqc.settings.line')}</TableHead>
+                  <TableHead className="text-center">{t('common.status')}</TableHead>
+                  <TableHead className="text-right">{t('newTqc.settings.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teams.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      등록된 팀이 없습니다.
+                      {t('newTqc.settings.noTeams')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -89,7 +91,7 @@ export function TeamSettingsDialog({
                       <TableCell>{team.line || '-'}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={team.is_active ? 'success' : 'secondary'}>
-                          {team.is_active ? '활성' : '비활성'}
+                          {team.is_active ? t('newTqc.settings.active') : t('newTqc.settings.inactive')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -109,7 +111,7 @@ export function TeamSettingsDialog({
                             size="sm"
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
-                              if (confirm(`'${team.team_name}' 팀을 삭제하시겠습니까?`)) {
+                              if (confirm(t('newTqc.settings.confirmDelete', { name: team.team_name }))) {
                                 onDeleteTeam(team.team_id);
                               }
                             }}
@@ -128,7 +130,7 @@ export function TeamSettingsDialog({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose}>
-            닫기
+            {t('newTqc.settings.close')}
           </Button>
           <Button
             onClick={() => {
@@ -137,7 +139,7 @@ export function TeamSettingsDialog({
             }}
           >
             <Plus className="h-4 w-4 mr-1" />
-            팀 추가
+            {t('newTqc.settings.addTeam')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -198,6 +200,7 @@ function getInitialTeamFormData(team: NewTQCTeam | null): NewTQCTeamInput {
 }
 
 function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDialogProps) {
+  const { t } = useTranslation();
   const isEdit = !!team;
 
   // 초기값으로 폼 데이터 설정
@@ -218,7 +221,7 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
     const newErrors: Record<string, string> = {};
 
     if (!formData.team_name.trim()) {
-      newErrors.team_name = '팀 이름을 입력하세요.';
+      newErrors.team_name = t('newTqc.settings.teamNameRequired');
     }
 
     setErrors(newErrors);
@@ -234,9 +237,9 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? '팀 수정' : '새 팀 추가'}</DialogTitle>
+          <DialogTitle>{isEdit ? t('newTqc.settings.editTeam') : t('newTqc.settings.newTeam')}</DialogTitle>
           <DialogDescription>
-            {isEdit ? '팀 정보를 수정합니다.' : '새로운 배치예정팀을 추가합니다.'}
+            {isEdit ? t('newTqc.settings.editTeamDesc') : t('newTqc.settings.newTeamDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -244,7 +247,7 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
           {/* Team Name */}
           <div className="space-y-2">
             <Label htmlFor="team_name">
-              팀 이름 <span className="text-destructive">*</span>
+              {t('newTqc.settings.teamName')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="team_name"
@@ -252,7 +255,7 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, team_name: e.target.value }))
               }
-              placeholder="예: ASSEMBLY"
+              placeholder={t('newTqc.settings.exampleTeam')}
               className={errors.team_name ? 'border-destructive' : ''}
             />
             {errors.team_name && (
@@ -262,7 +265,7 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
 
           {/* Team Name (Vietnamese) */}
           <div className="space-y-2">
-            <Label htmlFor="team_name_vn">베트남어 이름 (선택)</Label>
+            <Label htmlFor="team_name_vn">{t('newTqc.settings.vnNameOptional')}</Label>
             <Input
               id="team_name_vn"
               value={formData.team_name_vn || ''}
@@ -272,13 +275,13 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
                   team_name_vn: e.target.value || undefined,
                 }))
               }
-              placeholder="예: Lắp ráp"
+              placeholder={t('newTqc.settings.exampleVnName')}
             />
           </div>
 
           {/* Factory */}
           <div className="space-y-2">
-            <Label htmlFor="factory">공장 (선택)</Label>
+            <Label htmlFor="factory">{t('newTqc.settings.factoryOptional')}</Label>
             <Input
               id="factory"
               value={formData.factory || ''}
@@ -288,13 +291,13 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
                   factory: e.target.value || undefined,
                 }))
               }
-              placeholder="예: Building A"
+              placeholder={t('newTqc.settings.exampleFactory')}
             />
           </div>
 
           {/* Line */}
           <div className="space-y-2">
-            <Label htmlFor="line">라인 (선택)</Label>
+            <Label htmlFor="line">{t('newTqc.settings.lineOptional')}</Label>
             <Input
               id="line"
               value={formData.line || ''}
@@ -304,17 +307,17 @@ function TeamFormDialog({ open, onClose, team, onSubmit, isSaving }: TeamFormDia
                   line: e.target.value || undefined,
                 }))
               }
-              placeholder="예: Line 1"
+              placeholder={t('newTqc.settings.exampleLine')}
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            취소
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSaving}>
-            {isSaving ? '저장 중...' : isEdit ? '수정' : '추가'}
+            {isSaving ? t('common.saving') : isEdit ? t('common.edit') : t('common.add')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -329,6 +332,7 @@ interface TeamActiveToggleProps {
 }
 
 export function TeamActiveToggle({ team, onToggle }: TeamActiveToggleProps) {
+  const { t } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleToggle = async (checked: boolean) => {
@@ -348,7 +352,7 @@ export function TeamActiveToggle({ team, onToggle }: TeamActiveToggleProps) {
         disabled={isUpdating}
       />
       <span className="text-sm text-muted-foreground">
-        {team.is_active ? '활성' : '비활성'}
+        {team.is_active ? t('newTqc.settings.active') : t('newTqc.settings.inactive')}
       </span>
     </div>
   );

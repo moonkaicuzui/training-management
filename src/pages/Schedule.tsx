@@ -57,7 +57,8 @@ import {
   subDays,
 } from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
-import type { TrainingSession, SessionStatus } from '@/types';
+import type { TrainingSession, SessionStatus, TrainingType, TrainingLevel } from '@/types';
+import { TRAINING_TYPES, TRAINING_LEVELS } from '@/data/constants';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -86,6 +87,8 @@ export default function Schedule() {
     trainer: '',
     location: '',
     max_attendees: 20,
+    training_level: '' as TrainingLevel | '',
+    training_type: '' as TrainingType | '',
     notes: '',
   });
 
@@ -223,6 +226,8 @@ export default function Schedule() {
         trainer_name: formData.trainer,
         location: formData.location,
         max_attendees: formData.max_attendees,
+        training_level: formData.training_level || undefined,
+        training_type: formData.training_type || undefined,
         notes: formData.notes,
         status: 'PLANNED',
         attendees: [],
@@ -240,6 +245,8 @@ export default function Schedule() {
         trainer: '',
         location: '',
         max_attendees: 20,
+        training_level: '',
+        training_type: '',
         notes: '',
       });
     } catch {
@@ -732,7 +739,15 @@ export default function Schedule() {
               <Label>{t('schedule.programRequired')}</Label>
               <Select
                 value={formData.program_code}
-                onValueChange={(value) => setFormData({ ...formData, program_code: value })}
+                onValueChange={(value) => {
+                  const selectedProgram = programs.find(p => p.program_code === value);
+                  setFormData({
+                    ...formData,
+                    program_code: value,
+                    training_level: selectedProgram?.training_level || formData.training_level,
+                    training_type: selectedProgram?.training_type || formData.training_type,
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t('schedule.programPlaceholder')} />
@@ -787,6 +802,46 @@ export default function Schedule() {
                 value={formData.max_attendees}
                 onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) || 20 })}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('trainingLevel.title')}</Label>
+                <Select
+                  value={formData.training_level || 'none'}
+                  onValueChange={(v) => setFormData({ ...formData, training_level: v === 'none' ? '' : v as TrainingLevel })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('common.select')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-</SelectItem>
+                    {TRAINING_LEVELS.map((level) => (
+                      <SelectItem key={level.value} value={level.value}>
+                        {t(`trainingLevel.${level.value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('trainingType.title')}</Label>
+                <Select
+                  value={formData.training_type || 'none'}
+                  onValueChange={(v) => setFormData({ ...formData, training_type: v === 'none' ? '' : v as TrainingType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('common.select')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-</SelectItem>
+                    {TRAINING_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {t(`trainingType.${type.value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t('schedule.memo')}</Label>

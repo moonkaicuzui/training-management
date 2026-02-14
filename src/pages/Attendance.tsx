@@ -13,6 +13,8 @@ import {
   AlertCircle,
   Search,
   ChevronLeft,
+  UserPlus,
+  FileWarning,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import type { AttendanceStatus } from '@/types/attendance';
 import type { SessionId, EmployeeId } from '@/types/branded';
 import { saveBulkAttendance } from '@/services/api';
@@ -63,6 +76,20 @@ interface SessionWithAttendance {
   attendees: AttendeeRecord[];
 }
 
+// 추가 가능한 직원 목록 (실제 프로젝트에서는 API에서 가져옴)
+const allEmployees: AttendeeRecord[] = [
+  { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC' },
+  { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC' },
+  { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
+  { employee_id: 'EMP-004', employee_name: '박지성', department: 'STITCHING', position: 'PRO_WORKER' },
+  { employee_id: 'EMP-005', employee_name: '손흥민', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
+  { employee_id: 'EMP-006', employee_name: '김민재', department: 'ASSEMBLY', position: 'QIP_TQC' },
+  { employee_id: 'EMP-007', employee_name: '이강인', department: 'STITCHING', position: 'PRO_WORKER' },
+  { employee_id: 'EMP-008', employee_name: '황희찬', department: 'MTL', position: 'QIP_GROUP_LEADER' },
+  { employee_id: 'EMP-009', employee_name: '정우영', department: 'OSC', position: 'QIP_RQC' },
+  { employee_id: 'EMP-010', employee_name: '조규성', department: 'STITCHING', position: 'PRO_WORKER' },
+];
+
 // 샘플 세션 데이터
 const sampleSessions: SessionWithAttendance[] = [
   {
@@ -74,9 +101,9 @@ const sampleSessions: SessionWithAttendance[] = [
     trainer_name: '김강사',
     location: 'A동 2층 교육실',
     attendees: [
-      { employee_id: 'EMP-001', employee_name: '홍길동', department: 'QIP', position: 'TQC' },
-      { employee_id: 'EMP-002', employee_name: '김철수', department: 'QIP', position: 'RQC' },
-      { employee_id: 'EMP-003', employee_name: '이영희', department: 'Production', position: 'Line Leader' },
+      { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC' },
+      { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC' },
+      { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
     ],
   },
   {
@@ -97,19 +124,28 @@ const sampleSessions: SessionWithAttendance[] = [
 export default function AttendancePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceStatus>>({});
+  const [reasonData, setReasonData] = useState<Record<string, string>>({});
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<AttendanceStatus>('PRESENT');
+
+  // Add Trainee dialog state
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addSearchQuery, setAddSearchQuery] = useState('');
+
+  // Mutable session data (allows adding attendees)
+  const [sessionData, setSessionData] = useState<SessionWithAttendance[]>(sampleSessions);
 
   // 선택된 세션
   const selectedSession = useMemo(() => {
     if (!sessionId) return null;
-    return sampleSessions.find(s => s.session_id === sessionId) ?? null;
-  }, [sessionId]);
+    return sessionData.find(s => s.session_id === sessionId) ?? null;
+  }, [sessionId, sessionData]);
 
   // 세션 변경 시 초기 출석 데이터 설정
   // useEffect에서 ref를 사용하여 불필요한 재실행 방지
@@ -124,6 +160,7 @@ export default function AttendancePage() {
       });
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 세션 전환 시 한 번만 실행
       setAttendanceData(initial);
+      setReasonData({});
       lastSessionIdRef.current = currentSessionId;
     }
   }, [currentSessionId, selectedSession]);
@@ -131,8 +168,8 @@ export default function AttendancePage() {
   // 오늘 예정된 세션
   const todaySessions = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    return sampleSessions.filter(s => s.session_date === today);
-  }, []);
+    return sessionData.filter(s => s.session_date === today);
+  }, [sessionData]);
 
   // 세션의 참석자 목록
   const sessionAttendees = useMemo(() => {
@@ -143,11 +180,28 @@ export default function AttendancePage() {
     );
   }, [selectedSession, searchQuery]);
 
+  // Add Trainee dialog: employees not already in attendance list
+  const availableEmployees = useMemo(() => {
+    if (!selectedSession) return [];
+    const existingIds = new Set(selectedSession.attendees.map(a => a.employee_id));
+    return allEmployees
+      .filter(emp => !existingIds.has(emp.employee_id))
+      .filter(emp =>
+        addSearchQuery === '' ||
+        emp.employee_name.toLowerCase().includes(addSearchQuery.toLowerCase()) ||
+        emp.employee_id.toLowerCase().includes(addSearchQuery.toLowerCase()) ||
+        emp.department.toLowerCase().includes(addSearchQuery.toLowerCase())
+      );
+  }, [selectedSession, addSearchQuery]);
+
   // 출석 통계
   const attendanceStats = useMemo(() => {
-    const stats = { present: 0, absent: 0, late: 0, excused: 0, total: 0 };
+    const stats = { present: 0, absent: 0, late: 0, excused: 0, absent_with_reason: 0, total: 0 };
     Object.values(attendanceData).forEach((status) => {
-      stats[status.toLowerCase() as keyof typeof stats]++;
+      const key = status.toLowerCase() as keyof typeof stats;
+      if (key in stats) {
+        stats[key]++;
+      }
       stats.total++;
     });
     return stats;
@@ -156,6 +210,19 @@ export default function AttendancePage() {
   // 출석 상태 변경
   const handleStatusChange = (employeeId: string, status: AttendanceStatus) => {
     setAttendanceData((prev) => ({ ...prev, [employeeId]: status }));
+    // Clear reason if status is not ABSENT_WITH_REASON
+    if (status !== 'ABSENT_WITH_REASON') {
+      setReasonData((prev) => {
+        const next = { ...prev };
+        delete next[employeeId];
+        return next;
+      });
+    }
+  };
+
+  // 결석 사유 변경
+  const handleReasonChange = (employeeId: string, reason: string) => {
+    setReasonData((prev) => ({ ...prev, [employeeId]: reason }));
   };
 
   // 전체 선택/해제
@@ -189,7 +256,49 @@ export default function AttendancePage() {
       });
       return next;
     });
+    // Clear reasons for bulk status change if not ABSENT_WITH_REASON
+    if (bulkStatus !== 'ABSENT_WITH_REASON') {
+      setReasonData((prev) => {
+        const next = { ...prev };
+        selectedEmployees.forEach((empId) => {
+          delete next[empId];
+        });
+        return next;
+      });
+    }
     setSelectedEmployees(new Set());
+  };
+
+  // Add trainee to session
+  const handleAddTrainee = (employee: AttendeeRecord) => {
+    if (!selectedSession) return;
+
+    // Update session data to include the new attendee
+    setSessionData((prev) =>
+      prev.map((session) => {
+        if (session.session_id === selectedSession.session_id) {
+          return {
+            ...session,
+            attendees: [...session.attendees, employee],
+          };
+        }
+        return session;
+      })
+    );
+
+    // Set default attendance status for the new trainee
+    setAttendanceData((prev) => ({
+      ...prev,
+      [employee.employee_id]: 'PRESENT',
+    }));
+
+    toast({
+      title: t('attendance.addSuccess'),
+      description: t('attendance.addSuccessDesc'),
+    });
+
+    setAddDialogOpen(false);
+    setAddSearchQuery('');
   };
 
   // 출석 저장
@@ -200,6 +309,7 @@ export default function AttendancePage() {
       const attendances = Object.entries(attendanceData).map(([employeeId, status]) => ({
         employee_id: employeeId as EmployeeId,
         status,
+        notes: status === 'ABSENT_WITH_REASON' ? reasonData[employeeId] : undefined,
       }));
 
       await saveBulkAttendance({
@@ -283,7 +393,7 @@ export default function AttendancePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sampleSessions.map((session) => (
+                {sessionData.map((session) => (
                   <TableRow key={session.session_id}>
                     <TableCell>{session.session_date}</TableCell>
                     <TableCell>{session.session_time}</TableCell>
@@ -333,14 +443,73 @@ export default function AttendancePage() {
             </p>
           </div>
         </div>
-        <Button onClick={handleSaveAttendance}>
-          <CheckCircle2 className="h-4 w-4 mr-2" />
-          {t('attendance.saveAttendance')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Add Trainee Dialog */}
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <UserPlus className="h-4 w-4 mr-2" />
+                {t('attendance.addTrainee')}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>{t('attendance.addTrainee')}</DialogTitle>
+                <DialogDescription>
+                  {t('attendance.searchEmployee')}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t('attendance.searchEmployee')}
+                    className="pl-8"
+                    value={addSearchQuery}
+                    onChange={(e) => setAddSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="max-h-[300px] overflow-y-auto border rounded-md">
+                  {availableEmployees.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      {t('attendance.alreadyAdded')}
+                    </div>
+                  ) : (
+                    availableEmployees.map((employee) => (
+                      <div
+                        key={employee.employee_id}
+                        className="flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
+                        onClick={() => handleAddTrainee(employee)}
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{employee.employee_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {employee.employee_id} - {employee.department} / {employee.position}
+                          </p>
+                        </div>
+                        <UserPlus className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setAddDialogOpen(false); setAddSearchQuery(''); }}>
+                  {t('common.close')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Button onClick={handleSaveAttendance}>
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            {t('attendance.saveAttendance')}
+          </Button>
+        </div>
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
@@ -360,6 +529,13 @@ export default function AttendancePage() {
             <UserX className="h-6 w-6 mx-auto mb-2 text-red-600" />
             <p className="text-2xl font-bold text-red-700">{attendanceStats.absent}</p>
             <p className="text-xs text-red-600">{t('attendance.absent')}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4 text-center">
+            <FileWarning className="h-6 w-6 mx-auto mb-2 text-orange-600" />
+            <p className="text-2xl font-bold text-orange-700">{attendanceStats.absent_with_reason}</p>
+            <p className="text-xs text-orange-600">{t('attendance.absentWithReason')}</p>
           </CardContent>
         </Card>
         <Card className="border-yellow-200 bg-yellow-50">
@@ -397,12 +573,13 @@ export default function AttendancePage() {
                   {t('attendance.selectedCount', { count: selectedEmployees.size })}
                 </span>
                 <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as AttendanceStatus)}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PRESENT">{t('attendance.present')}</SelectItem>
                     <SelectItem value="ABSENT">{t('attendance.absent')}</SelectItem>
+                    <SelectItem value="ABSENT_WITH_REASON">{t('attendance.absentWithReason')}</SelectItem>
                     <SelectItem value="LATE">{t('attendance.late')}</SelectItem>
                     <SelectItem value="EXCUSED">{t('attendance.excused')}</SelectItem>
                   </SelectContent>
@@ -452,20 +629,31 @@ export default function AttendancePage() {
                   <TableCell>{employee.department}</TableCell>
                   <TableCell>{employee.position}</TableCell>
                   <TableCell>
-                    <Select
-                      value={attendanceData[employee.employee_id] || 'PRESENT'}
-                      onValueChange={(v) => handleStatusChange(employee.employee_id, v as AttendanceStatus)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PRESENT">{t('attendance.present')}</SelectItem>
-                        <SelectItem value="ABSENT">{t('attendance.absent')}</SelectItem>
-                        <SelectItem value="LATE">{t('attendance.late')}</SelectItem>
-                        <SelectItem value="EXCUSED">{t('attendance.excused')}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Select
+                        value={attendanceData[employee.employee_id] || 'PRESENT'}
+                        onValueChange={(v) => handleStatusChange(employee.employee_id, v as AttendanceStatus)}
+                      >
+                        <SelectTrigger className="w-44">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PRESENT">{t('attendance.present')}</SelectItem>
+                          <SelectItem value="ABSENT">{t('attendance.absent')}</SelectItem>
+                          <SelectItem value="ABSENT_WITH_REASON">{t('attendance.absentWithReason')}</SelectItem>
+                          <SelectItem value="LATE">{t('attendance.late')}</SelectItem>
+                          <SelectItem value="EXCUSED">{t('attendance.excused')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {attendanceData[employee.employee_id] === 'ABSENT_WITH_REASON' && (
+                        <Textarea
+                          placeholder={t('attendance.reasonPlaceholder')}
+                          value={reasonData[employee.employee_id] || ''}
+                          onChange={(e) => handleReasonChange(employee.employee_id, e.target.value)}
+                          className="min-h-[60px] text-sm"
+                        />
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, subDays } from 'date-fns';
 import {
@@ -53,52 +53,8 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import type { ChangeAction } from '@/types';
-
-interface AuditLogEntry {
-  log_id: string;
-  entity_type: 'PROGRAM' | 'RESULT' | 'SESSION' | 'EMPLOYEE' | 'USER';
-  entity_id: string;
-  action: ChangeAction | 'LOGIN' | 'LOGOUT' | 'VIEW' | 'EXPORT';
-  changed_by: string;
-  changed_at: string;
-  ip_address?: string;
-  user_agent?: string;
-  before_data?: Record<string, unknown>;
-  after_data?: Record<string, unknown>;
-  reason?: string;
-}
-
-// 샘플 감사 로그 데이터
-const generateSampleLogs = (): AuditLogEntry[] => {
-  const logs: AuditLogEntry[] = [];
-  const users = ['admin@hwk.com', 'qip.manager@hwk.com', 'trainer01@hwk.com'];
-  const entityTypes: AuditLogEntry['entity_type'][] = ['PROGRAM', 'RESULT', 'SESSION', 'EMPLOYEE'];
-  const actions: AuditLogEntry['action'][] = ['CREATE', 'UPDATE', 'DELETE', 'VIEW', 'EXPORT'];
-
-  for (let i = 0; i < 50; i++) {
-    const entityType = entityTypes[Math.floor(Math.random() * entityTypes.length)];
-    const action = actions[Math.floor(Math.random() * actions.length)];
-    const daysAgo = Math.floor(Math.random() * 30);
-    const hoursAgo = Math.floor(Math.random() * 24);
-
-    logs.push({
-      log_id: `LOG-${String(i + 1).padStart(6, '0')}`,
-      entity_type: entityType,
-      entity_id: `${entityType.substring(0, 3)}-${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
-      action,
-      changed_by: users[Math.floor(Math.random() * users.length)],
-      changed_at: format(subDays(new Date(), daysAgo).setHours(hoursAgo, Math.floor(Math.random() * 60)), "yyyy-MM-dd'T'HH:mm:ss"),
-      ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      before_data: action === 'UPDATE' ? { field: 'old_value' } : undefined,
-      after_data: action !== 'DELETE' && action !== 'VIEW' ? { field: 'new_value' } : undefined,
-      reason: action === 'UPDATE' || action === 'DELETE' ? '관리자 요청에 의한 수정' : undefined,
-    });
-  }
-
-  return logs.sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
-};
+import type { AuditLogEntry } from '@/types/auditLog';
+import * as api from '@/services/api';
 
 // 로그 상세 다이얼로그
 function LogDetailDialog({
@@ -230,13 +186,32 @@ function LogDetailDialog({
 
 export default function AuditLogPage() {
   const { t } = useTranslation();
-  const [logs] = useState<AuditLogEntry[]>(generateSampleLogs);
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntityType, setSelectedEntityType] = useState<string>('all');
   const [selectedAction, setSelectedAction] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7');
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.getAuditLogs();
+      setLogs(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load audit logs');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 필터링된 로그
   const filteredLogs = useMemo(() => {
@@ -320,6 +295,20 @@ export default function AuditLogPage() {
           {t('auditLog.exportLogs')}
         </Button>
       </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
+            {t('common.retry', '재시도')}
+          </Button>
+        </div>
+      )}
 
       {/* 통계 카드 */}
       <div className="grid gap-4 md:grid-cols-5">

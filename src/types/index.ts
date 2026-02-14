@@ -6,27 +6,77 @@
 // ========== Enums ==========
 
 export type Department =
-  | 'QIP'
-  | 'PRODUCTION'
-  | 'MTL'
-  | 'OSC'
-  | 'CUTTING'
+  | 'ASSEMBLY'
   | 'STITCHING'
-  | 'ASSEMBLY';
+  | 'CUTTING'
+  | 'OSC'
+  | 'MTL'
+  | 'BOTTOM'
+  | 'AQL'
+  | 'REPACKING'
+  | 'QA'
+  | 'OFFICE'
+  | 'NEW';
 
 export type Position =
-  | 'TQC'
-  | 'RQC'
+  | 'QIP_TQC'
+  | 'QIP_RQC'
+  | 'QIP_CFA'
+  | 'QIP_QA'
   | 'QIP_LINE_LEADER'
+  | 'QIP_GROUP_LEADER'
+  | 'QIP_SUPERVISOR'
+  | 'QIP_MANAGER_PLUS'
+  | 'QIP_OFFICE'
+  | 'QIP_NEW_MEMBER'
+  | 'PRO_WORKER'
   | 'PRO_LINE_LEADER'
-  | 'GROUP_LEADER'
-  | 'SUPERVISOR'
-  | 'A_MANAGER';
+  | 'PRO_GROUP_PLUS';
 
 export type Building =
-  | 'BUILDING_A_F1'
-  | 'BUILDING_A_F2'
-  | 'BUILDING_C';
+  | 'BUILDING_A'
+  | 'BUILDING_A1'
+  | 'BUILDING_A2'
+  | 'BUILDING_B'
+  | 'BUILDING_B1'
+  | 'BUILDING_B2'
+  | 'BUILDING_B3'
+  | 'BUILDING_C'
+  | 'BUILDING_D'
+  | 'BUILDING_E1'
+  | 'BUILDING_E2'
+  | 'BUILDING_EZ_HAPPO'
+  | 'BUILDING_FG_WH'
+  | 'BUILDING_INHOUSE_EZ'
+  | 'BUILDING_INHOUSE_PRINTING'
+  | 'BUILDING_MTL_WH'
+  | 'BUILDING_OSC_A'
+  | 'BUILDING_QA_OFFICE'
+  | 'BUILDING_QIP_OFFICE';
+
+// ========== Training Level & Type (2026 Curriculum) ==========
+
+export type TrainingLevel = 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' | 'LEVEL_4';
+
+export type TrainingType = 'REGULAR' | 'SPECIAL';
+
+export type WorkingArea =
+  | 'ASSEMBLY'
+  | 'STITCHING'
+  | 'CUTTING'
+  | 'BOTTOM'
+  | 'STOCKFIT'
+  | 'OSC'
+  | 'MTL_HAPPO'
+  | 'MTL_HAPPO_EZ'
+  | 'MTL_LEATHER'
+  | 'MTL_SUBSHI'
+  | 'MTL_TEXTILE'
+  | 'QA'
+  | 'OFFICE'
+  | 'REPACKING'
+  | 'AQL'
+  | 'OCPT';
 
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE';
 
@@ -93,6 +143,8 @@ export interface TrainingProgram {
   grade_b: number;
   duration_hours: number;
   validity_months: number | null;
+  training_level?: TrainingLevel;
+  training_type?: TrainingType;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -117,6 +169,8 @@ export interface TrainingSession {
   location: string;
   max_attendees: number;
   status: SessionStatus;
+  training_level?: TrainingLevel;
+  training_type?: TrainingType;
   notes: string;
   created_by: string;
   created_at: string;
@@ -144,6 +198,9 @@ export interface TrainingResultRecord {
   needs_retraining: boolean;
   evaluated_by: string;
   remarks: string;
+  test_attempt?: number; // 1st/2nd/3rd attempt tracking
+  trainer_name?: string;
+  stop_working_date?: string;
   created_at: string;
   updated_at: string | null;
   updated_by: string | null;
@@ -317,6 +374,8 @@ export interface ProgramFormData {
   grade_b: number;
   duration_hours: number;
   validity_months: number | null;
+  training_level?: TrainingLevel;
+  training_type?: TrainingType;
 }
 
 export interface SessionFormData {
@@ -325,6 +384,7 @@ export interface SessionFormData {
   session_time: string;
   trainer_name: string;
   location: string;
+  training_type?: TrainingType;
   notes?: string;
   attendees: string[];
 }
@@ -388,3 +448,10 @@ export * from './curriculum';
 
 // ========== CAPA (Corrective and Preventive Action) Types ==========
 export * from './capa';
+
+// ========== Material (교육 자료) Types ==========
+// NOTE: material.ts types imported directly via '@/types/material'
+// to avoid TrainingMaterial name collision with trainingPlan.ts
+
+// ========== Audit Log (감사 로그) Types ==========
+export * from './auditLog';

@@ -24,6 +24,7 @@ service cloud.firestore {
       let email = request.auth.token.email;
       return email.matches('.*@hwaseung\\.com$') ||
              email.matches('.*@hwaseungvina\\.com$') ||
+             email.matches('.*@hsvina\\.com$') ||
              email.matches('.*@gmail\\.com$');
     }
 
@@ -108,6 +109,44 @@ service cloud.firestore {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if false;  // 퇴사 기록은 삭제 불가
+    }
+
+    // 교육 자료
+    match /materials/{materialId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /materialFolders/{folderId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // 효과성 평가
+    match /evaluations/{evaluationId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // 알림
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    match /notificationSettings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 감사 로그 (APPEND-ONLY: 수정/삭제 불가)
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;  // 감사 로그는 수정/삭제 불가
     }
   }
 }

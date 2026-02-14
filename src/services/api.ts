@@ -1,7 +1,7 @@
 // ============================================================
 // Q-TRAIN API Service
-// Mock API for development, switch to GAS for production
-// Enhanced with error handling, caching, and retry logic
+// Firebase Firestore-based API layer
+// All data is stored in and retrieved from Firebase Firestore
 // ============================================================
 
 import {
@@ -9,6 +9,18 @@ import {
   toDashboardStats,
 } from '@/utils/kpiCalculator';
 import { logger } from '@/utils/logger';
+
+import * as employeeService from './employeeService';
+import * as programService from './programService';
+import * as sessionService from './sessionService';
+import * as resultService from './resultService';
+import * as logService from './logService';
+import * as tqcService from './tqcService';
+import * as attendanceService from './attendanceService';
+import * as materialService from './materialService';
+import * as evaluationService from './evaluationService';
+import * as notificationService from './notificationService';
+import * as auditLogService from './auditLogService';
 
 import type {
   Employee,
@@ -31,7 +43,6 @@ import type {
   Grade,
   ProgramChangeLog,
   ResultEditLog,
-  ChangeAction,
   // New TQC Types
   NewTQCTeam,
   NewTQCTrainee,
@@ -57,43 +68,20 @@ import type {
   // Attendance Types
   BulkAttendanceInput,
   Attendance,
+  // AuditLog Types
+  AuditLogEntry,
+  AuditLogFilters,
 } from '@/types';
-
-import {
-  mockEmployees,
-  mockPrograms,
-  mockSessions,
-  mockResults,
-  mockProgramChangeLogs,
-  mockResultEditLogs,
-  // New TQC Mock Data
-  mockNewTQCTeams,
-  mockNewTQCTrainees,
-  mockNewTQCColorBlindTests,
-  mockNewTQCTrainingStages,
-  mockNewTQCMeetings,
-  mockNewTQCResignations,
-} from '@/data/mockData';
-
-// ========== Configuration ==========
-
-// Demo mode - using mock data for demonstration
-// Set VITE_USE_MOCK_API=true in .env for mock data, false for GAS API
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2020t2o--mUb-o-ag-OJM5WUGsjZEsQq6YcALTyTxJOsM9Diuqpk-sDswAuuWrf_/exec';
-
-// Simulate API delay for realistic UX
-const MOCK_DELAY = 300;
-
-// Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // ms
-const RETRY_BACKOFF = 2; // exponential backoff multiplier
-
-// Cache configuration
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import type { TrainingMaterial, MaterialFolder, MaterialFilters } from '@/types/material';
+import type {
+  TrainingEvaluation,
+  EvaluationFilters,
+} from './evaluationService';
+import type {
+  NotificationSettingsData,
+  NotificationQueryFilters,
+} from './notificationService';
+import type { Notification } from '@/types/notification';
 
 // ========== Error Classes ==========
 
@@ -144,120 +132,9 @@ export class NotFoundError extends ApiError {
   }
 }
 
-// ========== Change Log Functions ==========
-
-let programLogCounter = mockProgramChangeLogs.length;
-let resultLogCounter = mockResultEditLogs.length;
-
-/**
- * Generate unique log ID
- */
-function generateLogId(prefix: 'PCL' | 'REL'): string {
-  const counter = prefix === 'PCL' ? ++programLogCounter : ++resultLogCounter;
-  return `${prefix}-${String(counter).padStart(3, '0')}`;
-}
-
-/**
- * Log program changes (CREATE, UPDATE, DELETE)
- * All program modifications are tracked for audit compliance
- */
-function logProgramChange(
-  programCode: string,
-  action: ChangeAction,
-  beforeData: Partial<TrainingProgram> | null,
-  afterData: Partial<TrainingProgram> | null,
-  changedBy: string = 'system@hsvina.com'
-): ProgramChangeLog {
-  const log: ProgramChangeLog = {
-    log_id: generateLogId('PCL'),
-    program_code: programCode,
-    action,
-    changed_by: changedBy,
-    before_data: beforeData ? JSON.stringify(beforeData) : null,
-    after_data: afterData ? JSON.stringify(afterData) : null,
-    changed_at: new Date().toISOString(),
-  };
-
-  mockProgramChangeLogs.push(log);
-  logger.log(`[AUDIT] Program ${action}: ${programCode}`, log);
-  return log;
-}
-
-/**
- * Log result edits
- * NO DELETE POLICY: Results can only be edited, never deleted
- */
-function logResultEdit(
-  resultId: string,
-  beforeData: Partial<TrainingResultRecord>,
-  afterData: Partial<TrainingResultRecord>,
-  editReason: string,
-  editedBy: string = 'system@hsvina.com'
-): ResultEditLog {
-  const log: ResultEditLog = {
-    log_id: generateLogId('REL'),
-    result_id: resultId,
-    before_data: JSON.stringify(beforeData),
-    after_data: JSON.stringify(afterData),
-    edit_reason: editReason,
-    edited_by: editedBy,
-    edited_at: new Date().toISOString(),
-  };
-
-  mockResultEditLogs.push(log);
-  logger.log(`[AUDIT] Result Edit: ${resultId}`, log);
-  return log;
-}
-
-/**
- * Get program change logs with optional filtering
- */
-export async function getProgramChangeLogs(
-  programCode?: string
-): Promise<ProgramChangeLog[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    if (programCode) {
-      return mockProgramChangeLogs.filter(log => log.program_code === programCode);
-    }
-    return [...mockProgramChangeLogs].sort(
-      (a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
-    );
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getProgramChangeLogs', programCode }),
-  });
-  const data = await response.json();
-  return data.data;
-}
-
-/**
- * Get result edit logs with optional filtering
- */
-export async function getResultEditLogs(
-  resultId?: string
-): Promise<ResultEditLog[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    if (resultId) {
-      return mockResultEditLogs.filter(log => log.result_id === resultId);
-    }
-    return [...mockResultEditLogs].sort(
-      (a, b) => new Date(b.edited_at).getTime() - new Date(a.edited_at).getTime()
-    );
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getResultEditLogs', resultId }),
-  });
-  const data = await response.json();
-  return data.data;
-}
-
 // ========== Cache Implementation ==========
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 interface CacheEntry<T> {
   data: T;
@@ -310,7 +187,13 @@ const apiCache = new ApiCache();
 
 // ========== Retry Logic ==========
 
-async function withRetry<T>(
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+const RETRY_BACKOFF = 2;
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function withRetry<T>(
   fn: () => Promise<T>,
   retries: number = MAX_RETRIES,
   delayMs: number = RETRY_DELAY
@@ -323,7 +206,6 @@ async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on validation or not found errors
       if (error instanceof ValidationError || error instanceof NotFoundError) {
         throw error;
       }
@@ -336,89 +218,6 @@ async function withRetry<T>(
   }
 
   throw lastError!;
-}
-
-// ========== Fetch Wrapper ==========
-
-interface ApiFetchOptions {
-  timeout?: number;
-  useCache?: boolean;
-  cacheKey?: string;
-  cacheTTL?: number;
-}
-
-async function apiFetch<T>(
-  url: string,
-  options: RequestInit & ApiFetchOptions = {}
-): Promise<T> {
-  const { timeout = 30000, useCache = false, cacheKey, cacheTTL, ...fetchOptions } = options;
-
-  // Check cache first
-  if (useCache && cacheKey) {
-    const cached = apiCache.get<T>(cacheKey);
-    if (cached !== null) {
-      return cached;
-    }
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...fetchOptions,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.message || `HTTP Error: ${response.status}`,
-        'HTTP_ERROR',
-        response.status,
-        errorData
-      );
-    }
-
-    const data = await response.json();
-
-    if (data.error) {
-      throw new ApiError(data.error, 'API_ERROR', response.status, data);
-    }
-
-    const result = data.data ?? data;
-
-    // Store in cache
-    if (useCache && cacheKey) {
-      apiCache.set(cacheKey, result, cacheTTL);
-    }
-
-    return result;
-  } catch (error) {
-    clearTimeout(timeoutId);
-
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new TimeoutError();
-      }
-      if (error.message.includes('fetch')) {
-        throw new NetworkError();
-      }
-    }
-
-    throw new ApiError(
-      '알 수 없는 오류가 발생했습니다',
-      'UNKNOWN_ERROR',
-      undefined,
-      error
-    );
-  }
 }
 
 // ========== Cache Invalidation Helpers ==========
@@ -441,6 +240,18 @@ export function invalidateResultCache(): void {
 
 export function invalidateDashboardCache(): void {
   apiCache.invalidate('dashboard');
+}
+
+export function invalidateMaterialCache(): void {
+  apiCache.invalidate('materials');
+}
+
+export function invalidateEvaluationCache(): void {
+  apiCache.invalidate('evaluations');
+}
+
+export function invalidateNotificationCache(): void {
+  apiCache.invalidate('notifications');
 }
 
 export function invalidateAllCache(): void {
@@ -472,101 +283,19 @@ export function calculateResult(
 // ========== Employee API ==========
 
 export async function getEmployees(filters?: EmployeeFilters): Promise<Employee[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockEmployees];
-
-    if (filters?.department) {
-      result = result.filter(e => e.department === filters.department);
-    }
-    if (filters?.position) {
-      result = result.filter(e => e.position === filters.position);
-    }
-    if (filters?.building) {
-      result = result.filter(e => e.building === filters.building);
-    }
-    if (filters?.line) {
-      result = result.filter(e => e.line === filters.line);
-    }
-    if (filters?.status) {
-      result = result.filter(e => e.status === filters.status);
-    }
-    if (filters?.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        e =>
-          e.employee_id.toLowerCase().includes(searchLower) ||
-          e.employee_name.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return result;
-  }
-
-  // GAS API call with retry and caching
-  const params = new URLSearchParams({ action: 'getEmployees', ...filters });
-  const cacheKey = `employees:${params.toString()}`;
-
-  return withRetry(() =>
-    apiFetch<Employee[]>(`${GAS_URL}?${params}`, {
-      useCache: true,
-      cacheKey,
-    })
-  );
+  return employeeService.getEmployees(filters);
 }
 
 export async function getEmployee(id: string): Promise<Employee | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockEmployees.find(e => e.employee_id === id) || null;
-  }
-
-  const params = new URLSearchParams({ action: 'getEmployee', id });
-  const cacheKey = `employees:${id}`;
-
-  return withRetry(() =>
-    apiFetch<Employee | null>(`${GAS_URL}?${params}`, {
-      useCache: true,
-      cacheKey,
-    })
-  );
+  return employeeService.getEmployee(id);
 }
 
 export async function getEmployeeHistory(id: string): Promise<TrainingResultRecord[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockResults.filter(r => r.employee_id === id);
-  }
-
-  const params = new URLSearchParams({ action: 'getEmployeeHistory', id });
-  const cacheKey = `employees:history:${id}`;
-
-  return withRetry(() =>
-    apiFetch<TrainingResultRecord[]>(`${GAS_URL}?${params}`, {
-      useCache: true,
-      cacheKey,
-    })
-  );
+  return resultService.getResultsByEmployee(id);
 }
 
 export async function createEmployee(employee: Omit<Employee, 'updated_at'>): Promise<Employee> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const newEmployee: Employee = {
-      ...employee,
-      updated_at: new Date().toISOString(),
-    };
-    mockEmployees.push(newEmployee);
-    return newEmployee;
-  }
-
-  const result = await withRetry(() =>
-    apiFetch<Employee>(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'createEmployee', data: employee }),
-    })
-  );
-
+  const result = await employeeService.createEmployee(employee);
   invalidateEmployeeCache();
   return result;
 }
@@ -575,500 +304,291 @@ export async function updateEmployee(
   id: string,
   updates: Partial<Employee>
 ): Promise<Employee | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockEmployees.findIndex(e => e.employee_id === id);
-    if (index === -1) return null;
-
-    mockEmployees[index] = {
-      ...mockEmployees[index],
-      ...updates,
-      updated_at: new Date().toISOString(),
-    };
-    return mockEmployees[index];
-  }
-
-  const result = await withRetry(() =>
-    apiFetch<Employee | null>(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updateEmployee', id, data: updates }),
-    })
-  );
-
+  await employeeService.updateEmployee(id, updates);
   invalidateEmployeeCache();
-  return result;
+  return employeeService.getEmployee(id);
 }
 
 // ========== Training Program API ==========
 
 export async function getPrograms(filters?: ProgramFilters): Promise<TrainingProgram[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockPrograms];
-
-    if (filters?.category) {
-      result = result.filter(p => p.category === filters.category);
-    }
-    if (!filters?.showInactive) {
-      result = result.filter(p => p.is_active);
-    }
-    if (filters?.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        p =>
-          p.program_code.toLowerCase().includes(searchLower) ||
-          p.program_name.toLowerCase().includes(searchLower) ||
-          p.program_name_vn.toLowerCase().includes(searchLower) ||
-          p.program_name_kr.toLowerCase().includes(searchLower)
-      );
-    }
-    if (filters?.tags && filters.tags.length > 0) {
-      result = result.filter(p =>
-        filters.tags!.some(tag => p.tags.includes(tag))
-      );
-    }
-
-    return result;
-  }
-
-  const params = new URLSearchParams({ action: 'getPrograms' });
-  if (filters?.category) params.append('category', filters.category);
-  if (filters?.search) params.append('search', filters.search);
-  if (filters?.showInactive) params.append('showInactive', 'true');
-  if (filters?.tags) params.append('tags', filters.tags.join(','));
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return programService.getPrograms(filters);
 }
 
 export async function getProgram(code: string): Promise<TrainingProgram | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockPrograms.find(p => p.program_code === code) || null;
-  }
-
-  const params = new URLSearchParams({ action: 'getProgram', code });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return programService.getProgram(code);
 }
 
 export async function createProgram(
   program: Omit<TrainingProgram, 'created_at' | 'updated_at'>
 ): Promise<TrainingProgram> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const newProgram: TrainingProgram = {
-      ...program,
-      created_at: now,
-      updated_at: now,
-    };
-    mockPrograms.push(newProgram);
+  const newProgram = await programService.createProgram(program);
 
-    // Log the creation
-    logProgramChange(program.program_code, 'CREATE', null, newProgram);
+  // Log the creation
+  await logService.logProgramChange(program.program_code, 'CREATE', null, newProgram);
 
-    return newProgram;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createProgram', data: program }),
-  });
-  const data = await response.json();
-  return data.data;
+  invalidateProgramCache();
+  return newProgram;
 }
 
 export async function updateProgram(
   code: string,
   updates: Partial<TrainingProgram>
 ): Promise<TrainingProgram | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockPrograms.findIndex(p => p.program_code === code);
-    if (index === -1) return null;
+  // Capture before state
+  const beforeData = await programService.getProgram(code);
+  if (!beforeData) return null;
 
-    // Capture before state for logging
-    const beforeData = { ...mockPrograms[index] };
+  await programService.updateProgram(code, updates);
 
-    mockPrograms[index] = {
-      ...mockPrograms[index],
-      ...updates,
-      updated_at: new Date().toISOString(),
-    };
+  // Re-fetch updated document
+  const afterData = await programService.getProgram(code);
 
-    // Log the update
-    logProgramChange(code, 'UPDATE', beforeData, mockPrograms[index]);
+  // Log the update
+  await logService.logProgramChange(code, 'UPDATE', beforeData, afterData);
 
-    return mockPrograms[index];
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateProgram', code, data: updates }),
-  });
-  const data = await response.json();
-  return data.data;
+  invalidateProgramCache();
+  return afterData;
 }
 
 export async function deleteProgram(code: string): Promise<boolean> {
   // Soft delete - set is_active to false (NO DELETE POLICY)
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockPrograms.findIndex(p => p.program_code === code);
-    if (index === -1) return false;
+  const beforeData = await programService.getProgram(code);
+  if (!beforeData) return false;
 
-    // Capture before state for logging
-    const beforeData = { ...mockPrograms[index] };
+  await programService.deleteProgram(code);
 
-    mockPrograms[index] = {
-      ...mockPrograms[index],
-      is_active: false,
-      updated_at: new Date().toISOString(),
-    };
+  // Re-fetch for after state
+  const afterData = await programService.getProgram(code);
 
-    // Log the soft delete as DELETE action
-    logProgramChange(code, 'DELETE', beforeData, mockPrograms[index]);
+  // Log the soft delete
+  await logService.logProgramChange(code, 'DELETE', beforeData, afterData);
 
-    return true;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'deleteProgram', code }),
-  });
-  const data = await response.json();
-  return data.success;
+  invalidateProgramCache();
+  return true;
 }
 
 // ========== Training Session API ==========
 
 export async function getSessions(filters?: SessionFilters): Promise<TrainingSession[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockSessions];
-
-    if (filters?.startDate) {
-      result = result.filter(s => s.session_date >= filters.startDate!);
-    }
-    if (filters?.endDate) {
-      result = result.filter(s => s.session_date <= filters.endDate!);
-    }
-    if (filters?.programCode) {
-      result = result.filter(s => s.program_code === filters.programCode);
-    }
-    if (filters?.status) {
-      result = result.filter(s => s.status === filters.status);
-    }
-
-    return result.sort((a, b) => b.session_date.localeCompare(a.session_date));
-  }
-
-  const params = new URLSearchParams({ action: 'getSessions', ...filters } as Record<string, string>);
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return sessionService.getSessions(filters);
 }
 
 export async function createSession(
   session: Omit<TrainingSession, 'session_id' | 'created_at'>
 ): Promise<TrainingSession> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const newSession: TrainingSession = {
-      ...session,
-      session_id: `SES-${Date.now()}`,
-      created_at: new Date().toISOString(),
-    };
-    mockSessions.push(newSession);
-    return newSession;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createSession', data: session }),
-  });
-  const data = await response.json();
-  return data.data;
+  const result = await sessionService.createSession(session);
+  invalidateSessionCache();
+  return result;
 }
 
 export async function updateSession(
   id: string,
   updates: Partial<TrainingSession>
 ): Promise<TrainingSession | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockSessions.findIndex(s => s.session_id === id);
-    if (index === -1) return null;
-
-    mockSessions[index] = {
-      ...mockSessions[index],
-      ...updates,
-    };
-    return mockSessions[index];
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateSession', id, data: updates }),
-  });
-  const data = await response.json();
-  return data.data;
+  await sessionService.updateSession(id, updates);
+  invalidateSessionCache();
+  return sessionService.getSession(id);
 }
 
 export async function cancelSession(id: string): Promise<boolean> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockSessions.findIndex(s => s.session_id === id);
-    if (index === -1) return false;
+  const session = await sessionService.getSession(id);
+  if (!session) return false;
 
-    mockSessions[index] = {
-      ...mockSessions[index],
-      status: 'CANCELLED',
-    };
-    return true;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'cancelSession', id }),
-  });
-  const data = await response.json();
-  return data.success;
+  await sessionService.cancelSession(id);
+  invalidateSessionCache();
+  return true;
 }
 
 // ========== Training Result API ==========
 
 export async function getResults(filters?: ResultFilters): Promise<TrainingResultRecord[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockResults];
-
-    if (filters?.employeeId) {
-      result = result.filter(r => r.employee_id === filters.employeeId);
-    }
-    if (filters?.programCode) {
-      result = result.filter(r => r.program_code === filters.programCode);
-    }
-    if (filters?.startDate) {
-      result = result.filter(r => r.training_date >= filters.startDate!);
-    }
-    if (filters?.endDate) {
-      result = result.filter(r => r.training_date <= filters.endDate!);
-    }
-    if (filters?.result) {
-      result = result.filter(r => r.result === filters.result);
-    }
-    if (filters?.grade) {
-      result = result.filter(r => r.grade === filters.grade);
-    }
-
-    return result.sort((a, b) => b.training_date.localeCompare(a.training_date));
-  }
-
-  const params = new URLSearchParams({ action: 'getResults', ...filters } as Record<string, string>);
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return resultService.getResults(filters);
 }
 
 export async function recordResults(results: ResultInput[]): Promise<TrainingResultRecord[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const newResults: TrainingResultRecord[] = [];
+  const programs = await programService.getPrograms();
+  const newResults: TrainingResultRecord[] = [];
 
-    for (const input of results) {
-      const program = mockPrograms.find(p => p.program_code === input.program_code);
-      if (!program) continue;
+  for (const input of results) {
+    const program = programs.find(p => p.program_code === input.program_code);
+    if (!program) continue;
 
-      const grade =
-        input.score !== null
-          ? calculateGrade(input.score, program.grade_aa, program.grade_a, program.grade_b)
-          : null;
+    const grade =
+      input.score !== null
+        ? calculateGrade(input.score, program.grade_aa, program.grade_a, program.grade_b)
+        : null;
 
-      const needsRetraining = input.result === 'FAIL' || input.result === 'ABSENT';
+    const needsRetraining = input.result === 'FAIL' || input.result === 'ABSENT';
 
-      const newResult: TrainingResultRecord = {
-        result_id: `RES-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        session_id: input.session_id || null,
-        employee_id: input.employee_id,
-        program_code: input.program_code,
-        training_date: input.training_date,
-        score: input.score,
-        grade,
-        result: input.result,
-        needs_retraining: needsRetraining,
-        evaluated_by: input.evaluated_by,
-        remarks: input.remarks || '',
-        created_at: now,
-        updated_at: null,
-        updated_by: null,
-      };
+    const resultData = {
+      session_id: input.session_id || null,
+      employee_id: input.employee_id,
+      program_code: input.program_code,
+      training_date: input.training_date,
+      score: input.score,
+      grade,
+      result: input.result,
+      needs_retraining: needsRetraining,
+      evaluated_by: input.evaluated_by,
+      remarks: input.remarks || '',
+    };
 
-      mockResults.push(newResult);
-      newResults.push(newResult);
-    }
-
-    return newResults;
+    const created = await resultService.createResult(resultData);
+    newResults.push(created);
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'recordResults', data: results }),
-  });
-  const data = await response.json();
-  return data.data;
+  invalidateResultCache();
+  invalidateDashboardCache();
+  return newResults;
 }
 
 export async function updateResult(update: ResultUpdate): Promise<TrainingResultRecord | null> {
   // NOTE: This updates a result and logs the change (NO DELETE POLICY)
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockResults.findIndex(r => r.result_id === update.result_id);
-    if (index === -1) return null;
+  const existing = await resultService.getResult(update.result_id);
+  if (!existing) return null;
 
-    // Capture before state for logging
-    const beforeData = { ...mockResults[index] };
+  // Capture before state
+  const beforeData = { ...existing };
 
-    const program = mockPrograms.find(
-      p => p.program_code === mockResults[index].program_code
-    );
+  const programs = await programService.getPrograms();
+  const program = programs.find(p => p.program_code === existing.program_code);
 
-    let newGrade = mockResults[index].grade;
-    let newNeedsRetraining = mockResults[index].needs_retraining;
+  let newGrade = existing.grade;
+  let newNeedsRetraining = existing.needs_retraining;
 
-    if (update.score !== undefined && program) {
-      newGrade =
-        update.score !== null
-          ? calculateGrade(update.score, program.grade_aa, program.grade_a, program.grade_b)
-          : null;
-    }
-
-    if (update.result !== undefined) {
-      newNeedsRetraining = update.result === 'FAIL' || update.result === 'ABSENT';
-    }
-
-    mockResults[index] = {
-      ...mockResults[index],
-      score: update.score !== undefined ? update.score : mockResults[index].score,
-      grade: newGrade,
-      result: update.result || mockResults[index].result,
-      remarks: update.remarks !== undefined ? update.remarks : mockResults[index].remarks,
-      needs_retraining: newNeedsRetraining,
-      updated_at: new Date().toISOString(),
-      updated_by: 'current_user', // Would come from auth
-    };
-
-    // Log the result edit with reason
-    logResultEdit(
-      update.result_id,
-      beforeData,
-      mockResults[index],
-      update.edit_reason || '결과 수정'
-    );
-
-    return mockResults[index];
+  if (update.score !== undefined && program) {
+    newGrade =
+      update.score !== null
+        ? calculateGrade(update.score, program.grade_aa, program.grade_a, program.grade_b)
+        : null;
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateResult', data: update }),
-  });
-  const data = await response.json();
-  return data.data;
+  if (update.result !== undefined) {
+    newNeedsRetraining = update.result === 'FAIL' || update.result === 'ABSENT';
+  }
+
+  const updates: Partial<TrainingResultRecord> = {
+    score: update.score !== undefined ? update.score : existing.score,
+    grade: newGrade,
+    result: update.result || existing.result,
+    remarks: update.remarks !== undefined ? update.remarks : existing.remarks,
+    needs_retraining: newNeedsRetraining,
+    updated_by: 'current_user',
+  };
+
+  await resultService.updateResult(update.result_id, updates);
+
+  // Re-fetch updated result
+  const afterData = await resultService.getResult(update.result_id);
+
+  // Log the result edit with reason
+  await logService.logResultEdit(
+    update.result_id,
+    beforeData,
+    afterData || updates,
+    update.edit_reason || '결과 수정'
+  );
+
+  invalidateResultCache();
+  invalidateDashboardCache();
+  return afterData;
+}
+
+// ========== Change Log Functions ==========
+
+export async function getProgramChangeLogs(
+  programCode?: string
+): Promise<ProgramChangeLog[]> {
+  return logService.getProgramChangeLogs(programCode);
+}
+
+export async function getResultEditLogs(
+  resultId?: string
+): Promise<ResultEditLog[]> {
+  return logService.getResultEditLogs(resultId);
 }
 
 // ========== Dashboard API ==========
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const cached = apiCache.get<DashboardStats>('dashboard:stats');
+  if (cached) return cached;
 
-    // Use accurate KPI calculation logic
-    // This considers:
-    // 1. target_positions - only count programs required for employee's position
-    // 2. validity_months - expired trainings don't count as completed
-    // 3. Individual completion rates - accurate per-employee calculation
-    const kpiResult = calculateDashboardKPIs(
-      mockEmployees,
-      mockPrograms,
-      mockResults
-    );
+  const [employees, programs, results] = await Promise.all([
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+    resultService.getResults(),
+  ]);
 
-    return toDashboardStats(kpiResult);
-  }
+  const kpiResult = calculateDashboardKPIs(employees, programs, results);
+  const stats = toDashboardStats(kpiResult);
 
-  const params = new URLSearchParams({ action: 'getDashboardStats' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  apiCache.set('dashboard:stats', stats);
+  return stats;
 }
 
 export async function getMonthlyTrainingData(): Promise<MonthlyTrainingData[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const cached = apiCache.get<MonthlyTrainingData[]>('dashboard:monthly');
+  if (cached) return cached;
 
-    const monthlyData: Record<string, { planned: number; completed: number }> = {};
+  const sessions = await sessionService.getSessions();
 
-    // Get last 6 months
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = date.toISOString().substring(0, 7);
-      monthlyData[monthKey] = { planned: 0, completed: 0 };
-    }
+  const monthlyData: Record<string, { planned: number; completed: number }> = {};
 
-    // Count sessions
-    for (const session of mockSessions) {
-      const monthKey = session.session_date.substring(0, 7);
-      if (monthlyData[monthKey]) {
-        monthlyData[monthKey].planned += session.attendees?.length || 0;
-        if (session.status === 'COMPLETED') {
-          monthlyData[monthKey].completed += session.attendees?.length || 0;
-        }
-      }
-    }
-
-    return Object.entries(monthlyData).map(([month, data]) => ({
-      month,
-      ...data,
-    }));
+  // Get last 6 months
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthKey = date.toISOString().substring(0, 7);
+    monthlyData[monthKey] = { planned: 0, completed: 0 };
   }
 
-  const params = new URLSearchParams({ action: 'getMonthlyTrainingData' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  // Count sessions
+  for (const session of sessions) {
+    const monthKey = session.session_date.substring(0, 7);
+    if (monthlyData[monthKey]) {
+      monthlyData[monthKey].planned += session.attendees?.length || 0;
+      if (session.status === 'COMPLETED') {
+        monthlyData[monthKey].completed += session.attendees?.length || 0;
+      }
+    }
+  }
+
+  const result = Object.entries(monthlyData).map(([month, data]) => ({
+    month,
+    ...data,
+  }));
+
+  apiCache.set('dashboard:monthly', result);
+  return result;
 }
 
 export async function getGradeDistribution(): Promise<GradeDistribution[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const cached = apiCache.get<GradeDistribution[]>('dashboard:grades');
+  if (cached) return cached;
 
-    const counts: Record<Grade, number> = { AA: 0, A: 0, B: 0, C: 0 };
-    let total = 0;
+  const results = await resultService.getResults();
 
-    for (const result of mockResults) {
-      if (result.grade) {
-        counts[result.grade]++;
-        total++;
-      }
+  const counts: Record<Grade, number> = { AA: 0, A: 0, B: 0, C: 0 };
+  let total = 0;
+
+  for (const result of results) {
+    if (result.grade) {
+      counts[result.grade]++;
+      total++;
     }
-
-    const grades: Grade[] = ['AA', 'A', 'B', 'C'];
-    return grades.map(grade => ({
-      grade,
-      count: counts[grade],
-      percentage: total > 0 ? Math.round((counts[grade] / total) * 100) : 0,
-    }));
   }
 
-  const params = new URLSearchParams({ action: 'getGradeDistribution' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  const grades: Grade[] = ['AA', 'A', 'B', 'C'];
+  const distribution = grades.map(grade => ({
+    grade,
+    count: counts[grade],
+    percentage: total > 0 ? Math.round((counts[grade] / total) * 100) : 0,
+  }));
+
+  apiCache.set('dashboard:grades', distribution);
+  return distribution;
 }
 
 // ========== Progress Matrix API ==========
@@ -1076,198 +596,112 @@ export async function getGradeDistribution(): Promise<GradeDistribution[]> {
 export async function getProgressMatrix(
   filters?: ProgressMatrixFilters
 ): Promise<ProgressMatrixData> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const [allEmployees, allPrograms, allResults] = await Promise.all([
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+    resultService.getResults(),
+  ]);
 
-    let employees = mockEmployees.filter(e => e.status === 'ACTIVE');
-    const programs = mockPrograms.filter(p => p.is_active);
+  let employees = allEmployees.filter(e => e.status === 'ACTIVE');
+  const programs = allPrograms.filter(p => p.is_active);
 
-    if (filters?.building) {
-      employees = employees.filter(e => e.building === filters.building);
-    }
-    if (filters?.line) {
-      employees = employees.filter(e => e.line === filters.line);
-    }
-    if (filters?.position) {
-      employees = employees.filter(e => e.position === filters.position);
-    }
+  if (filters?.building) {
+    employees = employees.filter(e => e.building === filters.building);
+  }
+  if (filters?.line) {
+    employees = employees.filter(e => e.line === filters.line);
+  }
+  if (filters?.position) {
+    employees = employees.filter(e => e.position === filters.position);
+  }
 
-    let filteredPrograms = programs;
-    if (filters?.category) {
-      filteredPrograms = programs.filter(p => p.category === filters.category);
-    }
+  let filteredPrograms = programs;
+  if (filters?.category) {
+    filteredPrograms = programs.filter(p => p.category === filters.category);
+  }
 
-    const cells: ProgressMatrixData['cells'] = [];
-    const now = new Date();
+  const cells: ProgressMatrixData['cells'] = [];
+  const now = new Date();
 
-    for (const employee of employees) {
-      for (const program of filteredPrograms) {
-        // Find the latest result for this employee and program
-        const employeeResults = mockResults
-          .filter(
-            r => r.employee_id === employee.employee_id && r.program_code === program.program_code
-          )
-          .sort((a, b) => b.training_date.localeCompare(a.training_date));
+  for (const employee of employees) {
+    for (const program of filteredPrograms) {
+      const employeeResults = allResults
+        .filter(
+          r => r.employee_id === employee.employee_id && r.program_code === program.program_code
+        )
+        .sort((a, b) => b.training_date.localeCompare(a.training_date));
 
-        const lastResult = employeeResults[0];
+      const lastResult = employeeResults[0];
 
-        let status: 'PASS' | 'FAIL' | 'EXPIRING' | 'EXPIRED' | 'NOT_TAKEN' = 'NOT_TAKEN';
-        let expirationDate: string | undefined;
+      let status: 'PASS' | 'FAIL' | 'EXPIRING' | 'EXPIRED' | 'NOT_TAKEN' = 'NOT_TAKEN';
+      let expirationDate: string | undefined;
 
-        if (lastResult) {
-          if (lastResult.result === 'PASS') {
-            // Check expiration
-            if (program.validity_months) {
-              const resultDate = new Date(lastResult.training_date);
-              const expDate = new Date(resultDate);
-              expDate.setMonth(expDate.getMonth() + program.validity_months);
-              expirationDate = expDate.toISOString().substring(0, 10);
+      if (lastResult) {
+        if (lastResult.result === 'PASS') {
+          if (program.validity_months) {
+            const resultDate = new Date(lastResult.training_date);
+            const expDate = new Date(resultDate);
+            expDate.setMonth(expDate.getMonth() + program.validity_months);
+            expirationDate = expDate.toISOString().substring(0, 10);
 
-              const daysUntilExpiry = Math.ceil(
-                (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-              );
+            const daysUntilExpiry = Math.ceil(
+              (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+            );
 
-              if (daysUntilExpiry < 0) {
-                status = 'EXPIRED';
-              } else if (daysUntilExpiry <= 30) {
-                status = 'EXPIRING';
-              } else {
-                status = 'PASS';
-              }
+            if (daysUntilExpiry < 0) {
+              status = 'EXPIRED';
+            } else if (daysUntilExpiry <= 30) {
+              status = 'EXPIRING';
             } else {
               status = 'PASS';
             }
           } else {
-            status = 'FAIL';
+            status = 'PASS';
           }
+        } else {
+          status = 'FAIL';
         }
-
-        cells.push({
-          employeeId: employee.employee_id,
-          programCode: program.program_code,
-          status,
-          lastResult,
-          expirationDate,
-        });
       }
-    }
 
-    return {
-      employees,
-      programs: filteredPrograms,
-      cells,
-    };
+      cells.push({
+        employeeId: employee.employee_id,
+        programCode: program.program_code,
+        status,
+        lastResult,
+        expirationDate,
+      });
+    }
   }
 
-  const params = new URLSearchParams({ action: 'getProgressMatrix', ...filters } as Record<string, string>);
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return {
+    employees,
+    programs: filteredPrograms,
+    cells,
+  };
 }
 
 // ========== Retraining API ==========
 
 export async function getRetrainingTargets(): Promise<RetrainingTarget[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const [allResults, allEmployees, allPrograms] = await Promise.all([
+    resultService.getResults(),
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+  ]);
 
-    const targets: RetrainingTarget[] = [];
-    const now = new Date();
-    const EXPIRING_THRESHOLD_DAYS = 30;
+  const targets: RetrainingTarget[] = [];
+  const now = new Date();
+  const EXPIRING_THRESHOLD_DAYS = 30;
 
-    // Helper function to determine retraining reason
-    const determineReason = (
-      result: TrainingResultRecord,
-      program: TrainingProgram
-    ): 'FAILED' | 'EXPIRED' | 'EXPIRING_SOON' => {
-      // If result is FAIL or ABSENT, reason is FAILED
-      if (result.result === 'FAIL' || result.result === 'ABSENT') {
-        return 'FAILED';
-      }
-
-      // For PASS results, check expiration
-      if (result.result === 'PASS' && program.validity_months) {
-        const resultDate = new Date(result.training_date);
-        const expDate = new Date(resultDate);
-        expDate.setMonth(expDate.getMonth() + program.validity_months);
-
-        const daysUntilExpiry = Math.ceil(
-          (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        if (daysUntilExpiry <= 0) {
-          return 'EXPIRED';
-        }
-        if (daysUntilExpiry <= EXPIRING_THRESHOLD_DAYS) {
-          return 'EXPIRING_SOON';
-        }
-      }
-
-      // Default to FAILED for needs_retraining cases
+  const determineReason = (
+    result: TrainingResultRecord,
+    program: TrainingProgram
+  ): 'FAILED' | 'EXPIRED' | 'EXPIRING_SOON' => {
+    if (result.result === 'FAIL' || result.result === 'ABSENT') {
       return 'FAILED';
-    };
-
-    // Find employees with needs_retraining = true
-    const retrainingResults = mockResults.filter(r => r.needs_retraining);
-
-    for (const result of retrainingResults) {
-      const employee = mockEmployees.find(e => e.employee_id === result.employee_id);
-      const program = mockPrograms.find(p => p.program_code === result.program_code);
-
-      if (employee && program && employee.status === 'ACTIVE') {
-        // Find recommended retraining programs
-        const retrainingPrograms = mockPrograms.filter(
-          p =>
-            p.category === 'RETRAINING' &&
-            p.is_active &&
-            p.target_positions.includes(employee.position)
-        );
-
-        targets.push({
-          employee,
-          program,
-          lastResult: result,
-          reason: determineReason(result, program),
-          recommendedPrograms: retrainingPrograms.slice(0, 3),
-        });
-      }
     }
 
-    return targets;
-  }
-
-  const params = new URLSearchParams({ action: 'getRetrainingTargets' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
-}
-
-export async function getExpiringTrainings(days: number = 30): Promise<ExpiringTraining[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-
-    const expiring: ExpiringTraining[] = [];
-    const now = new Date();
-
-    // Group results by employee and program, get latest PASS
-    const latestPasses: Record<string, TrainingResultRecord> = {};
-
-    for (const result of mockResults) {
-      if (result.result !== 'PASS') continue;
-
-      const key = `${result.employee_id}-${result.program_code}`;
-      if (!latestPasses[key] || result.training_date > latestPasses[key].training_date) {
-        latestPasses[key] = result;
-      }
-    }
-
-    for (const result of Object.values(latestPasses)) {
-      const program = mockPrograms.find(p => p.program_code === result.program_code);
-      if (!program || !program.validity_months) continue;
-
-      const employee = mockEmployees.find(e => e.employee_id === result.employee_id);
-      if (!employee || employee.status !== 'ACTIVE') continue;
-
+    if (result.result === 'PASS' && program.validity_months) {
       const resultDate = new Date(result.training_date);
       const expDate = new Date(resultDate);
       expDate.setMonth(expDate.getMonth() + program.validity_months);
@@ -1276,24 +710,93 @@ export async function getExpiringTrainings(days: number = 30): Promise<ExpiringT
         (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      if (daysUntilExpiry > 0 && daysUntilExpiry <= days) {
-        expiring.push({
-          employee,
-          program,
-          lastPassDate: result.training_date,
-          expirationDate: expDate.toISOString().substring(0, 10),
-          daysUntilExpiry,
-        });
+      if (daysUntilExpiry <= 0) {
+        return 'EXPIRED';
+      }
+      if (daysUntilExpiry <= EXPIRING_THRESHOLD_DAYS) {
+        return 'EXPIRING_SOON';
       }
     }
 
-    return expiring.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+    return 'FAILED';
+  };
+
+  const retrainingResults = allResults.filter(r => r.needs_retraining);
+
+  for (const result of retrainingResults) {
+    const employee = allEmployees.find(e => e.employee_id === result.employee_id);
+    const program = allPrograms.find(p => p.program_code === result.program_code);
+
+    if (employee && program && employee.status === 'ACTIVE') {
+      const retrainingPrograms = allPrograms.filter(
+        p =>
+          p.category === 'RETRAINING' &&
+          p.is_active &&
+          p.target_positions.includes(employee.position)
+      );
+
+      targets.push({
+        employee,
+        program,
+        lastResult: result,
+        reason: determineReason(result, program),
+        recommendedPrograms: retrainingPrograms.slice(0, 3),
+      });
+    }
   }
 
-  const params = new URLSearchParams({ action: 'getExpiringTrainings', days: days.toString() });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return targets;
+}
+
+export async function getExpiringTrainings(days: number = 30): Promise<ExpiringTraining[]> {
+  const [allResults, allEmployees, allPrograms] = await Promise.all([
+    resultService.getResults(),
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+  ]);
+
+  const expiring: ExpiringTraining[] = [];
+  const now = new Date();
+
+  // Group results by employee and program, get latest PASS
+  const latestPasses: Record<string, TrainingResultRecord> = {};
+
+  for (const result of allResults) {
+    if (result.result !== 'PASS') continue;
+
+    const key = `${result.employee_id}-${result.program_code}`;
+    if (!latestPasses[key] || result.training_date > latestPasses[key].training_date) {
+      latestPasses[key] = result;
+    }
+  }
+
+  for (const result of Object.values(latestPasses)) {
+    const program = allPrograms.find(p => p.program_code === result.program_code);
+    if (!program || !program.validity_months) continue;
+
+    const employee = allEmployees.find(e => e.employee_id === result.employee_id);
+    if (!employee || employee.status !== 'ACTIVE') continue;
+
+    const resultDate = new Date(result.training_date);
+    const expDate = new Date(resultDate);
+    expDate.setMonth(expDate.getMonth() + program.validity_months);
+
+    const daysUntilExpiry = Math.ceil(
+      (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysUntilExpiry > 0 && daysUntilExpiry <= days) {
+      expiring.push({
+        employee,
+        program,
+        lastPassDate: result.training_date,
+        expirationDate: expDate.toISOString().substring(0, 10),
+        daysUntilExpiry,
+      });
+    }
+  }
+
+  return expiring.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 }
 
 // ========== Search API ==========
@@ -1302,35 +805,31 @@ export async function globalSearch(query: string): Promise<{
   employees: Employee[];
   programs: TrainingProgram[];
 }> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const [allEmployees, allPrograms] = await Promise.all([
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+  ]);
 
-    const queryLower = query.toLowerCase();
+  const queryLower = query.toLowerCase();
 
-    const employees = mockEmployees.filter(
-      e =>
-        e.employee_id.toLowerCase().includes(queryLower) ||
-        e.employee_name.toLowerCase().includes(queryLower)
-    );
+  const employees = allEmployees.filter(
+    e =>
+      e.employee_id.toLowerCase().includes(queryLower) ||
+      e.employee_name.toLowerCase().includes(queryLower)
+  );
 
-    const programs = mockPrograms.filter(
-      p =>
-        p.program_code.toLowerCase().includes(queryLower) ||
-        p.program_name.toLowerCase().includes(queryLower) ||
-        p.program_name_vn.toLowerCase().includes(queryLower) ||
-        p.program_name_kr.toLowerCase().includes(queryLower)
-    );
+  const programs = allPrograms.filter(
+    p =>
+      p.program_code.toLowerCase().includes(queryLower) ||
+      p.program_name.toLowerCase().includes(queryLower) ||
+      p.program_name_vn.toLowerCase().includes(queryLower) ||
+      p.program_name_kr.toLowerCase().includes(queryLower)
+  );
 
-    return {
-      employees: employees.slice(0, 5),
-      programs: programs.slice(0, 5),
-    };
-  }
-
-  const params = new URLSearchParams({ action: 'globalSearch', query });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return {
+    employees: employees.slice(0, 5),
+    programs: programs.slice(0, 5),
+  };
 }
 
 // ============================================================
@@ -1340,102 +839,23 @@ export async function globalSearch(query: string): Promise<{
 // ========== New TQC Team API ==========
 
 export async function getNewTQCTeams(includeInactive = false): Promise<NewTQCTeam[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    if (includeInactive) {
-      return [...mockNewTQCTeams];
-    }
-    return mockNewTQCTeams.filter(t => t.is_active);
-  }
-
-  const params = new URLSearchParams({
-    action: 'getNewTQCTeams',
-    includeInactive: includeInactive.toString(),
-  });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getTeams(includeInactive);
 }
 
 export async function getNewTQCTeamById(teamId: string): Promise<NewTQCTeam | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockNewTQCTeams.find(t => t.team_id === teamId) || null;
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCTeamById', teamId });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getTeamById(teamId);
 }
 
 export async function createNewTQCTeam(input: NewTQCTeamInput): Promise<NewTQCTeam> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const newTeam: NewTQCTeam = {
-      team_id: input.team_name.toUpperCase().replace(/\s+/g, '_'),
-      team_name: input.team_name,
-      team_name_vn: input.team_name_vn,
-      team_name_kr: input.team_name_kr,
-      factory: input.factory,
-      line: input.line,
-      is_active: true,
-      created_at: now,
-      updated_at: now,
-    };
-    mockNewTQCTeams.push(newTeam);
-    return newTeam;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createNewTQCTeam', data: input }),
-  });
-  const data = await response.json();
-  return data.data;
+  return tqcService.createTeam(input);
 }
 
 export async function updateNewTQCTeam(input: NewTQCTeamUpdate): Promise<NewTQCTeam | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockNewTQCTeams.findIndex(t => t.team_id === input.team_id);
-    if (index === -1) return null;
-
-    mockNewTQCTeams[index] = {
-      ...mockNewTQCTeams[index],
-      ...input,
-      updated_at: new Date().toISOString(),
-    };
-    return mockNewTQCTeams[index];
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateNewTQCTeam', data: input }),
-  });
-  const data = await response.json();
-  return data.data;
+  return tqcService.updateTeam(input);
 }
 
 export async function deleteNewTQCTeam(teamId: string): Promise<boolean> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockNewTQCTeams.findIndex(t => t.team_id === teamId);
-    if (index === -1) return false;
-
-    // Soft delete - set is_active to false
-    mockNewTQCTeams[index].is_active = false;
-    mockNewTQCTeams[index].updated_at = new Date().toISOString();
-    return true;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'deleteNewTQCTeam', teamId }),
-  });
-  const data = await response.json();
-  return data.success;
+  return tqcService.deleteTeam(teamId);
 }
 
 // ========== New TQC Trainee API ==========
@@ -1443,446 +863,284 @@ export async function deleteNewTQCTeam(teamId: string): Promise<boolean> {
 export async function getNewTQCTrainees(
   filters?: NewTQCTraineeFilters
 ): Promise<NewTQCTrainee[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockNewTQCTrainees];
-
-    if (filters) {
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        result = result.filter(
-          t =>
-            t.name.toLowerCase().includes(searchLower) ||
-            t.trainee_id.toLowerCase().includes(searchLower) ||
-            t.employee_id?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      if (filters.status && filters.status !== 'all') {
-        result = result.filter(t => t.status === filters.status);
-      }
-
-      if (filters.trainer && filters.trainer !== 'all') {
-        result = result.filter(t => t.trainer_id === filters.trainer);
-      }
-
-      if (filters.team && filters.team !== 'all') {
-        result = result.filter(t => t.team_id === filters.team);
-      }
-
-      if (filters.startWeek) {
-        const week = parseInt(filters.startWeek, 10);
-        result = result.filter(t => t.start_week === week);
-      }
-
-      if (filters.colorBlindStatus && filters.colorBlindStatus !== 'all') {
-        if (filters.colorBlindStatus === 'pending') {
-          result = result.filter(t => t.color_blind_status === null);
-        } else {
-          result = result.filter(t => t.color_blind_status === filters.colorBlindStatus);
-        }
-      }
-    }
-
-    return result.sort((a, b) => b.start_date.localeCompare(a.start_date));
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCTrainees' });
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
-    });
-  }
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getTrainees(filters);
 }
 
 export async function getNewTQCTraineeById(traineeId: string): Promise<NewTQCTrainee | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockNewTQCTrainees.find(t => t.trainee_id === traineeId) || null;
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCTraineeById', traineeId });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getTraineeById(traineeId);
 }
 
 export async function getNewTQCTraineeWithDetails(
   traineeId: string
 ): Promise<NewTQCTraineeWithDetails | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const trainee = mockNewTQCTrainees.find(t => t.trainee_id === traineeId);
-    if (!trainee) return null;
+  const trainee = await tqcService.getTraineeById(traineeId);
+  if (!trainee) return null;
 
-    const team = mockNewTQCTeams.find(t => t.team_id === trainee.team_id);
-    const stages = mockNewTQCTrainingStages.filter(s => s.trainee_id === traineeId);
-    const colorBlindTests = mockNewTQCColorBlindTests.filter(c => c.trainee_id === traineeId);
-    const meetings = mockNewTQCMeetings.filter(m => m.trainee_id === traineeId);
-    const resignation = mockNewTQCResignations.find(r => r.trainee_id === traineeId);
+  const [team, stages, colorBlindTests, meetings, resignations] = await Promise.all([
+    tqcService.getTeamById(trainee.team_id),
+    tqcService.getStagesByTrainee(traineeId),
+    tqcService.getColorBlindTests(traineeId),
+    tqcService.getMeetings({ traineeId }),
+    tqcService.getResignations(),
+  ]);
 
-    return {
-      ...trainee,
-      team,
-      stages: stages.sort((a, b) => a.stage_order - b.stage_order),
-      colorBlindTests: colorBlindTests.sort((a, b) => b.test_date.localeCompare(a.test_date)),
-      meetings: meetings.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date)),
-      resignation,
-    };
-  }
+  const resignation = resignations.find(r => r.trainee_id === traineeId);
 
-  const params = new URLSearchParams({ action: 'getNewTQCTraineeWithDetails', traineeId });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return {
+    ...trainee,
+    team: team || undefined,
+    stages: stages.sort((a, b) => a.stage_order - b.stage_order),
+    colorBlindTests: colorBlindTests.sort((a, b) => b.test_date.localeCompare(a.test_date)),
+    meetings: meetings.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date)),
+    resignation,
+  };
 }
 
 export async function createNewTQCTrainee(input: NewTQCTraineeInput): Promise<NewTQCTrainee> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const startDate = new Date(input.start_date);
-    const startOfYear = new Date(startDate.getFullYear(), 0, 1);
-    const weekNum = Math.ceil(
-      ((startDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24) + 1) / 7
-    );
+  const now = new Date().toISOString();
+  const startDate = new Date(input.start_date);
+  const startOfYear = new Date(startDate.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(
+    ((startDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24) + 1) / 7
+  );
 
-    const traineeCount = mockNewTQCTrainees.length + 1;
-    const traineeId = `TRN-${new Date().getFullYear()}-${String(traineeCount).padStart(3, '0')}`;
+  // Generate trainee ID
+  const existingTrainees = await tqcService.getTrainees();
+  const traineeCount = existingTrainees.length + 1;
+  const traineeId = `TRN-${new Date().getFullYear()}-${String(traineeCount).padStart(3, '0')}`;
 
-    const expectedEndDate = new Date(startDate);
-    expectedEndDate.setMonth(expectedEndDate.getMonth() + 3);
+  const expectedEndDate = new Date(startDate);
+  expectedEndDate.setMonth(expectedEndDate.getMonth() + 3);
 
-    const newTrainee: NewTQCTrainee = {
+  const newTrainee: NewTQCTrainee = {
+    trainee_id: traineeId,
+    employee_id: input.employee_id,
+    name: input.name,
+    team_id: input.team_id,
+    trainer_id: input.trainer_id,
+    start_week: weekNum,
+    start_date: input.start_date,
+    expected_end_date: expectedEndDate.toISOString().split('T')[0],
+    introducer: input.introducer,
+    building: input.building,
+    working_area: input.working_area,
+    status: 'IN_TRAINING',
+    color_blind_status: null,
+    progress_percentage: 0,
+    notes: input.notes,
+    created_at: now,
+    updated_at: now,
+    created_by: 'admin',
+  };
+
+  // Create default training stages
+  const defaultStages = ['Orientation', 'Basic Training', 'Line Assignment', 'Field Evaluation'];
+  const stages: NewTQCTrainingStage[] = defaultStages.map((stageName, index) => ({
+    stage_id: `STG-${traineeId.split('-').slice(1).join('-')}-${index + 1}`,
+    trainee_id: traineeId,
+    stage_name: stageName,
+    stage_order: index + 1,
+    status: 'PENDING' as const,
+    updated_at: now,
+  }));
+
+  // Auto-create scheduled meetings (1WEEK, 1MONTH, 3MONTH)
+  const meetingTypes: Array<'1WEEK' | '1MONTH' | '3MONTH'> = ['1WEEK', '1MONTH', '3MONTH'];
+  const meetings: NewTQCMeeting[] = meetingTypes.map((type) => {
+    const meetingDate = new Date(startDate);
+    if (type === '1WEEK') {
+      meetingDate.setDate(meetingDate.getDate() + 7);
+    } else if (type === '1MONTH') {
+      meetingDate.setMonth(meetingDate.getMonth() + 1);
+    } else {
+      meetingDate.setMonth(meetingDate.getMonth() + 3);
+    }
+
+    return {
+      meeting_id: `MTG-${traineeId.split('-').slice(1).join('-')}-${type}`,
       trainee_id: traineeId,
-      employee_id: input.employee_id,
-      name: input.name,
-      team_id: input.team_id,
-      trainer_id: input.trainer_id,
-      start_week: weekNum,
-      start_date: input.start_date,
-      expected_end_date: expectedEndDate.toISOString().split('T')[0],
-      introducer: input.introducer,
-      status: 'IN_TRAINING',
-      color_blind_status: null,
-      progress_percentage: 0,
-      notes: input.notes,
+      meeting_type: type,
+      scheduled_date: meetingDate.toISOString().split('T')[0],
+      status: 'SCHEDULED' as const,
+      attendees: [input.trainer_id],
+      notes: undefined,
       created_at: now,
       updated_at: now,
-      created_by: 'admin',
     };
-
-    mockNewTQCTrainees.push(newTrainee);
-
-    // Create default training stages
-    const defaultStages = ['Orientation', 'Basic Training', 'Line Assignment', 'Field Evaluation'];
-    defaultStages.forEach((stageName, index) => {
-      const stageId = `STG-${traineeId.split('-')[2]}-${index + 1}`;
-      mockNewTQCTrainingStages.push({
-        stage_id: stageId,
-        trainee_id: traineeId,
-        stage_name: stageName,
-        stage_order: index + 1,
-        status: 'PENDING',
-        updated_at: now,
-      });
-    });
-
-    // Auto-create scheduled meetings (1WEEK, 1MONTH, 3MONTH)
-    const meetingTypes: Array<'1WEEK' | '1MONTH' | '3MONTH'> = ['1WEEK', '1MONTH', '3MONTH'];
-
-    meetingTypes.forEach((type) => {
-      const meetingDate = new Date(startDate);
-      if (type === '1WEEK') {
-        meetingDate.setDate(meetingDate.getDate() + 7);
-      } else if (type === '1MONTH') {
-        meetingDate.setMonth(meetingDate.getMonth() + 1);
-      } else {
-        meetingDate.setMonth(meetingDate.getMonth() + 3);
-      }
-
-      const meetingId = `MTG-${traineeId.split('-')[2]}-${type}`;
-      mockNewTQCMeetings.push({
-        meeting_id: meetingId,
-        trainee_id: traineeId,
-        meeting_type: type,
-        scheduled_date: meetingDate.toISOString().split('T')[0],
-        status: 'SCHEDULED',
-        attendees: [input.trainer_id],
-        notes: undefined,
-        created_at: now,
-        updated_at: now,
-      });
-    });
-
-    return newTrainee;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createNewTQCTrainee', data: input }),
   });
-  const data = await response.json();
-  return data.data;
+
+  // Write all to Firestore atomically
+  await tqcService.createTrainee(newTrainee);
+  await tqcService.batchCreateStagesAndMeetings(stages, meetings);
+
+  return newTrainee;
 }
 
 export async function updateNewTQCTrainee(
   input: NewTQCTraineeUpdate
 ): Promise<NewTQCTrainee | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
-    if (index === -1) return null;
+  const existing = await tqcService.getTraineeById(input.trainee_id);
+  if (!existing) return null;
 
-    mockNewTQCTrainees[index] = {
-      ...mockNewTQCTrainees[index],
-      ...input,
-      updated_at: new Date().toISOString(),
-    };
-    return mockNewTQCTrainees[index];
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateNewTQCTrainee', data: input }),
+  await tqcService.updateTrainee(input.trainee_id, {
+    ...input,
+    updated_at: new Date().toISOString(),
   });
-  const data = await response.json();
-  return data.data;
+
+  return tqcService.getTraineeById(input.trainee_id);
 }
 
 // ========== New TQC Color Blind Test API ==========
 
 export async function getNewTQCColorBlindTests(traineeId?: string): Promise<NewTQCColorBlindTest[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    if (traineeId) {
-      return mockNewTQCColorBlindTests.filter(t => t.trainee_id === traineeId);
-    }
-    return [...mockNewTQCColorBlindTests];
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCColorBlindTests' });
-  if (traineeId) params.append('traineeId', traineeId);
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getColorBlindTests(traineeId);
 }
 
 export async function createNewTQCColorBlindTest(
   input: NewTQCColorBlindTestInput
 ): Promise<NewTQCColorBlindTest> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const testCount = mockNewTQCColorBlindTests.length + 1;
+  const now = new Date().toISOString();
+  const existingTests = await tqcService.getColorBlindTests();
+  const testCount = existingTests.length + 1;
 
-    const newTest: NewTQCColorBlindTest = {
-      test_id: `CBT-${new Date().getFullYear()}-${String(testCount).padStart(3, '0')}`,
-      trainee_id: input.trainee_id,
-      test_date: input.test_date,
-      result: input.result,
-      notes: input.notes,
-      tested_by: 'admin',
-      created_at: now,
-    };
+  const newTest: NewTQCColorBlindTest = {
+    test_id: `CBT-${new Date().getFullYear()}-${String(testCount).padStart(3, '0')}`,
+    trainee_id: input.trainee_id,
+    test_date: input.test_date,
+    result: input.result,
+    notes: input.notes,
+    tested_by: 'admin',
+    created_at: now,
+  };
 
-    mockNewTQCColorBlindTests.push(newTest);
+  await tqcService.createColorBlindTest(newTest);
 
-    // Update trainee's color_blind_status
-    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
-    if (traineeIndex !== -1) {
-      mockNewTQCTrainees[traineeIndex].color_blind_status = input.result;
-      mockNewTQCTrainees[traineeIndex].updated_at = now;
-    }
-
-    return newTest;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createNewTQCColorBlindTest', data: input }),
+  // Update trainee's color_blind_status
+  await tqcService.updateTrainee(input.trainee_id, {
+    color_blind_status: input.result,
+    updated_at: now,
   });
-  const data = await response.json();
-  return data.data;
+
+  return newTest;
 }
 
 // ========== New TQC Training Stage API ==========
 
 export async function getNewTQCTrainingStages(traineeId: string): Promise<NewTQCTrainingStage[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    return mockNewTQCTrainingStages
-      .filter(s => s.trainee_id === traineeId)
-      .sort((a, b) => a.stage_order - b.stage_order);
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCTrainingStages', traineeId });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getStagesByTrainee(traineeId);
 }
 
 export async function updateNewTQCTrainingStage(
   input: NewTQCStageUpdate
 ): Promise<NewTQCTrainingStage | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockNewTQCTrainingStages.findIndex(s => s.stage_id === input.stage_id);
-    if (index === -1) return null;
-
-    const now = new Date().toISOString();
-    mockNewTQCTrainingStages[index] = {
-      ...mockNewTQCTrainingStages[index],
-      ...input,
-      updated_at: now,
-      updated_by: 'admin',
-    };
-
-    // Update trainee progress
-    const traineeId = mockNewTQCTrainingStages[index].trainee_id;
-    const traineeStages = mockNewTQCTrainingStages.filter(s => s.trainee_id === traineeId);
-    const completedCount = traineeStages.filter(s => s.status === 'COMPLETED').length;
-    const progress = Math.round((completedCount / traineeStages.length) * 100);
-
-    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === traineeId);
-    if (traineeIndex !== -1) {
-      mockNewTQCTrainees[traineeIndex].progress_percentage = progress;
-      mockNewTQCTrainees[traineeIndex].updated_at = now;
-
-      // Check if all stages are completed
-      if (progress === 100) {
-        mockNewTQCTrainees[traineeIndex].status = 'COMPLETED';
-      }
-    }
-
-    return mockNewTQCTrainingStages[index];
+  const stages = await tqcService.getStagesByTrainee('');
+  const existingStage = stages.find(s => s.stage_id === input.stage_id);
+  if (!existingStage) {
+    // Fallback: try fetching all stages to find this one
+    // We need the trainee_id to update progress
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateNewTQCTrainingStage', data: input }),
+  const now = new Date().toISOString();
+  await tqcService.updateStage(input.stage_id, {
+    ...input,
+    updated_at: now,
+    updated_by: 'admin',
   });
-  const data = await response.json();
-  return data.data;
+
+  // Find the trainee_id by querying stages that match this stage_id
+  // Re-fetch the stage to get trainee_id
+  // Since we can't query by stage_id in the stages collection easily,
+  // we need to get all stages or pass trainee_id
+  // For now, we'll search through stages to find the trainee_id
+  const allTrainees = await tqcService.getTrainees();
+  for (const trainee of allTrainees) {
+    const traineeStages = await tqcService.getStagesByTrainee(trainee.trainee_id);
+    const matchingStage = traineeStages.find(s => s.stage_id === input.stage_id);
+    if (matchingStage) {
+      // Update trainee progress
+      const completedCount = traineeStages.filter(s =>
+        s.stage_id === input.stage_id
+          ? (input.status || s.status) === 'COMPLETED'
+          : s.status === 'COMPLETED'
+      ).length;
+      const progress = Math.round((completedCount / traineeStages.length) * 100);
+
+      const traineeUpdates: Partial<NewTQCTrainee> = {
+        progress_percentage: progress,
+        updated_at: now,
+      };
+
+      if (progress === 100) {
+        traineeUpdates.status = 'COMPLETED';
+      }
+
+      await tqcService.updateTrainee(trainee.trainee_id, traineeUpdates);
+
+      // Return updated stage
+      const updatedStages = await tqcService.getStagesByTrainee(trainee.trainee_id);
+      return updatedStages.find(s => s.stage_id === input.stage_id) || null;
+    }
+  }
+
+  return null;
 }
 
 // ========== New TQC Meeting API ==========
 
 export async function getNewTQCMeetings(filters?: NewTQCMeetingFilters): Promise<NewTQCMeeting[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockNewTQCMeetings];
-
-    if (filters) {
-      if (filters.traineeId) {
-        result = result.filter(m => m.trainee_id === filters.traineeId);
-      }
-
-      if (filters.meetingType && filters.meetingType !== 'all') {
-        result = result.filter(m => m.meeting_type === filters.meetingType);
-      }
-
-      if (filters.status && filters.status !== 'all') {
-        result = result.filter(m => m.status === filters.status);
-      }
-
-      if (filters.dateFrom) {
-        result = result.filter(m => m.scheduled_date >= filters.dateFrom!);
-      }
-
-      if (filters.dateTo) {
-        result = result.filter(m => m.scheduled_date <= filters.dateTo!);
-      }
-    }
-
-    return result.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCMeetings' });
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
-    });
-  }
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return tqcService.getMeetings(filters);
 }
 
 export async function createNewTQCMeeting(input: NewTQCMeetingInput): Promise<NewTQCMeeting> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const meetingCount = mockNewTQCMeetings.length + 1;
+  const now = new Date().toISOString();
+  const existingMeetings = await tqcService.getMeetings();
+  const meetingCount = existingMeetings.length + 1;
 
-    const newMeeting: NewTQCMeeting = {
-      meeting_id: `MTG-${String(meetingCount).padStart(3, '0')}-${input.meeting_type}`,
-      trainee_id: input.trainee_id,
-      meeting_type: input.meeting_type,
-      scheduled_date: input.scheduled_date,
-      status: 'SCHEDULED',
-      attendees: input.attendees || [],
-      notes: input.notes,
-      created_at: now,
-      updated_at: now,
-    };
+  const newMeeting: NewTQCMeeting = {
+    meeting_id: `MTG-${String(meetingCount).padStart(3, '0')}-${input.meeting_type}`,
+    trainee_id: input.trainee_id,
+    meeting_type: input.meeting_type,
+    scheduled_date: input.scheduled_date,
+    status: 'SCHEDULED',
+    attendees: input.attendees || [],
+    notes: input.notes,
+    created_at: now,
+    updated_at: now,
+  };
 
-    mockNewTQCMeetings.push(newMeeting);
-    return newMeeting;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createNewTQCMeeting', data: input }),
-  });
-  const data = await response.json();
-  return data.data;
+  await tqcService.createMeeting(newMeeting);
+  return newMeeting;
 }
 
 export async function updateNewTQCMeeting(
   input: NewTQCMeetingUpdate
 ): Promise<NewTQCMeeting | null> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const index = mockNewTQCMeetings.findIndex(m => m.meeting_id === input.meeting_id);
-    if (index === -1) return null;
+  const now = new Date().toISOString();
+  await tqcService.updateMeeting(input.meeting_id, {
+    ...input,
+    updated_at: now,
+  });
 
-    const now = new Date().toISOString();
-    mockNewTQCMeetings[index] = {
-      ...mockNewTQCMeetings[index],
-      ...input,
-      updated_at: now,
-    };
-
-    // Update trainee's meeting date if completed
-    if (input.status === 'COMPLETED' && input.completed_date) {
-      const meeting = mockNewTQCMeetings[index];
-      const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === meeting.trainee_id);
-      if (traineeIndex !== -1) {
-        const trainee = mockNewTQCTrainees[traineeIndex];
-        if (meeting.meeting_type === '1WEEK') {
-          trainee.meeting_1week_date = input.completed_date;
-        } else if (meeting.meeting_type === '1MONTH') {
-          trainee.meeting_1month_date = input.completed_date;
-        } else if (meeting.meeting_type === '3MONTH') {
-          trainee.meeting_3month_date = input.completed_date;
-        }
-        trainee.updated_at = now;
+  // Update trainee's meeting date if completed
+  if (input.status === 'COMPLETED' && input.completed_date) {
+    const meetings = await tqcService.getMeetings();
+    const meeting = meetings.find(m => m.meeting_id === input.meeting_id);
+    if (meeting) {
+      const traineeUpdates: Partial<NewTQCTrainee> = { updated_at: now };
+      if (meeting.meeting_type === '1WEEK') {
+        traineeUpdates.meeting_1week_date = input.completed_date;
+      } else if (meeting.meeting_type === '1MONTH') {
+        traineeUpdates.meeting_1month_date = input.completed_date;
+      } else if (meeting.meeting_type === '3MONTH') {
+        traineeUpdates.meeting_3month_date = input.completed_date;
       }
+      await tqcService.updateTrainee(meeting.trainee_id, traineeUpdates);
     }
-
-    return mockNewTQCMeetings[index];
   }
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateNewTQCMeeting', data: input }),
-  });
-  const data = await response.json();
-  return data.data;
+  // Return updated meeting
+  const updatedMeetings = await tqcService.getMeetings();
+  return updatedMeetings.find(m => m.meeting_id === input.meeting_id) || null;
 }
 
 // ========== New TQC Resignation API ==========
@@ -1890,331 +1148,366 @@ export async function updateNewTQCMeeting(
 export async function getNewTQCResignations(
   filters?: NewTQCResignationFilters
 ): Promise<NewTQCResignation[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    let result = [...mockNewTQCResignations];
+  let result = await tqcService.getResignations(filters);
 
-    if (filters) {
-      if (filters.reasonCategory && filters.reasonCategory !== 'all') {
-        result = result.filter(r => r.reason_category === filters.reasonCategory);
-      }
-
-      if (filters.trainer && filters.trainer !== 'all') {
-        const traineeIds = mockNewTQCTrainees
-          .filter(t => t.trainer_id === filters.trainer)
-          .map(t => t.trainee_id);
-        result = result.filter(r => traineeIds.includes(r.trainee_id));
-      }
-
-      if (filters.team && filters.team !== 'all') {
-        const traineeIds = mockNewTQCTrainees
-          .filter(t => t.team_id === filters.team)
-          .map(t => t.trainee_id);
-        result = result.filter(r => traineeIds.includes(r.trainee_id));
-      }
-
-      if (filters.dateFrom) {
-        result = result.filter(r => r.resign_date >= filters.dateFrom!);
-      }
-
-      if (filters.dateTo) {
-        result = result.filter(r => r.resign_date <= filters.dateTo!);
-      }
-    }
-
-    return result.sort((a, b) => b.resign_date.localeCompare(a.resign_date));
+  // Additional filters that require trainee data
+  if (filters?.trainer && filters.trainer !== 'all') {
+    const trainees = await tqcService.getTrainees();
+    const traineeIds = trainees
+      .filter(t => t.trainer_id === filters.trainer)
+      .map(t => t.trainee_id);
+    result = result.filter(r => traineeIds.includes(r.trainee_id));
   }
 
-  const params = new URLSearchParams({ action: 'getNewTQCResignations' });
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
-    });
+  if (filters?.team && filters.team !== 'all') {
+    const trainees = await tqcService.getTrainees();
+    const traineeIds = trainees
+      .filter(t => t.team_id === filters.team)
+      .map(t => t.trainee_id);
+    result = result.filter(r => traineeIds.includes(r.trainee_id));
   }
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+
+  return result;
 }
 
 export async function createNewTQCResignation(
   input: NewTQCResignationInput
 ): Promise<NewTQCResignation> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
-    const now = new Date().toISOString();
-    const trainee = mockNewTQCTrainees.find(t => t.trainee_id === input.trainee_id);
-    if (!trainee) throw new NotFoundError('Trainee not found');
+  const now = new Date().toISOString();
+  const trainee = await tqcService.getTraineeById(input.trainee_id);
+  if (!trainee) throw new NotFoundError('Trainee not found');
 
-    const startDate = new Date(trainee.start_date);
-    const resignDate = new Date(input.resign_date);
-    const trainingDays = Math.ceil(
-      (resignDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+  const startDate = new Date(trainee.start_date);
+  const resignDate = new Date(input.resign_date);
+  const trainingDays = Math.ceil(
+    (resignDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-    const stages = mockNewTQCTrainingStages.filter(s => s.trainee_id === input.trainee_id);
-    const completedStages = stages.filter(s => s.status === 'COMPLETED');
-    const lastCompletedStage =
-      completedStages.length > 0
-        ? completedStages.sort((a, b) => b.stage_order - a.stage_order)[0].stage_name
-        : undefined;
+  const stages = await tqcService.getStagesByTrainee(input.trainee_id);
+  const completedStages = stages.filter(s => s.status === 'COMPLETED');
+  const lastCompletedStage =
+    completedStages.length > 0
+      ? completedStages.sort((a, b) => b.stage_order - a.stage_order)[0].stage_name
+      : undefined;
 
-    const resignationCount = mockNewTQCResignations.length + 1;
-    const newResignation: NewTQCResignation = {
-      resignation_id: `RSG-${new Date().getFullYear()}-${String(resignationCount).padStart(3, '0')}`,
-      trainee_id: input.trainee_id,
-      resign_date: input.resign_date,
-      reason_category: input.reason_category,
-      reason_detail: input.reason_detail,
-      training_duration_days: trainingDays,
-      last_completed_stage: lastCompletedStage,
-      created_at: now,
-      created_by: 'admin',
-    };
+  const existingResignations = await tqcService.getResignations();
+  const resignationCount = existingResignations.length + 1;
 
-    mockNewTQCResignations.push(newResignation);
+  const newResignation: NewTQCResignation = {
+    resignation_id: `RSG-${new Date().getFullYear()}-${String(resignationCount).padStart(3, '0')}`,
+    trainee_id: input.trainee_id,
+    resign_date: input.resign_date,
+    reason_category: input.reason_category,
+    reason_detail: input.reason_detail,
+    training_duration_days: trainingDays,
+    last_completed_stage: lastCompletedStage,
+    created_at: now,
+    created_by: 'admin',
+  };
 
-    // Update trainee status
-    const traineeIndex = mockNewTQCTrainees.findIndex(t => t.trainee_id === input.trainee_id);
-    if (traineeIndex !== -1) {
-      mockNewTQCTrainees[traineeIndex].status = 'RESIGNED';
-      mockNewTQCTrainees[traineeIndex].updated_at = now;
-    }
+  await tqcService.createResignation(newResignation);
 
-    return newResignation;
-  }
-
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'createNewTQCResignation', data: input }),
+  // Update trainee status
+  await tqcService.updateTrainee(input.trainee_id, {
+    status: 'RESIGNED',
+    updated_at: now,
   });
-  const data = await response.json();
-  return data.data;
+
+  return newResignation;
 }
 
 // ========== New TQC Dashboard Stats API ==========
 
 export async function getNewTQCDashboardStats(): Promise<NewTQCDashboardStats> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const [trainees, meetings] = await Promise.all([
+    tqcService.getTrainees(),
+    tqcService.getMeetings(),
+  ]);
 
-    const trainees = mockNewTQCTrainees;
-    const inTraining = trainees.filter(t => t.status === 'IN_TRAINING');
-    const completed = trainees.filter(t => t.status === 'COMPLETED');
-    const resigned = trainees.filter(t => t.status === 'RESIGNED');
+  const inTraining = trainees.filter(t => t.status === 'IN_TRAINING');
+  const completed = trainees.filter(t => t.status === 'COMPLETED');
+  const resigned = trainees.filter(t => t.status === 'RESIGNED');
 
-    const colorBlindPending = trainees.filter(
-      t => t.status === 'IN_TRAINING' && t.color_blind_status === null
-    );
-    const colorBlindFailed = trainees.filter(t => t.color_blind_status === 'FAIL');
+  const colorBlindPending = trainees.filter(
+    t => t.status === 'IN_TRAINING' && t.color_blind_status === null
+  );
+  const colorBlindFailed = trainees.filter(t => t.color_blind_status === 'FAIL');
 
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
 
-    const meetingsThisWeek = mockNewTQCMeetings.filter(m => {
-      const meetingDate = new Date(m.scheduled_date);
-      return meetingDate >= weekStart && meetingDate <= weekEnd;
-    });
+  const meetingsThisWeek = meetings.filter(m => {
+    const meetingDate = new Date(m.scheduled_date);
+    return meetingDate >= weekStart && meetingDate <= weekEnd;
+  });
 
-    const meetingsPending = mockNewTQCMeetings.filter(
-      m => m.status === 'SCHEDULED' && new Date(m.scheduled_date) <= now
-    );
+  const meetingsPending = meetings.filter(
+    m => m.status === 'SCHEDULED' && new Date(m.scheduled_date) <= now
+  );
 
-    const avgProgress =
-      inTraining.length > 0
-        ? Math.round(
-            inTraining.reduce((sum, t) => sum + t.progress_percentage, 0) / inTraining.length
-          )
-        : 0;
+  const avgProgress =
+    inTraining.length > 0
+      ? Math.round(
+          inTraining.reduce((sum, t) => sum + t.progress_percentage, 0) / inTraining.length
+        )
+      : 0;
 
-    const resignationRate =
-      trainees.length > 0 ? Math.round((resigned.length / trainees.length) * 100) : 0;
+  const resignationRate =
+    trainees.length > 0 ? Math.round((resigned.length / trainees.length) * 100) : 0;
 
-    return {
-      totalTrainees: trainees.length,
-      inTraining: inTraining.length,
-      completed: completed.length,
-      resigned: resigned.length,
-      colorBlindPending: colorBlindPending.length,
-      colorBlindFailed: colorBlindFailed.length,
-      meetingsThisWeek: meetingsThisWeek.length,
-      meetingsPending: meetingsPending.length,
-      averageProgress: avgProgress,
-      resignationRate,
-    };
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCDashboardStats' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return {
+    totalTrainees: trainees.length,
+    inTraining: inTraining.length,
+    completed: completed.length,
+    resigned: resigned.length,
+    colorBlindPending: colorBlindPending.length,
+    colorBlindFailed: colorBlindFailed.length,
+    meetingsThisWeek: meetingsThisWeek.length,
+    meetingsPending: meetingsPending.length,
+    averageProgress: avgProgress,
+    resignationRate,
+  };
 }
 
 // ========== New TQC Resignation Analysis API ==========
 
 export async function getNewTQCResignationAnalysis(): Promise<NewTQCResignationAnalysis> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const [resignations, trainees] = await Promise.all([
+    tqcService.getResignations(),
+    tqcService.getTrainees(),
+  ]);
 
-    const resignations = mockNewTQCResignations;
-    const trainees = mockNewTQCTrainees;
+  // By Reason
+  const reasonCounts: Record<string, number> = {};
+  resignations.forEach(r => {
+    reasonCounts[r.reason_category] = (reasonCounts[r.reason_category] || 0) + 1;
+  });
+  const byReason = Object.entries(reasonCounts).map(([reason, count]) => ({
+    reason: reason as NewTQCResignation['reason_category'],
+    count,
+    percentage: resignations.length > 0 ? Math.round((count / resignations.length) * 100) : 0,
+  }));
 
-    // By Reason
-    const reasonCounts: Record<string, number> = {};
-    resignations.forEach(r => {
-      reasonCounts[r.reason_category] = (reasonCounts[r.reason_category] || 0) + 1;
+  // By Month
+  const monthCounts: Record<string, number> = {};
+  resignations.forEach(r => {
+    const month = r.resign_date.substring(0, 7);
+    monthCounts[month] = (monthCounts[month] || 0) + 1;
+  });
+  const byMonth = Object.entries(monthCounts)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
+  // By Trainer
+  const trainerStats: Record<string, { count: number; total: number }> = {};
+  trainees.forEach(t => {
+    if (!trainerStats[t.trainer_id]) {
+      trainerStats[t.trainer_id] = { count: 0, total: 0 };
+    }
+    trainerStats[t.trainer_id].total++;
+    if (t.status === 'RESIGNED') {
+      trainerStats[t.trainer_id].count++;
+    }
+  });
+  const byTrainer = Object.entries(trainerStats).map(([trainer, stats]) => ({
+    trainer,
+    count: stats.count,
+    total: stats.total,
+    rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
+  }));
+
+  // By Team
+  const teamStats: Record<string, { count: number; total: number }> = {};
+  trainees.forEach(t => {
+    if (!teamStats[t.team_id]) {
+      teamStats[t.team_id] = { count: 0, total: 0 };
+    }
+    teamStats[t.team_id].total++;
+    if (t.status === 'RESIGNED') {
+      teamStats[t.team_id].count++;
+    }
+  });
+  const byTeam = Object.entries(teamStats).map(([team, stats]) => ({
+    team,
+    count: stats.count,
+    total: stats.total,
+    rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
+  }));
+
+  // By Week
+  const weekCounts: Record<number, number> = {};
+  trainees
+    .filter(t => t.status === 'RESIGNED')
+    .forEach(t => {
+      weekCounts[t.start_week] = (weekCounts[t.start_week] || 0) + 1;
     });
-    const byReason = Object.entries(reasonCounts).map(([reason, count]) => ({
-      reason: reason as NewTQCResignation['reason_category'],
-      count,
-      percentage: Math.round((count / resignations.length) * 100),
-    }));
+  const byWeek = Object.entries(weekCounts)
+    .map(([week, count]) => ({ week: parseInt(week, 10), count }))
+    .sort((a, b) => a.week - b.week);
 
-    // By Month
-    const monthCounts: Record<string, number> = {};
-    resignations.forEach(r => {
-      const month = r.resign_date.substring(0, 7);
-      monthCounts[month] = (monthCounts[month] || 0) + 1;
-    });
-    const byMonth = Object.entries(monthCounts)
-      .map(([month, count]) => ({ month, count }))
-      .sort((a, b) => a.month.localeCompare(b.month));
+  // Average Training Days
+  const avgTrainingDays =
+    resignations.length > 0
+      ? Math.round(
+          resignations.reduce((sum, r) => sum + r.training_duration_days, 0) / resignations.length
+        )
+      : 0;
 
-    // By Trainer
-    const trainerStats: Record<string, { count: number; total: number }> = {};
-    trainees.forEach(t => {
-      if (!trainerStats[t.trainer_id]) {
-        trainerStats[t.trainer_id] = { count: 0, total: 0 };
-      }
-      trainerStats[t.trainer_id].total++;
-      if (t.status === 'RESIGNED') {
-        trainerStats[t.trainer_id].count++;
-      }
-    });
-    const byTrainer = Object.entries(trainerStats).map(([trainer, stats]) => ({
-      trainer,
-      count: stats.count,
-      total: stats.total,
-      rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
-    }));
-
-    // By Team
-    const teamStats: Record<string, { count: number; total: number }> = {};
-    trainees.forEach(t => {
-      if (!teamStats[t.team_id]) {
-        teamStats[t.team_id] = { count: 0, total: 0 };
-      }
-      teamStats[t.team_id].total++;
-      if (t.status === 'RESIGNED') {
-        teamStats[t.team_id].count++;
-      }
-    });
-    const byTeam = Object.entries(teamStats).map(([team, stats]) => ({
-      team,
-      count: stats.count,
-      total: stats.total,
-      rate: stats.total > 0 ? Math.round((stats.count / stats.total) * 100) : 0,
-    }));
-
-    // By Week
-    const weekCounts: Record<number, number> = {};
-    trainees
-      .filter(t => t.status === 'RESIGNED')
-      .forEach(t => {
-        weekCounts[t.start_week] = (weekCounts[t.start_week] || 0) + 1;
-      });
-    const byWeek = Object.entries(weekCounts)
-      .map(([week, count]) => ({ week: parseInt(week, 10), count }))
-      .sort((a, b) => a.week - b.week);
-
-    // Average Training Days
-    const avgTrainingDays =
-      resignations.length > 0
-        ? Math.round(
-            resignations.reduce((sum, r) => sum + r.training_duration_days, 0) / resignations.length
-          )
-        : 0;
-
-    return {
-      byReason,
-      byMonth,
-      byTrainer,
-      byTeam,
-      byWeek,
-      averageTrainingDays: avgTrainingDays,
-    };
-  }
-
-  const params = new URLSearchParams({ action: 'getNewTQCResignationAnalysis' });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return {
+    byReason,
+    byMonth,
+    byTrainer,
+    byTeam,
+    byWeek,
+    averageTrainingDays: avgTrainingDays,
+  };
 }
 
 // ========== New TQC Upcoming Meetings API ==========
 
 export async function getNewTQCUpcomingMeetings(days: number = 7): Promise<NewTQCMeeting[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const meetings = await tqcService.getMeetings();
 
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setDate(now.getDate() + days);
+  const now = new Date();
+  const endDate = new Date(now);
+  endDate.setDate(now.getDate() + days);
 
-    return mockNewTQCMeetings
-      .filter(m => {
-        const meetingDate = new Date(m.scheduled_date);
-        return m.status === 'SCHEDULED' && meetingDate >= now && meetingDate <= endDate;
-      })
-      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-  }
-
-  const params = new URLSearchParams({
-    action: 'getNewTQCUpcomingMeetings',
-    days: days.toString(),
-  });
-  const response = await fetch(`${GAS_URL}?${params}`);
-  const data = await response.json();
-  return data.data;
+  return meetings
+    .filter(m => {
+      const meetingDate = new Date(m.scheduled_date);
+      return m.status === 'SCHEDULED' && meetingDate >= now && meetingDate <= endDate;
+    })
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
 }
 
 // ========== Attendance API ==========
 
-/**
- * Save bulk attendance records for a session
- * @param input Bulk attendance input with session_id and attendance records
- * @returns Array of saved attendance records
- */
 export async function saveBulkAttendance(input: BulkAttendanceInput): Promise<Attendance[]> {
-  if (USE_MOCK_API) {
-    await delay(MOCK_DELAY);
+  const savedRecords = await attendanceService.saveBulkAttendance(input);
+  logger.log('Attendance saved:', savedRecords.length, 'records');
+  return savedRecords;
+}
 
-    const now = new Date().toISOString();
-    const savedRecords: Attendance[] = input.attendances.map((record, index) => ({
-      attendance_id: `ATT-${Date.now()}-${index}`,
-      session_id: input.session_id,
-      employee_id: record.employee_id,
-      status: record.status,
-      notes: record.notes,
-      created_at: now,
-      updated_at: now,
-    }));
+// ========== Materials API ==========
 
-    logger.log('Attendance saved (mock):', savedRecords.length, 'records');
-    return savedRecords;
-  }
+export async function getMaterials(filters?: MaterialFilters): Promise<TrainingMaterial[]> {
+  return materialService.getMaterials(filters);
+}
 
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'saveBulkAttendance', data: input }),
-  });
-  const data = await response.json();
+export async function getMaterial(id: string): Promise<TrainingMaterial | null> {
+  return materialService.getMaterial(id);
+}
 
-  if (!data.success) {
-    throw new ApiError(data.error || 'Failed to save attendance', 'SAVE_ATTENDANCE_ERROR');
-  }
+export async function createMaterial(data: Omit<TrainingMaterial, 'updatedAt'>): Promise<TrainingMaterial> {
+  const result = await materialService.createMaterial(data);
+  invalidateMaterialCache();
+  return result;
+}
 
-  return data.data;
+export async function updateMaterial(id: string, updates: Partial<TrainingMaterial>): Promise<void> {
+  await materialService.updateMaterial(id, updates);
+  invalidateMaterialCache();
+}
+
+export async function deleteMaterial(id: string): Promise<void> {
+  await materialService.deleteMaterial(id);
+  invalidateMaterialCache();
+}
+
+export async function getFolders(parentId?: string | null): Promise<MaterialFolder[]> {
+  return materialService.getFolders(parentId);
+}
+
+export async function createFolder(data: Omit<MaterialFolder, 'createdAt' | 'updatedAt'>): Promise<MaterialFolder> {
+  const result = await materialService.createFolder(data);
+  invalidateMaterialCache();
+  return result;
+}
+
+export async function updateFolder(id: string, updates: Partial<MaterialFolder>): Promise<void> {
+  await materialService.updateFolder(id, updates);
+  invalidateMaterialCache();
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  await materialService.deleteFolder(id);
+  invalidateMaterialCache();
+}
+
+// ========== Evaluations API ==========
+
+export async function getEvaluations(filters?: EvaluationFilters): Promise<TrainingEvaluation[]> {
+  return evaluationService.getEvaluations(filters);
+}
+
+export async function getEvaluation(id: string): Promise<TrainingEvaluation | null> {
+  return evaluationService.getEvaluation(id);
+}
+
+export async function getEvaluationsByProgram(programId: string): Promise<TrainingEvaluation[]> {
+  return evaluationService.getEvaluationsByProgram(programId);
+}
+
+export async function createEvaluation(data: Omit<TrainingEvaluation, 'submittedAt'>): Promise<TrainingEvaluation> {
+  const result = await evaluationService.createEvaluation(data);
+  invalidateEvaluationCache();
+  return result;
+}
+
+export async function updateEvaluation(id: string, updates: Partial<TrainingEvaluation>): Promise<void> {
+  await evaluationService.updateEvaluation(id, updates);
+  invalidateEvaluationCache();
+}
+
+// ========== Notifications API ==========
+
+export async function getNotifications(userId?: string, filters?: NotificationQueryFilters): Promise<Notification[]> {
+  return notificationService.getNotifications(userId, filters);
+}
+
+export async function createNotification(data: Omit<Notification, 'created_at'>): Promise<Notification> {
+  const result = await notificationService.createNotification(data);
+  invalidateNotificationCache();
+  return result;
+}
+
+export async function markNotificationAsRead(id: string): Promise<void> {
+  await notificationService.markAsRead(id);
+  invalidateNotificationCache();
+}
+
+export async function markAllNotificationsAsRead(userId: string): Promise<void> {
+  await notificationService.markAllAsRead(userId);
+  invalidateNotificationCache();
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  await notificationService.deleteNotification(id);
+  invalidateNotificationCache();
+}
+
+export async function batchDeleteNotifications(ids: string[]): Promise<void> {
+  await notificationService.batchDeleteNotifications(ids);
+  invalidateNotificationCache();
+}
+
+export async function getNotificationSettings(userId: string): Promise<NotificationSettingsData | null> {
+  return notificationService.getSettings(userId);
+}
+
+export async function updateNotificationSettings(userId: string, data: Partial<NotificationSettingsData>): Promise<void> {
+  return notificationService.updateSettings(userId, data);
+}
+
+// ========== Audit Logs API ==========
+
+export async function getAuditLogs(filters?: AuditLogFilters): Promise<AuditLogEntry[]> {
+  return auditLogService.getAuditLogs(filters);
+}
+
+export async function createAuditLog(data: Omit<AuditLogEntry, 'changed_at'>): Promise<AuditLogEntry> {
+  return auditLogService.createAuditLog(data);
 }

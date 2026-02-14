@@ -30,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { buildings, departments, categories } from '@/data/mockData';
+import { buildings, departments, categories } from '@/data/constants';
 import { format } from 'date-fns';
 
 export default function Retraining() {

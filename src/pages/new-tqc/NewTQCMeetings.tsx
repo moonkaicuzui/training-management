@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import {
   Calendar,
@@ -29,13 +30,27 @@ import {
   useNewTQCLoading,
   useNewTQCActions,
 } from '@/stores/newTqcStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { NewTQCMeetingFilters as FiltersType } from '@/types/newTqc';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isPast, isToday } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko, vi, enUS } from 'date-fns/locale';
 
 export default function NewTQCMeetings() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toast } = useToast();
+  const { language } = useUIStore();
+
+  const getLocale = () => {
+    switch (language) {
+      case 'ko':
+        return ko;
+      case 'vi':
+        return vi;
+      default:
+        return enUS;
+    }
+  };
 
   const meetings = useNewTQCMeetings();
   const trainees = useNewTQCTrainees();
@@ -50,8 +65,8 @@ export default function NewTQCMeetings() {
       } catch {
         toast({
           variant: 'destructive',
-          title: '데이터 로드 실패',
-          description: '미팅 데이터를 불러오는데 실패했습니다.',
+          title: t('messages.loadError'),
+          description: t('newTQCModule.meetings.loadErrorDesc'),
         });
       }
     };
@@ -102,14 +117,14 @@ export default function NewTQCMeetings() {
       });
       await fetchMeetings(filters);
       toast({
-        title: '미팅 완료',
-        description: '미팅이 완료 처리되었습니다.',
+        title: t('newTQCModule.meetings.meetingCompleted'),
+        description: t('newTQCModule.meetings.meetingCompletedDesc'),
       });
     } catch {
       toast({
         variant: 'destructive',
-        title: '업데이트 실패',
-        description: '미팅 상태 변경에 실패했습니다.',
+        title: t('messages.saveError'),
+        description: t('newTQCModule.meetings.updateFailedDesc'),
       });
     }
   };
@@ -123,9 +138,9 @@ export default function NewTQCMeetings() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">미팅 관리</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newTQCModule.meetings.title')}</h1>
           <p className="text-muted-foreground">
-            신입 교육생 면담 일정 관리
+            {t('newTQCModule.meetings.description')}
           </p>
         </div>
       </div>
@@ -136,7 +151,7 @@ export default function NewTQCMeetings() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              예정된 미팅
+              {t('newTQCModule.meetings.scheduled')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -147,7 +162,7 @@ export default function NewTQCMeetings() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
-              지연된 미팅
+              {t('newTQCModule.meetings.overdue')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -158,7 +173,7 @@ export default function NewTQCMeetings() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-status-pass" />
-              완료된 미팅
+              {t('newTQCModule.meetings.completed')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -169,7 +184,7 @@ export default function NewTQCMeetings() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-orange-500" />
-              미실시
+              {t('newTQCModule.meetings.missed')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -194,11 +209,11 @@ export default function NewTQCMeetings() {
         <TabsList>
           <TabsTrigger value="list" className="gap-2">
             <List className="h-4 w-4" />
-            목록
+            {t('newTQCModule.meetings.listView')}
           </TabsTrigger>
           <TabsTrigger value="calendar" className="gap-2">
             <Calendar className="h-4 w-4" />
-            캘린더
+            {t('newTQCModule.meetings.calendarView')}
           </TabsTrigger>
         </TabsList>
 
@@ -210,10 +225,10 @@ export default function NewTQCMeetings() {
               <CardHeader>
                 <CardTitle className="text-lg text-destructive flex items-center gap-2">
                   <AlertCircle className="h-5 w-5" />
-                  지연된 미팅 ({overdueMeetings.length})
+                  {t('newTQCModule.meetings.overdue')} ({overdueMeetings.length})
                 </CardTitle>
                 <CardDescription>
-                  예정일이 지났으나 완료되지 않은 미팅입니다.
+                  {t('newTQCModule.meetings.overdueDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -236,7 +251,7 @@ export default function NewTQCMeetings() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                예정된 미팅 ({scheduledMeetings.filter((m) => !overdueMeetings.includes(m)).length})
+                {t('newTQCModule.meetings.scheduled')} ({scheduledMeetings.filter((m) => !overdueMeetings.includes(m)).length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -255,7 +270,7 @@ export default function NewTQCMeetings() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  예정된 미팅이 없습니다.
+                  {t('newTQCModule.meetings.noScheduled')}
                 </div>
               )}
             </CardContent>
@@ -266,7 +281,7 @@ export default function NewTQCMeetings() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-status-pass" />
-                완료된 미팅 ({completedMeetings.length})
+                {t('newTQCModule.meetings.completed')} ({completedMeetings.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -282,7 +297,7 @@ export default function NewTQCMeetings() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  완료된 미팅이 없습니다.
+                  {t('newTQCModule.meetings.noCompleted')}
                 </div>
               )}
             </CardContent>
@@ -294,10 +309,10 @@ export default function NewTQCMeetings() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                {format(currentWeekStart, 'yyyy년 M월', { locale: ko })} 주간 일정
+                {format(currentWeekStart, 'yyyy MMMM', { locale: getLocale() })} {t('newTQCModule.meetings.weeklySchedule')}
               </CardTitle>
               <CardDescription>
-                {format(currentWeekStart, 'M월 d일', { locale: ko })} - {format(currentWeekEnd, 'M월 d일', { locale: ko })}
+                {format(currentWeekStart, 'MMM d', { locale: getLocale() })} - {format(currentWeekEnd, 'MMM d', { locale: getLocale() })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -310,7 +325,7 @@ export default function NewTQCMeetings() {
                       isToday(day) ? 'bg-primary text-primary-foreground rounded-t-lg' : ''
                     }`}
                   >
-                    <div className="text-sm">{format(day, 'EEE', { locale: ko })}</div>
+                    <div className="text-sm">{format(day, 'EEE', { locale: getLocale() })}</div>
                     <div className="text-lg">{format(day, 'd')}</div>
                   </div>
                 ))}
@@ -343,10 +358,10 @@ export default function NewTQCMeetings() {
                               </div>
                               <div className="text-muted-foreground">
                                 {meeting.meeting_type === '1WEEK'
-                                  ? '1주'
+                                  ? t('newTQCModule.meetings.oneWeek')
                                   : meeting.meeting_type === '1MONTH'
-                                    ? '1개월'
-                                    : '3개월'}
+                                    ? t('newTQCModule.meetings.oneMonth')
+                                    : t('newTQCModule.meetings.threeMonths')}
                               </div>
                             </div>
                           ))}

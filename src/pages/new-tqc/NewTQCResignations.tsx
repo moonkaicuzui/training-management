@@ -1,9 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import {
   UserMinus,
   Download,
   TrendingDown,
+  Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,42 +31,57 @@ import {
   ResignationByMonthChart,
   ResignationStats,
   ResignationFilters,
+  ResignationFormDialog,
 } from '@/components/new-tqc';
 import {
   useNewTQCResignations,
   useNewTQCResignationAnalysis,
   useNewTQCTeams,
+  useNewTQCTrainees,
   useNewTQCResignationFilters,
   useNewTQCLoading,
   useNewTQCActions,
 } from '@/stores/newTqcStore';
-import type { NewTQCResignationFilters as FiltersType, ResignationReason } from '@/types/newTqc';
+import type { NewTQCResignationFilters as FiltersType, NewTQCResignationInput, ResignationReason } from '@/types/newTqc';
 import { format } from 'date-fns';
 
-const REASON_LABELS: Record<ResignationReason, string> = {
-  HEALTH_ISSUE: '건강 문제',
-  FAMILY_MATTERS: '가정 사정',
-  DISTANCE: '출퇴근 거리',
-  LOW_SALARY: '급여 불만',
-  JOB_CHANGE: '이직',
-  ABSENCE: '무단 결근',
-  ACCIDENT: '사고',
-  OTHER: '기타',
-};
+// Reason labels will be resolved via i18n t() function at render time
 
 export default function NewTQCResignations() {
+  const { t } = useTranslation();
   const { toast } = useToast();
+
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+
+  const REASON_LABELS: Record<ResignationReason, string> = {
+    HEALTH_ISSUE: t('newTqc.resignations.reasons.healthIssue'),
+    FAMILY_MATTERS: t('newTqc.resignations.reasons.familyMatters'),
+    DISTANCE: t('newTqc.resignations.reasons.distance'),
+    LOW_SALARY: t('newTqc.resignations.reasons.lowSalary'),
+    JOB_CHANGE: t('newTqc.resignations.reasons.jobChange'),
+    ABSENCE: t('newTqc.resignations.reasons.absence'),
+    ACCIDENT: t('newTqc.resignations.reasons.accident'),
+    OTHER: t('newTqc.resignations.reasons.other'),
+  };
   const resignations = useNewTQCResignations();
   const analysis = useNewTQCResignationAnalysis();
   const teams = useNewTQCTeams();
+  const trainees = useNewTQCTrainees();
   const filters = useNewTQCResignationFilters();
   const loading = useNewTQCLoading();
   const {
     fetchResignations,
     fetchResignationAnalysis,
     fetchTeams,
+    fetchTrainees,
     setResignationFilters,
+    createResignation,
   } = useNewTQCActions();
+
+  const inTrainingTrainees = useMemo(
+    () => trainees.filter((t) => t.status === 'IN_TRAINING'),
+    [trainees]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,12 +90,13 @@ export default function NewTQCResignations() {
           fetchResignations(filters),
           fetchResignationAnalysis(),
           fetchTeams(),
+          fetchTrainees(),
         ]);
       } catch {
         toast({
           variant: 'destructive',
-          title: '데이터 로드 실패',
-          description: '퇴사 데이터를 불러오는데 실패했습니다.',
+          title: t('newTqc.resignations.loadError'),
+          description: t('newTqc.resignations.loadErrorDesc'),
         });
       }
     };
@@ -104,6 +122,15 @@ export default function NewTQCResignations() {
     setResignationFilters({});
   };
 
+  const handleCreateResignation = async (data: NewTQCResignationInput) => {
+    await createResignation(data);
+    setFormDialogOpen(false);
+    await Promise.all([
+      fetchResignations(filters),
+      fetchResignationAnalysis(),
+    ]);
+  };
+
   if (loading.analysis && !analysis) {
     return <PageLoading />;
   }
@@ -113,15 +140,21 @@ export default function NewTQCResignations() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">퇴사 분석</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newTqc.resignations.title')}</h1>
           <p className="text-muted-foreground">
-            신입 교육생 퇴사 현황 및 원인 분석
+            {t('newTqc.resignations.description')}
           </p>
         </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          리포트 다운로드
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="destructive" onClick={() => setFormDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('newTqc.resignationForm.submit')}
+          </Button>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            {t('newTqc.resignations.downloadReport')}
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -151,18 +184,18 @@ export default function NewTQCResignations() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <UserMinus className="h-5 w-5" />
-            퇴사자 목록 ({filteredResignations.length})
+            {t('newTqc.resignations.listTitle', { count: filteredResignations.length })}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>퇴사일</TableHead>
-                <TableHead>교육생 ID</TableHead>
-                <TableHead>퇴사 사유</TableHead>
-                <TableHead>상세 사유</TableHead>
-                <TableHead>교육 기간</TableHead>
+                <TableHead>{t('newTqc.resignations.resignDate')}</TableHead>
+                <TableHead>{t('newTqc.resignations.traineeId')}</TableHead>
+                <TableHead>{t('newTqc.resignations.reason')}</TableHead>
+                <TableHead>{t('newTqc.resignations.reasonDetail')}</TableHead>
+                <TableHead>{t('newTqc.resignations.trainingDuration')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,14 +204,14 @@ export default function NewTQCResignations() {
                   <TableCell colSpan={5} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                      로딩 중...
+                      {t('common.loading')}
                     </div>
                   </TableCell>
                 </TableRow>
               ) : filteredResignations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    퇴사 기록이 없습니다.
+                    {t('newTqc.resignations.noRecords')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -199,7 +232,7 @@ export default function NewTQCResignations() {
                       {resignation.reason_detail || '-'}
                     </TableCell>
                     <TableCell>
-                      {resignation.training_duration_days}일
+                      {t('newTqc.resignations.daysCount', { count: resignation.training_duration_days })}
                     </TableCell>
                   </TableRow>
                 ))
@@ -215,10 +248,10 @@ export default function NewTQCResignations() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingDown className="h-5 w-5" />
-              분석 인사이트
+              {t('newTqc.resignations.insights')}
             </CardTitle>
             <CardDescription>
-              퇴사 데이터 기반 개선 포인트
+              {t('newTqc.resignations.insightsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -228,10 +261,12 @@ export default function NewTQCResignations() {
                 const totalResignations = analysis.byReason.reduce((sum, item) => sum + item.count, 0);
                 return (
                   <div className="p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">주요 퇴사 사유</h4>
+                    <h4 className="font-medium mb-2">{t('newTqc.resignations.topReason')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      가장 많은 퇴사 사유는 <strong>{REASON_LABELS[analysis.byReason[0].reason]}</strong>
-                      으로, 전체의 {totalResignations > 0 ? Math.round((analysis.byReason[0].count / totalResignations) * 100) : 0}%를 차지합니다.
+                      {t('newTqc.resignations.topReasonDetail', {
+                        reason: REASON_LABELS[analysis.byReason[0].reason],
+                        percentage: totalResignations > 0 ? Math.round((analysis.byReason[0].count / totalResignations) * 100) : 0,
+                      })}
                     </p>
                   </div>
                 );
@@ -239,11 +274,11 @@ export default function NewTQCResignations() {
 
               {/* Average training duration insight */}
               <div className="p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-medium mb-2">평균 교육 기간</h4>
+                <h4 className="font-medium mb-2">{t('newTqc.resignations.avgTrainingDuration')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  퇴사자들의 평균 교육 기간은 <strong>{analysis.averageTrainingDays}일</strong>입니다.
+                  {t('newTqc.resignations.avgTrainingDetail', { days: analysis.averageTrainingDays })}
                   {analysis.averageTrainingDays < 14 && (
-                    <span className="text-destructive"> 초기 퇴사율이 높습니다. 입사 초기 적응 프로그램 강화를 권장합니다.</span>
+                    <span className="text-destructive"> {t('newTqc.resignations.earlyResignWarning')}</span>
                   )}
                 </p>
               </div>
@@ -251,10 +286,9 @@ export default function NewTQCResignations() {
               {/* Team with highest resignation */}
               {analysis.byTeam.length > 0 && (
                 <div className="p-4 bg-muted/50 rounded-lg">
-                  <h4 className="font-medium mb-2">팀별 퇴사 현황</h4>
+                  <h4 className="font-medium mb-2">{t('newTqc.resignations.teamStatus')}</h4>
                   <p className="text-sm text-muted-foreground">
-                    <strong>{analysis.byTeam[0].team}</strong> 팀의 퇴사율이 가장 높습니다 ({analysis.byTeam[0].count}명).
-                    해당 팀의 교육 환경 및 업무 강도를 점검해 보시기 바랍니다.
+                    {t('newTqc.resignations.teamStatusDetail', { team: analysis.byTeam[0].team, count: analysis.byTeam[0].count })}
                   </p>
                 </div>
               )}
@@ -262,6 +296,14 @@ export default function NewTQCResignations() {
           </CardContent>
         </Card>
       )}
+
+      {/* Resignation Form Dialog */}
+      <ResignationFormDialog
+        open={formDialogOpen}
+        onClose={() => setFormDialogOpen(false)}
+        onSubmit={handleCreateResignation}
+        trainees={inTrainingTrainees}
+      />
     </div>
   );
 }

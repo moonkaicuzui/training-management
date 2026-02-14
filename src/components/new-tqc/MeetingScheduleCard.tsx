@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Calendar, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import {
   Card,
@@ -20,11 +21,14 @@ interface MeetingScheduleCardProps {
   className?: string;
 }
 
-const meetingTypeLabels: Record<NewTQCMeetingType, { label: string; description: string }> = {
-  '1WEEK': { label: '1주차 면담', description: '입사 1주 후 적응 확인' },
-  '1MONTH': { label: '1개월 면담', description: '입사 1개월 후 중간 점검' },
-  '3MONTH': { label: '3개월 면담', description: '입사 3개월 후 배치 전 최종 면담' },
-};
+function useMeetingTypeLabels(): Record<NewTQCMeetingType, { label: string; description: string }> {
+  const { t } = useTranslation();
+  return {
+    '1WEEK': { label: t('newTqc.meetings.1weekTitle'), description: t('newTqc.meetings.1weekDesc') },
+    '1MONTH': { label: t('newTqc.meetings.1monthTitle'), description: t('newTqc.meetings.1monthDesc') },
+    '3MONTH': { label: t('newTqc.meetings.3monthTitle'), description: t('newTqc.meetings.3monthDesc') },
+  };
+}
 
 export function MeetingScheduleCard({
   meeting,
@@ -33,6 +37,8 @@ export function MeetingScheduleCard({
   onReschedule,
   className,
 }: MeetingScheduleCardProps) {
+  const { t } = useTranslation();
+  const meetingTypeLabels = useMeetingTypeLabels();
   const typeConfig = meetingTypeLabels[meeting.meeting_type];
   const scheduledDate = new Date(meeting.scheduled_date);
   const daysUntil = differenceInDays(scheduledDate, new Date());
@@ -85,9 +91,9 @@ export function MeetingScheduleCard({
               )}
             >
               {isOverdue
-                ? `${Math.abs(daysUntil)}일 지남`
+                ? t('newTqc.meetings.daysAgo', { days: Math.abs(daysUntil) })
                 : isTodayMeeting
-                  ? '오늘'
+                  ? t('newTqc.meetings.today')
                   : `D-${daysUntil}`}
             </span>
           )}
@@ -97,7 +103,7 @@ export function MeetingScheduleCard({
         {meeting.completed_date && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle className="h-4 w-4 text-status-pass" />
-            <span>완료: {format(new Date(meeting.completed_date), 'yyyy-MM-dd')}</span>
+            <span>{t('newTqc.meetings.completedDate', { date: format(new Date(meeting.completed_date), 'yyyy-MM-dd') })}</span>
           </div>
         )}
 
@@ -126,7 +132,7 @@ export function MeetingScheduleCard({
                 className="flex-1"
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
-                완료
+                {t('newTqc.meetings.markComplete')}
               </Button>
             )}
             {onReschedule && (
@@ -136,7 +142,7 @@ export function MeetingScheduleCard({
                 onClick={() => onReschedule(meeting.meeting_id)}
               >
                 <Clock className="h-4 w-4 mr-1" />
-                일정 변경
+                {t('newTqc.meetings.reschedule')}
               </Button>
             )}
           </div>
@@ -154,6 +160,7 @@ interface MeetingListItemProps {
 }
 
 export function MeetingListItem({ meeting, traineeName, onClick }: MeetingListItemProps) {
+  const meetingTypeLabels = useMeetingTypeLabels();
   const typeConfig = meetingTypeLabels[meeting.meeting_type];
   const scheduledDate = new Date(meeting.scheduled_date);
   const isOverdue = isPast(scheduledDate) && meeting.status === 'SCHEDULED';

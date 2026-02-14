@@ -24,9 +24,9 @@ import {
 const createEmployee = (overrides: Partial<Employee> = {}): Employee => ({
   employee_id: 'EMP001',
   employee_name: 'Test Employee',
-  department: 'PRODUCTION',
-  position: 'OP' as Position,
-  building: 'BUILDING_A_F1',
+  department: 'STITCHING',
+  position: 'PRO_WORKER' as Position,
+  building: 'BUILDING_A1',
   line: '1',
   hire_date: '2023-01-01',
   status: 'ACTIVE',
@@ -134,35 +134,35 @@ describe('getExpirationDate', () => {
 
 describe('isProgramRequiredForEmployee', () => {
   it('should return true when program has no target positions (applies to all)', () => {
-    const employee = createEmployee({ position: 'OP' as Position, status: 'ACTIVE' });
+    const employee = createEmployee({ position: 'PRO_WORKER' as Position, status: 'ACTIVE' });
     const program = createProgram({ target_positions: [], is_active: true });
 
     expect(isProgramRequiredForEmployee(employee, program)).toBe(true);
   });
 
   it('should return true when employee position matches target positions', () => {
-    const employee = createEmployee({ position: 'OP' as Position, status: 'ACTIVE' });
-    const program = createProgram({ target_positions: ['OP' as Position], is_active: true });
+    const employee = createEmployee({ position: 'PRO_WORKER' as Position, status: 'ACTIVE' });
+    const program = createProgram({ target_positions: ['PRO_WORKER' as Position], is_active: true });
 
     expect(isProgramRequiredForEmployee(employee, program)).toBe(true);
   });
 
   it('should return false when employee position does not match', () => {
     const employee = createEmployee({ position: 'TL' as Position, status: 'ACTIVE' });
-    const program = createProgram({ target_positions: ['OP' as Position], is_active: true });
+    const program = createProgram({ target_positions: ['PRO_WORKER' as Position], is_active: true });
 
     expect(isProgramRequiredForEmployee(employee, program)).toBe(false);
   });
 
   it('should return false for inactive program', () => {
-    const employee = createEmployee({ position: 'OP' as Position, status: 'ACTIVE' });
+    const employee = createEmployee({ position: 'PRO_WORKER' as Position, status: 'ACTIVE' });
     const program = createProgram({ target_positions: [], is_active: false });
 
     expect(isProgramRequiredForEmployee(employee, program)).toBe(false);
   });
 
   it('should return false for inactive employee', () => {
-    const employee = createEmployee({ position: 'OP' as Position, status: 'INACTIVE' });
+    const employee = createEmployee({ position: 'PRO_WORKER' as Position, status: 'INACTIVE' });
     const program = createProgram({ target_positions: [], is_active: true });
 
     expect(isProgramRequiredForEmployee(employee, program)).toBe(false);

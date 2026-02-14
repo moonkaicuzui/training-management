@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Bell,
   BellRing,
@@ -53,56 +53,7 @@ import {
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Notification, NotificationType, NotificationPriority } from '@/types/notification';
-
-// 샘플 알림 데이터 생성
-const generateSampleNotifications = (): Notification[] => {
-  const notifications: Notification[] = [];
-  const types: NotificationType[] = [
-    'TRAINING_REMINDER',
-    'EXPIRY_WARNING',
-    'RETRAINING_REQUIRED',
-    'SESSION_CANCELLED',
-    'RESULT_AVAILABLE',
-    'CERTIFICATE_READY',
-    'SYSTEM',
-  ];
-  const priorities: NotificationPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-
-  const titles: Record<NotificationType, string[]> = {
-    TRAINING_REMINDER: ['QIP 기초 교육 예정', '생산 품질 관리 교육 임박', '안전 교육 D-3'],
-    EXPIRY_WARNING: ['QIP 자격 만료 임박 (7일)', '생산 품질 자격 만료 (14일)', '안전 교육 갱신 필요'],
-    RETRAINING_REQUIRED: ['재교육 필요: 불합격', '역량 평가 미달', '정기 재교육 대상자'],
-    SESSION_CANCELLED: ['3월 15일 교육 취소', '일정 변경 안내', '장소 변경 안내'],
-    RESULT_AVAILABLE: ['교육 결과 확인 가능', '시험 결과 발표', '평가 완료'],
-    CERTIFICATE_READY: ['이수증 발급 완료', '자격증 갱신 완료', '수료증 다운로드 가능'],
-    SYSTEM: ['시스템 점검 안내', '새 기능 업데이트', '보안 알림'],
-  };
-
-  for (let i = 0; i < 30; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const priority = priorities[Math.floor(Math.random() * priorities.length)];
-    const daysAgo = Math.floor(Math.random() * 14);
-    const titleOptions = titles[type];
-    const title = titleOptions[Math.floor(Math.random() * titleOptions.length)];
-
-    notifications.push({
-      notification_id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
-      type,
-      priority,
-      title,
-      message: `${title}에 대한 상세 내용입니다. 확인 후 필요한 조치를 취해주세요.`,
-      recipient_type: 'EMPLOYEE',
-      recipient_id: `EMP-${String(Math.floor(Math.random() * 100) + 1).padStart(3, '0')}`,
-      is_read: Math.random() > 0.6,
-      created_at: format(subDays(new Date(), daysAgo), "yyyy-MM-dd'T'HH:mm:ss"),
-      expires_at: format(subDays(new Date(), daysAgo - 30), "yyyy-MM-dd'T'HH:mm:ss"),
-    });
-  }
-
-  return notifications.sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-};
+import * as api from '@/services/api';
 
 // 알림 타입 아이콘
 const NotificationIcon = ({ type }: { type: NotificationType }) => {
@@ -141,7 +92,9 @@ const PriorityBadge = ({ priority }: { priority: NotificationPriority }) => {
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState<Notification[]>(generateSampleNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
@@ -158,6 +111,37 @@ export default function NotificationsPage() {
     retrainingRequired: true,
     reminderDays: [7, 3, 1],
   });
+
+  // Firebase에서 데이터 로드
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 알림 설정 로드
+  const loadSettings = useCallback(async () => {
+    try {
+      const savedSettings = await api.getNotificationSettings('current-user');
+      if (savedSettings) {
+        setSettings(savedSettings);
+      }
+    } catch {
+      // 설정 로드 실패 시 기본값 유지
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    loadSettings();
+  }, [loadData, loadSettings]);
 
   // 필터링된 알림
   const filteredNotifications = useMemo(() => {
@@ -182,34 +166,63 @@ export default function NotificationsPage() {
   }), [notifications]);
 
   // 읽음 처리
-  const handleMarkAsRead = (notificationId: string) => {
-    setNotifications(prev => prev.map(n =>
-      n.notification_id === notificationId ? { ...n, is_read: true } : n
-    ));
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await api.markNotificationAsRead(notificationId);
+      setNotifications(prev => prev.map(n =>
+        n.notification_id === notificationId ? { ...n, is_read: true } : n
+      ));
+    } catch {
+      // 실패 시 다시 로드
+      loadData();
+    }
   };
 
   // 전체 읽음 처리
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.markAllNotificationsAsRead('current-user');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch {
+      loadData();
+    }
   };
 
   // 선택 항목 읽음 처리
-  const handleMarkSelectedAsRead = () => {
-    setNotifications(prev => prev.map(n =>
-      selectedNotifications.has(n.notification_id) ? { ...n, is_read: true } : n
-    ));
-    setSelectedNotifications(new Set());
+  const handleMarkSelectedAsRead = async () => {
+    try {
+      const promises = Array.from(selectedNotifications).map(id =>
+        api.markNotificationAsRead(id)
+      );
+      await Promise.all(promises);
+      setNotifications(prev => prev.map(n =>
+        selectedNotifications.has(n.notification_id) ? { ...n, is_read: true } : n
+      ));
+      setSelectedNotifications(new Set());
+    } catch {
+      loadData();
+    }
   };
 
   // 삭제
-  const handleDelete = (notificationId: string) => {
-    setNotifications(prev => prev.filter(n => n.notification_id !== notificationId));
+  const handleDelete = async (notificationId: string) => {
+    try {
+      await api.deleteNotification(notificationId);
+      setNotifications(prev => prev.filter(n => n.notification_id !== notificationId));
+    } catch {
+      loadData();
+    }
   };
 
   // 선택 항목 삭제
-  const handleDeleteSelected = () => {
-    setNotifications(prev => prev.filter(n => !selectedNotifications.has(n.notification_id)));
-    setSelectedNotifications(new Set());
+  const handleDeleteSelected = async () => {
+    try {
+      await api.batchDeleteNotifications(Array.from(selectedNotifications));
+      setNotifications(prev => prev.filter(n => !selectedNotifications.has(n.notification_id)));
+      setSelectedNotifications(new Set());
+    } catch {
+      loadData();
+    }
   };
 
   // 전체 선택
@@ -240,6 +253,23 @@ export default function NotificationsPage() {
           </Button>
         </div>
       </div>
+
+      {/* 로딩 상태 */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )}
+
+      {/* 에러 상태 */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
+            {t('common.retry', '재시도')}
+          </Button>
+        </div>
+      )}
 
       {/* 통계 카드 */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -578,7 +608,14 @@ export default function NotificationsPage() {
             <Button variant="outline" onClick={() => setSettingsDialogOpen(false)}>
               취소
             </Button>
-            <Button onClick={() => setSettingsDialogOpen(false)}>
+            <Button onClick={async () => {
+              try {
+                await api.updateNotificationSettings('current-user', settings);
+              } catch {
+                // 설정 저장 실패 무시
+              }
+              setSettingsDialogOpen(false);
+            }}>
               저장
             </Button>
           </DialogFooter>

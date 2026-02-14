@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,7 @@ import type {
   NewTQCMeetingStatus,
   ResignationReason,
 } from '@/types/newTqc';
-import { newTQCTraineeStatuses, newTQCMeetingTypes, newTQCResignationReasons } from '@/data/mockData';
+import { newTQCTraineeStatuses, newTQCMeetingTypes, newTQCResignationReasons } from '@/data/constants';
 
 interface TraineeFiltersProps {
   filters: NewTQCTraineeFilters;
@@ -36,6 +37,7 @@ export function TraineeFilters({
   onFiltersChange,
   onClear,
 }: TraineeFiltersProps) {
+  const { t } = useTranslation();
   const hasActiveFilters = Object.values(filters).some(
     (v) => v !== undefined && v !== '' && v !== 'all'
   );
@@ -47,7 +49,7 @@ export function TraineeFilters({
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="이름 또는 사번으로 검색..."
+            placeholder={t('newTqc.filters.searchPlaceholder')}
             value={filters.search || ''}
             onChange={(e) =>
               onFiltersChange({ ...filters, search: e.target.value || undefined })
@@ -67,10 +69,10 @@ export function TraineeFilters({
           }
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="상태" />
+            <SelectValue placeholder={t('newTqc.filters.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 상태</SelectItem>
+            <SelectItem value="all">{t('newTqc.filters.allStatus')}</SelectItem>
             {newTQCTraineeStatuses.map((status) => (
               <SelectItem key={status.value} value={status.value}>
                 {status.label}
@@ -90,10 +92,10 @@ export function TraineeFilters({
           }
         >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="배치예정팀" />
+            <SelectValue placeholder={t('newTqc.filters.team')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 팀</SelectItem>
+            <SelectItem value="all">{t('newTqc.filters.allTeams')}</SelectItem>
             {teams.map((team) => (
               <SelectItem key={team.team_id} value={team.team_id}>
                 {team.team_name}
@@ -113,10 +115,10 @@ export function TraineeFilters({
           }
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="트레이너" />
+            <SelectValue placeholder={t('newTqc.filters.trainer')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 트레이너</SelectItem>
+            <SelectItem value="all">{t('newTqc.filters.allTrainers')}</SelectItem>
             {trainers.map((trainer) => (
               <SelectItem key={trainer} value={trainer}>
                 {trainer}
@@ -136,13 +138,13 @@ export function TraineeFilters({
           }
         >
           <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="주차" />
+            <SelectValue placeholder={t('newTqc.filters.week')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 주차</SelectItem>
+            <SelectItem value="all">{t('newTqc.filters.allWeeks')}</SelectItem>
             {Array.from({ length: 52 }, (_, i) => i + 1).map((week) => (
               <SelectItem key={week} value={week.toString()}>
-                {week}주차
+                {t('newTqc.filters.weekLabel', { week })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -152,7 +154,7 @@ export function TraineeFilters({
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onClear}>
             <X className="h-4 w-4 mr-1" />
-            초기화
+            {t('newTqc.filters.reset')}
           </Button>
         )}
       </div>
@@ -162,7 +164,7 @@ export function TraineeFilters({
         <div className="flex flex-wrap gap-2">
           {filters.status && filters.status !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              상태: {newTQCTraineeStatuses.find((s) => s.value === filters.status)?.label}
+              {t('newTqc.filters.statusLabel')} {newTQCTraineeStatuses.find((s) => s.value === filters.status)?.label}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => onFiltersChange({ ...filters, status: 'all' })}
@@ -171,7 +173,7 @@ export function TraineeFilters({
           )}
           {filters.team && filters.team !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              팀: {teams.find((t) => t.team_id === filters.team)?.team_name}
+              {t('newTqc.filters.teamLabel')} {teams.find((t) => t.team_id === filters.team)?.team_name}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => onFiltersChange({ ...filters, team: 'all' })}
@@ -180,7 +182,7 @@ export function TraineeFilters({
           )}
           {filters.trainer && filters.trainer !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              트레이너: {filters.trainer}
+              {t('newTqc.filters.trainerLabel')} {filters.trainer}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => onFiltersChange({ ...filters, trainer: 'all' })}
@@ -189,7 +191,7 @@ export function TraineeFilters({
           )}
           {filters.startWeek && (
             <Badge variant="secondary" className="gap-1">
-              {filters.startWeek}주차
+              {t('newTqc.filters.weekLabel', { week: filters.startWeek })}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => onFiltersChange({ ...filters, startWeek: undefined })}
@@ -214,6 +216,7 @@ export function MeetingFilters({
   onFiltersChange,
   onClear,
 }: MeetingFiltersProps) {
+  const { t } = useTranslation();
   const hasActiveFilters = Object.values(filters).some(
     (v) => v !== undefined && v !== '' && v !== 'all'
   );
@@ -231,10 +234,10 @@ export function MeetingFilters({
         }
       >
         <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="미팅 유형" />
+          <SelectValue placeholder={t('newTqc.filters.meetingType')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">전체 유형</SelectItem>
+          <SelectItem value="all">{t('newTqc.filters.allTypes')}</SelectItem>
           {newTQCMeetingTypes.map((type) => (
             <SelectItem key={type.value} value={type.value}>
               {type.label}
@@ -254,14 +257,14 @@ export function MeetingFilters({
         }
       >
         <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="상태" />
+          <SelectValue placeholder={t('newTqc.filters.status')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">전체 상태</SelectItem>
-          <SelectItem value="SCHEDULED">예정</SelectItem>
-          <SelectItem value="COMPLETED">완료</SelectItem>
-          <SelectItem value="MISSED">미실시</SelectItem>
-          <SelectItem value="RESCHEDULED">재조정</SelectItem>
+          <SelectItem value="all">{t('newTqc.filters.allStatus')}</SelectItem>
+          <SelectItem value="SCHEDULED">{t('newTqc.filters.scheduled')}</SelectItem>
+          <SelectItem value="COMPLETED">{t('newTqc.filters.completed')}</SelectItem>
+          <SelectItem value="MISSED">{t('newTqc.filters.missed')}</SelectItem>
+          <SelectItem value="RESCHEDULED">{t('newTqc.filters.rescheduled')}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -287,7 +290,7 @@ export function MeetingFilters({
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <X className="h-4 w-4 mr-1" />
-          초기화
+          {t('newTqc.filters.reset')}
         </Button>
       )}
     </div>
@@ -308,6 +311,7 @@ export function ResignationFilters({
   onFiltersChange,
   onClear,
 }: ResignationFiltersProps) {
+  const { t } = useTranslation();
   const hasActiveFilters = Object.values(filters).some(
     (v) => v !== undefined && v !== '' && v !== 'all'
   );
@@ -325,10 +329,10 @@ export function ResignationFilters({
         }
       >
         <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="퇴사 사유" />
+          <SelectValue placeholder={t('newTqc.filters.resignReason')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">전체 사유</SelectItem>
+          <SelectItem value="all">{t('newTqc.filters.allReasons')}</SelectItem>
           {newTQCResignationReasons.map((reason) => (
             <SelectItem key={reason.value} value={reason.value}>
               {reason.label}
@@ -348,10 +352,10 @@ export function ResignationFilters({
         }
       >
         <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="팀" />
+          <SelectValue placeholder={t('newTqc.filters.team')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">전체 팀</SelectItem>
+          <SelectItem value="all">{t('newTqc.filters.allTeams')}</SelectItem>
           {teams.map((team) => (
             <SelectItem key={team.team_id} value={team.team_id}>
               {team.team_name}
@@ -382,7 +386,7 @@ export function ResignationFilters({
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <X className="h-4 w-4 mr-1" />
-          초기화
+          {t('newTqc.filters.reset')}
         </Button>
       )}
     </div>

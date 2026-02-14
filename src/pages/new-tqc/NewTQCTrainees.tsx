@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import {
   Plus,
@@ -45,9 +46,11 @@ import {
 } from '@/stores/newTqcStore';
 import { NEW_TQC_TRAINERS } from '@/types/newTqc';
 import type { NewTQCTrainee, NewTQCTraineeFilters as FiltersType, NewTQCTraineeInput } from '@/types/newTqc';
+import { BUILDINGS, WORKING_AREAS } from '@/data/constants';
 import { format } from 'date-fns';
 
 export default function NewTQCTrainees() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
@@ -90,8 +93,8 @@ export default function NewTQCTrainees() {
       } catch {
         toast({
           variant: 'destructive',
-          title: '데이터 로드 실패',
-          description: '교육생 목록을 불러오는데 실패했습니다.',
+          title: t('messages.loadError'),
+          description: t('newTQCModule.trainees.loadErrorDesc'),
         });
       }
     };
@@ -148,20 +151,20 @@ export default function NewTQCTrainees() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">교육생 목록</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newTQCModule.trainees.title')}</h1>
           <p className="text-muted-foreground">
-            신입 교육생 {filteredTrainees.length}명
+            {t('newTQCModule.trainees.countDesc', { count: filteredTrainees.length })}
             {filters.status && filters.status !== 'all' && ` (${filters.status})`}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            내보내기
+            {t('common.export')}
           </Button>
           <Button onClick={() => setFormDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            교육생 등록
+            {t('newTQCModule.trainees.register')}
           </Button>
         </div>
       </div>
@@ -185,32 +188,34 @@ export default function NewTQCTrainees() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>이름</TableHead>
-                <TableHead>사번</TableHead>
-                <TableHead>배치예정팀</TableHead>
-                <TableHead>트레이너</TableHead>
-                <TableHead>주차</TableHead>
-                <TableHead>시작일</TableHead>
-                <TableHead>상태</TableHead>
+                <TableHead>{t('common.name')}</TableHead>
+                <TableHead>{t('newTQCModule.trainees.employeeId')}</TableHead>
+                <TableHead>{t('newTQCModule.trainees.assignedTeam')}</TableHead>
+                <TableHead>{t('newTqc.traineeForm.building')}</TableHead>
+                <TableHead>{t('newTqc.traineeForm.workingArea')}</TableHead>
+                <TableHead>{t('newTQCModule.trainees.trainer')}</TableHead>
+                <TableHead>{t('newTQCModule.trainees.week')}</TableHead>
+                <TableHead>{t('newTQCModule.trainees.startDate')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
                 <TableHead>Color Blind</TableHead>
-                <TableHead>진행률</TableHead>
-                <TableHead className="text-right">작업</TableHead>
+                <TableHead>{t('newTQCModule.trainees.progress')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading.trainees ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8">
+                  <TableCell colSpan={12} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                      로딩 중...
+                      {t('common.loading')}
                     </div>
                   </TableCell>
                 </TableRow>
               ) : filteredTrainees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                    등록된 교육생이 없습니다.
+                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                    {t('common.noData')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -228,8 +233,18 @@ export default function NewTQCTrainees() {
                       {teams.find((t) => t.team_id === trainee.team_id)?.team_name ||
                         trainee.team_id}
                     </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {trainee.building
+                        ? BUILDINGS.find((b) => b.value === trainee.building)?.label || trainee.building
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {trainee.working_area
+                        ? WORKING_AREAS.find((a) => a.value === trainee.working_area)?.label || trainee.working_area
+                        : '-'}
+                    </TableCell>
                     <TableCell>{trainee.trainer_id}</TableCell>
-                    <TableCell>{trainee.start_week}주차</TableCell>
+                    <TableCell>{trainee.start_week}{t('newTQCModule.trainees.weekUnit')}</TableCell>
                     <TableCell>
                       {format(new Date(trainee.start_date), 'yyyy-MM-dd')}
                     </TableCell>
@@ -267,7 +282,7 @@ export default function NewTQCTrainees() {
                             }}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            상세보기
+                            {t('program.viewDetail')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => {
@@ -277,7 +292,7 @@ export default function NewTQCTrainees() {
                             }}
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            수정
+                            {t('common.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {trainee.status === 'IN_TRAINING' && (
@@ -289,7 +304,7 @@ export default function NewTQCTrainees() {
                               }}
                             >
                               <UserMinus className="h-4 w-4 mr-2" />
-                              퇴사 처리
+                              {t('newTQCModule.trainees.processResignation')}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

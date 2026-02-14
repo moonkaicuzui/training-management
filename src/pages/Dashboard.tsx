@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Clock,
   Calendar,
+  MapPin,
 } from 'lucide-react';
 import {
   Card,
@@ -32,6 +33,8 @@ import { LazyBarChart, LazyPieChart } from '@/components/charts/LazyCharts';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
+import { BUILDINGS } from '@/data/constants';
+import type { Building } from '@/types';
 import { format } from 'date-fns';
 
 const GRADE_COLORS = {
@@ -40,6 +43,17 @@ const GRADE_COLORS = {
   B: '#F59E0B',
   C: '#EF4444',
 };
+
+/**
+ * Get the ordinal attempt label for a given attempt number.
+ * Uses i18n keys: extendedDashboard.attempt_1, attempt_2, attempt_3, attempt_n
+ */
+function getAttemptLabel(attempt: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (attempt <= 3) {
+    return t(`extendedDashboard.attempt_${attempt}`);
+  }
+  return t('extendedDashboard.attempt_n', { n: attempt });
+}
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -61,6 +75,39 @@ export default function Dashboard() {
   const gradeDistribution = derived.dashboard.gradeDistribution;
   const retrainingTargets = derived.retraining.targets;
   const expiringTrainings = derived.retraining.expiring;
+
+  // Compute building-level statistics from retraining + expiring data
+  const buildingStats = useMemo(() => {
+    const stats = new Map<Building, { retraining: number; expiring: number }>();
+
+    // Count retraining targets per building
+    retrainingTargets.forEach((target) => {
+      const building = target.employee.building;
+      const existing = stats.get(building) || { retraining: 0, expiring: 0 };
+      existing.retraining += 1;
+      stats.set(building, existing);
+    });
+
+    // Count expiring trainings per building
+    expiringTrainings.forEach((item) => {
+      const building = item.employee.building;
+      const existing = stats.get(building) || { retraining: 0, expiring: 0 };
+      existing.expiring += 1;
+      stats.set(building, existing);
+    });
+
+    // Convert to chart data using BUILDINGS constant for labels
+    return BUILDINGS
+      .map((b) => {
+        const data = stats.get(b.value) || { retraining: 0, expiring: 0 };
+        return {
+          building: b.label,
+          retraining: data.retraining,
+          expiring: data.expiring,
+        };
+      })
+      .filter((d) => d.retraining > 0 || d.expiring > 0);
+  }, [retrainingTargets, expiringTrainings]);
 
   const [error, setError] = useState<string | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -298,6 +345,7 @@ export default function Dashboard() {
                   <TableHead>{t('employee.position')}</TableHead>
                   <TableHead>{t('employee.building')}</TableHead>
                   <TableHead>{t('common.program')}</TableHead>
+                  <TableHead>{t('extendedDashboard.failCount')}</TableHead>
                   <TableHead>{t('common.failDate')}</TableHead>
                   <TableHead>{t('common.score')}</TableHead>
                   <TableHead>{t('common.actions')}</TableHead>
@@ -320,6 +368,19 @@ export default function Dashboard() {
                       <span className="ml-2 text-sm">
                         {target.program.program_name}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          (target.last_result.test_attempt ?? 1) >= 3
+                            ? 'destructive'
+                            : (target.last_result.test_attempt ?? 1) >= 2
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
+                        {getAttemptLabel(target.last_result.test_attempt ?? 1, t)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {format(new Date(target.last_result.training_date), 'yyyy-MM-dd')}
@@ -375,6 +436,20 @@ export default function Dashboard() {
                           <span className="text-xs">{target.program.program_name}</span>
                         </div>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">{t('extendedDashboard.failCount')}:</span>
+                        <Badge
+                          variant={
+                            (target.last_result.test_attempt ?? 1) >= 3
+                              ? 'destructive'
+                              : (target.last_result.test_attempt ?? 1) >= 2
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                        >
+                          {getAttemptLabel(target.last_result.test_attempt ?? 1, t)}
+                        </Badge>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">{t('common.failDate')}:</span>
                         <span className="font-medium">
@@ -394,6 +469,54 @@ export default function Dashboard() {
                 ))}
               </div>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Location/Area Analysis */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-full bg-primary/10">
+              <MapPin className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>{t('extendedDashboard.locationAnalysis')}</CardTitle>
+              <CardDescription>{t('extendedDashboard.buildingAnalysis')}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {buildingStats.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <div className="rounded-full bg-muted p-6 mb-4">
+                <MapPin className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{t('extendedDashboard.noLocationData')}</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                {t('extendedDashboard.noLocationDataDesc')}
+              </p>
+            </div>
+          ) : (
+            <LazyBarChart
+              data={buildingStats}
+              height={300}
+              xAxisKey="building"
+              bars={[
+                {
+                  dataKey: 'retraining',
+                  name: t('extendedDashboard.retrainingCount'),
+                  fill: '#EF4444',
+                  radius: [4, 4, 0, 0],
+                },
+                {
+                  dataKey: 'expiring',
+                  name: t('extendedDashboard.expiringCount'),
+                  fill: '#F59E0B',
+                  radius: [4, 4, 0, 0],
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>

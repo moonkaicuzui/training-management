@@ -41,8 +41,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { format } from 'date-fns';
-import type { ResultInput, TrainingResult } from '@/types';
+import { format, differenceInMonths } from 'date-fns';
+import type { ResultInput, TrainingResult, Employee } from '@/types';
 
 interface ResultEntry {
   employee_id: string;
@@ -311,6 +311,30 @@ export default function Results() {
     return 'C';
   };
 
+  // Helper: get employee by ID
+  const getEmployee = (employeeId: string): Employee | undefined => {
+    return employees.find(e => e.employee_id === employeeId);
+  };
+
+  // Helper: calculate working experience from hire_date to now
+  const getWorkExperience = (hireDate: string | undefined): string => {
+    if (!hireDate) return '-';
+    try {
+      const totalMonths = differenceInMonths(new Date(), new Date(hireDate));
+      const years = Math.floor(totalMonths / 12);
+      const months = totalMonths % 12;
+      return t('results.yearsMonths', { years, months });
+    } catch {
+      return '-';
+    }
+  };
+
+  // Helper: format test attempt
+  const formatTestAttempt = (attempt: number | undefined): string => {
+    if (attempt == null) return '-';
+    return t('results.nthAttempt', { n: attempt });
+  };
+
   if (loading.sessions || loading.programs || loading.employees) {
     return <PageLoading />;
   }
@@ -552,21 +576,41 @@ export default function Results() {
                 <TableRow>
                   <TableHead>{t('training.date')}</TableHead>
                   <TableHead>{t('results.employeeId')}</TableHead>
+                  <TableHead>{t('results.area')}</TableHead>
+                  <TableHead>{t('results.position')}</TableHead>
+                  <TableHead>{t('results.entranceDate')}</TableHead>
+                  <TableHead>{t('results.workExperience')}</TableHead>
                   <TableHead>{t('results.programLabel')}</TableHead>
                   <TableHead className="text-center">{t('training.score')}</TableHead>
                   <TableHead className="text-center">{t('training.grade')}</TableHead>
                   <TableHead className="text-center">{t('training.result')}</TableHead>
+                  <TableHead className="text-center">{t('results.testAttempt')}</TableHead>
+                  <TableHead>{t('results.stopWorkingDate')}</TableHead>
                   <TableHead>{t('training.trainer')}</TableHead>
                   <TableHead className="w-[80px]">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredResults.slice(0, 20).map((result) => (
+                {filteredResults.slice(0, 20).map((result) => {
+                  const emp = getEmployee(result.employee_id);
+                  return (
                   <TableRow key={result.result_id}>
                     <TableCell>
                       {format(new Date(result.training_date), 'yyyy-MM-dd')}
                     </TableCell>
                     <TableCell className="font-mono">{result.employee_id}</TableCell>
+                    <TableCell>
+                      {emp ? t(`building.${emp.building}`, { defaultValue: emp.building }) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {emp ? t(`position.${emp.position}`, { defaultValue: emp.position }) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {emp?.hire_date ? format(new Date(emp.hire_date), 'yyyy-MM-dd') : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {getWorkExperience(emp?.hire_date)}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{result.program_code}</Badge>
                     </TableCell>
@@ -607,6 +651,14 @@ export default function Results() {
                           : t('training.absent')}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-center">
+                      {formatTestAttempt(result.test_attempt)}
+                    </TableCell>
+                    <TableCell>
+                      {result.stop_working_date
+                        ? format(new Date(result.stop_working_date), 'yyyy-MM-dd')
+                        : '-'}
+                    </TableCell>
                     <TableCell>{result.evaluated_by}</TableCell>
                     <TableCell>
                       <Button
@@ -618,7 +670,8 @@ export default function Results() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}

@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TrainingMaterial, MaterialFolder } from '@/types/material';
+import * as api from '@/services/api';
 import {
   Card,
   CardContent,
@@ -74,117 +76,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Types
-interface MaterialFolder {
-  id: string;
-  name: string;
-  parentId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  itemCount: number;
-}
-
-interface TrainingMaterial {
-  id: string;
-  name: string;
-  type: 'document' | 'video' | 'image' | 'archive' | 'other';
-  mimeType: string;
-  size: number;
-  folderId: string | null;
-  programId: string | null;
-  programName: string | null;
-  description: string;
-  tags: string[];
-  version: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  updatedAt: string;
-  downloadCount: number;
-  isStarred: boolean;
-  isPublic: boolean;
-  url: string;
-}
-
-// Sample Data
-const generateSampleFolders = (): MaterialFolder[] => [
-  { id: 'f1', name: '품질관리', parentId: null, createdAt: '2024-01-01', updatedAt: '2024-03-15', itemCount: 15 },
-  { id: 'f2', name: '안전교육', parentId: null, createdAt: '2024-01-01', updatedAt: '2024-03-10', itemCount: 23 },
-  { id: 'f3', name: '리더십', parentId: null, createdAt: '2024-01-01', updatedAt: '2024-02-28', itemCount: 8 },
-  { id: 'f4', name: '신입사원', parentId: null, createdAt: '2024-01-01', updatedAt: '2024-03-01', itemCount: 12 },
-  { id: 'f5', name: '법정교육', parentId: null, createdAt: '2024-01-01', updatedAt: '2024-03-20', itemCount: 18 },
-  { id: 'f6', name: 'ISO 문서', parentId: 'f1', createdAt: '2024-01-15', updatedAt: '2024-03-15', itemCount: 7 },
-  { id: 'f7', name: '작업지침서', parentId: 'f1', createdAt: '2024-01-15', updatedAt: '2024-03-12', itemCount: 8 },
-];
-
-const generateSampleMaterials = (): TrainingMaterial[] => {
-  const types: TrainingMaterial['type'][] = ['document', 'video', 'image', 'archive', 'other'];
-  const mimeTypes: Record<TrainingMaterial['type'], string> = {
-    document: 'application/pdf',
-    video: 'video/mp4',
-    image: 'image/png',
-    archive: 'application/zip',
-    other: 'application/octet-stream',
-  };
-  const extensions: Record<TrainingMaterial['type'], string> = {
-    document: '.pdf',
-    video: '.mp4',
-    image: '.png',
-    archive: '.zip',
-    other: '.bin',
-  };
-
-  const materials: TrainingMaterial[] = [];
-  const names = [
-    '품질관리 기초 교재',
-    '안전교육 영상',
-    '작업표준서',
-    '리더십 워크북',
-    '신입사원 오리엔테이션',
-    'ISO 9001 가이드',
-    '비상대피 훈련 자료',
-    '5S 활동 안내서',
-    'KPI 관리 매뉴얼',
-    '고객응대 가이드',
-    '설비점검 체크리스트',
-    '환경안전 규정집',
-    '품질검사 기준서',
-    '개인보호구 착용법',
-    '화학물질 취급 안내',
-  ];
-
-  const tags = ['필수', 'ISO', '법정', '추천', '신규', '개정'];
-  const uploaders = ['김철수', '이영희', '박민수', '정수진', '최동훈'];
-  const folderIds = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', null];
-
-  for (let i = 0; i < 30; i++) {
-    const type = types[i % types.length];
-    const selectedTags = tags.filter(() => Math.random() > 0.7);
-
-    materials.push({
-      id: `MAT${String(i + 1).padStart(4, '0')}`,
-      name: names[i % names.length] + extensions[type],
-      type,
-      mimeType: mimeTypes[type],
-      size: Math.floor(Math.random() * 50000000) + 100000,
-      folderId: folderIds[i % folderIds.length],
-      programId: i % 3 === 0 ? `PRG${String((i % 5) + 1).padStart(3, '0')}` : null,
-      programName: i % 3 === 0 ? names[i % 5] : null,
-      description: '교육용 자료입니다.',
-      tags: selectedTags,
-      version: `v${Math.floor(i / 10) + 1}.${i % 10}`,
-      uploadedBy: uploaders[i % uploaders.length],
-      uploadedAt: new Date(2024, Math.floor(i / 10), (i % 28) + 1).toISOString(),
-      updatedAt: new Date(2024, Math.floor(i / 10) + 1, (i % 28) + 1).toISOString(),
-      downloadCount: Math.floor(Math.random() * 200),
-      isStarred: Math.random() > 0.8,
-      isPublic: Math.random() > 0.3,
-      url: `/materials/MAT${String(i + 1).padStart(4, '0')}`,
-    });
-  }
-
-  return materials;
-};
-
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -217,8 +108,32 @@ const getFileIconColor = (type: TrainingMaterial['type']) => {
 
 export default function Materials() {
   const { t } = useTranslation();
-  const [folders] = useState<MaterialFolder[]>(generateSampleFolders);
-  const [materials, setMaterials] = useState<TrainingMaterial[]>(generateSampleMaterials);
+  const [folders, setFolders] = useState<MaterialFolder[]>([]);
+  const [materials, setMaterials] = useState<TrainingMaterial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [foldersData, materialsData] = await Promise.all([
+        api.getFolders(),
+        api.getMaterials(),
+      ]);
+      setFolders(foldersData);
+      setMaterials(materialsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -229,6 +144,8 @@ export default function Materials() {
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<TrainingMaterial | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
 
   // Get current folder's children
   const childFolders = folders.filter(f => f.parentId === currentFolderId);
@@ -253,10 +170,15 @@ export default function Materials() {
     return uploadDate >= weekAgo;
   }).length;
 
-  const handleToggleStar = (materialId: string) => {
-    setMaterials(prev => prev.map(m =>
-      m.id === materialId ? { ...m, isStarred: !m.isStarred } : m
-    ));
+  const handleToggleStar = async (materialId: string) => {
+    try {
+      const material = materials.find(m => m.id === materialId);
+      if (!material) return;
+      await api.updateMaterial(materialId, { isStarred: !material.isStarred });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle star');
+    }
   };
 
   const handleSelectItem = (materialId: string) => {
@@ -280,9 +202,32 @@ export default function Materials() {
     setShowDetailDialog(true);
   };
 
-  const handleDeleteSelected = () => {
-    setMaterials(prev => prev.filter(m => !selectedItems.includes(m.id)));
-    setSelectedItems([]);
+  const handleDeleteSelected = async () => {
+    try {
+      await Promise.all(selectedItems.map(id => api.deleteMaterial(id)));
+      setSelectedItems([]);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete materials');
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      await api.createFolder({
+        id: `f-${Date.now()}`,
+        name: newFolderName.trim(),
+        parentId: newFolderParentId,
+        itemCount: 0,
+      });
+      setShowNewFolderDialog(false);
+      setNewFolderName('');
+      setNewFolderParentId(null);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create folder');
+    }
   };
 
   const getBreadcrumbs = () => {
@@ -308,6 +253,21 @@ export default function Materials() {
 
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
+            재시도
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -317,7 +277,10 @@ export default function Materials() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowNewFolderDialog(true)}>
+          <Button variant="outline" onClick={() => {
+            setNewFolderParentId(currentFolderId);
+            setShowNewFolderDialog(true);
+          }}>
             <FolderPlus className="mr-2 h-4 w-4" />
             {t('materials.newFolder')}
           </Button>
@@ -604,7 +567,17 @@ export default function Materials() {
                                   공유
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={async () => {
+                                    try {
+                                      await api.deleteMaterial(material.id);
+                                      await loadData();
+                                    } catch (err) {
+                                      setError(err instanceof Error ? err.message : 'Failed to delete material');
+                                    }
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   삭제
                                 </DropdownMenuItem>
@@ -895,11 +868,18 @@ export default function Materials() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>폴더명</Label>
-              <Input placeholder="폴더명을 입력하세요" />
+              <Input
+                placeholder="폴더명을 입력하세요"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>상위 폴더</Label>
-              <Select defaultValue={currentFolderId ?? 'root'}>
+              <Select
+                value={newFolderParentId ?? 'root'}
+                onValueChange={(val) => setNewFolderParentId(val === 'root' ? null : val)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="상위 폴더 선택" />
                 </SelectTrigger>
@@ -913,10 +893,14 @@ export default function Materials() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewFolderDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowNewFolderDialog(false);
+              setNewFolderName('');
+              setNewFolderParentId(null);
+            }}>
               취소
             </Button>
-            <Button onClick={() => setShowNewFolderDialog(false)}>
+            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
               생성
             </Button>
           </DialogFooter>

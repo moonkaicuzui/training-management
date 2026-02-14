@@ -188,6 +188,16 @@ const newTQCItems: NavItem[] = [
     icon: CalendarDays,
   },
   {
+    titleKey: 'nav.newTQC.finalResult',
+    href: '/new-tqc/final-result',
+    icon: ClipboardCheck,
+  },
+  {
+    titleKey: 'nav.newTQC.certificates',
+    href: '/new-tqc/certificates',
+    icon: Award,
+  },
+  {
     titleKey: 'nav.newTQC.resignations',
     href: '/new-tqc/resignations',
     icon: UserMinus,
