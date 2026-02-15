@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import type {
   Employee,
   EmployeeFilters,
@@ -53,6 +54,9 @@ interface TrainingState {
   retrainingTargets: RetrainingTarget[];
   expiringTrainings: ExpiringTraining[];
 
+  // Error state
+  error: string | null;
+
   // Loading states
   loading: {
     employees: boolean;
@@ -64,6 +68,10 @@ interface TrainingState {
     progress: boolean;
     retraining: boolean;
   };
+
+  // Actions - Error
+  clearError: () => void;
+  clearAllData: () => void;
 
   // Actions - Employees
   fetchEmployees: (filters?: EmployeeFilters) => Promise<void>;
@@ -108,7 +116,8 @@ interface TrainingState {
   fetchExpiringTrainings: (days?: number) => Promise<void>;
 }
 
-export const useTrainingStore = create<TrainingState>((set, get) => ({
+export const useTrainingStore = create<TrainingState>()(
+  devtools((set, get) => ({
   // Initial state
   employees: [],
   selectedEmployee: null,
@@ -136,6 +145,8 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
   retrainingTargets: [],
   expiringTrainings: [],
 
+  error: null,
+
   loading: {
     employees: false,
     programs: false,
@@ -147,13 +158,42 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
     retraining: false,
   },
 
+  // Error Actions
+  clearError: () => set({ error: null }),
+
+  clearAllData: () => set({
+    employees: [],
+    selectedEmployee: null,
+    employeeFilters: {},
+    employeeHistory: [],
+    programs: [],
+    selectedProgram: null,
+    programFilters: {},
+    sessions: [],
+    selectedSession: null,
+    sessionFilters: {},
+    results: [],
+    resultFilters: {},
+    dashboardStats: null,
+    monthlyData: [],
+    gradeDistribution: [],
+    progressMatrix: null,
+    progressFilters: {},
+    retrainingTargets: [],
+    expiringTrainings: [],
+    error: null,
+  }),
+
   // Employee Actions
   fetchEmployees: async (filters) => {
-    set((state) => ({ loading: { ...state.loading, employees: true } }));
+    set((state) => ({ loading: { ...state.loading, employees: true }, error: null }));
     try {
       const mergedFilters = { ...get().employeeFilters, ...filters };
       const employees = await api.getEmployees(mergedFilters);
       set({ employees, employeeFilters: mergedFilters });
+    } catch (error) {
+      set({ error: '직원 목록을 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, employees: false } }));
     }
@@ -197,11 +237,14 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Program Actions
   fetchPrograms: async (filters) => {
-    set((state) => ({ loading: { ...state.loading, programs: true } }));
+    set((state) => ({ loading: { ...state.loading, programs: true }, error: null }));
     try {
       const mergedFilters = { ...get().programFilters, ...filters };
       const programs = await api.getPrograms(mergedFilters);
       set({ programs, programFilters: mergedFilters });
+    } catch (error) {
+      set({ error: '교육 프로그램을 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, programs: false } }));
     }
@@ -251,11 +294,14 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Session Actions
   fetchSessions: async (filters) => {
-    set((state) => ({ loading: { ...state.loading, sessions: true } }));
+    set((state) => ({ loading: { ...state.loading, sessions: true }, error: null }));
     try {
       const mergedFilters = { ...get().sessionFilters, ...filters };
       const sessions = await api.getSessions(mergedFilters);
       set({ sessions, sessionFilters: mergedFilters });
+    } catch (error) {
+      set({ error: '교육 세션을 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, sessions: false } }));
     }
@@ -300,11 +346,14 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Result Actions
   fetchResults: async (filters) => {
-    set((state) => ({ loading: { ...state.loading, results: true } }));
+    set((state) => ({ loading: { ...state.loading, results: true }, error: null }));
     try {
       const mergedFilters = { ...get().resultFilters, ...filters };
       const results = await api.getResults(mergedFilters);
       set({ results, resultFilters: mergedFilters });
+    } catch (error) {
+      set({ error: '교육 결과를 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, results: false } }));
     }
@@ -337,10 +386,13 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Dashboard Actions
   fetchDashboardStats: async () => {
-    set((state) => ({ loading: { ...state.loading, dashboard: true } }));
+    set((state) => ({ loading: { ...state.loading, dashboard: true }, error: null }));
     try {
       const stats = await api.getDashboardStats();
       set({ dashboardStats: stats });
+    } catch (error) {
+      set({ error: '대시보드 데이터를 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, dashboard: false } }));
     }
@@ -358,11 +410,14 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Progress Matrix Actions
   fetchProgressMatrix: async (filters) => {
-    set((state) => ({ loading: { ...state.loading, progressMatrix: true } }));
+    set((state) => ({ loading: { ...state.loading, progressMatrix: true }, error: null }));
     try {
       const mergedFilters = { ...get().progressFilters, ...filters };
       const data = await api.getProgressMatrix(mergedFilters);
       set({ progressMatrix: data, progressFilters: mergedFilters });
+    } catch (error) {
+      set({ error: '진도 매트릭스를 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, progressMatrix: false } }));
     }
@@ -375,17 +430,25 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
 
   // Retraining & Expiring Actions
   fetchRetrainingTargets: async () => {
-    set((state) => ({ loading: { ...state.loading, retraining: true } }));
+    set((state) => ({ loading: { ...state.loading, retraining: true }, error: null }));
     try {
       const targets = await api.getRetrainingTargets();
       set({ retrainingTargets: targets });
+    } catch (error) {
+      set({ error: '재교육 대상자를 불러오는데 실패했습니다.' });
+      throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, retraining: false } }));
     }
   },
 
   fetchExpiringTrainings: async (days = 30) => {
-    const expiring = await api.getExpiringTrainings(days);
-    set({ expiringTrainings: expiring });
+    try {
+      const expiring = await api.getExpiringTrainings(days);
+      set({ expiringTrainings: expiring });
+    } catch (error) {
+      set({ error: '만료 예정 교육을 불러오는데 실패했습니다.' });
+      throw error;
+    }
   },
-}));
+}), { name: 'TrainingStore' }));

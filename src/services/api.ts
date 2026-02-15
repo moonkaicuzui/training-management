@@ -24,6 +24,7 @@ import * as auditLogService from './auditLogService';
 import * as trainerService from './trainerService';
 import * as trainingPlanService from './trainingPlanService';
 import * as auditComplianceService from './auditComplianceService';
+import * as capaService from './capaService';
 import { updateResultWithLog } from '@/services/firebase';
 
 import type {
@@ -1600,3 +1601,12 @@ export async function createCorrectiveAction(data: Parameters<typeof auditCompli
 export async function updateCorrectiveAction(id: string, updates: Parameters<typeof auditComplianceService.updateCorrectiveAction>[1]) {
   await auditComplianceService.updateCorrectiveAction(id, updates);
 }
+
+// ========== CAPA API ==========
+
+export const getCAPAs = capaService.getCAPAs;
+export const getCAPA = capaService.getCAPA;
+export const createCAPA = capaService.createCAPA;
+export const updateCAPA = capaService.updateCAPA;
+export const updateCAPAStage = capaService.updateCAPAStage;
+export const getAllCAPAs = capaService.getAllCAPAs;

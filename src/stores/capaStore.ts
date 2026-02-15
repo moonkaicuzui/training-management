@@ -6,20 +6,10 @@
  */
 
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import type { Timestamp } from 'firebase/firestore';
+import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
 import type {
   CAPA,
@@ -58,32 +48,6 @@ interface CAPAState {
 
 // ========== Helper Functions ==========
 
-function generateCAPANumber(): string {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, '0');
-  return `CAPA-${year}-${random}`;
-}
-
-function convertTimestampToDate(timestamp: Timestamp | Date): Date {
-  if (timestamp instanceof Timestamp) {
-    return timestamp.toDate();
-  }
-  return timestamp;
-}
-
-function convertCAPAFromFirestore(doc: { id: string; data: () => Record<string, unknown> }): CAPA {
-  const data = doc.data() as Record<string, unknown>;
-  return {
-    ...data,
-    id: doc.id,
-    createdAt: data.createdAt ? convertTimestampToDate(data.createdAt as Timestamp) : new Date(),
-    updatedAt: data.updatedAt ? convertTimestampToDate(data.updatedAt as Timestamp) : new Date(),
-    dueDate: data.dueDate ? convertTimestampToDate(data.dueDate as Timestamp) : undefined,
-  } as CAPA;
-}
-
 function calculateDashboardStats(capas: CAPA[]): CAPADashboardStats {
   const now = new Date();
   const thisMonth = now.getMonth();
@@ -109,13 +73,8 @@ function calculateDashboardStats(capas: CAPA[]): CAPADashboardStats {
   let verifiedCount = 0;
 
   capas.forEach((capa) => {
-    // Count by status
     byStatus[capa.status]++;
-
-    // Count by severity
     bySeverity[capa.severity]++;
-
-    // Count by type
     byType[capa.type]++;
 
     // Check overdue
@@ -135,7 +94,6 @@ function calculateDashboardStats(capas: CAPA[]): CAPADashboardStats {
         closedThisMonth++;
       }
 
-      // Calculate resolution time
       const createdAt = capa.createdAt instanceof Date
         ? capa.createdAt
         : (capa.createdAt as Timestamp).toDate();
@@ -168,310 +126,202 @@ function calculateDashboardStats(capas: CAPA[]): CAPADashboardStats {
 // ========== Store ==========
 
 export const useCAPAStore = create<CAPAState>()(
-  immer((set, get) => ({
-    // Initial State
-    capas: [],
-    currentCAPA: null,
-    dashboardStats: null,
-    isLoading: false,
-    error: null,
-    filters: {},
+  devtools(
+    immer((set, get) => ({
+      // Initial State
+      capas: [],
+      currentCAPA: null,
+      dashboardStats: null,
+      isLoading: false,
+      error: null,
+      filters: {},
 
-    // Fetch all CAPAs with optional filters
-    fetchCAPAs: async (filters?: CAPAFilters) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-        if (filters) {
-          state.filters = filters;
-        }
-      });
-
-      try {
-        const capaRef = collection(db, 'capas');
-        let q = query(capaRef, orderBy('createdAt', 'desc'));
-
-        // Apply filters
-        const currentFilters = filters || get().filters;
-
-        if (currentFilters.status && currentFilters.status.length > 0) {
-          q = query(q, where('status', 'in', currentFilters.status));
-        }
-
-        if (currentFilters.type) {
-          q = query(q, where('type', '==', currentFilters.type));
-        }
-
-        if (currentFilters.severity && currentFilters.severity.length > 0) {
-          q = query(q, where('severity', 'in', currentFilters.severity));
-        }
-
-        const snapshot = await getDocs(q);
-        let capas = snapshot.docs.map(convertCAPAFromFirestore);
-
-        // Client-side filtering for complex filters
-        if (currentFilters.search) {
-          const searchLower = currentFilters.search.toLowerCase();
-          capas = capas.filter(
-            (c) =>
-              c.title.toLowerCase().includes(searchLower) ||
-              c.description.toLowerCase().includes(searchLower) ||
-              c.capaNumber.toLowerCase().includes(searchLower)
-          );
-        }
-
-        if (currentFilters.owner) {
-          capas = capas.filter((c) => c.owner === currentFilters.owner);
-        }
-
+      // Fetch all CAPAs with optional filters
+      fetchCAPAs: async (filters?: CAPAFilters) => {
         set((state) => {
-          state.capas = capas;
-          state.isLoading = false;
+          state.isLoading = true;
+          state.error = null;
+          if (filters) {
+            state.filters = filters;
+          }
         });
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to fetch CAPAs:', error);
-        set((state) => {
-          state.error = 'CAPA 목록을 불러오는데 실패했습니다.';
-          state.isLoading = false;
-        });
-      }
-    },
 
-    // Fetch single CAPA by ID
-    fetchCAPAById: async (id: string) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
+        try {
+          const currentFilters = filters || get().filters;
+          const capas = await api.getCAPAs(currentFilters);
 
-      try {
-        const docRef = doc(db, 'capas', id);
-        const docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) {
           set((state) => {
-            state.error = 'CAPA를 찾을 수 없습니다.';
+            state.capas = capas;
+            state.isLoading = false;
+          });
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to fetch CAPAs:', error);
+          set((state) => {
+            state.error = 'CAPA 목록을 불러오는데 실패했습니다.';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      // Fetch single CAPA by ID
+      fetchCAPAById: async (id: string) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+
+        try {
+          const capa = await api.getCAPA(id);
+
+          if (!capa) {
+            set((state) => {
+              state.error = 'CAPA를 찾을 수 없습니다.';
+              state.isLoading = false;
+            });
+            return null;
+          }
+
+          set((state) => {
+            state.currentCAPA = capa;
+            state.isLoading = false;
+          });
+
+          return capa;
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to fetch CAPA:', error);
+          set((state) => {
+            state.error = 'CAPA를 불러오는데 실패했습니다.';
             state.isLoading = false;
           });
           return null;
         }
+      },
 
-        const capa = convertCAPAFromFirestore({
-          id: docSnap.id,
-          data: () => docSnap.data(),
+      // Create new CAPA
+      createCAPA: async (input: CAPAInput) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
         });
 
+        try {
+          const id = await api.createCAPA(input);
+
+          // Refresh list
+          await get().fetchCAPAs();
+
+          set((state) => {
+            state.isLoading = false;
+          });
+
+          return id;
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to create CAPA:', error);
+          set((state) => {
+            state.error = 'CAPA 생성에 실패했습니다.';
+            state.isLoading = false;
+          });
+          throw error;
+        }
+      },
+
+      // Update CAPA basic info
+      updateCAPA: async (id: string, update: CAPAUpdate) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+
+        try {
+          await api.updateCAPA(id, update);
+
+          // Refresh current CAPA if it's the one being edited
+          if (get().currentCAPA?.id === id) {
+            await get().fetchCAPAById(id);
+          }
+
+          // Refresh list
+          await get().fetchCAPAs();
+
+          set((state) => {
+            state.isLoading = false;
+          });
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to update CAPA:', error);
+          set((state) => {
+            state.error = 'CAPA 업데이트에 실패했습니다.';
+            state.isLoading = false;
+          });
+          throw error;
+        }
+      },
+
+      // Update CAPA stage (workflow transition)
+      updateCAPAStage: async (id: string, stageUpdate: CAPAStageUpdate) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+
+        try {
+          await api.updateCAPAStage(id, stageUpdate);
+
+          // Refresh current CAPA
+          await get().fetchCAPAById(id);
+
+          // Refresh list
+          await get().fetchCAPAs();
+
+          set((state) => {
+            state.isLoading = false;
+          });
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to update CAPA stage:', error);
+          set((state) => {
+            state.error = 'CAPA 단계 업데이트에 실패했습니다.';
+            state.isLoading = false;
+          });
+          throw error;
+        }
+      },
+
+      // Fetch dashboard statistics
+      fetchDashboardStats: async () => {
+        try {
+          const capas = await api.getAllCAPAs();
+          const stats = calculateDashboardStats(capas);
+
+          set((state) => {
+            state.dashboardStats = stats;
+          });
+        } catch (error) {
+          logger.error('[CAPA Store] Failed to fetch dashboard stats:', error);
+        }
+      },
+
+      // Set filters
+      setFilters: (filters: CAPAFilters) => {
+        set((state) => {
+          state.filters = filters;
+        });
+      },
+
+      // Clear error
+      clearError: () => {
+        set((state) => {
+          state.error = null;
+        });
+      },
+
+      // Set current CAPA
+      setCurrentCAPA: (capa: CAPA | null) => {
         set((state) => {
           state.currentCAPA = capa;
-          state.isLoading = false;
         });
-
-        return capa;
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to fetch CAPA:', error);
-        set((state) => {
-          state.error = 'CAPA를 불러오는데 실패했습니다.';
-          state.isLoading = false;
-        });
-        return null;
-      }
-    },
-
-    // Create new CAPA
-    createCAPA: async (input: CAPAInput) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
-
-      try {
-        const now = Timestamp.now();
-        const capaData = {
-          capaNumber: generateCAPANumber(),
-          title: input.title,
-          description: input.description,
-          type: input.type,
-          status: 'discovery' as CAPAStatus,
-          severity: input.severity,
-          priority: input.priority,
-          source: input.source,
-          discovery: {
-            ...input.discovery,
-            discoveredAt: now,
-          },
-          owner: input.owner,
-          team: input.team || [],
-          relatedTrainingPrograms: input.relatedTrainingPrograms || [],
-          createdBy: input.owner,
-          createdAt: now,
-          updatedAt: now,
-          dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
-        };
-
-        const docRef = await addDoc(collection(db, 'capas'), capaData);
-
-        logger.log('[CAPA Store] Created CAPA:', docRef.id);
-
-        // Refresh list
-        await get().fetchCAPAs();
-
-        set((state) => {
-          state.isLoading = false;
-        });
-
-        return docRef.id;
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to create CAPA:', error);
-        set((state) => {
-          state.error = 'CAPA 생성에 실패했습니다.';
-          state.isLoading = false;
-        });
-        throw error;
-      }
-    },
-
-    // Update CAPA basic info
-    updateCAPA: async (id: string, update: CAPAUpdate) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
-
-      try {
-        const docRef = doc(db, 'capas', id);
-        await updateDoc(docRef, {
-          ...update,
-          updatedAt: Timestamp.now(),
-          dueDate: update.dueDate ? Timestamp.fromDate(update.dueDate) : undefined,
-        });
-
-        logger.log('[CAPA Store] Updated CAPA:', id);
-
-        // Refresh current CAPA if it's the one being edited
-        if (get().currentCAPA?.id === id) {
-          await get().fetchCAPAById(id);
-        }
-
-        // Refresh list
-        await get().fetchCAPAs();
-
-        set((state) => {
-          state.isLoading = false;
-        });
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to update CAPA:', error);
-        set((state) => {
-          state.error = 'CAPA 업데이트에 실패했습니다.';
-          state.isLoading = false;
-        });
-        throw error;
-      }
-    },
-
-    // Update CAPA stage (workflow transition)
-    updateCAPAStage: async (id: string, stageUpdate: CAPAStageUpdate) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
-
-      try {
-        const now = Timestamp.now();
-        const updateData: Record<string, unknown> = {
-          status: stageUpdate.status,
-          updatedAt: now,
-        };
-
-        // Add stage-specific data
-        if (stageUpdate.investigation) {
-          updateData.investigation = {
-            ...stageUpdate.investigation,
-            investigatedAt: now,
-          };
-        }
-
-        if (stageUpdate.action) {
-          updateData.action = {
-            ...stageUpdate.action,
-            plannedAt: now,
-          };
-        }
-
-        if (stageUpdate.verification) {
-          updateData.verification = {
-            ...stageUpdate.verification,
-            verifiedAt: now,
-          };
-        }
-
-        if (stageUpdate.closure) {
-          updateData.closure = {
-            ...stageUpdate.closure,
-            closedAt: now,
-          };
-        }
-
-        const docRef = doc(db, 'capas', id);
-        await updateDoc(docRef, updateData);
-
-        logger.log('[CAPA Store] Updated CAPA stage:', id, stageUpdate.status);
-
-        // Refresh current CAPA
-        await get().fetchCAPAById(id);
-
-        // Refresh list
-        await get().fetchCAPAs();
-
-        set((state) => {
-          state.isLoading = false;
-        });
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to update CAPA stage:', error);
-        set((state) => {
-          state.error = 'CAPA 단계 업데이트에 실패했습니다.';
-          state.isLoading = false;
-        });
-        throw error;
-      }
-    },
-
-    // Fetch dashboard statistics
-    fetchDashboardStats: async () => {
-      try {
-        const capaRef = collection(db, 'capas');
-        const snapshot = await getDocs(capaRef);
-        const capas = snapshot.docs.map(convertCAPAFromFirestore);
-        const stats = calculateDashboardStats(capas);
-
-        set((state) => {
-          state.dashboardStats = stats;
-        });
-      } catch (error) {
-        logger.error('[CAPA Store] Failed to fetch dashboard stats:', error);
-      }
-    },
-
-    // Set filters
-    setFilters: (filters: CAPAFilters) => {
-      set((state) => {
-        state.filters = filters;
-      });
-    },
-
-    // Clear error
-    clearError: () => {
-      set((state) => {
-        state.error = null;
-      });
-    },
-
-    // Set current CAPA
-    setCurrentCAPA: (capa: CAPA | null) => {
-      set((state) => {
-        state.currentCAPA = capa;
-      });
-    },
-  }))
+      },
+    })),
+    { name: 'CAPAStore' }
+  )
 );
 
 // Selector hooks for common data access patterns
