@@ -101,6 +101,14 @@ export default function Evaluation() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showNewEvaluationDialog, setShowNewEvaluationDialog] = useState(false);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
+  const [newEvalForm, setNewEvalForm] = useState({
+    programCode: '',
+    type: '' as string,
+    sessionId: '',
+    deadline: '',
+    message: '',
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -114,6 +122,38 @@ export default function Evaluation() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleCreateEvaluation = async () => {
+    if (!newEvalForm.programCode || !newEvalForm.type) {
+      setError('프로그램과 평가 유형을 선택해주세요.');
+      return;
+    }
+    setIsCreating(true);
+    try {
+      await api.createEvaluation({
+        id: `eval-${Date.now()}`,
+        programId: newEvalForm.programCode,
+        programName: '',
+        sessionId: newEvalForm.sessionId || '',
+        sessionDate: '',
+        employeeId: '',
+        employeeName: '',
+        department: '',
+        evaluationType: newEvalForm.type as 'reaction' | 'learning' | 'behavior' | 'results',
+        responses: [],
+        overallScore: 0,
+        feedback: newEvalForm.message || '',
+        status: 'pending',
+      });
+      setShowNewEvaluationDialog(false);
+      setNewEvalForm({ programCode: '', type: '', sessionId: '', deadline: '', message: '' });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create evaluation');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -818,7 +858,10 @@ export default function Evaluation() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t('evaluation.selectProgram')}</Label>
-                <Select>
+                <Select
+                  value={newEvalForm.programCode}
+                  onValueChange={(v) => setNewEvalForm(prev => ({ ...prev, programCode: v }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t('evaluation.selectProgram')} />
                   </SelectTrigger>
@@ -831,7 +874,10 @@ export default function Evaluation() {
               </div>
               <div className="space-y-2">
                 <Label>{t('evaluation.typeLabel')}</Label>
-                <Select>
+                <Select
+                  value={newEvalForm.type}
+                  onValueChange={(v) => setNewEvalForm(prev => ({ ...prev, type: v }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t('evaluation.selectType')} />
                   </SelectTrigger>
@@ -845,29 +891,23 @@ export default function Evaluation() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t('evaluation.targetSession')}</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('evaluation.selectSession')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ses1">2024-01-15 오전 세션</SelectItem>
-                  <SelectItem value="ses2">2024-01-16 오후 세션</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>
                 <Calendar className="inline h-4 w-4 mr-1" />
                 {t('evaluation.deadline')}
               </Label>
-              <Input type="date" />
+              <Input
+                type="date"
+                value={newEvalForm.deadline}
+                onChange={(e) => setNewEvalForm(prev => ({ ...prev, deadline: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t('evaluation.message')}</Label>
               <Textarea
                 placeholder={t('evaluation.messagePlaceholder')}
                 rows={3}
+                value={newEvalForm.message}
+                onChange={(e) => setNewEvalForm(prev => ({ ...prev, message: e.target.value }))}
               />
             </div>
           </div>
@@ -875,8 +915,8 @@ export default function Evaluation() {
             <Button variant="outline" onClick={() => setShowNewEvaluationDialog(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={() => setShowNewEvaluationDialog(false)}>
-              {t('evaluation.create')}
+            <Button onClick={handleCreateEvaluation} disabled={isCreating}>
+              {isCreating ? '생성 중...' : t('evaluation.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

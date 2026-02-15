@@ -210,7 +210,7 @@ export default function ReportsPage() {
           [t('reports.exportAvgScore')]: r.averageScore,
           [t('reports.exportPassRate')]: r.passRate,
         }));
-        filename = `부서별_교육현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
+        filename = `${t('reports.deptTitle')}_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
 
       case 'program':
@@ -225,7 +225,7 @@ export default function ReportsPage() {
           [t('reports.exportAvgScore')]: r.averageScore,
           [t('reports.exportRetraining')]: r.retrainingCount,
         }));
-        filename = `프로그램별_현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
+        filename = `${t('reports.progTitle')}_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
 
       case 'employee':
@@ -241,7 +241,7 @@ export default function ReportsPage() {
           [t('reports.exportTrainingCompleted')]: emp.passCount,
           [t('reports.exportTotalTrainings')]: emp.totalCount,
         }));
-        filename = `직원별_교육현황_${format(new Date(), 'yyyyMMdd')}.xlsx`;
+        filename = `${t('reports.empTitle')}_${format(new Date(), 'yyyyMMdd')}.xlsx`;
         break;
     }
 
@@ -276,55 +276,55 @@ export default function ReportsPage() {
 
     switch (reportType) {
       case 'department':
-        title = '부서별 교육 현황 리포트';
-        filename = `부서별_교육현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        title = t('reports.pdfDeptReport');
+        filename = `${t('reports.deptTitle')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
         columns = [
-          { header: '부서', dataKey: 'department' },
-          { header: '직원 수', dataKey: 'totalEmployees' },
-          { header: '완료 교육', dataKey: 'completedTrainings' },
-          { header: '미완료', dataKey: 'pendingTrainings' },
-          { header: '이수율(%)', dataKey: 'completionRate' },
-          { header: '평균 점수', dataKey: 'averageScore' },
-          { header: '합격률(%)', dataKey: 'passRate' },
+          { header: t('reports.colDepartment'), dataKey: 'department' },
+          { header: t('reports.colEmployeeCount'), dataKey: 'totalEmployees' },
+          { header: t('reports.colCompleted'), dataKey: 'completedTrainings' },
+          { header: t('reports.colIncomplete'), dataKey: 'pendingTrainings' },
+          { header: t('reports.colCompletionRate'), dataKey: 'completionRate' },
+          { header: t('reports.colAvgScore'), dataKey: 'averageScore' },
+          { header: t('reports.colPassRate'), dataKey: 'passRate' },
         ];
         data = departmentReports;
         break;
 
       case 'program':
-        title = '프로그램별 현황 리포트';
-        filename = `프로그램별_현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        title = t('reports.pdfProgReport');
+        filename = `${t('reports.progTitle')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
         columns = [
-          { header: '코드', dataKey: 'program_code' },
-          { header: '프로그램명', dataKey: 'program_name' },
-          { header: '총 세션', dataKey: 'totalSessions' },
-          { header: '교육 인원', dataKey: 'totalTrainees' },
-          { header: '합격', dataKey: 'passCount' },
-          { header: '불합격', dataKey: 'failCount' },
-          { header: '합격률(%)', dataKey: 'passRate' },
-          { header: '평균 점수', dataKey: 'averageScore' },
+          { header: t('reports.colProgramCode'), dataKey: 'program_code' },
+          { header: t('reports.colProgramName'), dataKey: 'program_name' },
+          { header: t('reports.colSessionCount'), dataKey: 'totalSessions' },
+          { header: t('reports.colTraineeCount'), dataKey: 'totalTrainees' },
+          { header: t('reports.colPass'), dataKey: 'passCount' },
+          { header: t('reports.colFail'), dataKey: 'failCount' },
+          { header: t('reports.colPassRate'), dataKey: 'passRate' },
+          { header: t('reports.colAvgScore'), dataKey: 'averageScore' },
         ];
         data = programReports;
         break;
 
       case 'employee':
-        title = '직원별 교육 현황 리포트';
-        filename = `직원별_교육현황_${format(new Date(), 'yyyyMMdd')}.pdf`;
+        title = t('reports.pdfEmpReport');
+        filename = `${t('reports.empTitle')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
         columns = [
-          { header: '사번', dataKey: 'employee_id' },
-          { header: '이름', dataKey: 'employee_name' },
-          { header: '부서', dataKey: 'department' },
-          { header: '직책', dataKey: 'position' },
-          { header: '건물', dataKey: 'building' },
-          { header: '라인', dataKey: 'line' },
-          { header: '이수', dataKey: 'passCount' },
-          { header: '총계', dataKey: 'totalCount' },
+          { header: t('reports.exportEmployeeId'), dataKey: 'employee_id' },
+          { header: t('reports.exportName'), dataKey: 'employee_name' },
+          { header: t('reports.exportDepartment'), dataKey: 'department' },
+          { header: t('reports.exportPosition'), dataKey: 'position' },
+          { header: t('reports.exportBuilding'), dataKey: 'building' },
+          { header: t('reports.exportLine'), dataKey: 'line' },
+          { header: t('reports.exportTrainingCompleted'), dataKey: 'passCount' },
+          { header: t('reports.exportTotalTrainings'), dataKey: 'totalCount' },
         ];
         data = employeeExportData;
         break;
     }
 
     await exportTableToPDFWithUnicode(data, columns, { title, filename, orientation: 'landscape' });
-  }, [departmentReports, programReports, employeeExportData]);
+  }, [departmentReports, programReports, employeeExportData, t]);
 
   // 전체 통계
   const totalStats = useMemo(() => {
@@ -483,7 +483,7 @@ export default function ReportsPage() {
               <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                 <SelectTrigger className="w-40">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="부서 선택" />
+                  <SelectValue placeholder={t('reports.allDepartments')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('reports.allDepartments')}</SelectItem>

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Shield,
   CheckCircle2,
@@ -54,14 +55,14 @@ import type {
 } from '@/types/executive';
 import * as api from '@/services/api';
 
-// 카테고리 한글명 매핑
-const categoryNames: Record<AuditCategory, string> = {
-  TRAINING_COVERAGE: '교육 적용 범위',
-  CERTIFICATION: '자격 인증',
-  DOCUMENTATION: '문서화',
-  COMPETENCY: '역량 평가',
-  RETRAINING: '재교육',
-  RECORDS_RETENTION: '기록 보관',
+// 카테고리별 i18n 키 매핑
+const categoryI18nKeys: Record<AuditCategory, string> = {
+  TRAINING_COVERAGE: 'auditCompliance.catTrainingScope',
+  CERTIFICATION: 'auditCompliance.catQualification',
+  DOCUMENTATION: 'auditCompliance.catDocumentation',
+  COMPETENCY: 'auditCompliance.catCompetencyEval',
+  RETRAINING: 'auditCompliance.catRetraining',
+  RECORDS_RETENTION: 'auditCompliance.catRecordKeeping',
 };
 
 // 상태별 배지 컴포넌트
@@ -70,32 +71,33 @@ const StatusBadge = memo(function StatusBadge({
 }: {
   status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL' | 'NOT_APPLICABLE';
 }) {
+  const { t } = useTranslation();
   switch (status) {
     case 'COMPLIANT':
       return (
         <Badge className="bg-green-500 hover:bg-green-600">
           <CheckCircle2 className="h-3 w-3 mr-1" />
-          준수
+          {t('auditCompliance.statusCompliant')}
         </Badge>
       );
     case 'NON_COMPLIANT':
       return (
         <Badge className="bg-red-500 hover:bg-red-600">
           <XCircle className="h-3 w-3 mr-1" />
-          미준수
+          {t('auditCompliance.statusNonCompliant')}
         </Badge>
       );
     case 'PARTIAL':
       return (
         <Badge className="bg-yellow-500 hover:bg-yellow-600">
           <AlertTriangle className="h-3 w-3 mr-1" />
-          부분 준수
+          {t('auditCompliance.statusPartial')}
         </Badge>
       );
     case 'NOT_APPLICABLE':
       return (
         <Badge variant="secondary">
-          해당 없음
+          {t('auditCompliance.statusNA')}
         </Badge>
       );
   }
@@ -107,15 +109,16 @@ const SeverityBadge = memo(function SeverityBadge({
 }: {
   severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'OBSERVATION';
 }) {
+  const { t } = useTranslation();
   switch (severity) {
     case 'CRITICAL':
-      return <Badge className="bg-red-600">심각</Badge>;
+      return <Badge className="bg-red-600">{t('auditCompliance.severityCritical')}</Badge>;
     case 'MAJOR':
-      return <Badge className="bg-orange-500">주요</Badge>;
+      return <Badge className="bg-orange-500">{t('auditCompliance.severityMajor')}</Badge>;
     case 'MINOR':
-      return <Badge className="bg-yellow-500">경미</Badge>;
+      return <Badge className="bg-yellow-500">{t('auditCompliance.severityMinor')}</Badge>;
     case 'OBSERVATION':
-      return <Badge variant="secondary">관찰</Badge>;
+      return <Badge variant="secondary">{t('auditCompliance.severityObservation')}</Badge>;
   }
 });
 
@@ -125,15 +128,16 @@ const ActionStatusBadge = memo(function ActionStatusBadge({
 }: {
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
 }) {
+  const { t } = useTranslation();
   switch (status) {
     case 'COMPLETED':
-      return <Badge className="bg-green-500">완료</Badge>;
+      return <Badge className="bg-green-500">{t('auditCompliance.actionCompleted')}</Badge>;
     case 'IN_PROGRESS':
-      return <Badge className="bg-blue-500">진행중</Badge>;
+      return <Badge className="bg-blue-500">{t('auditCompliance.actionInProgress')}</Badge>;
     case 'PENDING':
-      return <Badge variant="secondary">대기</Badge>;
+      return <Badge variant="secondary">{t('auditCompliance.actionPending')}</Badge>;
     case 'OVERDUE':
-      return <Badge className="bg-red-500">지연</Badge>;
+      return <Badge className="bg-red-500">{t('auditCompliance.actionOverdue')}</Badge>;
   }
 });
 
@@ -141,7 +145,7 @@ const ActionStatusBadge = memo(function ActionStatusBadge({
 function calculateCategorySummaries(
   metrics: AuditComplianceMetric[]
 ): AuditCategorySummary[] {
-  const categories = Object.keys(categoryNames) as AuditCategory[];
+  const categories = Object.keys(categoryI18nKeys) as AuditCategory[];
 
   return categories.map((category) => {
     const categoryMetrics = metrics.filter((m) => m.category === category);
@@ -172,7 +176,7 @@ function calculateCategorySummaries(
 
     return {
       category,
-      categoryName: categoryNames[category],
+      categoryName: categoryI18nKeys[category],
       compliantCount,
       nonCompliantCount,
       partialCount,
@@ -191,6 +195,7 @@ const CategoryCard = memo(function CategoryCard({
   summary: AuditCategorySummary;
   metrics: AuditComplianceMetric[];
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -215,10 +220,10 @@ const CategoryCard = memo(function CategoryCard({
                 )}
                 <div>
                   <CardTitle className="text-base">
-                    {summary.categoryName}
+                    {t(summary.categoryName)}
                   </CardTitle>
                   <CardDescription>
-                    {summary.totalCount}개 항목 중 {summary.compliantCount}개 준수
+                    {t('auditCompliance.categoryItemCount', { total: summary.totalCount, compliant: summary.compliantCount })}
                   </CardDescription>
                 </div>
               </div>
@@ -236,10 +241,10 @@ const CategoryCard = memo(function CategoryCard({
                   }
                 >
                   {summary.status === 'PASS'
-                    ? '적합'
+                    ? t('auditCompliance.categoryStatusPass')
                     : summary.status === 'ATTENTION'
-                      ? '주의'
-                      : '부적합'}
+                      ? t('auditCompliance.categoryStatusWarning')
+                      : t('auditCompliance.categoryStatusFail')}
                 </Badge>
               </div>
             </div>
@@ -267,14 +272,14 @@ const CategoryCard = memo(function CategoryCard({
 
                   {metric.currentValue !== undefined && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">현재:</span>
+                      <span className="text-muted-foreground">{t('auditCompliance.metricCurrent')}</span>
                       <span className="font-medium">
                         {metric.currentValue}
                         {metric.unit}
                       </span>
                       {metric.targetValue !== undefined && (
                         <>
-                          <span className="text-muted-foreground">/ 목표:</span>
+                          <span className="text-muted-foreground">/ {t('auditCompliance.metricTarget')}</span>
                           <span>
                             {metric.targetValue}
                             {metric.unit}
@@ -302,7 +307,7 @@ const CategoryCard = memo(function CategoryCard({
 
                   <div className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    최종 확인: {metric.lastChecked}
+                    {t('auditCompliance.lastChecked')} {metric.lastChecked}
                   </div>
                 </div>
               ))}
@@ -315,6 +320,7 @@ const CategoryCard = memo(function CategoryCard({
 });
 
 export default function AuditCompliance() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -402,94 +408,94 @@ export default function AuditCompliance() {
 
     // 요약 시트
     const summaryData = [
-      ['아디다스 감사 대응 현황 리포트'],
+      [t('auditCompliance.exportReportTitle')],
       [''],
-      ['생성일', new Date().toISOString().split('T')[0]],
-      ['전체 점수', `${overallStats.score}%`],
+      [t('auditCompliance.exportGeneratedDate'), new Date().toISOString().split('T')[0]],
+      [t('auditCompliance.exportOverallScore'), `${overallStats.score}%`],
       [
-        '전체 상태',
+        t('auditCompliance.exportOverallStatus'),
         overallStats.status === 'PASS'
-          ? '적합'
+          ? t('auditCompliance.overallStatusPass')
           : overallStats.status === 'CONDITIONAL_PASS'
-            ? '조건부 적합'
-            : '부적합',
+            ? t('auditCompliance.overallStatusConditional')
+            : t('auditCompliance.overallStatusFail'),
       ],
       [''],
-      ['카테고리별 현황'],
-      ['카테고리', '준수', '부분준수', '미준수', '점수', '상태'],
+      [t('auditCompliance.exportCategoryStatus')],
+      [t('auditCompliance.exportColCategory'), t('auditCompliance.exportColCompliant'), t('auditCompliance.exportColPartial'), t('auditCompliance.exportColNonCompliant'), t('auditCompliance.exportColScore'), t('auditCompliance.exportColStatus')],
       ...categorySummaries.map((s) => [
-        s.categoryName,
+        t(s.categoryName),
         s.compliantCount,
         s.partialCount,
         s.nonCompliantCount,
         `${s.score}%`,
-        s.status === 'PASS' ? '적합' : s.status === 'ATTENTION' ? '주의' : '부적합',
+        s.status === 'PASS' ? t('auditCompliance.categoryStatusPass') : s.status === 'ATTENTION' ? t('auditCompliance.categoryStatusWarning') : t('auditCompliance.categoryStatusFail'),
       ]),
     ];
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, wsSummary, '요약');
+    XLSX.utils.book_append_sheet(wb, wsSummary, t('auditCompliance.exportSheetSummary'));
 
     // 상세 항목 시트
     const detailHeader = [
-      'ID',
-      '카테고리',
-      '요구사항',
-      '설명',
-      '상태',
-      '현재값',
-      '목표값',
-      '조치필요',
-      '최종확인일',
+      t('auditCompliance.exportDetailId'),
+      t('auditCompliance.exportDetailCategory'),
+      t('auditCompliance.exportDetailRequirement'),
+      t('auditCompliance.exportDetailDescription'),
+      t('auditCompliance.exportDetailStatus'),
+      t('auditCompliance.exportDetailCurrentVal'),
+      t('auditCompliance.exportDetailTargetVal'),
+      t('auditCompliance.exportDetailAction'),
+      t('auditCompliance.exportDetailLastChecked'),
     ];
     const detailRows = metrics.map((m) => [
       m.id,
-      categoryNames[m.category],
+      t(categoryI18nKeys[m.category]),
       m.requirement,
       m.description,
       m.currentStatus === 'COMPLIANT'
-        ? '준수'
+        ? t('auditCompliance.exportDetailStatusCompliant')
         : m.currentStatus === 'PARTIAL'
-          ? '부분준수'
+          ? t('auditCompliance.exportDetailStatusPartial')
           : m.currentStatus === 'NON_COMPLIANT'
-            ? '미준수'
-            : '해당없음',
+            ? t('auditCompliance.exportDetailStatusNonCompliant')
+            : t('auditCompliance.exportDetailStatusNA'),
       m.currentValue !== undefined ? `${m.currentValue}${m.unit || ''}` : '-',
       m.targetValue !== undefined ? `${m.targetValue}${m.unit || ''}` : '-',
       m.actionRequired || '-',
       m.lastChecked,
     ]);
     const wsDetail = XLSX.utils.aoa_to_sheet([detailHeader, ...detailRows]);
-    XLSX.utils.book_append_sheet(wb, wsDetail, '상세항목');
+    XLSX.utils.book_append_sheet(wb, wsDetail, t('auditCompliance.exportSheetDetails'));
 
     // 발견사항 시트
     const findingsHeader = [
-      'ID',
-      '심각도',
-      '카테고리',
-      '설명',
-      '요구사항',
-      '권고사항',
+      t('auditCompliance.exportFindingId'),
+      t('auditCompliance.exportFindingSeverity'),
+      t('auditCompliance.exportFindingCategory'),
+      t('auditCompliance.exportFindingDescription'),
+      t('auditCompliance.exportFindingRequirement'),
+      t('auditCompliance.exportFindingRecommendation'),
     ];
     const findingsRows = findings.map((f) => [
       f.id,
       f.severity,
-      categoryNames[f.category],
+      t(categoryI18nKeys[f.category]),
       f.description,
       f.requirement,
       f.recommendation,
     ]);
     const wsFindings = XLSX.utils.aoa_to_sheet([findingsHeader, ...findingsRows]);
-    XLSX.utils.book_append_sheet(wb, wsFindings, '발견사항');
+    XLSX.utils.book_append_sheet(wb, wsFindings, t('auditCompliance.exportSheetFindings'));
 
     // 시정조치 시트
     const actionsHeader = [
-      'ID',
-      '관련발견',
-      '조치내용',
-      '담당자',
-      '목표일',
-      '상태',
-      '완료일',
+      t('auditCompliance.exportActionId'),
+      t('auditCompliance.exportActionRelatedFinding'),
+      t('auditCompliance.exportActionContent'),
+      t('auditCompliance.exportActionResponsible'),
+      t('auditCompliance.exportActionTargetDate'),
+      t('auditCompliance.exportActionStatus'),
+      t('auditCompliance.exportActionCompletedDate'),
     ];
     const actionsRows = correctiveActions.map((a) => [
       a.id,
@@ -498,18 +504,18 @@ export default function AuditCompliance() {
       a.responsiblePerson,
       a.targetDate,
       a.status === 'COMPLETED'
-        ? '완료'
+        ? t('auditCompliance.actionCompleted')
         : a.status === 'IN_PROGRESS'
-          ? '진행중'
+          ? t('auditCompliance.actionInProgress')
           : a.status === 'PENDING'
-            ? '대기'
-            : '지연',
+            ? t('auditCompliance.actionPending')
+            : t('auditCompliance.actionOverdue'),
       a.completedDate || '-',
     ]);
     const wsActions = XLSX.utils.aoa_to_sheet([actionsHeader, ...actionsRows]);
-    XLSX.utils.book_append_sheet(wb, wsActions, '시정조치');
+    XLSX.utils.book_append_sheet(wb, wsActions, t('auditCompliance.exportSheetActions'));
 
-    const filename = `아디다스_감사대응_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `${t('auditCompliance.exportFilename')}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
   }, [metrics, findings, correctiveActions, overallStats, categorySummaries]);
 
@@ -520,20 +526,20 @@ export default function AuditCompliance() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Shield className="h-6 w-6" />
-            감사 대응 현황
+            {t('auditCompliance.title')}
           </h1>
           <p className="text-muted-foreground">
-            아디다스 교육 규정 준수 현황 및 리포트
+            {t('auditCompliance.description')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadData} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            새로고침
+            {t('auditCompliance.refresh')}
           </Button>
           <Button onClick={handleExportExcel}>
             <Download className="h-4 w-4 mr-2" />
-            Excel 내보내기
+            {t('auditCompliance.exportExcel')}
           </Button>
         </div>
       </div>
@@ -543,7 +549,7 @@ export default function AuditCompliance() {
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-            <span className="ml-3 text-muted-foreground">데이터를 불러오는 중...</span>
+            <span className="ml-3 text-muted-foreground">{t('auditCompliance.loadingData')}</span>
           </CardContent>
         </Card>
       )}
@@ -558,7 +564,7 @@ export default function AuditCompliance() {
             </div>
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
+              {t('auditCompliance.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -579,7 +585,7 @@ export default function AuditCompliance() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">전체 준수율</p>
+                <p className="text-sm text-muted-foreground">{t('auditCompliance.overallComplianceRate')}</p>
                 <p className="text-4xl font-bold">{overallStats.score}%</p>
                 <Badge
                   className={`mt-2 ${
@@ -591,24 +597,24 @@ export default function AuditCompliance() {
                   }`}
                 >
                   {overallStats.status === 'PASS'
-                    ? '적합'
+                    ? t('auditCompliance.overallStatusPass')
                     : overallStats.status === 'CONDITIONAL_PASS'
-                      ? '조건부 적합'
-                      : '부적합'}
+                      ? t('auditCompliance.overallStatusConditional')
+                      : t('auditCompliance.overallStatusFail')}
                 </Badge>
               </div>
               <div className="text-right space-y-1">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span>준수: {overallStats.compliant}</span>
+                  <span>{t('auditCompliance.compliantCount')} {overallStats.compliant}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  <span>부분: {overallStats.partial}</span>
+                  <span>{t('auditCompliance.partialCount')} {overallStats.partial}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <XCircle className="h-4 w-4 text-red-500" />
-                  <span>미준수: {overallStats.nonCompliant}</span>
+                  <span>{t('auditCompliance.nonCompliantCount')} {overallStats.nonCompliant}</span>
                 </div>
               </div>
             </div>
@@ -624,7 +630,7 @@ export default function AuditCompliance() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{findings.length}</p>
-                <p className="text-xs text-muted-foreground">발견 사항</p>
+                <p className="text-xs text-muted-foreground">{t('auditCompliance.findings')}</p>
               </div>
             </div>
           </CardContent>
@@ -644,7 +650,7 @@ export default function AuditCompliance() {
                     ).length
                   }
                 </p>
-                <p className="text-xs text-muted-foreground">진행중 조치</p>
+                <p className="text-xs text-muted-foreground">{t('auditCompliance.ongoingActions')}</p>
               </div>
             </div>
           </CardContent>
@@ -664,7 +670,7 @@ export default function AuditCompliance() {
                     ).length
                   }
                 </p>
-                <p className="text-xs text-muted-foreground">완료된 조치</p>
+                <p className="text-xs text-muted-foreground">{t('auditCompliance.completedActions')}</p>
               </div>
             </div>
           </CardContent>
@@ -674,9 +680,9 @@ export default function AuditCompliance() {
       {/* 탭 네비게이션 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">카테고리별 현황</TabsTrigger>
-          <TabsTrigger value="findings">발견 사항</TabsTrigger>
-          <TabsTrigger value="actions">시정 조치</TabsTrigger>
+          <TabsTrigger value="overview">{t('auditCompliance.tabOverview')}</TabsTrigger>
+          <TabsTrigger value="findings">{t('auditCompliance.tabFindings')}</TabsTrigger>
+          <TabsTrigger value="actions">{t('auditCompliance.tabActions')}</TabsTrigger>
         </TabsList>
 
         {/* 카테고리별 현황 */}
@@ -686,7 +692,7 @@ export default function AuditCompliance() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="요구사항 검색..."
+                placeholder={t('auditCompliance.searchRequirements')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -698,10 +704,10 @@ export default function AuditCompliance() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="COMPLIANT">준수</SelectItem>
-                <SelectItem value="PARTIAL">부분 준수</SelectItem>
-                <SelectItem value="NON_COMPLIANT">미준수</SelectItem>
+                <SelectItem value="all">{t('auditCompliance.filterAll')}</SelectItem>
+                <SelectItem value="COMPLIANT">{t('auditCompliance.filterCompliant')}</SelectItem>
+                <SelectItem value="PARTIAL">{t('auditCompliance.filterPartial')}</SelectItem>
+                <SelectItem value="NON_COMPLIANT">{t('auditCompliance.filterNonCompliant')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -736,9 +742,9 @@ export default function AuditCompliance() {
         <TabsContent value="findings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>감사 발견 사항</CardTitle>
+              <CardTitle>{t('auditCompliance.findingsTitle')}</CardTitle>
               <CardDescription>
-                개선이 필요한 항목 및 권고사항
+                {t('auditCompliance.findingsDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -752,7 +758,7 @@ export default function AuditCompliance() {
                       <div className="flex items-center gap-2">
                         <SeverityBadge severity={finding.severity} />
                         <Badge variant="outline">
-                          {categoryNames[finding.category]}
+                          {t(categoryI18nKeys[finding.category])}
                         </Badge>
                       </div>
                       <span className="text-xs text-muted-foreground">
@@ -763,20 +769,20 @@ export default function AuditCompliance() {
                     <div>
                       <p className="font-medium">{finding.description}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        요구사항: {finding.requirement}
+                        {t('auditCompliance.requirement')} {finding.requirement}
                       </p>
                     </div>
 
                     <div className="flex items-start gap-2 text-sm">
                       <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        근거: {finding.evidence}
+                        {t('auditCompliance.evidence')} {finding.evidence}
                       </span>
                     </div>
 
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm font-medium text-blue-700">
-                        권고사항
+                        {t('auditCompliance.recommendation')}
                       </p>
                       <p className="text-sm text-blue-600">
                         {finding.recommendation}
@@ -788,7 +794,7 @@ export default function AuditCompliance() {
                 {findings.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                    <p>발견된 문제가 없습니다.</p>
+                    <p>{t('auditCompliance.noFindings')}</p>
                   </div>
                 )}
               </div>
@@ -800,8 +806,8 @@ export default function AuditCompliance() {
         <TabsContent value="actions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>시정 조치 현황</CardTitle>
-              <CardDescription>발견 사항에 대한 조치 계획 및 진행 현황</CardDescription>
+              <CardTitle>{t('auditCompliance.actionsTitle')}</CardTitle>
+              <CardDescription>{t('auditCompliance.actionsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -820,7 +826,7 @@ export default function AuditCompliance() {
                           <ActionStatusBadge status={action.status} />
                           {finding && (
                             <span className="text-sm text-muted-foreground">
-                              관련: {finding.description}
+                              {t('auditCompliance.relatedTo')} {finding.description}
                             </span>
                           )}
                         </div>
@@ -834,23 +840,23 @@ export default function AuditCompliance() {
                       <div className="flex flex-wrap gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          <span>담당: {action.responsiblePerson}</span>
+                          <span>{t('auditCompliance.assignee')} {action.responsiblePerson}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>목표일: {action.targetDate}</span>
+                          <span>{t('auditCompliance.targetDate')} {action.targetDate}</span>
                         </div>
                         {action.completedDate && (
                           <div className="flex items-center gap-1 text-green-600">
                             <CheckCircle2 className="h-4 w-4" />
-                            <span>완료일: {action.completedDate}</span>
+                            <span>{t('auditCompliance.completionDate')} {action.completedDate}</span>
                           </div>
                         )}
                       </div>
 
                       {action.verificationNotes && (
                         <div className="p-3 bg-green-50 rounded-lg text-sm">
-                          <p className="font-medium text-green-700">검증 노트</p>
+                          <p className="font-medium text-green-700">{t('auditCompliance.verificationNotes')}</p>
                           <p className="text-green-600">
                             {action.verificationNotes}
                           </p>

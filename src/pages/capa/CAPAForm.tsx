@@ -67,7 +67,7 @@ const initialFormData: FormData = {
 };
 
 export default function CAPAForm() {
-  useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
@@ -113,19 +113,19 @@ export default function CAPAForm() {
     const errors: Partial<Record<keyof FormData, string>> = {};
 
     if (!formData.title.trim()) {
-      errors.title = '제목을 입력해주세요.';
+      errors.title = t('capa.form.titleRequired');
     }
 
     if (!formData.description.trim()) {
-      errors.description = '설명을 입력해주세요.';
+      errors.description = t('capa.form.descriptionRequired');
     }
 
     if (!formData.problemDescription.trim()) {
-      errors.problemDescription = '문제 상세 설명을 입력해주세요.';
+      errors.problemDescription = t('capa.form.problemDescRequired');
     }
 
     if (!formData.affectedArea.trim()) {
-      errors.affectedArea = '영향 받는 영역을 입력해주세요.';
+      errors.affectedArea = t('capa.form.affectedAreaRequired');
     }
 
     setValidationErrors(errors);
@@ -182,10 +182,10 @@ export default function CAPAForm() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">
-            {isEditing ? 'CAPA 수정' : '새 CAPA 등록'}
+            {isEditing ? t('capa.form.editTitle') : t('capa.form.title')}
           </h1>
           <p className="text-muted-foreground">
-            시정 또는 예방 조치를 등록합니다
+            {t('capa.description')}
           </p>
         </div>
       </div>
@@ -205,19 +205,19 @@ export default function CAPAForm() {
         {/* Basic Info */}
         <Card>
           <CardHeader>
-            <CardTitle>기본 정보</CardTitle>
-            <CardDescription>CAPA의 기본 정보를 입력합니다</CardDescription>
+            <CardTitle>{t('capa.details')}</CardTitle>
+            <CardDescription>{t('capa.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">
-                제목 <span className="text-destructive">*</span>
+                {t('capa.form.titleLabel')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="CAPA 제목"
+                placeholder={t('capa.form.titlePlaceholder')}
                 className={validationErrors.title ? 'border-destructive' : ''}
               />
               {validationErrors.title && (
@@ -227,13 +227,13 @@ export default function CAPAForm() {
 
             <div className="space-y-2">
               <Label htmlFor="description">
-                설명 <span className="text-destructive">*</span>
+                {t('capa.form.descriptionLabel')} <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="CAPA에 대한 간단한 설명"
+                placeholder={t('capa.form.descriptionPlaceholder')}
                 rows={3}
                 className={validationErrors.description ? 'border-destructive' : ''}
               />
@@ -244,7 +244,7 @@ export default function CAPAForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>유형</Label>
+                <Label>{t('capa.form.categoryLabel')}</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value: CAPAType) =>
@@ -265,7 +265,7 @@ export default function CAPAForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>발생 원인</Label>
+                <Label>{t('capa.cause')}</Label>
                 <Select
                   value={formData.source}
                   onValueChange={(value: CAPASource) =>
@@ -288,7 +288,7 @@ export default function CAPAForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>심각도</Label>
+                <Label>{t('capa.form.severityLabel')}</Label>
                 <Select
                   value={formData.severity}
                   onValueChange={(value: CAPASeverity) =>
@@ -309,7 +309,7 @@ export default function CAPAForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>우선순위</Label>
+                <Label>{t('capa.form.priorityLabel')}</Label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value: CAPAPriority) =>
@@ -331,7 +331,7 @@ export default function CAPAForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">완료 기한</Label>
+              <Label htmlFor="dueDate">{t('capa.dueDate')}</Label>
               <Input
                 id="dueDate"
                 type="date"
@@ -345,13 +345,13 @@ export default function CAPAForm() {
         {/* Discovery Details */}
         <Card>
           <CardHeader>
-            <CardTitle>발견 단계 정보</CardTitle>
-            <CardDescription>문제 발견에 대한 상세 정보를 입력합니다</CardDescription>
+            <CardTitle>{t('capa.findingStage')}</CardTitle>
+            <CardDescription>{t('capa.problemDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="problemDescription">
-                문제 상세 설명 <span className="text-destructive">*</span>
+                {t('capa.problemDescription')} <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="problemDescription"
@@ -359,7 +359,7 @@ export default function CAPAForm() {
                 onChange={(e) =>
                   setFormData({ ...formData, problemDescription: e.target.value })
                 }
-                placeholder="발견된 문제에 대한 상세한 설명"
+                placeholder={t('capa.form.problemDescPlaceholder')}
                 rows={4}
                 className={validationErrors.problemDescription ? 'border-destructive' : ''}
               />
@@ -370,13 +370,13 @@ export default function CAPAForm() {
 
             <div className="space-y-2">
               <Label htmlFor="affectedArea">
-                영향 받는 영역 <span className="text-destructive">*</span>
+                {t('capa.affectedArea')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="affectedArea"
                 value={formData.affectedArea}
                 onChange={(e) => setFormData({ ...formData, affectedArea: e.target.value })}
-                placeholder="예: 생산라인 A, QIP 부서"
+                placeholder={t('capa.form.affectedAreaPlaceholder')}
                 className={validationErrors.affectedArea ? 'border-destructive' : ''}
               />
               {validationErrors.affectedArea && (
@@ -385,7 +385,7 @@ export default function CAPAForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="immediateActions">즉시 조치 사항 (선택)</Label>
+              <Label htmlFor="immediateActions">{t('capa.immediateAction')}</Label>
               <Textarea
                 id="immediateActions"
                 value={formData.immediateActions}
@@ -403,11 +403,11 @@ export default function CAPAForm() {
       {/* Actions */}
       <div className="flex justify-end gap-4">
         <Button variant="outline" onClick={() => navigate(-1)}>
-          취소
+          {t('capa.form.cancel')}
         </Button>
         <Button onClick={handleSubmit} disabled={isLoading}>
           <Save className="h-4 w-4 mr-2" />
-          {isLoading ? '저장 중...' : isEditing ? '수정' : '등록'}
+          {isLoading ? t('common.saving') : isEditing ? t('capa.form.update') : t('capa.form.submit')}
         </Button>
       </div>
     </div>

@@ -62,6 +62,7 @@ export default function CAPADashboard() {
     capas,
     dashboardStats,
     isLoading,
+    error,
     fetchCAPAs,
     fetchDashboardStats,
   } = useCAPAStore();
@@ -124,6 +125,16 @@ export default function CAPADashboard() {
           새 CAPA 등록
         </Button>
       </div>
+
+      {/* 에러 배너 */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex items-center gap-2 py-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics Cards */}
       {dashboardStats && (

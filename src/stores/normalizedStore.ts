@@ -155,6 +155,9 @@ interface NormalizedTrainingState {
   // Derived data
   derived: DerivedData;
 
+  // Error state
+  error: string | null;
+
   // ========== Entity Actions ==========
 
   // Employees
@@ -231,6 +234,9 @@ interface NormalizedTrainingState {
 
   // Clear all data (logout/reset)
   clearAllData: () => void;
+
+  // Error management
+  clearError: () => void;
 }
 
 // ============================================================
@@ -287,6 +293,7 @@ const initialState = {
       expiring: [],
     },
   },
+  error: null,
 };
 
 // ============================================================
@@ -302,6 +309,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
 
       fetchEmployees: async (filters) => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             entities: { ...state.loading.entities, employees: true },
@@ -332,6 +340,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch employees:', error);
+          set({ error: 'Failed to fetch employees' });
           throw error;
         } finally {
           set((state) => ({
@@ -381,6 +390,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
       // Programs
       fetchPrograms: async (filters) => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             entities: { ...state.loading.entities, programs: true },
@@ -407,6 +417,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch programs:', error);
+          set({ error: 'Failed to fetch programs' });
           throw error;
         } finally {
           set((state) => ({
@@ -460,6 +471,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
       // Sessions
       fetchSessions: async (filters) => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             entities: { ...state.loading.entities, sessions: true },
@@ -496,6 +508,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch sessions:', error);
+          set({ error: 'Failed to fetch sessions' });
           throw error;
         } finally {
           set((state) => ({
@@ -557,6 +570,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
       // Results
       fetchResults: async (filters) => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             entities: { ...state.loading.entities, results: true },
@@ -612,6 +626,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch results:', error);
+          set({ error: 'Failed to fetch results' });
           throw error;
         } finally {
           set((state) => ({
@@ -787,6 +802,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
 
       fetchDashboardStats: async () => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             views: { ...state.loading.views, dashboard: true },
@@ -804,6 +820,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch dashboard stats:', error);
+          set({ error: 'Failed to fetch dashboard stats' });
           throw error;
         } finally {
           set((state) => ({
@@ -816,6 +833,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
       },
 
       fetchMonthlyData: async () => {
+        set({ error: null });
         try {
           const monthlyData = await api.getMonthlyTrainingData();
 
@@ -827,11 +845,13 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch monthly data:', error);
+          set({ error: 'Failed to fetch monthly data' });
           throw error;
         }
       },
 
       fetchGradeDistribution: async () => {
+        set({ error: null });
         try {
           const gradeDistribution = await api.getGradeDistribution();
 
@@ -843,6 +863,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch grade distribution:', error);
+          set({ error: 'Failed to fetch grade distribution' });
           throw error;
         }
       },
@@ -851,6 +872,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
 
       fetchProgressMatrix: async (filters) => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             views: { ...state.loading.views, progressMatrix: true },
@@ -917,6 +939,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch progress matrix:', error);
+          set({ error: 'Failed to fetch progress matrix' });
           throw error;
         } finally {
           set((state) => ({
@@ -932,6 +955,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
 
       fetchRetrainingTargets: async () => {
         set((state) => ({
+          error: null,
           loading: {
             ...state.loading,
             views: { ...state.loading.views, retraining: true },
@@ -960,6 +984,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch retraining targets:', error);
+          set({ error: 'Failed to fetch retraining targets' });
           throw error;
         } finally {
           set((state) => ({
@@ -972,6 +997,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
       },
 
       fetchExpiringTrainings: async (days = 30) => {
+        set({ error: null });
         try {
           const rawExpiring = await api.getExpiringTrainings(days);
 
@@ -992,6 +1018,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch expiring trainings:', error);
+          set({ error: 'Failed to fetch expiring trainings' });
           throw error;
         }
       },
@@ -1040,6 +1067,10 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
 
       clearAllData: () => {
         set(initialState);
+      },
+
+      clearError: () => {
+        set({ error: null });
       },
     }),
     { name: 'NormalizedTrainingStore' }

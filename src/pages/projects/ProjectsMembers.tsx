@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,12 +59,7 @@ import {
 import { useProjectStore } from '@/stores/projectStore';
 import type { ProjectMember, CreateMemberInput, MemberRole, MemberStatus } from '@/types/project';
 
-// 역할 라벨
-const ROLE_LABELS: Record<MemberRole, string> = {
-  admin: '관리자',
-  member: '멤버',
-  guest: '게스트',
-};
+// Role labels are moved inside the component to use t()
 
 // 역할 색상
 const ROLE_COLORS: Record<MemberRole, string> = {
@@ -72,13 +68,21 @@ const ROLE_COLORS: Record<MemberRole, string> = {
   guest: 'bg-gray-100 text-gray-800',
 };
 
-// 상태 라벨
-const STATUS_LABELS: Record<MemberStatus, string> = {
-  active: '활성',
-  inactive: '비활성',
-};
-
 export default function ProjectsMembers() {
+  const { t } = useTranslation();
+
+  // 역할 라벨
+  const ROLE_LABELS: Record<MemberRole, string> = {
+    admin: t('projects.roles.admin'),
+    member: t('projects.roles.member'),
+    guest: t('projects.roles.guest'),
+  };
+
+  // 상태 라벨
+  const STATUS_LABELS: Record<MemberStatus, string> = {
+    active: t('common.active'),
+    inactive: t('common.inactive'),
+  };
   const {
     members,
     fetchMembers,
@@ -215,15 +219,15 @@ export default function ProjectsMembers() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="h-6 w-6" />
-            팀원 관리
+            {t('projects.members.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            프로젝트 팀원을 추가하고 관리하세요
+            {t('projects.members.description')}
           </p>
         </div>
         <Button onClick={() => openDialog()}>
           <Plus className="h-4 w-4 mr-2" />
-          팀원 추가
+          {t('projects.members.addMember')}
         </Button>
       </div>
 
@@ -241,7 +245,7 @@ export default function ProjectsMembers() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="이름, 이메일, 부서로 검색..."
+                placeholder={t('common.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -252,12 +256,12 @@ export default function ProjectsMembers() {
               onValueChange={(value) => setStatusFilter(value as MemberStatus | 'all')}
             >
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="상태" />
+                <SelectValue placeholder={t('common.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 상태</SelectItem>
-                <SelectItem value="active">활성</SelectItem>
-                <SelectItem value="inactive">비활성</SelectItem>
+                <SelectItem value="all">{t('common.all')} {t('common.status')}</SelectItem>
+                <SelectItem value="active">{t('common.active')}</SelectItem>
+                <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -265,13 +269,13 @@ export default function ProjectsMembers() {
               onValueChange={(value) => setRoleFilter(value as MemberRole | 'all')}
             >
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="역할" />
+                <SelectValue placeholder={t('projects.members.role')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 역할</SelectItem>
-                <SelectItem value="admin">관리자</SelectItem>
-                <SelectItem value="member">멤버</SelectItem>
-                <SelectItem value="guest">게스트</SelectItem>
+                <SelectItem value="all">{t('common.all')} {t('projects.members.role')}</SelectItem>
+                <SelectItem value="admin">{t('projects.roles.admin')}</SelectItem>
+                <SelectItem value="member">{t('projects.roles.member')}</SelectItem>
+                <SelectItem value="guest">{t('projects.roles.guest')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -282,27 +286,27 @@ export default function ProjectsMembers() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            팀원 목록 ({filteredMembers.length}명)
+            {t('projects.members.totalMembers')} ({filteredMembers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isMembersLoading && members.length === 0 ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">팀원 목록을 불러오는 중...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : filteredMembers.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
                 {searchQuery || statusFilter !== 'all' || roleFilter !== 'all'
-                  ? '검색 결과가 없습니다'
-                  : '등록된 팀원이 없습니다'}
+                  ? t('common.noData')
+                  : t('projects.members.noMembers')}
               </p>
               {!searchQuery && statusFilter === 'all' && roleFilter === 'all' && (
                 <Button className="mt-4" onClick={() => openDialog()}>
                   <Plus className="h-4 w-4 mr-2" />
-                  첫 번째 팀원 추가
+                  {t('projects.members.addMember')}
                 </Button>
               )}
             </div>
@@ -311,12 +315,12 @@ export default function ProjectsMembers() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[250px]">팀원</TableHead>
-                    <TableHead>부서</TableHead>
-                    <TableHead>직책</TableHead>
-                    <TableHead>역할</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead className="w-[100px]">작업</TableHead>
+                    <TableHead className="w-[250px]">{t('projects.members.name')}</TableHead>
+                    <TableHead>{t('projects.members.department')}</TableHead>
+                    <TableHead>{t('projects.members.position')}</TableHead>
+                    <TableHead>{t('projects.members.role')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                    <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -359,18 +363,18 @@ export default function ProjectsMembers() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openDialog(member)}>
                               <Edit className="h-4 w-4 mr-2" />
-                              수정
+                              {t('common.edit')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleToggleStatus(member)}>
                               {member.status === 'active' ? (
                                 <>
                                   <UserMinus className="h-4 w-4 mr-2" />
-                                  비활성화
+                                  {t('common.inactive')}
                                 </>
                               ) : (
                                 <>
                                   <UserCheck className="h-4 w-4 mr-2" />
-                                  활성화
+                                  {t('common.active')}
                                 </>
                               )}
                             </DropdownMenuItem>
@@ -383,7 +387,7 @@ export default function ProjectsMembers() {
                               }}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              삭제
+                              {t('common.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -402,19 +406,19 @@ export default function ProjectsMembers() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {selectedMember ? '팀원 수정' : '팀원 추가'}
+              {selectedMember ? t('projects.members.editMember') : t('projects.members.addMember')}
             </DialogTitle>
             <DialogDescription>
               {selectedMember
-                ? '팀원 정보를 수정하세요.'
-                : '새로운 팀원을 추가하세요.'}
+                ? t('projects.members.editMember')
+                : t('projects.members.addMember')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">
-                이름 <span className="text-red-500">*</span>
+                {t('projects.members.name')} <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -430,7 +434,7 @@ export default function ProjectsMembers() {
 
             <div className="grid gap-2">
               <Label htmlFor="email">
-                이메일 <span className="text-red-500">*</span>
+                {t('projects.members.email')} <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -448,7 +452,7 @@ export default function ProjectsMembers() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="department">
-                  부서 <span className="text-red-500">*</span>
+                  {t('projects.members.department')} <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -464,7 +468,7 @@ export default function ProjectsMembers() {
 
               <div className="grid gap-2">
                 <Label htmlFor="position">
-                  직책 <span className="text-red-500">*</span>
+                  {t('projects.members.position')} <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -481,7 +485,7 @@ export default function ProjectsMembers() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="phone">전화번호</Label>
+                <Label htmlFor="phone">{t('projects.members.name')}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -495,18 +499,18 @@ export default function ProjectsMembers() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="role">역할</Label>
+                <Label htmlFor="role">{t('projects.members.role')}</Label>
                 <Select
                   value={formData.role}
                   onValueChange={(value) => setFormData({ ...formData, role: value as MemberRole })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="역할 선택" />
+                    <SelectValue placeholder={t('projects.members.role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">관리자</SelectItem>
-                    <SelectItem value="member">멤버</SelectItem>
-                    <SelectItem value="guest">게스트</SelectItem>
+                    <SelectItem value="admin">{t('projects.roles.admin')}</SelectItem>
+                    <SelectItem value="member">{t('projects.roles.member')}</SelectItem>
+                    <SelectItem value="guest">{t('projects.roles.guest')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -515,13 +519,13 @@ export default function ProjectsMembers() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSave}
               disabled={!formData.name || !formData.email || !formData.department || !formData.position || isLoading}
             >
-              {isLoading ? '저장 중...' : selectedMember ? '수정' : '추가'}
+              {isLoading ? t('common.saving') : selectedMember ? t('common.edit') : t('common.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -531,19 +535,17 @@ export default function ProjectsMembers() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>팀원 삭제</DialogTitle>
+            <DialogTitle>{t('projects.members.deleteMember')}</DialogTitle>
             <DialogDescription>
-              정말로 <strong>{selectedMember?.name}</strong> 팀원을 삭제하시겠습니까?
-              <br />
-              삭제된 팀원은 비활성 상태로 변경됩니다.
+              {t('projects.members.deleteMember')} - {selectedMember?.name}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
-              {isLoading ? '삭제 중...' : '삭제'}
+              {isLoading ? t('common.loading') : t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

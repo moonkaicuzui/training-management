@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Download } from 'lucide-react';
+import { Download, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProgressMatrixData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
+import { useExport } from '@/hooks/useExport';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { buildings, departments, positions, categories } from '@/data/constants';
 import { format } from 'date-fns';
@@ -79,6 +80,8 @@ export default function Progress() {
   const navigate = useNavigate();
   const { progressMatrix, loading } = useProgressMatrixData();
   const fetchProgressMatrix = useNormalizedTrainingStore((state) => state.fetchProgressMatrix);
+  const error = useNormalizedTrainingStore((state) => state.error);
+  const { exportExcel, exporting } = useExport();
 
   const [buildingFilter, setBuildingFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -148,6 +151,25 @@ export default function Progress() {
     setSelectedCell({ employee, program, cell });
   };
 
+  const handleExport = () => {
+    const exportData = employees.flatMap((emp) =>
+      programs.map((prog) => {
+        const cell = matrix[emp.employee_id as EmployeeId]?.[prog.program_code as ProgramCode];
+        return {
+          사번: emp.employee_id,
+          이름: emp.employee_name,
+          부서: emp.department,
+          프로그램: prog.program_name,
+          상태: cell?.status || 'NOT_TAKEN',
+          점수: cell?.last_score ?? '',
+          등급: cell?.last_grade ?? '',
+          교육일: cell?.last_training_date ?? '',
+        };
+      })
+    );
+    exportExcel(exportData, { filename: 'progress-matrix', sheetName: '이수현황' });
+  };
+
   if (loading) {
     return <PageLoading />;
   }
@@ -162,11 +184,21 @@ export default function Progress() {
             {t('progress.description')}
           </p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExport} disabled={exporting}>
           <Download className="h-4 w-4 mr-2" />
-          {t('common.export')}
+          {exporting ? '내보내는 중...' : t('common.export')}
         </Button>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex items-center gap-2 py-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Legend */}
       <Card>

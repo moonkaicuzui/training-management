@@ -35,7 +35,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -44,10 +43,8 @@ import {
   FolderOpen,
   Search,
   Upload,
-  Download,
   Eye,
   Trash2,
-  Edit,
   FileText,
   FileVideo,
   FileImage,
@@ -57,16 +54,12 @@ import {
   Grid3X3,
   List,
   MoreVertical,
-  Link2,
   Clock,
   User,
   HardDrive,
   Tag,
   Star,
   StarOff,
-  Copy,
-  Move,
-  Share2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -263,7 +256,7 @@ export default function Materials() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800">{error}</p>
           <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
-            재시도
+            {t('common.retry')}
           </Button>
         </div>
       )}
@@ -390,7 +383,7 @@ export default function Materials() {
                   </div>
                   <Select value={selectedType} onValueChange={setSelectedType}>
                     <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="파일 유형" />
+                      <SelectValue placeholder={t('materials.allTypes')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('materials.allTypes')}</SelectItem>
@@ -405,13 +398,9 @@ export default function Materials() {
                 <div className="flex gap-2">
                   {selectedItems.length > 0 && (
                     <>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        다운로드 ({selectedItems.length})
-                      </Button>
                       <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
                         <Trash2 className="h-4 w-4 mr-1" />
-                        삭제
+                        {t('common.delete')}
                       </Button>
                     </>
                   )}
@@ -450,7 +439,7 @@ export default function Materials() {
                       <FolderOpen className="h-12 w-12 text-yellow-500 mb-2" />
                       <p className="font-medium truncate w-full">{folder.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {folder.itemCount}개 항목
+                        {t('materials.folderItems', { count: folder.itemCount })}
                       </p>
                     </div>
                   </CardContent>
@@ -473,13 +462,13 @@ export default function Materials() {
                         />
                       </TableHead>
                       <TableHead className="w-8"></TableHead>
-                      <TableHead>파일명</TableHead>
-                      <TableHead>크기</TableHead>
-                      <TableHead>태그</TableHead>
-                      <TableHead>업로더</TableHead>
-                      <TableHead>업로드일</TableHead>
-                      <TableHead>다운로드</TableHead>
-                      <TableHead className="text-right">작업</TableHead>
+                      <TableHead>{t('materials.colFileName')}</TableHead>
+                      <TableHead>{t('materials.colSize')}</TableHead>
+                      <TableHead>{t('materials.colTags')}</TableHead>
+                      <TableHead>{t('materials.colUploader')}</TableHead>
+                      <TableHead>{t('materials.colUploadDate')}</TableHead>
+                      <TableHead>{t('materials.colDownloads')}</TableHead>
+                      <TableHead className="text-right">{t('materials.colActions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -539,32 +528,7 @@ export default function Materials() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleViewDetails(material)}>
                                   <Eye className="h-4 w-4 mr-2" />
-                                  상세보기
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  다운로드
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Link2 className="h-4 w-4 mr-2" />
-                                  링크 복사
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  수정
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  복사
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Move className="h-4 w-4 mr-2" />
-                                  이동
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Share2 className="h-4 w-4 mr-2" />
-                                  공유
+                                  {t('materials.menuDetail')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -579,7 +543,7 @@ export default function Materials() {
                                   }}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  삭제
+                                  {t('materials.menuDelete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -655,18 +619,18 @@ export default function Materials() {
         <TabsContent value="starred" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>즐겨찾기 자료</CardTitle>
-              <CardDescription>자주 사용하는 교육 자료입니다</CardDescription>
+              <CardTitle>{t('materials.starredTitle')}</CardTitle>
+              <CardDescription>{t('materials.starredDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>파일명</TableHead>
-                    <TableHead>크기</TableHead>
-                    <TableHead>업로더</TableHead>
-                    <TableHead>업로드일</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+                    <TableHead>{t('materials.colFileName')}</TableHead>
+                    <TableHead>{t('materials.colSize')}</TableHead>
+                    <TableHead>{t('materials.colUploader')}</TableHead>
+                    <TableHead>{t('materials.colUploadDate')}</TableHead>
+                    <TableHead className="text-right">{t('materials.colActions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -684,8 +648,8 @@ export default function Materials() {
                         <TableCell>{material.uploadedBy}</TableCell>
                         <TableCell>{material.uploadedAt.split('T')[0]}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <Download className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(material)}>
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -701,18 +665,18 @@ export default function Materials() {
         <TabsContent value="recent" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>최근 업로드</CardTitle>
-              <CardDescription>최근 7일간 업로드된 자료입니다</CardDescription>
+              <CardTitle>{t('materials.recentTitle')}</CardTitle>
+              <CardDescription>{t('materials.recentDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>파일명</TableHead>
-                    <TableHead>크기</TableHead>
-                    <TableHead>업로더</TableHead>
-                    <TableHead>업로드일</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+                    <TableHead>{t('materials.colFileName')}</TableHead>
+                    <TableHead>{t('materials.colSize')}</TableHead>
+                    <TableHead>{t('materials.colUploader')}</TableHead>
+                    <TableHead>{t('materials.colUploadDate')}</TableHead>
+                    <TableHead className="text-right">{t('materials.colActions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -733,8 +697,8 @@ export default function Materials() {
                           <TableCell>{material.uploadedBy}</TableCell>
                           <TableCell>{material.uploadedAt.split('T')[0]}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(material)}>
+                              <Eye className="h-4 w-4" />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -750,8 +714,8 @@ export default function Materials() {
         <TabsContent value="programs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>프로그램별 자료</CardTitle>
-              <CardDescription>교육 프로그램에 연결된 자료입니다</CardDescription>
+              <CardTitle>{t('materials.programsTitle')}</CardTitle>
+              <CardDescription>{t('materials.programsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -771,8 +735,8 @@ export default function Materials() {
                               <span className="text-sm text-muted-foreground">
                                 {formatFileSize(material.size)}
                               </span>
-                              <Button variant="ghost" size="sm">
-                                <Download className="h-4 w-4" />
+                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(material)}>
+                                <Eye className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -789,68 +753,16 @@ export default function Materials() {
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>파일 업로드</DialogTitle>
+            <DialogTitle>{t('materials.uploadTitle')}</DialogTitle>
             <DialogDescription>
-              교육 자료를 업로드합니다
+              {t('materials.uploadDesc')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">
-                파일을 드래그하거나 클릭하여 업로드
-              </p>
-              <Button variant="outline">
-                파일 선택
-              </Button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>폴더 선택</Label>
-                <Select defaultValue={currentFolderId ?? 'root'}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="폴더 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="root">모든 자료 (루트)</SelectItem>
-                    {folders.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>연결 프로그램</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="프로그램 선택 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">없음</SelectItem>
-                    <SelectItem value="prg1">품질관리 기초</SelectItem>
-                    <SelectItem value="prg2">안전교육 정기</SelectItem>
-                    <SelectItem value="prg3">리더십 향상</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>태그</Label>
-              <Input placeholder="태그를 쉼표로 구분하여 입력" />
-            </div>
-            <div className="space-y-2">
-              <Label>설명</Label>
-              <Textarea placeholder="파일에 대한 설명을 입력하세요" rows={3} />
-            </div>
-          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-              취소
-            </Button>
-            <Button onClick={() => setShowUploadDialog(false)}>
-              업로드
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -860,31 +772,31 @@ export default function Materials() {
       <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>새 폴더</DialogTitle>
+            <DialogTitle>{t('materials.newFolderTitle')}</DialogTitle>
             <DialogDescription>
-              새 폴더를 생성합니다
+              {t('materials.newFolderDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>폴더명</Label>
+              <Label>{t('materials.folderName')}</Label>
               <Input
-                placeholder="폴더명을 입력하세요"
+                placeholder={t('materials.folderNamePlaceholder')}
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>상위 폴더</Label>
+              <Label>{t('materials.parentFolder')}</Label>
               <Select
                 value={newFolderParentId ?? 'root'}
                 onValueChange={(val) => setNewFolderParentId(val === 'root' ? null : val)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="상위 폴더 선택" />
+                  <SelectValue placeholder={t('materials.selectParentFolder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="root">모든 자료 (루트)</SelectItem>
+                  <SelectItem value="root">{t('materials.rootFolder')}</SelectItem>
                   {folders.filter(f => !f.parentId).map(f => (
                     <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                   ))}
@@ -898,10 +810,10 @@ export default function Materials() {
               setNewFolderName('');
               setNewFolderParentId(null);
             }}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
-              생성
+              {t('materials.create')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -911,7 +823,7 @@ export default function Materials() {
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>파일 상세 정보</DialogTitle>
+            <DialogTitle>{t('materials.detailTitle')}</DialogTitle>
           </DialogHeader>
           {selectedMaterial && (
             <div className="space-y-6">
@@ -930,38 +842,38 @@ export default function Materials() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="text-muted-foreground">업로더</Label>
+                  <Label className="text-muted-foreground">{t('materials.detailUploader')}</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <p>{selectedMaterial.uploadedBy}</p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">업로드일</Label>
+                  <Label className="text-muted-foreground">{t('materials.detailUploadDate')}</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <p>{selectedMaterial.uploadedAt.split('T')[0]}</p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">다운로드 횟수</Label>
-                  <p className="mt-1">{selectedMaterial.downloadCount}회</p>
+                  <Label className="text-muted-foreground">{t('materials.detailDownloadCount')}</Label>
+                  <p className="mt-1">{t('materials.detailDownloadUnit', { count: selectedMaterial.downloadCount })}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">공개 여부</Label>
-                  <p className="mt-1">{selectedMaterial.isPublic ? '공개' : '비공개'}</p>
+                  <Label className="text-muted-foreground">{t('materials.detailVisibility')}</Label>
+                  <p className="mt-1">{selectedMaterial.isPublic ? t('materials.detailPublic') : t('materials.detailPrivate')}</p>
                 </div>
               </div>
 
               {selectedMaterial.programName && (
                 <div>
-                  <Label className="text-muted-foreground">연결 프로그램</Label>
+                  <Label className="text-muted-foreground">{t('materials.detailLinkedProgram')}</Label>
                   <p className="mt-1">{selectedMaterial.programName}</p>
                 </div>
               )}
 
               <div>
-                <Label className="text-muted-foreground">태그</Label>
+                <Label className="text-muted-foreground">{t('materials.detailTags')}</Label>
                 <div className="flex gap-2 mt-2">
                   {selectedMaterial.tags.map(tag => (
                     <Badge key={tag} variant="secondary">
@@ -973,7 +885,7 @@ export default function Materials() {
               </div>
 
               <div>
-                <Label className="text-muted-foreground">설명</Label>
+                <Label className="text-muted-foreground">{t('materials.detailDescription')}</Label>
                 <p className="mt-1 p-3 bg-muted rounded-lg">
                   {selectedMaterial.description}
                 </p>
@@ -982,11 +894,7 @@ export default function Materials() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
-              닫기
-            </Button>
-            <Button>
-              <Download className="h-4 w-4 mr-2" />
-              다운로드
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

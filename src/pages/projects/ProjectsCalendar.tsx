@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
@@ -32,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CATEGORY_COLORS } from '@/types/project';
@@ -81,9 +82,11 @@ const defaultFormData: EventFormData = {
 };
 
 export default function ProjectsCalendar() {
+  const { t } = useTranslation();
   const {
     events,
     categories,
+    error,
     fetchEvents,
     fetchCategories,
     createEvent,
@@ -231,20 +234,20 @@ export default function ProjectsCalendar() {
     }
   };
 
-  // 캘린더 메시지 한글화
+  // 캘린더 메시지 i18n
   const messages = {
-    today: '오늘',
-    previous: '이전',
-    next: '다음',
-    month: '월',
-    week: '주',
-    day: '일',
-    agenda: '일정',
-    date: '날짜',
-    time: '시간',
-    event: '일정',
-    noEventsInRange: '이 기간에 일정이 없습니다.',
-    showMore: (count: number) => `+${count}개 더보기`,
+    today: t('projects.calendar.today'),
+    previous: t('projects.calendar.previous'),
+    next: t('projects.calendar.next'),
+    month: t('projects.calendar.monthView'),
+    week: t('projects.calendar.weekView'),
+    day: t('projects.calendar.dayView'),
+    agenda: t('projects.calendar.title'),
+    date: t('projects.calendar.dayView'),
+    time: t('projects.calendar.dayView'),
+    event: t('projects.calendar.newEvent'),
+    noEventsInRange: t('projects.calendar.noEvents'),
+    showMore: (count: number) => `+${count}`,
   };
 
   // 일정 카테고리 필터링을 위한 카테고리 (event 타입만)
@@ -257,10 +260,10 @@ export default function ProjectsCalendar() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <CalendarIcon className="h-6 w-6" />
-            캘린더
+            {t('projects.calendar.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            일정과 마감일을 한눈에 확인하세요
+            {t('projects.calendar.description')}
           </p>
         </div>
         <Button onClick={() => {
@@ -269,9 +272,19 @@ export default function ProjectsCalendar() {
           setIsDialogOpen(true);
         }}>
           <Plus className="h-4 w-4 mr-2" />
-          새 일정
+          {t('projects.calendar.newEvent')}
         </Button>
       </div>
+
+      {/* 에러 배너 */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex items-center gap-2 py-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 카테고리 범례 */}
       {eventCategories.length > 0 && (
@@ -317,7 +330,7 @@ export default function ProjectsCalendar() {
               variant="outline"
               onClick={() => setCurrentDate(new Date())}
             >
-              오늘
+              {t('projects.calendar.today')}
             </Button>
             <Button
               variant="outline"
@@ -362,38 +375,38 @@ export default function ProjectsCalendar() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedEvent ? '일정 수정' : '새 일정 추가'}
+              {selectedEvent ? t('projects.calendar.newEvent') : t('projects.calendar.newEvent')}
             </DialogTitle>
             <DialogDescription>
-              {selectedEvent ? '일정 정보를 수정하세요.' : '새로운 일정을 추가하세요.'}
+              {selectedEvent ? t('projects.calendar.newEvent') : t('projects.calendar.newEvent')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">제목 *</Label>
+              <Label htmlFor="title">{t('projects.tasks.taskTitle')} *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="일정 제목"
+                placeholder={t('projects.calendar.newEvent')}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">설명</Label>
+              <Label htmlFor="description">{t('projects.tasks.taskDescription')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="일정 설명"
+                placeholder={t('projects.tasks.taskDescription')}
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startDate">시작일시</Label>
+                <Label htmlFor="startDate">{t('projects.tasks.dueDate')}</Label>
                 <Input
                   id="startDate"
                   type="datetime-local"
@@ -404,7 +417,7 @@ export default function ProjectsCalendar() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="endDate">종료일시</Label>
+                <Label htmlFor="endDate">{t('projects.tasks.dueDate')}</Label>
                 <Input
                   id="endDate"
                   type="datetime-local"
@@ -417,13 +430,13 @@ export default function ProjectsCalendar() {
             </div>
 
             <div className="grid gap-2">
-              <Label>카테고리</Label>
+              <Label>{t('projects.tasks.category')}</Label>
               <Select
                 value={formData.categoryId}
                 onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="카테고리 선택" />
+                  <SelectValue placeholder={t('projects.tasks.category')} />
                 </SelectTrigger>
                 <SelectContent>
                   {eventCategories.map((category) => (
@@ -442,12 +455,12 @@ export default function ProjectsCalendar() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="location">장소</Label>
+              <Label htmlFor="location">{t('projects.calendar.newEvent')}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="장소"
+                placeholder={t('projects.calendar.newEvent')}
               />
             </div>
           </div>
@@ -455,15 +468,15 @@ export default function ProjectsCalendar() {
           <DialogFooter className="flex justify-between">
             {selectedEvent && (
               <Button variant="destructive" onClick={handleDelete}>
-                삭제
+                {t('common.delete')}
               </Button>
             )}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                취소
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleSubmit} disabled={!formData.title || isLoading}>
-                {isLoading ? '저장 중...' : selectedEvent ? '수정' : '추가'}
+                {isLoading ? t('common.saving') : selectedEvent ? t('common.edit') : t('common.add')}
               </Button>
             </div>
           </DialogFooter>

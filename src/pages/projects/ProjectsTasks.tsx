@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -64,33 +66,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
 import type { ViewType, TaskStatus, Task, TaskPriority, MessageType } from '@/types/project';
 
-// 우선순위 라벨
-const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  urgent: '긴급',
-  high: '높음',
-  medium: '보통',
-  low: '낮음',
-};
-
-// 상태별 라벨
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: '예정',
-  in_progress: '진행중',
-  delayed_start: '시작지연',
-  delayed_complete: '완료지연',
-  review: '검토중',
-  done: '완료',
-};
-
-// 메시지 타입 라벨 및 아이콘
-const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
-  question: '질문',
-  request: '요청',
-  approval: '승인',
-  rejection: '반려',
-  info: '정보',
-  comment: '댓글',
-};
+// Static label maps are moved inside the component to use t()
 
 // 메시지 타입별 아이콘 컴포넌트
 const MessageTypeIcon: React.FC<{ type: MessageType; className?: string }> = ({ type, className = 'h-4 w-4' }) => {
@@ -130,6 +106,36 @@ const toDate = (value: Date | { toDate: () => Date } | string | number | undefin
 };
 
 export default function ProjectsTasks() {
+  const { t } = useTranslation();
+
+  // 우선순위 라벨
+  const PRIORITY_LABELS: Record<TaskPriority, string> = {
+    urgent: t('projects.priority.urgent'),
+    high: t('projects.priority.high'),
+    medium: t('projects.priority.medium'),
+    low: t('projects.priority.low'),
+  };
+
+  // 상태별 라벨
+  const STATUS_LABELS: Record<TaskStatus, string> = {
+    todo: t('projects.status.planned'),
+    in_progress: t('projects.status.inProgress'),
+    delayed_start: t('projects.status.delayedStart'),
+    delayed_complete: t('projects.status.delayedCompletion'),
+    review: t('projects.status.underReview'),
+    done: t('projects.status.completed'),
+  };
+
+  // 메시지 타입 라벨
+  const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
+    question: t('projects.messageType.question'),
+    request: t('projects.messageType.request'),
+    approval: t('projects.messageType.approval'),
+    rejection: t('projects.messageType.rejection'),
+    info: t('projects.messageType.info'),
+    comment: t('projects.messageType.comment'),
+  };
+
   const {
     tasks,
     messages,
@@ -138,6 +144,7 @@ export default function ProjectsTasks() {
     getMemberById,
     isTasksLoading,
     isMessagesLoading,
+    error,
     updateTask,
     createTask,
     deleteTask,
@@ -147,6 +154,7 @@ export default function ProjectsTasks() {
     markMessageAsRead,
     resolveMessage,
     members,
+    currentProjectId,
   } = useProjectStore();
 
   const initializedRef = useRef(false);
@@ -246,7 +254,7 @@ export default function ProjectsTasks() {
       });
     } else {
       await createTask({
-        projectId: 'default',
+        projectId: currentProjectId || 'default',
         title: taskFormData.title,
         description: taskFormData.description || undefined,
         priority: taskFormData.priority,
@@ -357,7 +365,7 @@ export default function ProjectsTasks() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchTasksByProject('default');
+      fetchTasksByProject(currentProjectId || 'default');
     }
   }, [fetchTasksByProject]);
 
@@ -418,10 +426,10 @@ export default function ProjectsTasks() {
 
   // 뷰 라벨
   const viewLabels: Record<ViewType, string> = {
-    list: '리스트',
-    board: '보드',
-    timeline: '타임라인',
-    calendar: '캘린더',
+    list: t('projects.views.list'),
+    board: t('projects.views.board'),
+    timeline: t('projects.views.timeline'),
+    calendar: t('projects.views.calendar'),
   };
 
   return (
@@ -431,17 +439,27 @@ export default function ProjectsTasks() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <CheckCircle2 className="h-6 w-6" />
-            과제 관리
+            {t('projects.tasks.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            과제를 다양한 뷰로 관리하세요
+            {t('projects.tasks.description')}
           </p>
         </div>
         <Button onClick={handleNewTask}>
           <Plus className="h-4 w-4 mr-2" />
-          새 과제
+          {t('projects.tasks.newTask')}
         </Button>
       </div>
+
+      {/* 에러 배너 */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex items-center gap-2 py-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 뷰 탭 */}
       <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as ViewType)}>
@@ -460,22 +478,22 @@ export default function ProjectsTasks() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             {viewIcons[currentView]}
-            {viewLabels[currentView]} 뷰
+            {viewLabels[currentView]}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isTasksLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">과제 목록을 불러오는 중...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : tasks.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">등록된 과제가 없습니다</p>
+              <p className="text-muted-foreground mb-4">{t('projects.tasks.noTasks')}</p>
               <Button onClick={handleNewTask}>
                 <Plus className="h-4 w-4 mr-2" />
-                첫 번째 과제 추가
+                {t('projects.tasks.newTask')}
               </Button>
             </div>
           ) : (
@@ -523,7 +541,7 @@ export default function ProjectsTasks() {
                           {(task.dueDate instanceof Date
                             ? task.dueDate
                             : task.dueDate.toDate()
-                          ).toLocaleDateString('ko-KR')}
+                          ).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -607,7 +625,7 @@ export default function ProjectsTasks() {
                           })}
                           {statusTasks.length === 0 && isDragOver && (
                             <div className="p-4 text-center text-sm text-muted-foreground border-2 border-dashed border-primary/30 rounded-lg">
-                              여기에 놓기
+                              {t('projects.tasks.noTasks')}
                             </div>
                           )}
                         </div>
@@ -645,7 +663,7 @@ export default function ProjectsTasks() {
                         size="sm"
                         onClick={() => setTimelineDate(new Date())}
                       >
-                        오늘
+                        {t('projects.calendar.today')}
                       </Button>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
@@ -666,7 +684,7 @@ export default function ProjectsTasks() {
                     {/* 날짜 헤더 */}
                     <div className="flex border-b bg-muted/50">
                       <div className="w-48 min-w-48 p-2 border-r font-medium text-sm">
-                        과제명
+                        {t('projects.tasks.taskTitle')}
                       </div>
                       <div className="flex-1 flex">
                         {timelineRange.days.map((day, idx) => (
@@ -693,7 +711,7 @@ export default function ProjectsTasks() {
                     <div className="max-h-[400px] overflow-y-auto">
                       {tasks.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
-                          이 기간에 표시할 과제가 없습니다
+                          {t('projects.tasks.noTasks')}
                         </div>
                       ) : (
                         tasks.map((task) => {
@@ -738,7 +756,7 @@ export default function ProjectsTasks() {
                                       ...barStyle,
                                       backgroundColor: TASK_STATUS_COLORS[task.status],
                                     }}
-                                    title={`${task.title}\n시작: ${toDate(task.startDate)?.toLocaleDateString('ko-KR') || '-'}\n마감: ${toDate(task.dueDate)?.toLocaleDateString('ko-KR') || '-'}`}
+                                    title={`${task.title}\n시작: ${toDate(task.startDate)?.toLocaleDateString() || '-'}\n마감: ${toDate(task.dueDate)?.toLocaleDateString() || '-'}`}
                                   >
                                     <span className="text-xs text-white truncate">
                                       {task.title}
@@ -756,7 +774,7 @@ export default function ProjectsTasks() {
                   {/* 오늘 마커 설명 */}
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     <div className="w-3 h-3 bg-primary/10 border border-primary/30 rounded" />
-                    오늘
+                    {t('projects.calendar.today')}
                   </div>
                 </div>
               )}
@@ -766,14 +784,14 @@ export default function ProjectsTasks() {
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground mb-4">
-                    과제 마감일을 캘린더에서 확인하세요
+                    {t('projects.calendar.description')}
                   </p>
                   <Button
                     variant="outline"
                     onClick={() => window.location.href = '/projects/calendar'}
                   >
                     <Calendar className="h-4 w-4 mr-2" />
-                    캘린더 페이지로 이동
+                    {t('projects.calendar.title')}
                   </Button>
                 </div>
               )}
@@ -794,10 +812,10 @@ export default function ProjectsTasks() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              {selectedTask ? '과제 상세' : '새 과제 추가'}
+              {selectedTask ? t('projects.tasks.editTask') : t('projects.tasks.newTask')}
             </DialogTitle>
             <DialogDescription>
-              {selectedTask ? '과제 정보와 커뮤니케이션을 관리하세요.' : '새로운 과제를 추가하세요.'}
+              {selectedTask ? t('projects.tasks.editTask') : t('projects.tasks.newTask')}
             </DialogDescription>
           </DialogHeader>
 
@@ -813,7 +831,7 @@ export default function ProjectsTasks() {
                 onClick={() => setActiveTab('details')}
               >
                 <CheckCircle2 className="h-4 w-4 inline mr-2" />
-                상세 정보
+                {t('common.detail')}
               </button>
               <button
                 className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -824,7 +842,7 @@ export default function ProjectsTasks() {
                 onClick={() => setActiveTab('messages')}
               >
                 <MessageSquare className="h-4 w-4" />
-                커뮤니케이션
+                {t('projects.tasks.comments')}
                 {messages.length > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 px-1.5">
                     {messages.length}
@@ -839,23 +857,23 @@ export default function ProjectsTasks() {
             <div className="grid gap-4 py-4 overflow-y-auto">
               {/* 제목 */}
               <div className="grid gap-2">
-                <Label htmlFor="task-title">제목 *</Label>
+                <Label htmlFor="task-title">{t('projects.tasks.taskTitle')} *</Label>
                 <Input
                   id="task-title"
                   value={taskFormData.title}
                   onChange={(e) => setTaskFormData({ ...taskFormData, title: e.target.value })}
-                  placeholder="과제 제목"
+                  placeholder={t('projects.tasks.taskTitle')}
                 />
               </div>
 
               {/* 설명 */}
               <div className="grid gap-2">
-                <Label htmlFor="task-description">설명</Label>
+                <Label htmlFor="task-description">{t('projects.tasks.taskDescription')}</Label>
                 <Textarea
                   id="task-description"
                   value={taskFormData.description}
                   onChange={(e) => setTaskFormData({ ...taskFormData, description: e.target.value })}
-                  placeholder="과제 설명"
+                  placeholder={t('projects.tasks.taskDescription')}
                   rows={3}
                 />
               </div>
@@ -863,13 +881,13 @@ export default function ProjectsTasks() {
               {/* 상태 및 우선순위 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label>상태</Label>
+                  <Label>{t('projects.tasks.status')}</Label>
                   <Select
                     value={taskFormData.status}
                     onValueChange={(value) => setTaskFormData({ ...taskFormData, status: value as TaskStatus })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="상태 선택" />
+                      <SelectValue placeholder={t('projects.tasks.status')} />
                     </SelectTrigger>
                     <SelectContent>
                       {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
@@ -887,13 +905,13 @@ export default function ProjectsTasks() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label>우선순위</Label>
+                  <Label>{t('projects.tasks.priority')}</Label>
                   <Select
                     value={taskFormData.priority}
                     onValueChange={(value) => setTaskFormData({ ...taskFormData, priority: value as TaskPriority })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="우선순위 선택" />
+                      <SelectValue placeholder={t('projects.tasks.priority')} />
                     </SelectTrigger>
                     <SelectContent>
                       {(Object.keys(PRIORITY_LABELS) as TaskPriority[]).map((priority) => (
@@ -915,7 +933,7 @@ export default function ProjectsTasks() {
               {/* 시작일 및 마감일 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="task-start-date">시작일</Label>
+                  <Label htmlFor="task-start-date">{t('projects.tasks.dueDate')}</Label>
                   <Input
                     id="task-start-date"
                     type="date"
@@ -924,7 +942,7 @@ export default function ProjectsTasks() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="task-due-date">마감일</Label>
+                  <Label htmlFor="task-due-date">{t('projects.tasks.dueDate')}</Label>
                   <Input
                     id="task-due-date"
                     type="date"
@@ -939,7 +957,7 @@ export default function ProjectsTasks() {
                 <div className="grid gap-2">
                   <Label className="flex items-center gap-1">
                     <User className="h-3 w-3" />
-                    담당자
+                    {t('projects.tasks.assignee')}
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {selectedTask.assignees.map((assigneeId) => {
@@ -965,13 +983,13 @@ export default function ProjectsTasks() {
                   {isMessagesLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">메시지 불러오는 중...</p>
+                      <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="text-center py-8">
                       <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">아직 메시지가 없습니다</p>
-                      <p className="text-xs text-muted-foreground mt-1">첫 번째 메시지를 남겨보세요</p>
+                      <p className="text-sm text-muted-foreground">{t('projects.tasks.message')}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t('projects.tasks.message')}</p>
                     </div>
                   ) : (
                     messages.map((message) => {
@@ -991,7 +1009,7 @@ export default function ProjectsTasks() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-sm">
-                                {sender?.name || '알 수 없음'}
+                                {sender?.name || t('common.noData')}
                               </span>
                               <TooltipProvider>
                                 <Tooltip>
@@ -1009,7 +1027,7 @@ export default function ProjectsTasks() {
                                     </Badge>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    {MESSAGE_TYPE_LABELS[message.type]} 메시지
+                                    {MESSAGE_TYPE_LABELS[message.type]}
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -1019,7 +1037,7 @@ export default function ProjectsTasks() {
                               {message.isResolved && (
                                 <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                                   <CheckCheck className="h-3 w-3 mr-1" />
-                                  해결됨
+                                  {t('projects.status.completed')}
                                 </Badge>
                               )}
                             </div>
@@ -1049,7 +1067,7 @@ export default function ProjectsTasks() {
                               <div className="flex items-center gap-1 mt-2">
                                 <CheckCheck className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-xs text-muted-foreground">
-                                  {Object.keys(message.readBy).length}명이 읽음
+                                  {Object.keys(message.readBy).length}
                                 </span>
                               </div>
                             )}
@@ -1062,7 +1080,7 @@ export default function ProjectsTasks() {
                                 onClick={() => handleResolveMessage(message.id)}
                               >
                                 <CheckCheck className="h-3 w-3 mr-1" />
-                                해결됨으로 표시
+                                {t('projects.status.completed')}
                               </Button>
                             )}
                           </div>
@@ -1105,7 +1123,7 @@ export default function ProjectsTasks() {
 
                 {/* 메시지 타입 선택 */}
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs">메시지 타입:</Label>
+                  <Label className="text-xs">{t('projects.tasks.message')}:</Label>
                   <div className="flex gap-1">
                     {(['comment', 'question', 'request', 'info', 'approval', 'rejection'] as MessageType[]).map((type) => (
                       <TooltipProvider key={type}>
@@ -1134,7 +1152,7 @@ export default function ProjectsTasks() {
                     ref={messageInputRef}
                     value={newMessageContent}
                     onChange={handleMessageInputChange}
-                    placeholder="메시지를 입력하세요... (@로 멘션)"
+                    placeholder={t('projects.tasks.message')}
                     rows={2}
                     className="pr-12 resize-none"
                     onKeyDown={(e) => {
@@ -1179,7 +1197,7 @@ export default function ProjectsTasks() {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Enter로 전송, Shift+Enter로 줄바꿈
+                  Enter / Shift+Enter
                 </p>
               </div>
             </div>
@@ -1191,15 +1209,15 @@ export default function ProjectsTasks() {
               {selectedTask && (
                 <Button variant="destructive" onClick={handleDeleteTask}>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  삭제
+                  {t('common.delete')}
                 </Button>
               )}
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  취소
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleSaveTask} disabled={!taskFormData.title || isTasksLoading}>
-                  {isTasksLoading ? '저장 중...' : selectedTask ? '수정' : '추가'}
+                  {isTasksLoading ? t('common.saving') : selectedTask ? t('common.edit') : t('common.add')}
                 </Button>
               </div>
             </DialogFooter>

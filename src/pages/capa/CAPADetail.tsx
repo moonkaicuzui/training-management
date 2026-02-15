@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Edit,
-  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   FileText,
@@ -67,7 +66,7 @@ const STAGE_ICONS: Record<CAPAStatus, React.ReactNode> = {
 function formatDate(date: Date | Timestamp | undefined): string {
   if (!date) return '-';
   const d = date instanceof Date ? date : (date as { toDate: () => Date }).toDate();
-  return d.toLocaleDateString('ko-KR', {
+  return d.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -75,7 +74,7 @@ function formatDate(date: Date | Timestamp | undefined): string {
 }
 
 export default function CAPADetail() {
-  useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const initializedRef = useRef(false);
@@ -107,9 +106,9 @@ export default function CAPADetail() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <p className="text-muted-foreground">{error || 'CAPA를 찾을 수 없습니다.'}</p>
+        <p className="text-muted-foreground">{error || t('capa.noDataAvailable')}</p>
         <Button variant="link" onClick={() => navigate('/capa')}>
-          목록으로 돌아가기
+          {t('capa.backToList')}
         </Button>
       </div>
     );
@@ -139,7 +138,7 @@ export default function CAPADetail() {
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => navigate(`/capa/${id}/edit`)}>
             <Edit className="h-4 w-4 mr-2" />
-            수정
+            {t('common.edit')}
           </Button>
         </div>
       </div>
@@ -198,7 +197,7 @@ export default function CAPADetail() {
           {/* Description */}
           <Card>
             <CardHeader>
-              <CardTitle>설명</CardTitle>
+              <CardTitle>{t('capa.description')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap">{currentCAPA.description}</p>
@@ -210,29 +209,29 @@ export default function CAPADetail() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-blue-500" />
-                <CardTitle>발견 단계</CardTitle>
+                <CardTitle>{t('capa.findingStage')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">문제 설명</p>
+                <p className="text-sm text-muted-foreground">{t('capa.problemDescription')}</p>
                 <p className="mt-1 whitespace-pre-wrap">
                   {currentCAPA.discovery.problemDescription}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">발생 원인</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.cause')}</p>
                   <p className="mt-1">{CAPA_SOURCE_LABELS[currentCAPA.source]}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">영향 영역</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.affectedArea')}</p>
                   <p className="mt-1">{currentCAPA.discovery.affectedArea}</p>
                 </div>
               </div>
               {currentCAPA.discovery.immediateActions && (
                 <div>
-                  <p className="text-sm text-muted-foreground">즉시 조치</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.immediateAction')}</p>
                   <p className="mt-1">{currentCAPA.discovery.immediateActions}</p>
                 </div>
               )}
@@ -249,22 +248,22 @@ export default function CAPADetail() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Search className="h-5 w-5 text-yellow-500" />
-                  <CardTitle>조사 단계</CardTitle>
+                  <CardTitle>{t('capa.investigationStage')}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">근본 원인 분석</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.rootCauseAnalysis')}</p>
                   <p className="mt-1 whitespace-pre-wrap">
                     {currentCAPA.investigation.rootCauseAnalysis}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">영향 평가</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.impactAssessment')}</p>
                   <p className="mt-1">{currentCAPA.investigation.impactAssessment}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">조사 결과</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.investigationResult')}</p>
                   <p className="mt-1">{currentCAPA.investigation.findings}</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -281,13 +280,13 @@ export default function CAPADetail() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Hammer className="h-5 w-5 text-orange-500" />
-                  <CardTitle>조치 단계</CardTitle>
+                  <CardTitle>{t('capa.correctiveStage')}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {currentCAPA.action.correctiveActions.length > 0 && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">시정 조치</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('capa.correctiveAction')}</p>
                     <div className="space-y-2">
                       {currentCAPA.action.correctiveActions.map((action) => (
                         <div
@@ -316,7 +315,7 @@ export default function CAPADetail() {
                 )}
                 {currentCAPA.action.preventiveActions.length > 0 && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">예방 조치</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('capa.preventiveAction')}</p>
                     <div className="space-y-2">
                       {currentCAPA.action.preventiveActions.map((action) => (
                         <div
@@ -357,7 +356,7 @@ export default function CAPADetail() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-5 w-5 text-purple-500" />
-                  <CardTitle>검증 단계</CardTitle>
+                  <CardTitle>{t('capa.verificationStage')}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -378,11 +377,11 @@ export default function CAPADetail() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">검증 방법</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.verificationMethod')}</p>
                   <p className="mt-1">{currentCAPA.verification.verificationMethod}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">검증 결과</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.verificationResult')}</p>
                   <p className="mt-1">{currentCAPA.verification.verificationNotes}</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -399,7 +398,7 @@ export default function CAPADetail() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <CardTitle>종료 단계</CardTitle>
+                  <CardTitle>{t('capa.closureStage')}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -443,27 +442,27 @@ export default function CAPADetail() {
           {/* Status Card */}
           <Card>
             <CardHeader>
-              <CardTitle>상태</CardTitle>
+              <CardTitle>{t('capa.status')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">현재 단계</span>
+                <span className="text-muted-foreground">{t('capa.stage')}</span>
                 <Badge className={STATUS_COLORS[currentCAPA.status]}>
                   {CAPA_STATUS_LABELS[currentCAPA.status]}
                 </Badge>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">우선순위</span>
+                <span className="text-muted-foreground">{t('capa.priority')}</span>
                 <span>{CAPA_PRIORITY_LABELS[currentCAPA.priority]}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">담당자</span>
+                <span className="text-muted-foreground">{t('capa.assignedTo')}</span>
                 <span>{currentCAPA.owner}</span>
               </div>
               {currentCAPA.dueDate && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">기한</span>
+                  <span className="text-muted-foreground">{t('capa.dueDate')}</span>
                   <span>{formatDate(currentCAPA.dueDate)}</span>
                 </div>
               )}
@@ -473,14 +472,14 @@ export default function CAPADetail() {
           {/* Timeline Card */}
           <Card>
             <CardHeader>
-              <CardTitle>타임라인</CardTitle>
+              <CardTitle>{t('capa.history')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 mt-2 rounded-full bg-primary" />
                   <div>
-                    <p className="font-medium">생성됨</p>
+                    <p className="font-medium">{t('capa.createdAt')}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(currentCAPA.createdAt)}
                     </p>
@@ -492,7 +491,7 @@ export default function CAPADetail() {
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 mt-2 rounded-full bg-muted" />
                   <div>
-                    <p className="font-medium">마지막 수정</p>
+                    <p className="font-medium">{t('capa.updatedAt')}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(currentCAPA.updatedAt)}
                     </p>
@@ -502,26 +501,6 @@ export default function CAPADetail() {
             </CardContent>
           </Card>
 
-          {/* Actions Card */}
-          {currentCAPA.status !== 'closed' && currentCAPA.status !== 'rejected' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>다음 단계</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" disabled>
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                  {currentCAPA.status === 'discovery' && '조사 시작'}
-                  {currentCAPA.status === 'investigation' && '조치 계획'}
-                  {currentCAPA.status === 'action' && '검증 시작'}
-                  {currentCAPA.status === 'verification' && '종료'}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  단계 전환 기능은 향후 업데이트에서 제공됩니다
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

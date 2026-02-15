@@ -15,7 +15,6 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -313,6 +312,16 @@ export default function TrainersPage() {
     setDialogOpen(true);
   };
 
+  const handleDelete = async (trainer: TrainerWithStats) => {
+    if (!window.confirm(`${trainer.trainer_name} 강사를 삭제하시겠습니까?`)) return;
+    try {
+      await api.deleteTrainer(trainer.trainer_id);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete trainer');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 헤더 */}
@@ -552,12 +561,11 @@ export default function TrainersPage() {
                             <Edit className="h-4 w-4 mr-2" />
                             {t('common.edit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="h-4 w-4 mr-2" />
-                            {t('trainers.trainingHistory')}
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDelete(trainer)}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             {t('common.delete')}
                           </DropdownMenuItem>

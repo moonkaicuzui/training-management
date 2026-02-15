@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Calendar,
   Plus,
@@ -68,7 +69,13 @@ import type { AnnualPlan } from '@/services/trainingPlanService';
 
 // 월별 캘린더 뷰 컴포넌트
 function MonthlyCalendarView({ plan }: { plan: AnnualPlan }) {
-  const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+  const { t } = useTranslation();
+  const months = [
+    t('trainingPlan.months.jan'), t('trainingPlan.months.feb'), t('trainingPlan.months.mar'),
+    t('trainingPlan.months.apr'), t('trainingPlan.months.may'), t('trainingPlan.months.jun'),
+    t('trainingPlan.months.jul'), t('trainingPlan.months.aug'), t('trainingPlan.months.sep'),
+    t('trainingPlan.months.oct'), t('trainingPlan.months.nov'), t('trainingPlan.months.dec'),
+  ];
 
   return (
     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -90,7 +97,7 @@ function MonthlyCalendarView({ plan }: { plan: AnnualPlan }) {
             <div className="text-center">
               <p className={`text-sm font-medium ${isCurrent ? 'text-primary' : ''}`}>{month}</p>
               <p className="text-2xl font-bold">{programsInMonth.length}</p>
-              <p className="text-xs text-muted-foreground">교육 예정</p>
+              <p className="text-xs text-muted-foreground">{t('trainingPlan.status.scheduled')}</p>
             </div>
             {programsInMonth.length > 0 && (
               <div className="mt-2 space-y-1">
@@ -121,6 +128,7 @@ function PlanDetailDialog({
   onClose: () => void;
   plan: AnnualPlan | null;
 }) {
+  const { t } = useTranslation();
   const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
 
   if (!plan) return null;
@@ -158,10 +166,10 @@ function PlanDetailDialog({
             {plan.plan_name}
           </DialogTitle>
           <DialogDescription>
-            기간: {plan.year}년 | 상태: {
-              plan.status === 'DRAFT' ? '초안' :
-              plan.status === 'APPROVED' ? '승인됨' :
-              plan.status === 'IN_PROGRESS' ? '진행중' : '완료'
+            {t('trainingPlan.year')}: {plan.year} | {t('common.status')}: {
+              plan.status === 'DRAFT' ? t('trainingPlan.status.draft') :
+              plan.status === 'APPROVED' ? t('trainingPlan.status.approved') :
+              plan.status === 'IN_PROGRESS' ? t('trainingPlan.status.inProgress') : t('trainingPlan.status.completed')
             }
           </DialogDescription>
         </DialogHeader>
@@ -251,11 +259,14 @@ function PlanDetailDialog({
                         <div className="mt-3">
                           <p className="text-xs text-muted-foreground mb-1">예정 월</p>
                           <div className="flex flex-wrap gap-1">
-                            {prog.scheduled_months?.map((month) => (
-                              <Badge key={month} variant="outline" className="text-xs">
-                                {month}월
-                              </Badge>
-                            ))}
+                            {prog.scheduled_months?.map((month) => {
+                              const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+                              return (
+                                <Badge key={month} variant="outline" className="text-xs">
+                                  {t(`trainingPlan.months.${monthKeys[month - 1]}`)}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         </div>
                         {prog.budget && (
@@ -275,11 +286,11 @@ function PlanDetailDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            닫기
+            {t('common.close')}
           </Button>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            내보내기
+            {t('common.export')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -461,6 +472,7 @@ function ProgramQualityStatus({ programs }: { programs: Array<{ code: string; na
 }
 
 export default function TrainingPlanPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
@@ -632,8 +644,8 @@ export default function TrainingPlanPage() {
       {/* 헤더 */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">연간 교육 계획</h1>
-          <p className="text-muted-foreground">교육 계획 수립 및 진행 현황 관리 (품질 부서장 뷰)</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('trainingPlan.title')}</h1>
+          <p className="text-muted-foreground">{t('trainingPlan.description')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/retraining')}>
@@ -642,7 +654,7 @@ export default function TrainingPlanPage() {
           </Button>
           <Button onClick={() => { setFormData({ plan_name: '', year: new Date().getFullYear(), period: 'YEARLY', total_budget: 0 }); setCreateDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
-            새 계획 수립
+            {t('trainingPlan.addPlan')}
           </Button>
         </div>
       </div>
@@ -837,9 +849,9 @@ export default function TrainingPlanPage() {
                           plan.status === 'IN_PROGRESS' ? 'default' :
                           plan.status === 'APPROVED' ? 'secondary' : 'outline'
                         }>
-                          {plan.status === 'DRAFT' ? '초안' :
-                           plan.status === 'APPROVED' ? '승인됨' :
-                           plan.status === 'IN_PROGRESS' ? '진행중' : '완료'}
+                          {plan.status === 'DRAFT' ? t('trainingPlan.status.draft') :
+                           plan.status === 'APPROVED' ? t('trainingPlan.status.approved') :
+                           plan.status === 'IN_PROGRESS' ? t('trainingPlan.status.inProgress') : t('trainingPlan.status.completed')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -853,7 +865,12 @@ export default function TrainingPlanPage() {
                           <Button variant="ghost" size="sm" onClick={() => handleViewDetail(plan)}>
                             상세
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="교육 계획 수정"
+                            onClick={() => handleViewDetail(plan)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
@@ -1118,10 +1135,10 @@ export default function TrainingPlanPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              새 교육 계획 수립
+              {t('trainingPlan.addPlan')}
             </DialogTitle>
             <DialogDescription>
-              연간 교육 계획의 기본 정보를 입력하세요.
+              {t('trainingPlan.description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1137,7 +1154,7 @@ export default function TrainingPlanPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="year">연도</Label>
+              <Label htmlFor="year">{t('trainingPlan.year')}</Label>
               <Select
                 value={formData.year.toString()}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, year: parseInt(v) }))}
@@ -1154,7 +1171,7 @@ export default function TrainingPlanPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="period">기간</Label>
+              <Label htmlFor="period">{t('trainingPlan.quarter')}</Label>
               <Select
                 value={formData.period}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, period: v as AnnualPlan['period'] }))}
@@ -1185,16 +1202,16 @@ export default function TrainingPlanPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={isCreating}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleCreatePlan} disabled={isCreating || !formData.plan_name.trim()}>
               {isCreating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  생성 중...
+                  {t('common.saving')}
                 </>
               ) : (
-                '생성'
+                t('common.save')
               )}
             </Button>
           </DialogFooter>

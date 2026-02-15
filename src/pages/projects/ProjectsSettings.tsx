@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,17 +35,21 @@ import {
   Edit,
   Zap,
   FolderCog,
+  AlertTriangle,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useToast } from '@/hooks/use-toast';
 import { CATEGORY_COLORS } from '@/types/project';
 import type { Category, Automation } from '@/types/project';
 import { AutomationList, AutomationDialog } from '@/components/projects/automation';
 import type { AutomationFormData } from '@/components/projects/automation/constants';
 
 export default function ProjectsSettings() {
+  const { t } = useTranslation();
   const {
     categories,
+    error,
     fetchCategories,
     createCategory,
     updateCategory,
@@ -62,6 +67,7 @@ export default function ProjectsSettings() {
   } = useProjectStore();
 
   const { user } = useAuthStore();
+  const { toast } = useToast();
 
   const initializedRef = useRef(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -225,17 +231,10 @@ export default function ProjectsSettings() {
   // 자동화 테스트 실행
   const handleTestAutomation = useCallback((automation: Automation) => {
     // 테스트 실행 시뮬레이션
-    const triggerInfo = automation.trigger.type;
-    const actionsInfo = automation.actions.map(a => a.type).join(', ');
-
-    alert(
-      `🧪 자동화 테스트 실행\n\n` +
-      `이름: ${automation.name}\n` +
-      `트리거: ${triggerInfo}\n` +
-      `액션: ${actionsInfo}\n\n` +
-      `✅ 테스트가 성공적으로 완료되었습니다.\n` +
-      `(실제 액션은 실행되지 않았습니다)`
-    );
+    toast({
+      title: t('projects.settings.testNotReady'),
+      description: t('projects.settings.futureUpdate'),
+    });
 
     // 실행 횟수 증가 (선택적)
     updateAutomation(automation.id, {
@@ -250,26 +249,36 @@ export default function ProjectsSettings() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Settings className="h-6 w-6" />
-          설정
+          {t('projects.settings.title')}
         </h1>
         <p className="text-muted-foreground mt-1">
-          프로젝트 관리 시스템을 설정하세요
+          {t('projects.settings.description')}
         </p>
       </div>
+
+      {/* 에러 배너 */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex items-center gap-2 py-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="categories" className="space-y-6">
         <TabsList>
           <TabsTrigger value="categories" className="flex items-center gap-2">
             <Tag className="h-4 w-4" />
-            카테고리
+            {t('projects.settings.categories')}
           </TabsTrigger>
           <TabsTrigger value="automations" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
-            자동화
+            {t('projects.settings.automation')}
           </TabsTrigger>
           <TabsTrigger value="general" className="flex items-center gap-2">
             <FolderCog className="h-4 w-4" />
-            일반
+            {t('projects.settings.general')}
           </TabsTrigger>
         </TabsList>
 
@@ -278,24 +287,24 @@ export default function ProjectsSettings() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>카테고리 관리</CardTitle>
+                <CardTitle>{t('projects.settings.categories')}</CardTitle>
                 <CardDescription>
-                  과제 및 일정에 사용할 카테고리를 관리합니다
+                  {t('projects.settings.categories')}
                 </CardDescription>
               </div>
               <Button onClick={() => openDialog()}>
                 <Plus className="h-4 w-4 mr-2" />
-                카테고리 추가
+                {t('projects.settings.addCategory')}
               </Button>
             </CardHeader>
             <CardContent>
               {categories.length === 0 ? (
                 <div className="text-center py-12">
                   <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">등록된 카테고리가 없습니다</p>
+                  <p className="text-muted-foreground mb-4">{t('common.noData')}</p>
                   <Button onClick={() => openDialog()}>
                     <Plus className="h-4 w-4 mr-2" />
-                    첫 번째 카테고리 추가
+                    {t('projects.settings.addCategory')}
                   </Button>
                 </div>
               ) : (
@@ -312,7 +321,7 @@ export default function ProjectsSettings() {
                         />
                         <span className="font-medium">{category.name}</span>
                         <Badge variant="outline">
-                          {category.type === 'task' ? '과제' : '일정'}
+                          {category.type === 'task' ? t('projects.tasks.title') : t('projects.calendar.title')}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2">
@@ -320,8 +329,8 @@ export default function ProjectsSettings() {
                           variant="ghost"
                           size="icon"
                           onClick={() => openDialog(category)}
-                          title="편집"
-                          aria-label="카테고리 편집"
+                          title={t('common.edit')}
+                          aria-label={t('projects.settings.editCategory')}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -329,8 +338,8 @@ export default function ProjectsSettings() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(category.id)}
-                          title="삭제"
-                          aria-label="카테고리 삭제"
+                          title={t('common.delete')}
+                          aria-label={t('projects.settings.deleteCategory')}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
@@ -348,14 +357,14 @@ export default function ProjectsSettings() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>자동화 워크플로우</CardTitle>
+                <CardTitle>{t('projects.settings.automation')}</CardTitle>
                 <CardDescription>
-                  트리거와 액션을 설정하여 반복 작업을 자동화합니다
+                  {t('projects.settings.automation')}
                 </CardDescription>
               </div>
               <Button onClick={() => openAutomationDialog()}>
                 <Plus className="h-4 w-4 mr-2" />
-                자동화 추가
+                {t('projects.settings.automation')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -364,13 +373,13 @@ export default function ProjectsSettings() {
                   <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground mb-4">
                     {!currentProjectId
-                      ? '프로젝트를 선택해주세요'
-                      : '등록된 자동화 규칙이 없습니다'}
+                      ? t('common.noData')
+                      : t('common.noData')}
                   </p>
                   {currentProjectId && (
                     <Button onClick={() => openAutomationDialog()}>
                       <Plus className="h-4 w-4 mr-2" />
-                      첫 번째 자동화 추가
+                      {t('projects.settings.automation')}
                     </Button>
                   )}
                 </div>
@@ -393,22 +402,22 @@ export default function ProjectsSettings() {
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>일반 설정</CardTitle>
+              <CardTitle>{t('projects.settings.general')}</CardTitle>
               <CardDescription>
-                프로젝트 관리 시스템의 기본 설정을 관리합니다
+                {t('projects.settings.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label>알림 설정</Label>
+                <Label>{t('projects.settings.general')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  이메일 및 푸시 알림 설정은 Phase 4에서 구현됩니다.
+                  {t('projects.settings.futureUpdate')}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>데이터 내보내기</Label>
+                <Label>{t('common.export')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Excel/PDF 내보내기 기능은 Phase 6에서 구현됩니다.
+                  {t('projects.settings.futureUpdate')}
                 </p>
               </div>
             </CardContent>
@@ -421,28 +430,28 @@ export default function ProjectsSettings() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedCategory ? '카테고리 수정' : '카테고리 추가'}
+              {selectedCategory ? t('projects.settings.editCategory') : t('projects.settings.addCategory')}
             </DialogTitle>
             <DialogDescription>
               {selectedCategory
-                ? '카테고리 정보를 수정하세요.'
-                : '새로운 카테고리를 추가하세요.'}
+                ? t('projects.settings.editCategory')
+                : t('projects.settings.addCategory')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">이름</Label>
+              <Label htmlFor="name">{t('projects.settings.categoryName')}</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="카테고리 이름"
+                placeholder={t('projects.settings.categoryName')}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label>색상</Label>
+              <Label>{t('projects.settings.categoryColor')}</Label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_COLORS.map((color) => (
                   <button
@@ -461,7 +470,7 @@ export default function ProjectsSettings() {
             </div>
 
             <div className="grid gap-2">
-              <Label>타입</Label>
+              <Label>{t('projects.tasks.category')}</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) =>
@@ -469,11 +478,11 @@ export default function ProjectsSettings() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="타입 선택" />
+                  <SelectValue placeholder={t('common.select')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="task">과제</SelectItem>
-                  <SelectItem value="event">일정</SelectItem>
+                  <SelectItem value="task">{t('projects.tasks.title')}</SelectItem>
+                  <SelectItem value="event">{t('projects.calendar.title')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -481,10 +490,10 @@ export default function ProjectsSettings() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} disabled={!formData.name || isLoading}>
-              {isLoading ? '저장 중...' : selectedCategory ? '수정' : '추가'}
+              {isLoading ? t('common.saving') : selectedCategory ? t('common.edit') : t('common.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
