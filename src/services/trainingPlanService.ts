@@ -17,6 +17,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from '@/services/firebase';
+import { logger } from '@/utils/logger';
 
 export interface PlannedProgram {
   program_code: string;
@@ -82,30 +83,45 @@ export async function getTrainingPlan(id: string): Promise<AnnualPlan | null> {
 export async function createTrainingPlan(
   data: Omit<AnnualPlan, 'plan_id' | 'created_at' | 'updated_at'>
 ): Promise<AnnualPlan> {
-  const docRef = doc(collection(db, COLLECTION));
-  await setDoc(docRef, {
-    ...data,
-    plan_id: docRef.id,
-    created_at: serverTimestamp(),
-    updated_at: serverTimestamp(),
-  });
-  return {
-    ...data,
-    plan_id: docRef.id,
-    created_at: new Date().toISOString(),
-  };
+  try {
+    const docRef = doc(collection(db, COLLECTION));
+    await setDoc(docRef, {
+      ...data,
+      plan_id: docRef.id,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+    return {
+      ...data,
+      plan_id: docRef.id,
+      created_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[trainingPlanService] createTrainingPlan failed for year ${data.year}:`, error);
+    throw error;
+  }
 }
 
 export async function updateTrainingPlan(
   id: string,
   updates: Partial<AnnualPlan>
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTION, id), {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    await updateDoc(doc(db, COLLECTION, id), {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[trainingPlanService] updateTrainingPlan failed for ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function deleteTrainingPlan(id: string): Promise<void> {
-  await deleteDoc(doc(db, COLLECTION, id));
+  try {
+    await deleteDoc(doc(db, COLLECTION, id));
+  } catch (error) {
+    logger.error(`[trainingPlanService] deleteTrainingPlan failed for ${id}:`, error);
+    throw error;
+  }
 }

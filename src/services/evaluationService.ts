@@ -19,6 +19,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from '@/services/firebase';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Local Types (Kirkpatrick evaluation - page-specific)
@@ -160,27 +161,37 @@ export const getEvaluationsByProgram = async (
 export const createEvaluation = async (
   data: Omit<TrainingEvaluation, 'submittedAt'>
 ): Promise<TrainingEvaluation> => {
-  const docRef = doc(db, COLLECTION, data.id);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, COLLECTION, data.id);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    submittedAt: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      submittedAt: now,
+    });
 
-  return {
-    ...data,
-    submittedAt: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      submittedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[evaluationService] createEvaluation failed for ${data.id}:`, error);
+    throw error;
+  }
 };
 
 export const updateEvaluation = async (
   id: string,
   updates: Partial<TrainingEvaluation>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[evaluationService] updateEvaluation failed for ${id}:`, error);
+    throw error;
+  }
 };

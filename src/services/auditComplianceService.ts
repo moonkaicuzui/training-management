@@ -21,6 +21,7 @@ import type {
   AuditFinding,
   CorrectiveAction,
 } from '@/types/executive';
+import { logger } from '@/utils/logger';
 
 const METRICS_COLLECTION = 'auditMetrics';
 const FINDINGS_COLLECTION = 'auditFindings';
@@ -48,21 +49,31 @@ export async function updateAuditMetric(
   id: string,
   updates: Partial<AuditComplianceMetric>
 ): Promise<void> {
-  await updateDoc(doc(db, METRICS_COLLECTION, id), {
-    ...updates,
-    lastChecked: serverTimestamp(),
-  });
+  try {
+    await updateDoc(doc(db, METRICS_COLLECTION, id), {
+      ...updates,
+      lastChecked: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[auditComplianceService] updateAuditMetric failed for ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function createAuditMetric(
   data: Omit<AuditComplianceMetric, 'id'>
 ): Promise<AuditComplianceMetric> {
-  const docRef = doc(collection(db, METRICS_COLLECTION));
-  await setDoc(docRef, {
-    ...data,
-    lastChecked: serverTimestamp(),
-  });
-  return { ...data, id: docRef.id };
+  try {
+    const docRef = doc(collection(db, METRICS_COLLECTION));
+    await setDoc(docRef, {
+      ...data,
+      lastChecked: serverTimestamp(),
+    });
+    return { ...data, id: docRef.id };
+  } catch (error) {
+    logger.error(`[auditComplianceService] createAuditMetric failed:`, error);
+    throw error;
+  }
 }
 
 // ========== Findings ==========
@@ -79,9 +90,14 @@ export async function getAuditFindings(): Promise<AuditFinding[]> {
 export async function createAuditFinding(
   data: Omit<AuditFinding, 'id'>
 ): Promise<AuditFinding> {
-  const docRef = doc(collection(db, FINDINGS_COLLECTION));
-  await setDoc(docRef, data);
-  return { ...data, id: docRef.id };
+  try {
+    const docRef = doc(collection(db, FINDINGS_COLLECTION));
+    await setDoc(docRef, data);
+    return { ...data, id: docRef.id };
+  } catch (error) {
+    logger.error(`[auditComplianceService] createAuditFinding failed:`, error);
+    throw error;
+  }
 }
 
 // ========== Corrective Actions ==========
@@ -98,16 +114,26 @@ export async function getCorrectiveActions(): Promise<CorrectiveAction[]> {
 export async function createCorrectiveAction(
   data: Omit<CorrectiveAction, 'id'>
 ): Promise<CorrectiveAction> {
-  const docRef = doc(collection(db, ACTIONS_COLLECTION));
-  await setDoc(docRef, data);
-  return { ...data, id: docRef.id };
+  try {
+    const docRef = doc(collection(db, ACTIONS_COLLECTION));
+    await setDoc(docRef, data);
+    return { ...data, id: docRef.id };
+  } catch (error) {
+    logger.error(`[auditComplianceService] createCorrectiveAction failed:`, error);
+    throw error;
+  }
 }
 
 export async function updateCorrectiveAction(
   id: string,
   updates: Partial<CorrectiveAction>
 ): Promise<void> {
-  await updateDoc(doc(db, ACTIONS_COLLECTION, id), updates);
+  try {
+    await updateDoc(doc(db, ACTIONS_COLLECTION, id), updates);
+  } catch (error) {
+    logger.error(`[auditComplianceService] updateCorrectiveAction failed for ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function getCorrectiveAction(id: string): Promise<CorrectiveAction | null> {

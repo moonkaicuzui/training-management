@@ -21,6 +21,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { Notification, NotificationType, NotificationPriority } from '@/types/notification';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Names
@@ -135,70 +136,95 @@ export const getNotifications = async (
 export const createNotification = async (
   data: Omit<Notification, 'created_at'>
 ): Promise<Notification> => {
-  const docRef = doc(db, NOTIFICATIONS_COLLECTION, data.notification_id);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, NOTIFICATIONS_COLLECTION, data.notification_id);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    created_at: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      created_at: now,
+    });
 
-  return {
-    ...data,
-    created_at: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      created_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[notificationService] createNotification failed for ${data.notification_id}:`, error);
+    throw error;
+  }
 };
 
 export const markAsRead = async (id: string): Promise<void> => {
-  const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
-  await updateDoc(docRef, {
-    is_read: true,
-  });
+  try {
+    const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+    await updateDoc(docRef, {
+      is_read: true,
+    });
+  } catch (error) {
+    logger.error(`[notificationService] markAsRead failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 export const markAllAsRead = async (userId: string): Promise<void> => {
-  const q = query(
-    collection(db, NOTIFICATIONS_COLLECTION),
-    where('recipient_id', '==', userId),
-    where('is_read', '==', false)
-  );
-  const snapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('recipient_id', '==', userId),
+      where('is_read', '==', false)
+    );
+    const snapshot = await getDocs(q);
 
-  if (snapshot.empty) return;
+    if (snapshot.empty) return;
 
-  const BATCH_SIZE = 500;
-  const docs = snapshot.docs;
+    const BATCH_SIZE = 500;
+    const docs = snapshot.docs;
 
-  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-    const chunk = docs.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+      const chunk = docs.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (const d of chunk) {
-      batch.update(d.ref, { is_read: true });
+      for (const d of chunk) {
+        batch.update(d.ref, { is_read: true });
+      }
+
+      await batch.commit();
     }
-
-    await batch.commit();
+  } catch (error) {
+    logger.error(`[notificationService] markAllAsRead failed for user ${userId}:`, error);
+    throw error;
   }
 };
 
 export const deleteNotification = async (id: string): Promise<void> => {
-  const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
-  await deleteDoc(docRef);
+  try {
+    const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    logger.error(`[notificationService] deleteNotification failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 export const batchDeleteNotifications = async (ids: string[]): Promise<void> => {
-  const BATCH_SIZE = 500;
+  try {
+    const BATCH_SIZE = 500;
 
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const chunk = ids.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const chunk = ids.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (const id of chunk) {
-      const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
-      batch.delete(docRef);
+      for (const id of chunk) {
+        const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+        batch.delete(docRef);
+      }
+
+      await batch.commit();
     }
-
-    await batch.commit();
+  } catch (error) {
+    logger.error(`[notificationService] batchDeleteNotifications failed for ${ids.length} items:`, error);
+    throw error;
   }
 };
 
@@ -219,6 +245,11 @@ export const updateSettings = async (
   userId: string,
   data: Partial<NotificationSettingsData>
 ): Promise<void> => {
-  const docRef = doc(db, SETTINGS_COLLECTION, userId);
-  await setDoc(docRef, data, { merge: true });
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, userId);
+    await setDoc(docRef, data, { merge: true });
+  } catch (error) {
+    logger.error(`[notificationService] updateSettings failed for user ${userId}:`, error);
+    throw error;
+  }
 };

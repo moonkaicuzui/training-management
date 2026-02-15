@@ -19,6 +19,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingSession, SessionFilters } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Name
@@ -128,21 +129,26 @@ export const getSession = async (
 export const createSession = async (
   data: Omit<TrainingSession, 'session_id' | 'created_at'>
 ): Promise<TrainingSession> => {
-  const sessionId = `SES-${Date.now()}`;
-  const docRef = doc(db, COLLECTION, sessionId);
-  const now = serverTimestamp();
+  try {
+    const sessionId = `SES-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+    const docRef = doc(db, COLLECTION, sessionId);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    session_id: sessionId,
-    created_at: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      session_id: sessionId,
+      created_at: now,
+    });
 
-  return {
-    ...data,
-    session_id: sessionId,
-    created_at: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      session_id: sessionId,
+      created_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error('[sessionService] createSession failed:', error);
+    throw error;
+  }
 };
 
 /**
@@ -152,10 +158,15 @@ export const updateSession = async (
   id: string,
   updates: Partial<TrainingSession>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-  });
+  try {
+    const docRef = doc(db, COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+    });
+  } catch (error) {
+    logger.error(`[sessionService] updateSession failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -164,8 +175,13 @@ export const updateSession = async (
 export const cancelSession = async (
   id: string
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    status: 'CANCELLED',
-  });
+  try {
+    const docRef = doc(db, COLLECTION, id);
+    await updateDoc(docRef, {
+      status: 'CANCELLED',
+    });
+  } catch (error) {
+    logger.error(`[sessionService] cancelSession failed for ${id}:`, error);
+    throw error;
+  }
 };

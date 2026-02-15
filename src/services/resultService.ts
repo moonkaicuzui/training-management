@@ -20,6 +20,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingResultRecord, ResultFilters } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Name
@@ -171,24 +172,29 @@ export const createResult = async (
     'result_id' | 'created_at' | 'updated_at' | 'updated_by'
   >
 ): Promise<TrainingResultRecord> => {
-  const resultId = `RES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  const docRef = doc(db, COLLECTION, resultId);
+  try {
+    const resultId = `RES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const docRef = doc(db, COLLECTION, resultId);
 
-  await setDoc(docRef, {
-    ...data,
-    result_id: resultId,
-    created_at: serverTimestamp(),
-    updated_at: null,
-    updated_by: null,
-  });
+    await setDoc(docRef, {
+      ...data,
+      result_id: resultId,
+      created_at: serverTimestamp(),
+      updated_at: null,
+      updated_by: null,
+    });
 
-  return {
-    ...data,
-    result_id: resultId,
-    created_at: new Date().toISOString(),
-    updated_at: null,
-    updated_by: null,
-  };
+    return {
+      ...data,
+      result_id: resultId,
+      created_at: new Date().toISOString(),
+      updated_at: null,
+      updated_by: null,
+    };
+  } catch (error) {
+    logger.error(`[resultService] createResult failed for ${data.employee_id}/${data.program_code}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -203,38 +209,43 @@ export const batchCreateResults = async (
     >
   >
 ): Promise<TrainingResultRecord[]> => {
-  const BATCH_SIZE = 500;
-  const createdResults: TrainingResultRecord[] = [];
+  try {
+    const BATCH_SIZE = 500;
+    const createdResults: TrainingResultRecord[] = [];
 
-  for (let i = 0; i < results.length; i += BATCH_SIZE) {
-    const chunk = results.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < results.length; i += BATCH_SIZE) {
+      const chunk = results.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (const item of chunk) {
-      const resultId = `RES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const docRef = doc(db, COLLECTION, resultId);
+      for (const item of chunk) {
+        const resultId = `RES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const docRef = doc(db, COLLECTION, resultId);
 
-      batch.set(docRef, {
-        ...item,
-        result_id: resultId,
-        created_at: serverTimestamp(),
-        updated_at: null,
-        updated_by: null,
-      });
+        batch.set(docRef, {
+          ...item,
+          result_id: resultId,
+          created_at: serverTimestamp(),
+          updated_at: null,
+          updated_by: null,
+        });
 
-      createdResults.push({
-        ...item,
-        result_id: resultId,
-        created_at: new Date().toISOString(),
-        updated_at: null,
-        updated_by: null,
-      });
+        createdResults.push({
+          ...item,
+          result_id: resultId,
+          created_at: new Date().toISOString(),
+          updated_at: null,
+          updated_by: null,
+        });
+      }
+
+      await batch.commit();
     }
 
-    await batch.commit();
+    return createdResults;
+  } catch (error) {
+    logger.error(`[resultService] batchCreateResults failed for ${results.length} items:`, error);
+    throw error;
   }
-
-  return createdResults;
 };
 
 /**
@@ -245,9 +256,14 @@ export const updateResult = async (
   id: string,
   updates: Partial<TrainingResultRecord>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[resultService] updateResult failed for ${id}:`, error);
+    throw error;
+  }
 };

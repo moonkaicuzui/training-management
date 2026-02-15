@@ -36,6 +36,7 @@ import type {
   NewTQCResignation,
   NewTQCResignationFilters,
 } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Names
@@ -207,35 +208,40 @@ export const getTeamById = async (
 export const createTeam = async (
   input: NewTQCTeamInput
 ): Promise<NewTQCTeam> => {
-  const teamId = input.team_name.toUpperCase().replace(/\s+/g, '_');
-  const docRef = doc(db, COLLECTIONS.TEAMS, teamId);
-  const now = serverTimestamp();
+  try {
+    const teamId = input.team_name.toUpperCase().replace(/\s+/g, '_');
+    const docRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    const now = serverTimestamp();
 
-  const teamData = {
-    team_id: teamId,
-    team_name: input.team_name,
-    team_name_vn: input.team_name_vn || null,
-    team_name_kr: input.team_name_kr || null,
-    factory: input.factory || null,
-    line: input.line || null,
-    is_active: true,
-    created_at: now,
-    updated_at: now,
-  };
+    const teamData = {
+      team_id: teamId,
+      team_name: input.team_name,
+      team_name_vn: input.team_name_vn || null,
+      team_name_kr: input.team_name_kr || null,
+      factory: input.factory || null,
+      line: input.line || null,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+    };
 
-  await setDoc(docRef, teamData);
+    await setDoc(docRef, teamData);
 
-  return {
-    team_id: teamId,
-    team_name: input.team_name,
-    team_name_vn: input.team_name_vn,
-    team_name_kr: input.team_name_kr,
-    factory: input.factory,
-    line: input.line,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+    return {
+      team_id: teamId,
+      team_name: input.team_name,
+      team_name_vn: input.team_name_vn,
+      team_name_kr: input.team_name_kr,
+      factory: input.factory,
+      line: input.line,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[tqcService] createTeam failed for ${input.team_name}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -244,29 +250,34 @@ export const createTeam = async (
 export const updateTeam = async (
   input: NewTQCTeamUpdate
 ): Promise<NewTQCTeam | null> => {
-  const docRef = doc(db, COLLECTIONS.TEAMS, input.team_id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
+  try {
+    const docRef = doc(db, COLLECTIONS.TEAMS, input.team_id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return null;
 
-  const { team_id: _id, ...updateFields } = input;
-  void _id;
+    const { team_id: _id, ...updateFields } = input;
+    void _id;
 
-  // Remove undefined fields
-  const cleanUpdates: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(updateFields)) {
-    if (value !== undefined) {
-      cleanUpdates[key] = value;
+    // Remove undefined fields
+    const cleanUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updateFields)) {
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
     }
+
+    await updateDoc(docRef, {
+      ...cleanUpdates,
+      updated_at: serverTimestamp(),
+    });
+
+    // Re-read to return updated data
+    const updatedSnap = await getDoc(docRef);
+    return docToTeam(updatedSnap.id, updatedSnap.data() as Record<string, unknown>);
+  } catch (error) {
+    logger.error(`[tqcService] updateTeam failed for ${input.team_id}:`, error);
+    throw error;
   }
-
-  await updateDoc(docRef, {
-    ...cleanUpdates,
-    updated_at: serverTimestamp(),
-  });
-
-  // Re-read to return updated data
-  const updatedSnap = await getDoc(docRef);
-  return docToTeam(updatedSnap.id, updatedSnap.data() as Record<string, unknown>);
 };
 
 /**
@@ -275,16 +286,21 @@ export const updateTeam = async (
 export const deleteTeam = async (
   teamId: string
 ): Promise<boolean> => {
-  const docRef = doc(db, COLLECTIONS.TEAMS, teamId);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return false;
+  try {
+    const docRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return false;
 
-  await updateDoc(docRef, {
-    is_active: false,
-    updated_at: serverTimestamp(),
-  });
+    await updateDoc(docRef, {
+      is_active: false,
+      updated_at: serverTimestamp(),
+    });
 
-  return true;
+    return true;
+  } catch (error) {
+    logger.error(`[tqcService] deleteTeam failed for ${teamId}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -367,12 +383,17 @@ export const getTraineeById = async (
 export const createTrainee = async (
   data: NewTQCTrainee
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.TRAINEES, data.trainee_id);
-  await setDoc(docRef, {
-    ...data,
-    created_at: serverTimestamp(),
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.TRAINEES, data.trainee_id);
+    await setDoc(docRef, {
+      ...data,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] createTrainee failed for ${data.trainee_id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -382,11 +403,16 @@ export const updateTrainee = async (
   traineeId: string,
   updates: Partial<NewTQCTrainee>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.TRAINEES, traineeId);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.TRAINEES, traineeId);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] updateTrainee failed for ${traineeId}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -417,11 +443,16 @@ export const getStagesByTrainee = async (
 export const createStage = async (
   data: NewTQCTrainingStage
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.STAGES, data.stage_id);
-  await setDoc(docRef, {
-    ...data,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.STAGES, data.stage_id);
+    await setDoc(docRef, {
+      ...data,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] createStage failed for ${data.stage_id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -431,11 +462,16 @@ export const updateStage = async (
   stageId: string,
   updates: Partial<NewTQCTrainingStage>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.STAGES, stageId);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.STAGES, stageId);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] updateStage failed for ${stageId}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -469,11 +505,16 @@ export const getColorBlindTests = async (
 export const createColorBlindTest = async (
   data: NewTQCColorBlindTest
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.COLOR_BLIND, data.test_id);
-  await setDoc(docRef, {
-    ...data,
-    created_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.COLOR_BLIND, data.test_id);
+    await setDoc(docRef, {
+      ...data,
+      created_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] createColorBlindTest failed for ${data.test_id}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -528,12 +569,17 @@ export const getMeetings = async (
 export const createMeeting = async (
   data: NewTQCMeeting
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.MEETINGS, data.meeting_id);
-  await setDoc(docRef, {
-    ...data,
-    created_at: serverTimestamp(),
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.MEETINGS, data.meeting_id);
+    await setDoc(docRef, {
+      ...data,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] createMeeting failed for ${data.meeting_id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -543,11 +589,16 @@ export const updateMeeting = async (
   meetingId: string,
   updates: Partial<NewTQCMeeting>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.MEETINGS, meetingId);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.MEETINGS, meetingId);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] updateMeeting failed for ${meetingId}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -590,11 +641,16 @@ export const getResignations = async (
 export const createResignation = async (
   data: NewTQCResignation
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.RESIGNATIONS, data.resignation_id);
-  await setDoc(docRef, {
-    ...data,
-    created_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTIONS.RESIGNATIONS, data.resignation_id);
+    await setDoc(docRef, {
+      ...data,
+      created_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[tqcService] createResignation failed for ${data.resignation_id}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -609,25 +665,30 @@ export const batchCreateStagesAndMeetings = async (
   stages: NewTQCTrainingStage[],
   meetings: NewTQCMeeting[]
 ): Promise<void> => {
-  const batch = writeBatch(db);
-  const now = serverTimestamp();
+  try {
+    const batch = writeBatch(db);
+    const now = serverTimestamp();
 
-  for (const stage of stages) {
-    const docRef = doc(db, COLLECTIONS.STAGES, stage.stage_id);
-    batch.set(docRef, {
-      ...stage,
-      updated_at: now,
-    });
+    for (const stage of stages) {
+      const docRef = doc(db, COLLECTIONS.STAGES, stage.stage_id);
+      batch.set(docRef, {
+        ...stage,
+        updated_at: now,
+      });
+    }
+
+    for (const meeting of meetings) {
+      const docRef = doc(db, COLLECTIONS.MEETINGS, meeting.meeting_id);
+      batch.set(docRef, {
+        ...meeting,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
+    await batch.commit();
+  } catch (error) {
+    logger.error(`[tqcService] batchCreateStagesAndMeetings failed (${stages.length} stages, ${meetings.length} meetings):`, error);
+    throw error;
   }
-
-  for (const meeting of meetings) {
-    const docRef = doc(db, COLLECTIONS.MEETINGS, meeting.meeting_id);
-    batch.set(docRef, {
-      ...meeting,
-      created_at: now,
-      updated_at: now,
-    });
-  }
-
-  await batch.commit();
 };

@@ -17,6 +17,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { Attendance, BulkAttendanceInput } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Name
@@ -91,45 +92,50 @@ export const getAttendanceBySession = async (
 export const saveBulkAttendance = async (
   input: BulkAttendanceInput
 ): Promise<Attendance[]> => {
-  const BATCH_SIZE = 500;
-  const now = Date.now();
-  const createdAttendances: Attendance[] = [];
+  try {
+    const BATCH_SIZE = 500;
+    const now = Date.now();
+    const createdAttendances: Attendance[] = [];
 
-  for (let i = 0; i < input.attendances.length; i += BATCH_SIZE) {
-    const chunk = input.attendances.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < input.attendances.length; i += BATCH_SIZE) {
+      const chunk = input.attendances.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (let j = 0; j < chunk.length; j++) {
-      const record = chunk[j];
-      const index = i + j;
-      const attendanceId = `ATT-${now}-${index}`;
-      const docRef = doc(db, COLLECTION, attendanceId);
+      for (let j = 0; j < chunk.length; j++) {
+        const record = chunk[j];
+        const index = i + j;
+        const attendanceId = `ATT-${now}-${index}`;
+        const docRef = doc(db, COLLECTION, attendanceId);
 
-      const docData = {
-        attendance_id: attendanceId,
-        session_id: input.session_id,
-        employee_id: record.employee_id,
-        status: record.status,
-        notes: record.notes || '',
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      };
+        const docData = {
+          attendance_id: attendanceId,
+          session_id: input.session_id,
+          employee_id: record.employee_id,
+          status: record.status,
+          notes: record.notes || '',
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        };
 
-      batch.set(docRef, docData);
+        batch.set(docRef, docData);
 
-      createdAttendances.push({
-        attendance_id: attendanceId,
-        session_id: input.session_id,
-        employee_id: record.employee_id,
-        status: record.status,
-        notes: record.notes,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+        createdAttendances.push({
+          attendance_id: attendanceId,
+          session_id: input.session_id,
+          employee_id: record.employee_id,
+          status: record.status,
+          notes: record.notes,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      await batch.commit();
     }
 
-    await batch.commit();
+    return createdAttendances;
+  } catch (error) {
+    logger.error(`[attendanceService] saveBulkAttendance failed for session ${input.session_id}:`, error);
+    throw error;
   }
-
-  return createdAttendances;
 };

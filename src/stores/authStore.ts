@@ -15,7 +15,8 @@ import { ROLE_PERMISSIONS, ALLOWED_EMAIL_DOMAINS, ADMIN_EMAILS } from '@/types/a
 import {
   signInWithEmail,
   signOut as firebaseSignOut,
-  subscribeToAuthState
+  subscribeToAuthState,
+  syncUserRole
 } from '@/services/firebase';
 import type { FirebaseUser } from '@/services/firebase';
 
@@ -109,6 +110,10 @@ export const useAuthStore = create<AuthStore>()(
       initializeAuthListener: () => {
         const unsubscribe = subscribeToAuthState((firebaseUser) => {
           get().setUser(firebaseUser);
+          // Sync role on auth state restoration (e.g., page refresh)
+          if (firebaseUser) {
+            syncUserRole(firebaseUser).catch(() => {});
+          }
         });
         return unsubscribe;
       },
@@ -120,6 +125,9 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const firebaseUser = await signInWithEmail(email, password);
           const user = convertFirebaseUser(firebaseUser);
+
+          // Sync role to Firestore for rules enforcement
+          await syncUserRole(firebaseUser);
 
           set({
             user,
@@ -154,6 +162,15 @@ export const useAuthStore = create<AuthStore>()(
       logout: async () => {
         try {
           await firebaseSignOut();
+
+          // Clear service worker caches to prevent stale sensitive data
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+              cacheNames.map((name) => caches.delete(name))
+            );
+          }
+
           set({
             user: null,
             isAuthenticated: false,

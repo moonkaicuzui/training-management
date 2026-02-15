@@ -20,6 +20,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingMaterial, MaterialFolder, MaterialFilters } from '@/types/material';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Names
@@ -133,34 +134,49 @@ export const getMaterial = async (
 export const createMaterial = async (
   data: Omit<TrainingMaterial, 'updatedAt'>
 ): Promise<TrainingMaterial> => {
-  const docRef = doc(db, MATERIALS_COLLECTION, data.id);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, MATERIALS_COLLECTION, data.id);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    updatedAt: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      updatedAt: now,
+    });
 
-  return {
-    ...data,
-    updatedAt: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[materialService] createMaterial failed for ${data.id}:`, error);
+    throw error;
+  }
 };
 
 export const updateMaterial = async (
   id: string,
   updates: Partial<TrainingMaterial>
 ): Promise<void> => {
-  const docRef = doc(db, MATERIALS_COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, MATERIALS_COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[materialService] updateMaterial failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 export const deleteMaterial = async (id: string): Promise<void> => {
-  const docRef = doc(db, MATERIALS_COLLECTION, id);
-  await deleteDoc(docRef);
+  try {
+    const docRef = doc(db, MATERIALS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    logger.error(`[materialService] deleteMaterial failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -193,35 +209,50 @@ export const getFolders = async (
 export const createFolder = async (
   data: Omit<MaterialFolder, 'createdAt' | 'updatedAt'>
 ): Promise<MaterialFolder> => {
-  const docRef = doc(db, FOLDERS_COLLECTION, data.id);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, FOLDERS_COLLECTION, data.id);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    createdAt: now,
-    updatedAt: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+    });
 
-  const nowStr = new Date().toISOString();
-  return {
-    ...data,
-    createdAt: nowStr,
-    updatedAt: nowStr,
-  };
+    const nowStr = new Date().toISOString();
+    return {
+      ...data,
+      createdAt: nowStr,
+      updatedAt: nowStr,
+    };
+  } catch (error) {
+    logger.error(`[materialService] createFolder failed for ${data.id}:`, error);
+    throw error;
+  }
 };
 
 export const updateFolder = async (
   id: string,
   updates: Partial<MaterialFolder>
 ): Promise<void> => {
-  const docRef = doc(db, FOLDERS_COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, FOLDERS_COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[materialService] updateFolder failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 export const deleteFolder = async (id: string): Promise<void> => {
-  const docRef = doc(db, FOLDERS_COLLECTION, id);
-  await deleteDoc(docRef);
+  try {
+    const docRef = doc(db, FOLDERS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    logger.error(`[materialService] deleteFolder failed for ${id}:`, error);
+    throw error;
+  }
 };

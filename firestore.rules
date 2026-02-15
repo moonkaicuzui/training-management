@@ -19,13 +19,12 @@ service cloud.firestore {
          isAdmin());
     }
 
-    // 허용된 이메일 도메인 확인
+    // 허용된 이메일 도메인 확인 (회사 도메인만 허용)
     function hasAllowedDomain() {
       let email = request.auth.token.email;
       return email.matches('.*@hwaseung\\.com$') ||
              email.matches('.*@hwaseungvina\\.com$') ||
-             email.matches('.*@hsvina\\.com$') ||
-             email.matches('.*@gmail\\.com$');
+             email.matches('.*@hsvina\\.com$');
     }
 
     // 데이터 검증: 필수 필드 확인
@@ -188,7 +187,8 @@ service cloud.firestore {
     match /project_messages/{messageId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
-      allow delete: if isAuthenticated();
+      allow delete: if isAuthenticated() && hasAllowedDomain() &&
+        (resource.data.sender_id == request.auth.uid || isAdmin());
     }
 
     match /project_categories/{categoryId} {
@@ -210,9 +210,10 @@ service cloud.firestore {
     }
 
     match /project_notifications/{notificationId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated();
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if isAuthenticated() && hasAllowedDomain() &&
+        (resource.data.recipient_id == request.auth.uid || isAdmin());
     }
 
     // ========== 교육 자료 ==========
@@ -237,9 +238,11 @@ service cloud.firestore {
 
     // ========== 알림 ==========
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated();
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAuthenticated() && hasAllowedDomain() &&
+        (resource.data.recipient_id == request.auth.uid || isAdmin());
     }
 
     match /notificationSettings/{userId} {

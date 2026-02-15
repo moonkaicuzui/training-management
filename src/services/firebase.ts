@@ -144,6 +144,38 @@ export const isAdmin = (email: string | null): boolean => {
 };
 
 /**
+ * Sync user role to Firestore users/{uid} document.
+ * This enables isAdmin()/isTrainer() in firestore.rules to work correctly.
+ */
+export const syncUserRole = async (firebaseUser: FirebaseUser): Promise<void> => {
+  if (!firebaseUser.email) return;
+
+  const role = getUserRole(firebaseUser.email);
+  const userRef = doc(db, 'users', firebaseUser.uid);
+
+  try {
+    const userSnap = await getDoc(userRef);
+    const userData = {
+      email: firebaseUser.email,
+      name: firebaseUser.displayName || firebaseUser.email,
+      role,
+      last_login: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    };
+
+    if (!userSnap.exists()) {
+      await setDoc(userRef, { ...userData, created_at: serverTimestamp() });
+    } else {
+      // Only update if role changed or on login
+      await setDoc(userRef, userData, { merge: true });
+    }
+  } catch (error) {
+    // Log but don't block login — role sync is best-effort
+    logger.error('Failed to sync user role to Firestore:', error);
+  }
+};
+
+/**
  * Subscribe to auth state changes
  */
 export const subscribeToAuthState = (
@@ -246,18 +278,18 @@ export const createTraineeWithRelations = async (
   const now = serverTimestamp();
 
   // Create trainee document
-  const traineeRef = doc(db, 'trainees', trainee.trainee_id);
+  const traineeRef = doc(db, 'tqc_trainees', trainee.trainee_id);
   batch.set(traineeRef, { ...trainee, created_at: now, updated_at: now });
 
   // Create stage documents
   stages.forEach(({ id, data }) => {
-    const stageRef = doc(db, 'training_stages', id);
+    const stageRef = doc(db, 'tqc_training_stages', id);
     batch.set(stageRef, { ...data, updated_at: now });
   });
 
   // Create meeting documents
   meetings.forEach(({ id, data }) => {
-    const meetingRef = doc(db, 'meetings', id);
+    const meetingRef = doc(db, 'tqc_meetings', id);
     batch.set(meetingRef, { ...data, created_at: now, updated_at: now });
   });
 

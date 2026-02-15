@@ -24,6 +24,7 @@ import * as auditLogService from './auditLogService';
 import * as trainerService from './trainerService';
 import * as trainingPlanService from './trainingPlanService';
 import * as auditComplianceService from './auditComplianceService';
+import { updateResultWithLog } from '@/services/firebase';
 
 import type {
   Employee,
@@ -327,8 +328,12 @@ export async function createProgram(
 ): Promise<TrainingProgram> {
   const newProgram = await programService.createProgram(program);
 
-  // Log the creation
-  await logService.logProgramChange(program.program_code, 'CREATE', null, newProgram);
+  // Log the creation (non-blocking: log failure should not block program creation)
+  try {
+    await logService.logProgramChange(program.program_code, 'CREATE', null, newProgram);
+  } catch (logError) {
+    logger.error('[api] Failed to log program creation:', logError);
+  }
 
   invalidateProgramCache();
   return newProgram;
@@ -347,8 +352,12 @@ export async function updateProgram(
   // Re-fetch updated document
   const afterData = await programService.getProgram(code);
 
-  // Log the update
-  await logService.logProgramChange(code, 'UPDATE', beforeData, afterData);
+  // Log the update (non-blocking: log failure should not block program update)
+  try {
+    await logService.logProgramChange(code, 'UPDATE', beforeData, afterData);
+  } catch (logError) {
+    logger.error('[api] Failed to log program update:', logError);
+  }
 
   invalidateProgramCache();
   return afterData;
@@ -364,8 +373,12 @@ export async function deleteProgram(code: string): Promise<boolean> {
   // Re-fetch for after state
   const afterData = await programService.getProgram(code);
 
-  // Log the soft delete
-  await logService.logProgramChange(code, 'DELETE', beforeData, afterData);
+  // Log the soft delete (non-blocking: log failure should not block program deletion)
+  try {
+    await logService.logProgramChange(code, 'DELETE', beforeData, afterData);
+  } catch (logError) {
+    logger.error('[api] Failed to log program deletion:', logError);
+  }
 
   invalidateProgramCache();
   return true;
@@ -451,9 +464,6 @@ export async function updateResult(update: ResultUpdate): Promise<TrainingResult
   const existing = await resultService.getResult(update.result_id);
   if (!existing) return null;
 
-  // Capture before state
-  const beforeData = { ...existing };
-
   const programs = await programService.getPrograms();
   const program = programs.find(p => p.program_code === existing.program_code);
 
@@ -480,18 +490,15 @@ export async function updateResult(update: ResultUpdate): Promise<TrainingResult
     updated_by: 'current_user',
   };
 
-  await resultService.updateResult(update.result_id, updates);
+  // Atomic transaction: update result + create edit log together
+  await updateResultWithLog(update.result_id, updates, {
+    edited_by: 'current_user',
+    edit_reason: update.edit_reason || '결과 수정',
+    after_data: JSON.stringify(updates),
+  });
 
-  // Re-fetch updated result
+  // Re-fetch updated result for return
   const afterData = await resultService.getResult(update.result_id);
-
-  // Log the result edit with reason
-  await logService.logResultEdit(
-    update.result_id,
-    beforeData,
-    afterData || updates,
-    update.edit_reason || '결과 수정'
-  );
 
   invalidateResultCache();
   invalidateDashboardCache();

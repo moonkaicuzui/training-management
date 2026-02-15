@@ -20,6 +20,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingProgram, ProgramFilters } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Name
@@ -141,20 +142,25 @@ export const getProgram = async (
 export const createProgram = async (
   data: Omit<TrainingProgram, 'created_at' | 'updated_at'>
 ): Promise<TrainingProgram> => {
-  const docRef = doc(db, COLLECTION, data.program_code);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, COLLECTION, data.program_code);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    created_at: now,
-    updated_at: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      created_at: now,
+      updated_at: now,
+    });
 
-  return {
-    ...data,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[programService] createProgram failed for ${data.program_code}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -164,11 +170,16 @@ export const updateProgram = async (
   code: string,
   updates: Partial<TrainingProgram>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, code);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTION, code);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[programService] updateProgram failed for ${code}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -178,9 +189,14 @@ export const updateProgram = async (
 export const deleteProgram = async (
   code: string
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, code);
-  await updateDoc(docRef, {
-    is_active: false,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTION, code);
+    await updateDoc(docRef, {
+      is_active: false,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[programService] deleteProgram failed for ${code}:`, error);
+    throw error;
+  }
 };

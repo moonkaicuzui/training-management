@@ -22,6 +22,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import type { Employee, EmployeeFilters } from '@/types';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Collection Name
@@ -135,18 +136,23 @@ export const getEmployee = async (
 export const createEmployee = async (
   data: Omit<Employee, 'updated_at'>
 ): Promise<Employee> => {
-  const docRef = doc(db, COLLECTION, data.employee_id);
-  const now = serverTimestamp();
+  try {
+    const docRef = doc(db, COLLECTION, data.employee_id);
+    const now = serverTimestamp();
 
-  await setDoc(docRef, {
-    ...data,
-    updated_at: now,
-  });
+    await setDoc(docRef, {
+      ...data,
+      updated_at: now,
+    });
 
-  return {
-    ...data,
-    updated_at: new Date().toISOString(),
-  };
+    return {
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error(`[employeeService] createEmployee failed for ${data.employee_id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -156,11 +162,16 @@ export const updateEmployee = async (
   id: string,
   updates: Partial<Employee>
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(db, COLLECTION, id);
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+  } catch (error) {
+    logger.error(`[employeeService] updateEmployee failed for ${id}:`, error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -174,26 +185,31 @@ export const updateEmployee = async (
 export const batchUpsertEmployees = async (
   employees: Omit<Employee, 'updated_at'>[]
 ): Promise<number> => {
-  const BATCH_SIZE = 500;
-  let totalWritten = 0;
+  try {
+    const BATCH_SIZE = 500;
+    let totalWritten = 0;
 
-  for (let i = 0; i < employees.length; i += BATCH_SIZE) {
-    const chunk = employees.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < employees.length; i += BATCH_SIZE) {
+      const chunk = employees.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (const emp of chunk) {
-      const docRef = doc(db, COLLECTION, emp.employee_id);
-      batch.set(docRef, {
-        ...emp,
-        updated_at: serverTimestamp(),
-      }, { merge: true });
+      for (const emp of chunk) {
+        const docRef = doc(db, COLLECTION, emp.employee_id);
+        batch.set(docRef, {
+          ...emp,
+          updated_at: serverTimestamp(),
+        }, { merge: true });
+      }
+
+      await batch.commit();
+      totalWritten += chunk.length;
     }
 
-    await batch.commit();
-    totalWritten += chunk.length;
+    return totalWritten;
+  } catch (error) {
+    logger.error(`[employeeService] batchUpsertEmployees failed for ${employees.length} items:`, error);
+    throw error;
   }
-
-  return totalWritten;
 };
 
 // ============================================================
