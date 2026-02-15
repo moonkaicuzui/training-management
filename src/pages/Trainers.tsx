@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
+import * as api from '@/services/api';
 import {
   Users,
   Plus,
@@ -60,86 +61,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Trainer, TrainerType } from '@/types';
 
-// 샘플 강사 데이터 (확장된 타입)
+// 확장된 타입 (통계 포함)
 interface TrainerWithStats extends Trainer {
   total_sessions?: number;
   average_rating?: number;
 }
 
-const sampleTrainers: TrainerWithStats[] = [
-  {
-    trainer_id: 'TR001',
-    trainer_name: 'Nguyễn Văn Minh',
-    trainer_type: 'INTERNAL',
-    department: 'ASSEMBLY',
-    specializations: ['품질관리', 'SPC', '검사기법'],
-    email: 'minh.nguyen@hwk.com',
-    phone: '0901234567',
-    certifications: ['QIP Master Trainer'],
-    status: 'ACTIVE',
-    total_sessions: 45,
-    average_rating: 4.8,
-    created_at: '2024-01-15',
-    updated_at: '2024-12-20',
-  },
-  {
-    trainer_id: 'TR002',
-    trainer_name: 'Trần Thị Hương',
-    trainer_type: 'INTERNAL',
-    department: 'STITCHING',
-    specializations: ['생산관리', '공정개선', 'Lean'],
-    email: 'huong.tran@hwk.com',
-    phone: '0912345678',
-    certifications: ['Lean Six Sigma Green Belt'],
-    status: 'ACTIVE',
-    total_sessions: 32,
-    average_rating: 4.6,
-    created_at: '2024-02-20',
-    updated_at: '2024-12-18',
-  },
-  {
-    trainer_id: 'TR003',
-    trainer_name: 'Dr. 김철수',
-    trainer_type: 'EXTERNAL',
-    company: '품질연구소',
-    specializations: ['고급 SPC', '통계분석', '품질경영'],
-    email: 'kim.cs@qualitylab.co.kr',
-    phone: '+82-10-1234-5678',
-    certifications: ['Ph.D Quality Engineering'],
-    status: 'ACTIVE',
-    total_sessions: 12,
-    average_rating: 4.9,
-    created_at: '2024-03-01',
-    updated_at: '2024-12-15',
-  },
-  {
-    trainer_id: 'TR004',
-    trainer_name: 'Lê Văn Đức',
-    trainer_type: 'INTERNAL',
-    department: 'ASSEMBLY',
-    specializations: ['신입교육', '안전교육'],
-    email: 'duc.le@hwk.com',
-    phone: '0923456789',
-    status: 'INACTIVE',
-    total_sessions: 28,
-    average_rating: 4.3,
-    created_at: '2024-01-10',
-    updated_at: '2024-11-01',
-  },
-];
 
 // 강사 등록/수정 폼 다이얼로그
 function TrainerFormDialog({
   open,
   onClose,
+  onSaved,
   trainer,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved: () => void;
   trainer?: TrainerWithStats | null;
 }) {
   const { t } = useTranslation();
   const isEdit = !!trainer;
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     trainer_name: trainer?.trainer_name || '',
     trainer_type: trainer?.trainer_type || 'INTERNAL' as TrainerType,
@@ -151,9 +94,33 @@ function TrainerFormDialog({
     certifications: trainer?.certifications?.join(', ') || '',
   });
 
-  const handleSubmit = () => {
-    logger.log('Submit trainer:', formData);
-    onClose();
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      const trainerData = {
+        trainer_name: formData.trainer_name,
+        trainer_type: formData.trainer_type as TrainerType,
+        department: formData.trainer_type === 'INTERNAL' ? formData.department : undefined,
+        company: formData.trainer_type === 'EXTERNAL' ? formData.company : undefined,
+        specializations: formData.specializations.split(',').map(s => s.trim()).filter(Boolean),
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        certifications: formData.certifications ? formData.certifications.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        status: 'ACTIVE' as const,
+      };
+
+      if (isEdit && trainer) {
+        await api.updateTrainer(trainer.trainer_id, trainerData);
+      } else {
+        await api.createTrainer(trainerData);
+      }
+      onSaved();
+      onClose();
+    } catch (error) {
+      logger.error('Failed to save trainer:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -263,10 +230,13 @@ function TrainerFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+            ) : null}
             {isEdit ? t('common.edit') : t('trainers.register')}
           </Button>
         </DialogFooter>
@@ -277,12 +247,37 @@ function TrainerFormDialog({
 
 export default function TrainersPage() {
   const { t } = useTranslation();
-  const [trainers] = useState<TrainerWithStats[]>(sampleTrainers);
+  const [trainers, setTrainers] = useState<TrainerWithStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<TrainerWithStats | null>(null);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.getTrainers();
+      const trainersWithStats: TrainerWithStats[] = data.map((trainer) => ({
+        ...trainer,
+        total_sessions: 0,
+        average_rating: 0,
+      }));
+      setTrainers(trainersWithStats);
+    } catch (err) {
+      logger.error('Failed to load trainers:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load trainers');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 필터링된 강사 목록
   const filteredTrainers = useMemo(() => {
@@ -425,8 +420,29 @@ export default function TrainersPage() {
         </CardContent>
       </Card>
 
+      {/* 로딩 상태 */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )}
+
+      {/* 에러 상태 */}
+      {error && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-destructive">
+              <p className="font-medium">{error}</p>
+              <Button variant="outline" className="mt-4" onClick={loadData}>
+                {t('common.retry', 'Retry')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 강사 목록 */}
-      <Card>
+      {!isLoading && !error && <Card>
         <CardHeader>
           <CardTitle>{t('trainers.trainerList')}</CardTitle>
           <CardDescription>
@@ -554,12 +570,13 @@ export default function TrainersPage() {
             </TableBody>
           </Table>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* 강사 등록/수정 다이얼로그 */}
       <TrainerFormDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+        onSaved={loadData}
         trainer={editingTrainer}
       />
     </div>

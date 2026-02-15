@@ -18,8 +18,9 @@ import {
 } from 'firebase/auth';
 import type { Auth, User as FirebaseUser } from 'firebase/auth';
 import {
-  getFirestore,
-  enableIndexedDbPersistence,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   runTransaction,
   writeBatch,
   doc,
@@ -76,18 +77,10 @@ if (getApps().length === 0) {
 // Initialize Auth
 const auth: Auth = getAuth(app);
 
-// Initialize Firestore
-const db: Firestore = getFirestore(app);
-
-// Enable offline persistence for Firestore (optional but recommended)
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    // Multiple tabs open, persistence can only be enabled in one tab at a time
-    logger.warn('Firestore persistence failed: Multiple tabs open');
-  } else if (err.code === 'unimplemented') {
-    // Browser doesn't support persistence
-    logger.warn('Firestore persistence not supported by browser');
-  }
+// Initialize Firestore with ignoreUndefinedProperties and persistent cache
+const db: Firestore = initializeFirestore(app, {
+  ignoreUndefinedProperties: true,
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
 
 // Initialize Analytics (only in browser, not SSR)

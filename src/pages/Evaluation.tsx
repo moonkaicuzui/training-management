@@ -382,46 +382,29 @@ export default function Evaluation() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ThumbsUp className="h-4 w-4 text-blue-500" />
-                      <span>{t('evaluation.level1')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">4.2</span>
-                      <Progress value={84} className="w-20" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-green-500" />
-                      <span>{t('evaluation.level2')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">3.9</span>
-                      <Progress value={78} className="w-20" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-yellow-500" />
-                      <span>{t('evaluation.level3')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">3.5</span>
-                      <Progress value={70} className="w-20" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-purple-500" />
-                      <span>{t('evaluation.level4')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">3.8</span>
-                      <Progress value={76} className="w-20" />
-                    </div>
-                  </div>
+                  {([
+                    { type: 'reaction', icon: <ThumbsUp className="h-4 w-4 text-blue-500" />, label: t('evaluation.level1') },
+                    { type: 'learning', icon: <BarChart3 className="h-4 w-4 text-green-500" />, label: t('evaluation.level2') },
+                    { type: 'behavior', icon: <TrendingUp className="h-4 w-4 text-yellow-500" />, label: t('evaluation.level3') },
+                    { type: 'results', icon: <Award className="h-4 w-4 text-purple-500" />, label: t('evaluation.level4') },
+                  ] as const).map(level => {
+                    const levelEvals = evaluations.filter(e => e.evaluationType === level.type);
+                    const levelAvg = levelEvals.length > 0
+                      ? levelEvals.reduce((sum, e) => sum + e.overallScore, 0) / levelEvals.length
+                      : 0;
+                    return (
+                      <div key={level.type} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {level.icon}
+                          <span>{level.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{levelAvg > 0 ? levelAvg.toFixed(1) : '-'}</span>
+                          <Progress value={levelAvg > 0 ? (levelAvg / 5) * 100 : 0} className="w-20" />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -711,7 +694,14 @@ export default function Evaluation() {
                 </TableHeader>
                 <TableBody>
                   {evaluationCriteria.map((criteria) => {
-                    const avgScore = 3.5 + Math.random() * 1.5;
+                    // Compute average score from actual evaluations for this criteria
+                    const criteriaScores = evaluations
+                      .flatMap(e => e.responses || [])
+                      .filter(r => r.criteriaId === criteria.id)
+                      .map(r => r.score);
+                    const avgScore = criteriaScores.length > 0
+                      ? criteriaScores.reduce((a, b) => a + b, 0) / criteriaScores.length
+                      : 0;
                     return (
                       <TableRow key={criteria.id}>
                         <TableCell className="font-medium">{criteria.name}</TableCell>
@@ -724,7 +714,7 @@ export default function Evaluation() {
                             <span>{criteria.weight}%</span>
                           </div>
                         </TableCell>
-                        <TableCell>{renderStars(avgScore)}</TableCell>
+                        <TableCell>{avgScore > 0 ? renderStars(avgScore) : <span className="text-muted-foreground">-</span>}</TableCell>
                       </TableRow>
                     );
                   })}

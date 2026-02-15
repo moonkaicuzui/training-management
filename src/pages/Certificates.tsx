@@ -1,7 +1,8 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
+import * as api from '@/services/api';
 import {
   Award,
   Download,
@@ -11,6 +12,7 @@ import {
   CheckCircle,
   Calendar,
   User,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,82 +79,6 @@ interface CertificateData {
   grade: string | null;
   issueDate: string;
 }
-
-// 샘플 교육 결과 데이터
-const sampleResults: TrainingResult[] = [
-  {
-    result_id: 'RES-001',
-    employee_id: 'EMP-001',
-    employee_name: '홍길동',
-    department: 'ASSEMBLY',
-    position: 'QIP_TQC',
-    program_code: 'QIP-001',
-    program_name: 'QIP 기초 교육',
-    training_date: '2024-12-15',
-    score: 95,
-    grade: 'AA',
-    result: 'PASS',
-  },
-  {
-    result_id: 'RES-002',
-    employee_id: 'EMP-002',
-    employee_name: '김철수',
-    department: 'ASSEMBLY',
-    position: 'QIP_RQC',
-    program_code: 'QIP-001',
-    program_name: 'QIP 기초 교육',
-    training_date: '2024-12-15',
-    score: 88,
-    grade: 'A',
-    result: 'PASS',
-  },
-  {
-    result_id: 'RES-003',
-    employee_id: 'EMP-003',
-    employee_name: '이영희',
-    department: 'Production',
-    position: 'Line Leader',
-    program_code: 'PRO-001',
-    program_name: '생산 품질 관리',
-    training_date: '2024-12-10',
-    score: 92,
-    grade: 'AA',
-    result: 'PASS',
-  },
-  {
-    result_id: 'RES-004',
-    employee_id: 'EMP-004',
-    employee_name: '박지성',
-    department: 'Production',
-    position: 'Operator',
-    program_code: 'PRO-001',
-    program_name: '생산 품질 관리',
-    training_date: '2024-12-10',
-    score: 78,
-    grade: 'B',
-    result: 'PASS',
-  },
-  {
-    result_id: 'RES-005',
-    employee_id: 'EMP-005',
-    employee_name: '손흥민',
-    department: 'Production',
-    position: 'Line Leader',
-    program_code: 'QIP-002',
-    program_name: 'QIP 심화 교육',
-    training_date: '2024-12-20',
-    score: 85,
-    grade: 'A',
-    result: 'PASS',
-  },
-];
-
-// 샘플 프로그램 목록
-const samplePrograms: ProgramOption[] = [
-  { program_code: 'QIP-001', program_name: 'QIP 기초 교육' },
-  { program_code: 'QIP-002', program_name: 'QIP 심화 교육' },
-  { program_code: 'PRO-001', program_name: '생산 품질 관리' },
-];
 
 // 이수증 미리보기 컴포넌트
 function CertificatePreview({ data, onClose }: { data: CertificateData; onClose: () => void }) {
@@ -295,11 +221,56 @@ export default function CertificatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [selectedCertificate, setSelectedCertificate] = useState<CertificateData | null>(null);
+  const [results, setResults] = useState<TrainingResult[]>([]);
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 이수 가능한 결과 목록 (PASS만)
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [resultsData, programsData, employeesData] = await Promise.all([
+          api.getResults(),
+          api.getPrograms(),
+          api.getEmployees(),
+        ]);
+        // Build lookup maps
+        const empMap = new Map(employeesData.map(e => [e.employee_id, e]));
+        const progMap = new Map(programsData.map(p => [p.program_code, p]));
+        // Map to local types - only PASS results
+        setResults(resultsData.filter(r => r.result === 'PASS').map(r => {
+          const emp = empMap.get(r.employee_id);
+          const prog = progMap.get(r.program_code);
+          return {
+            result_id: r.result_id,
+            employee_id: r.employee_id,
+            employee_name: emp?.employee_name ?? r.employee_id,
+            department: emp?.department ?? '',
+            position: emp?.position ?? '',
+            program_code: r.program_code,
+            program_name: prog?.program_name ?? r.program_code,
+            training_date: r.training_date ?? '',
+            score: r.score ?? null,
+            grade: r.grade ?? null,
+            result: r.result as 'PASS' | 'FAIL',
+          };
+        }));
+        setPrograms(programsData.map(p => ({
+          program_code: p.program_code,
+          program_name: p.program_name ?? p.program_code,
+        })));
+      } catch (err) {
+        console.error('Failed to load data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // 이수 가능한 결과 목록 (already filtered to PASS only)
   const eligibleResults = useMemo(() => {
-    return sampleResults
-      .filter(result => result.result === 'PASS')
+    return results
       .filter(result => {
         const matchesSearch =
           result.employee_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -311,7 +282,7 @@ export default function CertificatesPage() {
         return matchesSearch && matchesProgram;
       })
       .sort((a, b) => b.training_date.localeCompare(a.training_date));
-  }, [searchQuery, selectedProgram]);
+  }, [results, searchQuery, selectedProgram]);
 
   // 이수증 번호 카운터
   const certificateCounterRef = useRef(0);
@@ -344,11 +315,19 @@ export default function CertificatesPage() {
     const thisMonth = format(new Date(), 'yyyy-MM');
     return {
       totalEligible: eligibleResults.length,
-      totalPrograms: samplePrograms.length,
+      totalPrograms: programs.length,
       uniqueEmployees: new Set(eligibleResults.map(r => r.employee_id)).size,
       thisMonthCount: eligibleResults.filter(r => r.training_date.startsWith(thisMonth)).length,
     };
   }, [eligibleResults]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -435,7 +414,7 @@ export default function CertificatesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">전체 프로그램</SelectItem>
-                {samplePrograms.map((program) => (
+                {programs.map((program) => (
                   <SelectItem key={program.program_code} value={program.program_code}>
                     {program.program_name}
                   </SelectItem>

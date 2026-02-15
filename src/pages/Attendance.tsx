@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
@@ -56,6 +56,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { AttendanceStatus } from '@/types/attendance';
 import type { SessionId, EmployeeId } from '@/types/branded';
 import { saveBulkAttendance } from '@/services/api';
+import * as api from '@/services/api';
 
 // 로컬 타입 정의
 interface AttendeeRecord {
@@ -76,51 +77,6 @@ interface SessionWithAttendance {
   attendees: AttendeeRecord[];
 }
 
-// 추가 가능한 직원 목록 (실제 프로젝트에서는 API에서 가져옴)
-const allEmployees: AttendeeRecord[] = [
-  { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC' },
-  { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC' },
-  { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
-  { employee_id: 'EMP-004', employee_name: '박지성', department: 'STITCHING', position: 'PRO_WORKER' },
-  { employee_id: 'EMP-005', employee_name: '손흥민', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
-  { employee_id: 'EMP-006', employee_name: '김민재', department: 'ASSEMBLY', position: 'QIP_TQC' },
-  { employee_id: 'EMP-007', employee_name: '이강인', department: 'STITCHING', position: 'PRO_WORKER' },
-  { employee_id: 'EMP-008', employee_name: '황희찬', department: 'MTL', position: 'QIP_GROUP_LEADER' },
-  { employee_id: 'EMP-009', employee_name: '정우영', department: 'OSC', position: 'QIP_RQC' },
-  { employee_id: 'EMP-010', employee_name: '조규성', department: 'STITCHING', position: 'PRO_WORKER' },
-];
-
-// 샘플 세션 데이터
-const sampleSessions: SessionWithAttendance[] = [
-  {
-    session_id: 'SES-001',
-    program_code: 'QIP-001',
-    program_name: 'QIP 기초 교육',
-    session_date: format(new Date(), 'yyyy-MM-dd'),
-    session_time: '09:00',
-    trainer_name: '김강사',
-    location: 'A동 2층 교육실',
-    attendees: [
-      { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC' },
-      { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC' },
-      { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER' },
-    ],
-  },
-  {
-    session_id: 'SES-002',
-    program_code: 'PRO-001',
-    program_name: '생산 품질 관리',
-    session_date: format(new Date(), 'yyyy-MM-dd'),
-    session_time: '14:00',
-    trainer_name: '박강사',
-    location: 'B동 1층 대강당',
-    attendees: [
-      { employee_id: 'EMP-004', employee_name: '박지성', department: 'Production', position: 'Operator' },
-      { employee_id: 'EMP-005', employee_name: '손흥민', department: 'Production', position: 'Line Leader' },
-    ],
-  },
-];
-
 export default function AttendancePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -138,8 +94,63 @@ export default function AttendancePage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addSearchQuery, setAddSearchQuery] = useState('');
 
-  // Mutable session data (allows adding attendees)
-  const [sessionData, setSessionData] = useState<SessionWithAttendance[]>(sampleSessions);
+  // Mutable session data (loaded from Firebase)
+  const [sessionData, setSessionData] = useState<SessionWithAttendance[]>([]);
+  const [allEmployees, setAllEmployees] = useState<AttendeeRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load data from Firebase
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [sessionsData, employeesData] = await Promise.all([
+        api.getSessions(),
+        api.getEmployees(),
+      ]);
+
+      // Map employees for lookup and for the add-trainee dialog
+      const empRecords: AttendeeRecord[] = employeesData
+        .filter(e => e.status === 'ACTIVE')
+        .map(e => ({
+          employee_id: e.employee_id,
+          employee_name: e.employee_name,
+          department: e.department || '',
+          position: e.position || '',
+        }));
+      setAllEmployees(empRecords);
+
+      // Map sessions - only SCHEDULED or IN_PROGRESS sessions
+      const mappedSessions: SessionWithAttendance[] = sessionsData
+        .filter(s => s.status !== 'CANCELLED')
+        .map(s => ({
+          session_id: s.session_id,
+          program_code: s.program_code,
+          program_name: (s as unknown as Record<string, string>).program_name ?? s.program_code,
+          session_date: s.session_date,
+          session_time: s.session_time ?? '',
+          trainer_name: s.trainer_name ?? '',
+          location: s.location ?? '',
+          attendees: (s.attendees || []).map((empId: string) => {
+            const emp = employeesData.find(e => e.employee_id === empId);
+            return {
+              employee_id: empId,
+              employee_name: emp?.employee_name ?? empId,
+              department: emp?.department ?? '',
+              position: emp?.position ?? '',
+            };
+          }),
+        }));
+      setSessionData(mappedSessions);
+    } catch (err) {
+      console.error('Failed to load attendance data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 선택된 세션
   const selectedSession = useMemo(() => {
@@ -192,7 +203,7 @@ export default function AttendancePage() {
         emp.employee_id.toLowerCase().includes(addSearchQuery.toLowerCase()) ||
         emp.department.toLowerCase().includes(addSearchQuery.toLowerCase())
       );
-  }, [selectedSession, addSearchQuery]);
+  }, [selectedSession, addSearchQuery, allEmployees]);
 
   // 출석 통계
   const attendanceStats = useMemo(() => {
@@ -337,8 +348,14 @@ export default function AttendancePage() {
           <p className="text-muted-foreground">{t('attendance.description')}</p>
         </div>
 
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        )}
+
         {/* 오늘 세션 */}
-        {todaySessions.length > 0 && (
+        {!isLoading && todaySessions.length > 0 && (
           <Card className="border-primary/50 bg-primary/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -374,7 +391,7 @@ export default function AttendancePage() {
         )}
 
         {/* 전체 세션 목록 */}
-        <Card>
+        {!isLoading && <Card>
           <CardHeader>
             <CardTitle>{t('attendance.scheduledSessions')}</CardTitle>
             <CardDescription>{t('attendance.selectSessionDesc')}</CardDescription>
@@ -422,7 +439,7 @@ export default function AttendancePage() {
               </TableBody>
             </Table>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
     );
   }

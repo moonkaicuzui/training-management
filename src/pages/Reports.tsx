@@ -1,6 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import * as api from '@/services/api';
+import type { Employee, TrainingProgram, TrainingResultRecord } from '@/types';
 import {
   Download,
   Users,
@@ -64,100 +66,6 @@ interface ProgramReport {
   retrainingCount: number;
 }
 
-// 샘플 부서 목록
-const departments = [
-  { value: 'ASSEMBLY', label: 'Assembly' },
-  { value: 'STITCHING', label: 'Stitching' },
-  { value: 'QA', label: 'QA' },
-];
-
-// 샘플 부서별 리포트 데이터
-const sampleDepartmentReports: DepartmentReport[] = [
-  {
-    department: 'ASSEMBLY',
-    totalEmployees: 25,
-    completedTrainings: 120,
-    pendingTrainings: 15,
-    completionRate: 89,
-    averageScore: 87,
-    passRate: 92,
-  },
-  {
-    department: 'STITCHING',
-    totalEmployees: 150,
-    completedTrainings: 580,
-    pendingTrainings: 45,
-    completionRate: 93,
-    averageScore: 82,
-    passRate: 88,
-  },
-  {
-    department: 'QA',
-    totalEmployees: 35,
-    completedTrainings: 175,
-    pendingTrainings: 10,
-    completionRate: 95,
-    averageScore: 90,
-    passRate: 95,
-  },
-];
-
-// 샘플 프로그램별 리포트 데이터
-const sampleProgramReports: ProgramReport[] = [
-  {
-    program_code: 'QIP-001',
-    program_name: 'QIP 기초 교육',
-    totalSessions: 12,
-    totalTrainees: 156,
-    passCount: 142,
-    failCount: 14,
-    passRate: 91,
-    averageScore: 85,
-    retrainingCount: 14,
-  },
-  {
-    program_code: 'QIP-002',
-    program_name: 'QIP 심화 교육',
-    totalSessions: 8,
-    totalTrainees: 98,
-    passCount: 88,
-    failCount: 10,
-    passRate: 90,
-    averageScore: 83,
-    retrainingCount: 10,
-  },
-  {
-    program_code: 'PRO-001',
-    program_name: '생산 품질 관리',
-    totalSessions: 20,
-    totalTrainees: 320,
-    passCount: 285,
-    failCount: 35,
-    passRate: 89,
-    averageScore: 81,
-    retrainingCount: 35,
-  },
-  {
-    program_code: 'PRO-002',
-    program_name: '안전 교육',
-    totalSessions: 15,
-    totalTrainees: 245,
-    passCount: 230,
-    failCount: 15,
-    passRate: 94,
-    averageScore: 88,
-    retrainingCount: 15,
-  },
-];
-
-// 샘플 직원 데이터
-const sampleEmployees = [
-  { employee_id: 'EMP-001', employee_name: '홍길동', department: 'ASSEMBLY', position: 'QIP_TQC', building: 'A', line: 'L1', hire_date: '2022-03-15', status: 'ACTIVE', passCount: 8, totalCount: 8 },
-  { employee_id: 'EMP-002', employee_name: '김철수', department: 'ASSEMBLY', position: 'QIP_RQC', building: 'A', line: 'L2', hire_date: '2021-06-20', status: 'ACTIVE', passCount: 12, totalCount: 13 },
-  { employee_id: 'EMP-003', employee_name: '이영희', department: 'STITCHING', position: 'PRO_LINE_LEADER', building: 'B', line: 'L1', hire_date: '2020-01-10', status: 'ACTIVE', passCount: 15, totalCount: 15 },
-  { employee_id: 'EMP-004', employee_name: '박지성', department: 'STITCHING', position: 'PRO_WORKER', building: 'B', line: 'L2', hire_date: '2023-02-01', status: 'ACTIVE', passCount: 5, totalCount: 6 },
-  { employee_id: 'EMP-005', employee_name: '손흥민', department: 'QA', position: 'QIP_QA', building: 'C', line: 'L1', hire_date: '2019-11-15', status: 'ACTIVE', passCount: 20, totalCount: 20 },
-];
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -166,12 +74,125 @@ export default function ReportsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('6months');
   const [activeTab, setActiveTab] = useState<ReportType>('department');
 
-  // 부서별 리포트 필터링
-  const departmentReports = useMemo(() => {
-    return sampleDepartmentReports.filter(r =>
+  // Firebase data state
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [results, setResults] = useState<TrainingResultRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load data from Firebase
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [employeesData, programsData, resultsData] = await Promise.all([
+        api.getEmployees(),
+        api.getPrograms(),
+        api.getResults(),
+      ]);
+      setEmployees(employeesData);
+      setPrograms(programsData);
+      setResults(resultsData);
+    } catch (err) {
+      console.error('Failed to load report data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Compute departments from actual employee data
+  const departments = useMemo(() => {
+    const deptSet = new Set(employees.filter(e => e.status === 'ACTIVE').map(e => e.department));
+    return Array.from(deptSet).sort().map(d => ({ value: d, label: d }));
+  }, [employees]);
+
+  // 부서별 리포트 (computed from real data)
+  const departmentReports = useMemo((): DepartmentReport[] => {
+    const deptMap = new Map<string, { employees: number; completed: number; pending: number; scores: number[]; passCount: number; totalCount: number }>();
+
+    employees.filter(e => e.status === 'ACTIVE').forEach(emp => {
+      const dept = emp.department || 'UNKNOWN';
+      if (!deptMap.has(dept)) {
+        deptMap.set(dept, { employees: 0, completed: 0, pending: 0, scores: [], passCount: 0, totalCount: 0 });
+      }
+      deptMap.get(dept)!.employees++;
+    });
+
+    results.forEach(r => {
+      const emp = employees.find(e => e.employee_id === r.employee_id);
+      const dept = emp?.department || 'UNKNOWN';
+      if (!deptMap.has(dept)) return;
+      const d = deptMap.get(dept)!;
+      d.totalCount++;
+      if (r.result === 'PASS') { d.completed++; d.passCount++; }
+      else { d.pending++; }
+      if (r.score != null) d.scores.push(r.score);
+    });
+
+    const allReports = Array.from(deptMap.entries())
+      .filter(([, d]) => d.employees > 0)
+      .map(([dept, d]) => ({
+        department: dept,
+        totalEmployees: d.employees,
+        completedTrainings: d.completed,
+        pendingTrainings: d.pending,
+        completionRate: d.totalCount > 0 ? Math.round((d.completed / d.totalCount) * 100) : 0,
+        averageScore: d.scores.length > 0 ? Math.round(d.scores.reduce((a, b) => a + b, 0) / d.scores.length) : 0,
+        passRate: d.totalCount > 0 ? Math.round((d.passCount / d.totalCount) * 100) : 0,
+      }));
+
+    return allReports.filter(r =>
       selectedDepartment === 'all' || r.department === selectedDepartment
     );
-  }, [selectedDepartment]);
+  }, [employees, results, selectedDepartment]);
+
+  // 프로그램별 리포트 (computed from real data)
+  const programReports = useMemo((): ProgramReport[] => {
+    return programs.filter(p => p.is_active).map(p => {
+      const programResults = results.filter(r => r.program_code === p.program_code);
+      const passCount = programResults.filter(r => r.result === 'PASS').length;
+      const failCount = programResults.filter(r => r.result === 'FAIL').length;
+      const scores = programResults.filter(r => r.score != null).map(r => r.score!);
+      const retrainingCount = programResults.filter(r => r.needs_retraining).length;
+      return {
+        program_code: p.program_code,
+        program_name: p.program_name,
+        totalSessions: 0,
+        totalTrainees: programResults.length,
+        passCount,
+        failCount,
+        passRate: programResults.length > 0 ? Math.round((passCount / programResults.length) * 100) : 0,
+        averageScore: scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+        retrainingCount,
+      };
+    });
+  }, [programs, results]);
+
+  // 직원별 내보내기 데이터 (computed from real data)
+  const employeeExportData = useMemo(() => {
+    return employees.filter(e => e.status === 'ACTIVE').map(emp => {
+      const empResults = results.filter(r => r.employee_id === emp.employee_id);
+      const passCount = empResults.filter(r => r.result === 'PASS').length;
+      return {
+        employee_id: emp.employee_id,
+        employee_name: emp.employee_name,
+        department: emp.department,
+        position: emp.position,
+        building: emp.building,
+        line: emp.line,
+        hire_date: emp.hire_date,
+        status: emp.status,
+        passCount,
+        totalCount: empResults.length,
+      };
+    });
+  }, [employees, results]);
 
   // Excel 내보내기 (동적 import로 번들 최적화)
   const handleExportToExcel = useCallback(async (reportType: ReportType) => {
@@ -193,7 +214,7 @@ export default function ReportsPage() {
         break;
 
       case 'program':
-        data = sampleProgramReports.map((r) => ({
+        data = programReports.map((r) => ({
           [t('reports.exportProgramCode')]: r.program_code,
           [t('reports.exportProgramName')]: r.program_name,
           [t('reports.exportSessionCount')]: r.totalSessions,
@@ -208,7 +229,7 @@ export default function ReportsPage() {
         break;
 
       case 'employee':
-        data = sampleEmployees.map((emp) => ({
+        data = employeeExportData.map((emp) => ({
           [t('reports.exportEmployeeId')]: emp.employee_id,
           [t('reports.exportName')]: emp.employee_name,
           [t('reports.exportDepartment')]: emp.department,
@@ -240,7 +261,7 @@ export default function ReportsPage() {
 
     // 파일 다운로드
     XLSX.writeFile(wb, filename);
-  }, [departmentReports, t]);
+  }, [departmentReports, programReports, employeeExportData, t]);
 
   // PDF 내보내기 (html2canvas 방식으로 한글/베트남어 지원)
   const handleExportToPDF = useCallback(async (reportType: ReportType) => {
@@ -282,7 +303,7 @@ export default function ReportsPage() {
           { header: '합격률(%)', dataKey: 'passRate' },
           { header: '평균 점수', dataKey: 'averageScore' },
         ];
-        data = sampleProgramReports;
+        data = programReports;
         break;
 
       case 'employee':
@@ -298,23 +319,49 @@ export default function ReportsPage() {
           { header: '이수', dataKey: 'passCount' },
           { header: '총계', dataKey: 'totalCount' },
         ];
-        data = sampleEmployees;
+        data = employeeExportData;
         break;
     }
 
     await exportTableToPDFWithUnicode(data, columns, { title, filename, orientation: 'landscape' });
-  }, [departmentReports]);
+  }, [departmentReports, programReports, employeeExportData]);
 
   // 전체 통계
   const totalStats = useMemo(() => {
-    const totalEmployees = sampleEmployees.length;
-    const totalTrainings = sampleEmployees.reduce((sum, e) => sum + e.totalCount, 0);
-    const passCount = sampleEmployees.reduce((sum, e) => sum + e.passCount, 0);
+    const totalEmployees = employees.filter(e => e.status === 'ACTIVE').length;
+    const totalTrainings = results.length;
+    const passCount = results.filter(r => r.result === 'PASS').length;
     const passRate = totalTrainings > 0 ? Math.round((passCount / totalTrainings) * 100) : 0;
-    const activePrograms = sampleProgramReports.length;
+    const activePrograms = programs.filter(p => p.is_active).length;
 
     return { totalEmployees, totalTrainings, passRate, activePrograms };
-  }, []);
+  }, [employees, programs, results]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">{t('common.loading', 'Loading...')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center space-y-4">
+            <p className="text-destructive font-medium">{error}</p>
+            <Button onClick={loadData} variant="outline">
+              {t('common.retry', 'Retry')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -509,7 +556,7 @@ export default function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sampleProgramReports.map((report) => (
+                  {programReports.map((report) => (
                     <TableRow key={report.program_code}>
                       <TableCell>
                         <Badge variant="outline">{report.program_code}</Badge>

@@ -21,6 +21,9 @@ import * as materialService from './materialService';
 import * as evaluationService from './evaluationService';
 import * as notificationService from './notificationService';
 import * as auditLogService from './auditLogService';
+import * as trainerService from './trainerService';
+import * as trainingPlanService from './trainingPlanService';
+import * as auditComplianceService from './auditComplianceService';
 
 import type {
   Employee,
@@ -1510,4 +1513,83 @@ export async function getAuditLogs(filters?: AuditLogFilters): Promise<AuditLogE
 
 export async function createAuditLog(data: Omit<AuditLogEntry, 'changed_at'>): Promise<AuditLogEntry> {
   return auditLogService.createAuditLog(data);
+}
+
+// ========== Trainer API ==========
+
+export async function getTrainers(status?: string) {
+  return trainerService.getTrainers(status);
+}
+
+export async function getTrainer(id: string) {
+  return trainerService.getTrainer(id);
+}
+
+export async function createTrainer(data: Parameters<typeof trainerService.createTrainer>[0]) {
+  const result = await trainerService.createTrainer(data);
+  return result;
+}
+
+export async function updateTrainer(id: string, updates: Parameters<typeof trainerService.updateTrainer>[1]) {
+  await trainerService.updateTrainer(id, updates);
+}
+
+export async function deleteTrainer(id: string) {
+  await trainerService.deleteTrainer(id);
+}
+
+// ========== Training Plan API ==========
+
+export async function getTrainingPlans() {
+  return trainingPlanService.getTrainingPlans();
+}
+
+export async function getTrainingPlan(id: string) {
+  return trainingPlanService.getTrainingPlan(id);
+}
+
+export async function createTrainingPlan(data: Parameters<typeof trainingPlanService.createTrainingPlan>[0]) {
+  return trainingPlanService.createTrainingPlan(data);
+}
+
+export async function updateTrainingPlan(id: string, updates: Parameters<typeof trainingPlanService.updateTrainingPlan>[1]) {
+  await trainingPlanService.updateTrainingPlan(id, updates);
+}
+
+export async function deleteTrainingPlan(id: string) {
+  await trainingPlanService.deleteTrainingPlan(id);
+}
+
+// ========== Audit Compliance API ==========
+
+export async function getAuditMetrics() {
+  return auditComplianceService.getAuditMetrics();
+}
+
+export async function updateAuditMetric(id: string, updates: Parameters<typeof auditComplianceService.updateAuditMetric>[1]) {
+  await auditComplianceService.updateAuditMetric(id, updates);
+}
+
+export async function createAuditMetric(data: Parameters<typeof auditComplianceService.createAuditMetric>[0]) {
+  return auditComplianceService.createAuditMetric(data);
+}
+
+export async function getAuditFindings() {
+  return auditComplianceService.getAuditFindings();
+}
+
+export async function createAuditFinding(data: Parameters<typeof auditComplianceService.createAuditFinding>[0]) {
+  return auditComplianceService.createAuditFinding(data);
+}
+
+export async function getCorrectiveActions() {
+  return auditComplianceService.getCorrectiveActions();
+}
+
+export async function createCorrectiveAction(data: Parameters<typeof auditComplianceService.createCorrectiveAction>[0]) {
+  return auditComplianceService.createCorrectiveAction(data);
+}
+
+export async function updateCorrectiveAction(id: string, updates: Parameters<typeof auditComplianceService.updateCorrectiveAction>[1]) {
+  await auditComplianceService.updateCorrectiveAction(id, updates);
 }

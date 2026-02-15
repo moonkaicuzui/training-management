@@ -3,7 +3,7 @@
  * 아디다스 감사 대응 - 교육 규정 준수 현황 및 리포트
  */
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import {
   Shield,
   CheckCircle2,
@@ -52,6 +52,7 @@ import type {
   AuditFinding,
   CorrectiveAction,
 } from '@/types/executive';
+import * as api from '@/services/api';
 
 // 카테고리 한글명 매핑
 const categoryNames: Record<AuditCategory, string> = {
@@ -62,187 +63,6 @@ const categoryNames: Record<AuditCategory, string> = {
   RETRAINING: '재교육',
   RECORDS_RETENTION: '기록 보관',
 };
-
-// 샘플 데이터 - 실제로는 API에서 가져옴
-const sampleMetrics: AuditComplianceMetric[] = [
-  // TRAINING_COVERAGE
-  {
-    id: 'tc-001',
-    category: 'TRAINING_COVERAGE',
-    requirement: '모든 생산직 직원 필수 교육 이수',
-    description: '생산라인 배치 전 필수 안전/품질 교육 100% 이수',
-    currentStatus: 'COMPLIANT',
-    currentValue: 98.5,
-    targetValue: 95,
-    unit: '%',
-    evidence: ['교육 이수 현황 리포트', '월별 완료율 추이'],
-    lastChecked: '2024-12-28',
-  },
-  {
-    id: 'tc-002',
-    category: 'TRAINING_COVERAGE',
-    requirement: 'QIP 프로그램 대상자 교육 완료',
-    description: 'QIP 담당자 전원 지정 프로그램 이수',
-    currentStatus: 'PARTIAL',
-    currentValue: 89,
-    targetValue: 100,
-    unit: '%',
-    evidence: ['QIP 교육 현황'],
-    lastChecked: '2024-12-28',
-    actionRequired: '미이수자 11% 대상 집중 교육 필요',
-  },
-  // CERTIFICATION
-  {
-    id: 'cert-001',
-    category: 'CERTIFICATION',
-    requirement: '교육 이수 증명서 발급',
-    description: '모든 필수 교육에 대한 이수 증명서 발급 및 관리',
-    currentStatus: 'COMPLIANT',
-    evidence: ['이수증 발급 시스템', '전자 서명 시스템'],
-    lastChecked: '2024-12-28',
-  },
-  {
-    id: 'cert-002',
-    category: 'CERTIFICATION',
-    requirement: '자격 유효기간 관리',
-    description: '교육 자격의 유효기간 관리 및 갱신 알림',
-    currentStatus: 'COMPLIANT',
-    currentValue: 100,
-    targetValue: 100,
-    unit: '%',
-    evidence: ['자동 만료 알림 시스템', '갱신 교육 일정'],
-    lastChecked: '2024-12-28',
-  },
-  // DOCUMENTATION
-  {
-    id: 'doc-001',
-    category: 'DOCUMENTATION',
-    requirement: '교육 자료 버전 관리',
-    description: '모든 교육 자료의 버전 및 개정 이력 관리',
-    currentStatus: 'COMPLIANT',
-    evidence: ['문서 관리 시스템', '개정 이력 로그'],
-    lastChecked: '2024-12-28',
-  },
-  {
-    id: 'doc-002',
-    category: 'DOCUMENTATION',
-    requirement: '교육 결과 기록 보존',
-    description: '최소 5년간 교육 결과 기록 보존',
-    currentStatus: 'COMPLIANT',
-    evidence: ['데이터베이스 백업', '문서 보관 정책'],
-    lastChecked: '2024-12-28',
-  },
-  // COMPETENCY
-  {
-    id: 'comp-001',
-    category: 'COMPETENCY',
-    requirement: '역량 평가 체계 수립',
-    description: '직무별 역량 평가 기준 및 프로세스',
-    currentStatus: 'PARTIAL',
-    evidence: ['역량 평가 매트릭스'],
-    lastChecked: '2024-12-28',
-    actionRequired: '평가 기준 세분화 필요',
-  },
-  {
-    id: 'comp-002',
-    category: 'COMPETENCY',
-    requirement: '합격/불합격 기준 명확화',
-    description: '모든 교육 프로그램의 합격 기준 문서화',
-    currentStatus: 'COMPLIANT',
-    evidence: ['프로그램별 합격 기준 문서'],
-    lastChecked: '2024-12-28',
-  },
-  // RETRAINING
-  {
-    id: 'retr-001',
-    category: 'RETRAINING',
-    requirement: '불합격자 재교육 프로세스',
-    description: '불합격 시 재교육 절차 및 추적',
-    currentStatus: 'COMPLIANT',
-    currentValue: 100,
-    targetValue: 100,
-    unit: '%',
-    evidence: ['재교육 프로세스 문서', '재교육 현황 리포트'],
-    lastChecked: '2024-12-28',
-  },
-  {
-    id: 'retr-002',
-    category: 'RETRAINING',
-    requirement: '정기 재교육 일정 관리',
-    description: '자격 갱신을 위한 정기 재교육 계획',
-    currentStatus: 'COMPLIANT',
-    evidence: ['연간 교육 계획', '재교육 일정표'],
-    lastChecked: '2024-12-28',
-  },
-  // RECORDS_RETENTION
-  {
-    id: 'rec-001',
-    category: 'RECORDS_RETENTION',
-    requirement: '교육 기록 변경 이력 관리',
-    description: '모든 교육 결과 수정 시 변경 로그 기록',
-    currentStatus: 'COMPLIANT',
-    evidence: ['Result_Edit_Log 시트', '변경 사유 필수 입력'],
-    lastChecked: '2024-12-28',
-  },
-  {
-    id: 'rec-002',
-    category: 'RECORDS_RETENTION',
-    requirement: '데이터 삭제 금지 정책',
-    description: '교육 결과 데이터 삭제 불가 (소프트 삭제만 허용)',
-    currentStatus: 'COMPLIANT',
-    evidence: ['NO DELETE 정책 코드', '소프트 삭제 구현'],
-    lastChecked: '2024-12-28',
-  },
-];
-
-const sampleFindings: AuditFinding[] = [
-  {
-    id: 'find-001',
-    severity: 'MAJOR',
-    category: 'TRAINING_COVERAGE',
-    description: 'QIP 교육 미이수자 11% 존재',
-    requirement: 'QIP 담당자 전원 교육 이수',
-    evidence: '교육 현황 리포트 2024-12',
-    recommendation: '1월 중 미이수자 대상 집중 교육 실시',
-  },
-  {
-    id: 'find-002',
-    severity: 'MINOR',
-    category: 'COMPETENCY',
-    description: '역량 평가 기준 세분화 필요',
-    requirement: '직무별 상세 역량 평가 체계',
-    evidence: '현재 평가 매트릭스',
-    recommendation: '직무별 세부 역량 항목 추가',
-  },
-];
-
-const sampleCorrectiveActions: CorrectiveAction[] = [
-  {
-    id: 'ca-001',
-    findingId: 'find-001',
-    action: 'QIP 미이수자 대상 집중 교육 일정 수립',
-    responsiblePerson: '김교육',
-    targetDate: '2025-01-15',
-    status: 'IN_PROGRESS',
-  },
-  {
-    id: 'ca-002',
-    findingId: 'find-001',
-    action: '미이수자 개별 연락 및 교육 참여 독려',
-    responsiblePerson: '박담당',
-    targetDate: '2025-01-05',
-    status: 'COMPLETED',
-    completedDate: '2025-01-03',
-  },
-  {
-    id: 'ca-003',
-    findingId: 'find-002',
-    action: '역량 평가 기준 문서 개정',
-    responsiblePerson: '이품질',
-    targetDate: '2025-02-28',
-    status: 'PENDING',
-  },
-];
 
 // 상태별 배지 컴포넌트
 const StatusBadge = memo(function StatusBadge({
@@ -498,26 +318,54 @@ export default function AuditCompliance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [metrics, setMetrics] = useState<AuditComplianceMetric[]>([]);
+  const [findings, setFindings] = useState<AuditFinding[]>([]);
+  const [correctiveActions, setCorrectiveActions] = useState<CorrectiveAction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [metricsData, findingsData, actionsData] = await Promise.all([
+        api.getAuditMetrics(),
+        api.getAuditFindings(),
+        api.getCorrectiveActions(),
+      ]);
+      setMetrics(metricsData);
+      setFindings(findingsData);
+      setCorrectiveActions(actionsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load audit data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 카테고리별 요약 계산
   const categorySummaries = useMemo(
-    () => calculateCategorySummaries(sampleMetrics),
-    []
+    () => calculateCategorySummaries(metrics),
+    [metrics]
   );
 
   // 전체 통계 계산
   const overallStats = useMemo(() => {
-    const total = sampleMetrics.length;
-    const compliant = sampleMetrics.filter(
+    const total = metrics.length;
+    const compliant = metrics.filter(
       (m) => m.currentStatus === 'COMPLIANT'
     ).length;
-    const partial = sampleMetrics.filter(
+    const partial = metrics.filter(
       (m) => m.currentStatus === 'PARTIAL'
     ).length;
-    const nonCompliant = sampleMetrics.filter(
+    const nonCompliant = metrics.filter(
       (m) => m.currentStatus === 'NON_COMPLIANT'
     ).length;
-    const score = Math.round(((compliant + partial * 0.5) / total) * 100);
+    const score = total > 0 ? Math.round(((compliant + partial * 0.5) / total) * 100) : 0;
 
     let status: 'PASS' | 'CONDITIONAL_PASS' | 'FAIL';
     if (nonCompliant > 0) {
@@ -529,11 +377,11 @@ export default function AuditCompliance() {
     }
 
     return { total, compliant, partial, nonCompliant, score, status };
-  }, []);
+  }, [metrics]);
 
   // 필터링된 메트릭
   const filteredMetrics = useMemo(() => {
-    return sampleMetrics.filter((m) => {
+    return metrics.filter((m) => {
       const matchesSearch =
         searchQuery === '' ||
         m.requirement.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -544,7 +392,7 @@ export default function AuditCompliance() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter]);
+  }, [metrics, searchQuery, statusFilter]);
 
   // Excel 내보내기
   const handleExportExcel = useCallback(async () => {
@@ -593,7 +441,7 @@ export default function AuditCompliance() {
       '조치필요',
       '최종확인일',
     ];
-    const detailRows = sampleMetrics.map((m) => [
+    const detailRows = metrics.map((m) => [
       m.id,
       categoryNames[m.category],
       m.requirement,
@@ -622,7 +470,7 @@ export default function AuditCompliance() {
       '요구사항',
       '권고사항',
     ];
-    const findingsRows = sampleFindings.map((f) => [
+    const findingsRows = findings.map((f) => [
       f.id,
       f.severity,
       categoryNames[f.category],
@@ -643,7 +491,7 @@ export default function AuditCompliance() {
       '상태',
       '완료일',
     ];
-    const actionsRows = sampleCorrectiveActions.map((a) => [
+    const actionsRows = correctiveActions.map((a) => [
       a.id,
       a.findingId,
       a.action,
@@ -663,7 +511,7 @@ export default function AuditCompliance() {
 
     const filename = `아디다스_감사대응_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
-  }, [overallStats, categorySummaries]);
+  }, [metrics, findings, correctiveActions, overallStats, categorySummaries]);
 
   return (
     <div className="space-y-6">
@@ -679,8 +527,8 @@ export default function AuditCompliance() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={loadData} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             새로고침
           </Button>
           <Button onClick={handleExportExcel}>
@@ -690,7 +538,34 @@ export default function AuditCompliance() {
         </div>
       </div>
 
+      {/* 로딩 상태 */}
+      {isLoading && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="ml-3 text-muted-foreground">데이터를 불러오는 중...</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 에러 상태 */}
+      {error && !isLoading && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <span>{error}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 전체 현황 요약 */}
+      {!isLoading && !error && (<>
       <div className="grid gap-4 md:grid-cols-5">
         <Card
           className={`col-span-2 ${
@@ -748,7 +623,7 @@ export default function AuditCompliance() {
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{sampleFindings.length}</p>
+                <p className="text-2xl font-bold">{findings.length}</p>
                 <p className="text-xs text-muted-foreground">발견 사항</p>
               </div>
             </div>
@@ -764,7 +639,7 @@ export default function AuditCompliance() {
               <div>
                 <p className="text-2xl font-bold">
                   {
-                    sampleCorrectiveActions.filter(
+                    correctiveActions.filter(
                       (a) => a.status === 'IN_PROGRESS'
                     ).length
                   }
@@ -784,7 +659,7 @@ export default function AuditCompliance() {
               <div>
                 <p className="text-2xl font-bold">
                   {
-                    sampleCorrectiveActions.filter(
+                    correctiveActions.filter(
                       (a) => a.status === 'COMPLETED'
                     ).length
                   }
@@ -846,7 +721,7 @@ export default function AuditCompliance() {
                   summary={summary}
                   metrics={
                     statusFilter === 'all'
-                      ? sampleMetrics.filter(
+                      ? metrics.filter(
                           (m) => m.category === summary.category
                         )
                       : categoryMetrics
@@ -868,7 +743,7 @@ export default function AuditCompliance() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sampleFindings.map((finding) => (
+                {findings.map((finding) => (
                   <div
                     key={finding.id}
                     className="p-4 border rounded-lg space-y-3"
@@ -910,7 +785,7 @@ export default function AuditCompliance() {
                   </div>
                 ))}
 
-                {sampleFindings.length === 0 && (
+                {findings.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
                     <p>발견된 문제가 없습니다.</p>
@@ -930,8 +805,8 @@ export default function AuditCompliance() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sampleCorrectiveActions.map((action) => {
-                  const finding = sampleFindings.find(
+                {correctiveActions.map((action) => {
+                  const finding = findings.find(
                     (f) => f.id === action.findingId
                   );
 
@@ -989,6 +864,7 @@ export default function AuditCompliance() {
           </Card>
         </TabsContent>
       </Tabs>
+      </>)}
     </div>
   );
 }

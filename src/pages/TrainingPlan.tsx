@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Calendar,
   Plus,
@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,133 +58,13 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useTrainingStore } from '@/stores/trainingStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useNavigate } from 'react-router-dom';
-
-interface PlannedProgramLocal {
-  program_code: string;
-  program_name: string;
-  planned_sessions: number;
-  target_participants: number;
-  scheduled_months: number[];
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  budget?: number;
-  actual_sessions: number;
-  actual_participants: number;
-  completion_rate: number;
-}
-
-interface AnnualPlan {
-  plan_id: string;
-  plan_name: string;
-  year: number;
-  period: 'YEARLY' | 'QUARTERLY' | 'MONTHLY';
-  status: 'DRAFT' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED';
-  planned_programs: PlannedProgramLocal[];
-  total_budget?: number;
-  created_by: string;
-  created_at: string;
-}
-
-// 샘플 연간 계획 데이터
-const samplePlans: AnnualPlan[] = [
-  {
-    plan_id: 'PLAN-2025-001',
-    plan_name: '2025년 연간 교육 계획',
-    year: 2025,
-    period: 'YEARLY',
-    status: 'IN_PROGRESS',
-    total_budget: 500000000,
-    created_by: 'admin',
-    created_at: '2024-12-01',
-    planned_programs: [
-      {
-        program_code: 'QIP-001',
-        program_name: 'QIP 기본 교육',
-        planned_sessions: 12,
-        target_participants: 240,
-        scheduled_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        priority: 'HIGH',
-        budget: 50000000,
-        actual_sessions: 0,
-        actual_participants: 0,
-        completion_rate: 0,
-      },
-      {
-        program_code: 'QIP-002',
-        program_name: 'SPC 교육',
-        planned_sessions: 6,
-        target_participants: 120,
-        scheduled_months: [1, 3, 5, 7, 9, 11],
-        priority: 'HIGH',
-        budget: 30000000,
-        actual_sessions: 0,
-        actual_participants: 0,
-        completion_rate: 0,
-      },
-      {
-        program_code: 'QIP-003',
-        program_name: '검사 기법',
-        planned_sessions: 4,
-        target_participants: 80,
-        scheduled_months: [2, 5, 8, 11],
-        priority: 'MEDIUM',
-        budget: 20000000,
-        actual_sessions: 0,
-        actual_participants: 0,
-        completion_rate: 0,
-      },
-      {
-        program_code: 'PRO-001',
-        program_name: '생산 관리',
-        planned_sessions: 6,
-        target_participants: 180,
-        scheduled_months: [1, 3, 5, 7, 9, 11],
-        priority: 'HIGH',
-        budget: 40000000,
-        actual_sessions: 0,
-        actual_participants: 0,
-        completion_rate: 0,
-      },
-    ],
-  },
-  {
-    plan_id: 'PLAN-2024-001',
-    plan_name: '2024년 연간 교육 계획',
-    year: 2024,
-    period: 'YEARLY',
-    status: 'COMPLETED',
-    total_budget: 450000000,
-    created_by: 'admin',
-    created_at: '2023-12-01',
-    planned_programs: [
-      {
-        program_code: 'QIP-001',
-        program_name: 'QIP 기본 교육',
-        planned_sessions: 12,
-        target_participants: 240,
-        scheduled_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        priority: 'HIGH',
-        budget: 45000000,
-        actual_sessions: 12,
-        actual_participants: 235,
-        completion_rate: 100,
-      },
-      {
-        program_code: 'QIP-002',
-        program_name: 'SPC 교육',
-        planned_sessions: 6,
-        target_participants: 120,
-        scheduled_months: [1, 3, 5, 7, 9, 11],
-        priority: 'HIGH',
-        budget: 28000000,
-        actual_sessions: 6,
-        actual_participants: 118,
-        completion_rate: 100,
-      },
-    ],
-  },
-];
+import * as api from '@/services/api';
+import type { AnnualPlan } from '@/services/trainingPlanService';
 
 // 월별 캘린더 뷰 컴포넌트
 function MonthlyCalendarView({ plan }: { plan: AnnualPlan }) {
@@ -581,6 +462,7 @@ function ProgramQualityStatus({ programs }: { programs: Array<{ code: string; na
 
 export default function TrainingPlanPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   // Store 연동
   const {
@@ -594,19 +476,44 @@ export default function TrainingPlanPage() {
     fetchPrograms,
   } = useTrainingStore();
 
-  const [plans] = useState<AnnualPlan[]>(samplePlans);
+  const [plans, setPlans] = useState<AnnualPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedPlan, setSelectedPlan] = useState<AnnualPlan | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    plan_name: '',
+    year: new Date().getFullYear(),
+    period: 'YEARLY' as AnnualPlan['period'],
+    total_budget: 0,
+  });
+
+  // Firebase에서 교육 계획 로드
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.getTrainingPlans();
+      setPlans(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load training plans');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // 초기 데이터 로드
   useEffect(() => {
+    loadData();
     fetchRetrainingTargets();
     fetchExpiringTrainings(30);
     fetchDashboardStats();
     fetchPrograms();
-  }, [fetchRetrainingTargets, fetchExpiringTrainings, fetchDashboardStats, fetchPrograms]);
+  }, [loadData, fetchRetrainingTargets, fetchExpiringTrainings, fetchDashboardStats, fetchPrograms]);
 
   // 품질 지표 계산
   const qualityMetrics = useMemo(() => {
@@ -664,16 +571,6 @@ export default function TrainingPlanPage() {
       };
     }) ?? [];
 
-    // 프로그램이 없으면 샘플 데이터
-    if (result.length === 0) {
-      return [
-        { code: 'QIP-001', name: 'QIP 기본 교육', sessions: 12, passRate: 92, retrainingNeeded: 3 },
-        { code: 'QIP-002', name: 'SPC 교육', sessions: 6, passRate: 88, retrainingNeeded: 5 },
-        { code: 'QIP-003', name: '검사 기법', sessions: 4, passRate: 95, retrainingNeeded: 1 },
-        { code: 'PRO-001', name: '생산 관리', sessions: 6, passRate: 78, retrainingNeeded: 8 },
-      ];
-    }
-
     return result;
   }, [programs, retrainingTargets]);
 
@@ -702,6 +599,29 @@ export default function TrainingPlanPage() {
     };
   }, [currentYearPlan]);
 
+  const handleCreatePlan = async () => {
+    if (!formData.plan_name.trim()) return;
+    setIsCreating(true);
+    try {
+      await api.createTrainingPlan({
+        plan_name: formData.plan_name,
+        year: formData.year,
+        period: formData.period,
+        status: 'DRAFT',
+        planned_programs: [],
+        total_budget: formData.total_budget || undefined,
+        created_by: user?.email || '',
+      });
+      setCreateDialogOpen(false);
+      setFormData({ plan_name: '', year: new Date().getFullYear(), period: 'YEARLY', total_budget: 0 });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '계획 생성 실패');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const handleViewDetail = (plan: AnnualPlan) => {
     setSelectedPlan(plan);
     setDetailDialogOpen(true);
@@ -720,12 +640,38 @@ export default function TrainingPlanPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             재교육 현황
           </Button>
-          <Button>
+          <Button onClick={() => { setFormData({ plan_name: '', year: new Date().getFullYear(), period: 'YEARLY', total_budget: 0 }); setCreateDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             새 계획 수립
           </Button>
         </div>
       </div>
+
+      {/* 로딩 상태 */}
+      {isLoading && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mr-3" />
+            <span className="text-muted-foreground">교육 계획을 불러오는 중...</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 에러 상태 */}
+      {error && (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              <span className="text-sm">{error}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 품질 관리 현황 - 품질 부서장을 위한 핵심 지표 */}
       <QualityMetricsSummary
@@ -1165,6 +1111,95 @@ export default function TrainingPlanPage() {
         onClose={() => setDetailDialogOpen(false)}
         plan={selectedPlan}
       />
+
+      {/* 새 계획 생성 다이얼로그 */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              새 교육 계획 수립
+            </DialogTitle>
+            <DialogDescription>
+              연간 교육 계획의 기본 정보를 입력하세요.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="plan_name">계획명 *</Label>
+              <Input
+                id="plan_name"
+                placeholder="예: 2025년 연간 교육 계획"
+                value={formData.plan_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, plan_name: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="year">연도</Label>
+              <Select
+                value={formData.year.toString()}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, year: parseInt(v) }))}
+              >
+                <SelectTrigger id="year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2024, 2025, 2026, 2027, 2028].map((y) => (
+                    <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="period">기간</Label>
+              <Select
+                value={formData.period}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, period: v as AnnualPlan['period'] }))}
+              >
+                <SelectTrigger id="period">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="YEARLY">연간</SelectItem>
+                  <SelectItem value="QUARTERLY">분기</SelectItem>
+                  <SelectItem value="MONTHLY">월간</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="total_budget">예산 (만원)</Label>
+              <Input
+                id="total_budget"
+                type="number"
+                min={0}
+                placeholder="0"
+                value={formData.total_budget || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, total_budget: parseInt(e.target.value) || 0 }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={isCreating}>
+              취소
+            </Button>
+            <Button onClick={handleCreatePlan} disabled={isCreating || !formData.plan_name.trim()}>
+              {isCreating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  생성 중...
+                </>
+              ) : (
+                '생성'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

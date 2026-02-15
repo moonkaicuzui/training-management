@@ -38,53 +38,90 @@ service cloud.firestore {
       return request.resource.data[field] is timestamp;
     }
 
-    // 직원 정보
+    // ========== 직원 ==========
     match /employees/{employeeId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    // 교육 프로그램
-    match /trainingPrograms/{programId} {
+    // ========== 교육 프로그램 (snake_case: training_programs) ==========
+    match /training_programs/{programId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    // 교육 세션
-    match /trainingSessions/{sessionId} {
+    // ========== 교육 세션 (snake_case: training_sessions) ==========
+    match /training_sessions/{sessionId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    // 교육 결과 - 삭제 금지 (감사 추적)
-    match /trainingResults/{resultId} {
+    // ========== 교육 결과 - 삭제 금지 (training_results) ==========
+    match /training_results/{resultId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      // 트레이너 또는 관리자만 생성/수정 가능
-      allow create: if (isTrainer() || isAdmin()) &&
-                      hasAllowedDomain() &&
-                      hasRequiredFields(['employee_id', 'session_id', 'result']);
-      allow update: if (isTrainer() || isAdmin()) && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if false;  // 삭제 불가 - 감사 추적 필수
     }
 
-    // 프로그램 변경 로그
-    match /programChangeLogs/{logId} {
+    // ========== 프로그램 변경 로그 (program_change_logs) ==========
+    match /program_change_logs/{logId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
       allow update, delete: if false;  // 로그는 수정/삭제 불가
     }
 
-    // 결과 수정 로그
-    match /resultEditLogs/{logId} {
+    // ========== 결과 수정 로그 (result_edit_logs) ==========
+    match /result_edit_logs/{logId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
       allow update, delete: if false;  // 로그는 수정/삭제 불가
     }
 
-    // 사용자 역할 정보
+    // ========== 트레이너 ==========
+    match /trainers/{trainerId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 교육 계획 ==========
+    match /trainingPlans/{planId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 출결 ==========
+    match /attendances/{attendanceId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 감사 준수 ==========
+    match /auditMetrics/{metricId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /auditFindings/{findingId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /correctiveActions/{actionId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 사용자 역할 정보 ==========
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
@@ -92,26 +129,93 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // New TQC 관련 컬렉션
-    match /newTqcTrainees/{traineeId} {
+    // ========== TQC 관련 컬렉션 ==========
+    match /tqc_teams/{teamId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    match /newTqcMeetings/{meetingId} {
+    match /tqc_trainees/{traineeId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    match /newTqcResignations/{resignationId} {
+    match /tqc_training_stages/{stageId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /tqc_color_blind_tests/{testId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /tqc_meetings/{meetingId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /tqc_resignations/{resignationId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if false;  // 퇴사 기록은 삭제 불가
     }
 
-    // 교육 자료
+    // ========== 프로젝트 관리 ==========
+    match /projects/{projectId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_members/{memberId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_tasks/{taskId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_messages/{messageId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAuthenticated();
+    }
+
+    match /project_categories/{categoryId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_events/{eventId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_automations/{automationId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /project_notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    // ========== 교육 자료 ==========
     match /materials/{materialId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
@@ -124,14 +228,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // 효과성 평가
+    // ========== 효과성 평가 ==========
     match /evaluations/{evaluationId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
 
-    // 알림
+    // ========== 알림 ==========
     match /notifications/{notificationId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
@@ -142,7 +246,21 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 감사 로그 (APPEND-ONLY: 수정/삭제 불가)
+    // ========== CAPA (시정/예방 조치) ==========
+    match /capas/{capaId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 재교육 대상 ==========
+    match /retraining_targets/{targetId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 감사 로그 (APPEND-ONLY: 수정/삭제 불가) ==========
     match /auditLogs/{logId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();

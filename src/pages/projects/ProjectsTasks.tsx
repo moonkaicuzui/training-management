@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -140,6 +139,9 @@ export default function ProjectsTasks() {
     isTasksLoading,
     isMessagesLoading,
     updateTask,
+    createTask,
+    deleteTask,
+    fetchTasksByProject,
     fetchMessagesByTask,
     createMessage,
     markMessageAsRead,
@@ -243,22 +245,27 @@ export default function ProjectsTasks() {
         dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
       });
     } else {
-      // 새 과제 생성은 createTask 사용 (추후 구현)
-      logger.log('New task would be created:', taskFormData);
+      await createTask({
+        projectId: 'default',
+        title: taskFormData.title,
+        description: taskFormData.description || undefined,
+        priority: taskFormData.priority,
+        startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
+        dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
+      });
     }
     setIsDialogOpen(false);
     setSelectedTask(null);
-  }, [selectedTask, taskFormData, updateTask]);
+  }, [selectedTask, taskFormData, updateTask, createTask]);
 
   // 과제 삭제
   const handleDeleteTask = useCallback(async () => {
     if (selectedTask && confirm('이 과제를 삭제하시겠습니까?')) {
-      // deleteTask 함수 호출 (추후 구현)
-      logger.log('Task would be deleted:', selectedTask.id);
+      await deleteTask(selectedTask.id);
       setIsDialogOpen(false);
       setSelectedTask(null);
     }
-  }, [selectedTask]);
+  }, [selectedTask, deleteTask]);
 
   // 메시지 전송
   const handleSendMessage = useCallback(async () => {
@@ -350,9 +357,9 @@ export default function ProjectsTasks() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      // Initialization logic can be added here if needed
+      fetchTasksByProject('default');
     }
-  }, []);
+  }, [fetchTasksByProject]);
 
   // 과제 선택 시 메시지 로드
   useEffect(() => {

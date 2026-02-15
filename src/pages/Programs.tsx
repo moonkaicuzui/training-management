@@ -192,8 +192,9 @@ export default function Programs() {
       setFormDialogOpen(false);
       setEditingProgram(null);
       setFormData(emptyFormData);
-    } catch {
-      addToast({ type: 'error', title: t('messages.saveError') });
+    } catch (error) {
+      console.error('[Programs] Save error:', error);
+      addToast({ type: 'error', title: t('messages.saveError') + ': ' + (error instanceof Error ? error.message : String(error)) });
     }
   };
 

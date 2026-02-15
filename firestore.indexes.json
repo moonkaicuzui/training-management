@@ -45,63 +45,151 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "hireDate", "order": "DESCENDING" }
+        { "fieldPath": "hire_date", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "trainingResults",
+      "collectionGroup": "training_programs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "employeeId", "order": "ASCENDING" },
-        { "fieldPath": "trainingDate", "order": "DESCENDING" }
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "program_code", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "trainingResults",
+      "collectionGroup": "training_programs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "programCode", "order": "ASCENDING" },
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "program_code", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "training_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "program_code", "order": "ASCENDING" },
+        { "fieldPath": "session_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "training_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "session_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "training_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "program_code", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "training_results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "employee_id", "order": "ASCENDING" },
+        { "fieldPath": "training_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "training_results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "program_code", "order": "ASCENDING" },
         { "fieldPath": "result", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "trainingResults",
+      "collectionGroup": "training_results",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "programCode", "order": "ASCENDING" },
-        { "fieldPath": "trainingDate", "order": "DESCENDING" }
+        { "fieldPath": "program_code", "order": "ASCENDING" },
+        { "fieldPath": "training_date", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "trainingSessions",
+      "collectionGroup": "program_change_logs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "programCode", "order": "ASCENDING" },
-        { "fieldPath": "sessionDate", "order": "DESCENDING" }
+        { "fieldPath": "program_code", "order": "ASCENDING" },
+        { "fieldPath": "changed_at", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "trainingSessions",
+      "collectionGroup": "result_edit_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "result_id", "order": "ASCENDING" },
+        { "fieldPath": "edited_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trainers",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "sessionDate", "order": "ASCENDING" }
+        { "fieldPath": "trainer_name", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "newTqcTrainees",
+      "collectionGroup": "attendances",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "session_id", "order": "ASCENDING" },
+        { "fieldPath": "employee_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_teams",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "team_name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_trainees",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "startDate", "order": "DESCENDING" }
+        { "fieldPath": "start_date", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "newTqcMeetings",
+      "collectionGroup": "tqc_trainees",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "traineeId", "order": "ASCENDING" },
-        { "fieldPath": "meetingDate", "order": "DESCENDING" }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "team_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_training_stages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "trainee_id", "order": "ASCENDING" },
+        { "fieldPath": "stage_order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_color_blind_tests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "trainee_id", "order": "ASCENDING" },
+        { "fieldPath": "test_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_meetings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "trainee_id", "order": "ASCENDING" },
+        { "fieldPath": "meeting_date", "order": "DESCENDING" }
       ]
     },
     {
@@ -110,6 +198,14 @@
       "fields": [
         { "fieldPath": "folderId", "order": "ASCENDING" },
         { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "materialFolders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parentId", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
@@ -137,6 +233,14 @@
       ]
     },
     {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipient_id", "order": "ASCENDING" },
+        { "fieldPath": "is_read", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "auditLogs",
       "queryScope": "COLLECTION",
       "fields": [
@@ -150,6 +254,54 @@
       "fields": [
         { "fieldPath": "action", "order": "ASCENDING" },
         { "fieldPath": "changed_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "project_members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "project_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "project_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "taskId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "project_categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "project_automations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],
