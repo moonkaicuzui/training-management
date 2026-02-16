@@ -51,6 +51,7 @@ import type {
 } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import type { Analytics } from 'firebase/analytics';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { logger } from '@/utils/logger';
 
 // Firebase configuration from environment variables
@@ -90,6 +91,22 @@ isSupported().then((supported) => {
     analytics = getAnalytics(app);
   }
 });
+
+// Initialize App Check (reCAPTCHA Enterprise)
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY;
+if (recaptchaSiteKey) {
+  // Enable debug token for localhost development
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // @ts-expect-error -- Firebase App Check debug token flag
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+  logger.info('App Check initialized with reCAPTCHA Enterprise');
+}
 
 // Admin email addresses
 const ADMIN_EMAILS = [
