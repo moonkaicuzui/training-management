@@ -83,6 +83,10 @@
       "dashboard": "Quản lý CAPA",
       "new": "Tạo CAPA mới"
     },
+    "fivePrs": {
+      "dashboard": "Bảng điều khiển 5PRS",
+      "aiInstructions": "Hướng dẫn AI"
+    },
     "department": "Bảng điều khiển phòng ban",
     "competency": "Ma trận năng lực",
     "skillGap": "Phân tích khoảng trống kỹ năng"
@@ -92,6 +96,7 @@
     "newTQC": "Đào tạo TQC mới",
     "projects": "Quản lý dự án",
     "capa": "CAPA",
+    "inspection": "Đánh giá kiểm tra",
     "management": "Quản lý",
     "admin": "Quản trị",
     "quickStats": "Thống kê nhanh",
@@ -2152,5 +2157,41 @@
       "belowTarget": "Dưới mục tiêu",
       "total": "Tổng"
     }
+  },
+  "fivePrs": {
+    "dashboardTitle": "Bảng điều khiển kiểm tra 5PRS",
+    "dashboardDescription": "Tổng quan kiểm tra chất lượng do 5 kiểm toán viên PRS quản lý",
+    "aiTitle": "Hướng dẫn công việc AI",
+    "aiDescription": "Tóm tắt chất lượng và tạo hướng dẫn công việc bằng AI",
+    "monthSelect": "Chọn tháng",
+    "selectMonthPrompt": "Chọn một tháng để tải dữ liệu kiểm tra",
+    "totalValidation": "Tổng kiểm tra",
+    "rejectRate": "Tỷ lệ lỗi",
+    "highRiskTqc": "TQC rủi ro cao",
+    "avgDailyValidation": "Kiểm tra TB/ngày",
+    "tqcAnalysis": "Phân tích kiểm tra viên TQC",
+    "tqcName": "Tên TQC",
+    "validation": "Kiểm tra",
+    "reject": "Lỗi",
+    "mainDefect": "Lỗi chính",
+    "building": "Tòa nhà",
+    "defectDistribution": "Phân bố loại lỗi",
+    "buildingAnalysis": "Tỷ lệ lỗi theo tòa nhà",
+    "dailyTrend": "Xu hướng kiểm tra/lỗi hàng ngày",
+    "aiBriefing": "Tóm tắt AI",
+    "riskTqc": "Kiểm tra viên rủi ro",
+    "riskModels": "Mẫu rủi ro",
+    "riskTqcTitle": "Kiểm tra viên TQC rủi ro cao (Tỷ lệ lỗi > 5%)",
+    "riskModelsTitle": "Mẫu lỗi cao (Tỷ lệ lỗi > 3%)",
+    "model": "Mẫu",
+    "generate": "Tạo tóm tắt",
+    "regenerate": "Tạo lại",
+    "analyzing": "AI đang phân tích...",
+    "clickGenerate": "Nhấn \"Tạo tóm tắt\" để bắt đầu phân tích AI",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "print": "In",
+    "share": "Chia sẻ",
+    "noHighRisk": "Không tìm thấy mục rủi ro cao"
   }
 }

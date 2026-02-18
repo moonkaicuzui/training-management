@@ -61,6 +61,10 @@ const CAPADashboard = lazy(() => import('./pages/capa/CAPADashboard'));
 const CAPAForm = lazy(() => import('./pages/capa/CAPAForm'));
 const CAPADetail = lazy(() => import('./pages/capa/CAPADetail'));
 
+// 5PRS (검사 평가) 페이지
+const FivePrsDashboard = lazy(() => import('./pages/five-prs/FivePrsDashboard'));
+const FivePrsAiInstructions = lazy(() => import('./pages/five-prs/FivePrsAiInstructions'));
+
 // 로딩 컴포넌트
 function PageLoader() {
   return (
@@ -325,6 +329,21 @@ function App() {
                   <Route path=":id/edit" element={
                     <Suspense fallback={<PageLoader />}>
                       <CAPAForm />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* 5PRS (검사 평가) 라우트 */}
+                <Route path="five-prs">
+                  <Route index element={<Navigate to="/five-prs/dashboard" replace />} />
+                  <Route path="dashboard" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <FivePrsDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="ai-instructions" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <FivePrsAiInstructions />
                     </Suspense>
                   } />
                 </Route>

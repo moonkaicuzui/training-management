@@ -83,6 +83,10 @@
       "dashboard": "CAPA 관리",
       "new": "새 CAPA 등록"
     },
+    "fivePrs": {
+      "dashboard": "5PRS 대시보드",
+      "aiInstructions": "AI 업무 지시서"
+    },
     "department": "부서별 대시보드",
     "competency": "역량 매트릭스",
     "skillGap": "스킬 갭 분석"
@@ -92,6 +96,7 @@
     "newTQC": "신입 TQC 교육",
     "projects": "프로젝트 관리",
     "capa": "시정/예방 조치",
+    "inspection": "검사 평가",
     "management": "관리",
     "admin": "관리자",
     "quickStats": "빠른 통계",
@@ -2152,5 +2157,41 @@
       "belowTarget": "목표 미달",
       "total": "전체"
     }
+  },
+  "fivePrs": {
+    "dashboardTitle": "5PRS 검사 대시보드",
+    "dashboardDescription": "5명의 품질 감사관이 TQC 검사원을 관리하는 검사 현황",
+    "aiTitle": "AI 업무 지시서",
+    "aiDescription": "AI 기반 품질 브리핑 및 업무 지시 생성",
+    "monthSelect": "월 선택",
+    "selectMonthPrompt": "월을 선택하여 데이터를 불러오세요",
+    "totalValidation": "총 검증량",
+    "rejectRate": "불량률",
+    "highRiskTqc": "고위험 TQC",
+    "avgDailyValidation": "일평균 검증",
+    "tqcAnalysis": "TQC 검사원 분석",
+    "tqcName": "TQC 이름",
+    "validation": "검증",
+    "reject": "불량",
+    "mainDefect": "주요 불량",
+    "building": "구역",
+    "defectDistribution": "불량 유형 분포",
+    "buildingAnalysis": "구역별 불량률",
+    "dailyTrend": "일별 검증/불량 추세",
+    "aiBriefing": "AI 브리핑",
+    "riskTqc": "문제 검사원",
+    "riskModels": "문제 모델",
+    "riskTqcTitle": "고위험 TQC 검사원 (불량률 > 5%)",
+    "riskModelsTitle": "고불량 모델 (불량률 > 3%)",
+    "model": "모델",
+    "generate": "브리핑 생성",
+    "regenerate": "재생성",
+    "analyzing": "AI 분석 중...",
+    "clickGenerate": "\"브리핑 생성\" 버튼을 클릭하여 AI 분석을 시작하세요",
+    "copy": "복사",
+    "copied": "복사됨",
+    "print": "인쇄",
+    "share": "공유",
+    "noHighRisk": "고위험 항목이 없습니다"
   }
 }

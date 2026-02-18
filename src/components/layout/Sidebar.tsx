@@ -29,6 +29,8 @@ import {
   ShieldCheck,
   FileWarning,
   RefreshCcw,
+  Search,
+  BrainCircuit,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -244,6 +246,20 @@ const capaItems: NavItem[] = [
   },
 ];
 
+// 5PRS (검사 평가) 메뉴
+const fivePrsItems: NavItem[] = [
+  {
+    titleKey: 'nav.fivePrs.dashboard',
+    href: '/five-prs/dashboard',
+    icon: Search,
+  },
+  {
+    titleKey: 'nav.fivePrs.aiInstructions',
+    href: '/five-prs/ai-instructions',
+    icon: BrainCircuit,
+  },
+];
+
 export function Sidebar() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -382,6 +398,35 @@ export function Sidebar() {
             </h2>
             <nav className="space-y-1">
               {capaItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {t(item.titleKey)}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* 5PRS (검사 평가) Section */}
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+              {t('sidebar.inspection')}
+            </h2>
+            <nav className="space-y-1">
+              {fivePrsItems.map((item) => (
                 <NavLink
                   key={item.href}
                   to={item.href}

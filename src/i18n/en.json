@@ -83,6 +83,10 @@
       "dashboard": "CAPA Management",
       "new": "New CAPA"
     },
+    "fivePrs": {
+      "dashboard": "5PRS Dashboard",
+      "aiInstructions": "AI Instructions"
+    },
     "department": "Department Dashboard",
     "competency": "Competency Matrix",
     "skillGap": "Skill Gap Analysis"
@@ -92,6 +96,7 @@
     "newTQC": "New TQC Training",
     "projects": "Project Management",
     "capa": "CAPA",
+    "inspection": "Inspection Evaluation",
     "management": "Management",
     "admin": "Administration",
     "quickStats": "Quick Stats",
@@ -2152,5 +2157,41 @@
       "belowTarget": "Below Target",
       "total": "Total"
     }
+  },
+  "fivePrs": {
+    "dashboardTitle": "5PRS Inspection Dashboard",
+    "dashboardDescription": "Quality inspection overview managed by 5 PRS auditors",
+    "aiTitle": "AI Work Instructions",
+    "aiDescription": "AI-powered quality briefing and work instruction generation",
+    "monthSelect": "Select Month",
+    "selectMonthPrompt": "Select a month to load inspection data",
+    "totalValidation": "Total Validation",
+    "rejectRate": "Reject Rate",
+    "highRiskTqc": "High Risk TQC",
+    "avgDailyValidation": "Avg Daily Validation",
+    "tqcAnalysis": "TQC Inspector Analysis",
+    "tqcName": "TQC Name",
+    "validation": "Validation",
+    "reject": "Reject",
+    "mainDefect": "Main Defect",
+    "building": "Building",
+    "defectDistribution": "Defect Type Distribution",
+    "buildingAnalysis": "Building Reject Rate",
+    "dailyTrend": "Daily Validation/Reject Trend",
+    "aiBriefing": "AI Briefing",
+    "riskTqc": "Risk Inspectors",
+    "riskModels": "Risk Models",
+    "riskTqcTitle": "High Risk TQC Inspectors (Reject Rate > 5%)",
+    "riskModelsTitle": "High Defect Models (Reject Rate > 3%)",
+    "model": "Model",
+    "generate": "Generate Briefing",
+    "regenerate": "Regenerate",
+    "analyzing": "AI analyzing...",
+    "clickGenerate": "Click \"Generate Briefing\" to start AI analysis",
+    "copy": "Copy",
+    "copied": "Copied",
+    "print": "Print",
+    "share": "Share",
+    "noHighRisk": "No high-risk items found"
   }
 }
