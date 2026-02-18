@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import * as api from '@/services/api';
 import type { Employee, TrainingProgram, TrainingResultRecord } from '@/types';
 import {
-  Download,
   Users,
   Building2,
   GraduationCap,
@@ -73,6 +72,8 @@ export default function ReportsPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('6months');
   const [activeTab, setActiveTab] = useState<ReportType>('department');
+  const [selectedEmployeeDepartment, setSelectedEmployeeDepartment] = useState<string>('all');
+  const [selectedEmployeePosition, setSelectedEmployeePosition] = useState<string>('all');
 
   // Firebase data state
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -193,6 +194,21 @@ export default function ReportsPage() {
       };
     });
   }, [employees, results]);
+
+  // Compute unique positions from employee data
+  const positions = useMemo(() => {
+    const posSet = new Set(employees.filter(e => e.status === 'ACTIVE').map(e => e.position).filter(Boolean));
+    return Array.from(posSet).sort().map(p => ({ value: p, label: p }));
+  }, [employees]);
+
+  // Filtered employee data based on selected filters
+  const filteredEmployeeData = useMemo(() => {
+    return employeeExportData.filter(emp => {
+      const deptMatch = selectedEmployeeDepartment === 'all' || emp.department === selectedEmployeeDepartment;
+      const posMatch = selectedEmployeePosition === 'all' || emp.position === selectedEmployeePosition;
+      return deptMatch && posMatch;
+    });
+  }, [employeeExportData, selectedEmployeeDepartment, selectedEmployeePosition]);
 
   // Excel 내보내기 (동적 import로 번들 최적화)
   const handleExportToExcel = useCallback(async (reportType: ReportType) => {
@@ -583,27 +599,83 @@ export default function ReportsPage() {
         {/* 직원별 리포트 */}
         <TabsContent value="employee">
           <Card>
-            <CardHeader>
-              <CardTitle>{t('reports.empTitle')}</CardTitle>
-              <CardDescription>{t('reports.empDescription')}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle>{t('reports.empTitle')}</CardTitle>
+                <CardDescription>{t('reports.empDescription')}</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={selectedEmployeeDepartment} onValueChange={setSelectedEmployeeDepartment}>
+                  <SelectTrigger className="w-40">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder={t('reports.empAllDepartments')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('reports.empAllDepartments')}</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.value} value={dept.value}>
+                        {dept.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedEmployeePosition} onValueChange={setSelectedEmployeePosition}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder={t('reports.empAllPositions')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('reports.empAllPositions')}</SelectItem>
+                    {positions.map((pos) => (
+                      <SelectItem key={pos.value} value={pos.value}>
+                        {pos.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Download className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  {t('reports.empDownloadHint')}
-                </p>
-                <div className="flex justify-center gap-2">
-                  <Button variant="outline" onClick={() => handleExportToPDF('employee')}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    {t('reports.pdfDownload')}
-                  </Button>
-                  <Button onClick={() => handleExportToExcel('employee')}>
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    {t('reports.excelDownload')}
-                  </Button>
-                </div>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('reports.colEmployeeId')}</TableHead>
+                    <TableHead>{t('reports.colEmployeeName')}</TableHead>
+                    <TableHead>{t('reports.colDepartment')}</TableHead>
+                    <TableHead>{t('reports.empFilterPosition')}</TableHead>
+                    <TableHead>{t('reports.colBuilding')}</TableHead>
+                    <TableHead>{t('reports.colLine')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colPassCount')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colTotalTrainings')}</TableHead>
+                    <TableHead className="text-right">{t('reports.colCompletionRateEmp')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredEmployeeData.map((emp) => {
+                    const completionRate = emp.totalCount > 0
+                      ? Math.round((emp.passCount / emp.totalCount) * 100)
+                      : 0;
+                    return (
+                      <TableRow key={emp.employee_id}>
+                        <TableCell>
+                          <Badge variant="outline">{emp.employee_id}</Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">{emp.employee_name}</TableCell>
+                        <TableCell>{emp.department}</TableCell>
+                        <TableCell>{emp.position}</TableCell>
+                        <TableCell>{emp.building}</TableCell>
+                        <TableCell>{emp.line}</TableCell>
+                        <TableCell className="text-right text-green-600">{emp.passCount}</TableCell>
+                        <TableCell className="text-right">{emp.totalCount}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={completionRate >= 80 ? 'success' : completionRate >= 50 ? 'warning' : 'destructive'}>
+                            {completionRate}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

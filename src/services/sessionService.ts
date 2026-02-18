@@ -15,7 +15,10 @@ import {
   query,
   where,
   getDocs,
+  orderBy,
   serverTimestamp,
+  onSnapshot,
+  limit,
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingSession, SessionFilters } from '@/types';
@@ -84,6 +87,8 @@ export const getSessions = async (
   if (filters?.status) {
     constraints.push(where('status', '==', filters.status));
   }
+
+  constraints.push(limit(500));
 
   const q = query(collection(db, COLLECTION), ...constraints);
   const snapshot = await getDocs(q);
@@ -184,4 +189,35 @@ export const cancelSession = async (
     logger.error(`[sessionService] cancelSession failed for ${id}:`, error);
     throw error;
   }
+};
+
+// ============================================================
+// Real-time Subscription
+// ============================================================
+
+/**
+ * 교육 세션 목록 실시간 구독
+ * 세션 날짜 내림차순, 최대 500건
+ */
+export const subscribeToSessions = (
+  callback: (sessions: TrainingSession[]) => void
+): (() => void) => {
+  const q = query(
+    collection(db, COLLECTION),
+    orderBy('session_date', 'desc'),
+    limit(500)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const sessions = snapshot.docs.map((d) =>
+        docToSession(d.id, d.data() as Record<string, unknown>)
+      );
+      callback(sessions);
+    },
+    (error) => {
+      logger.error('[sessionService] subscribeToSessions failed:', error);
+    }
+  );
 };

@@ -110,6 +110,7 @@ export default function ProjectsMembers() {
     phone: '',
   });
   const initializedRef = useRef(false);
+  const { cleanup } = useProjectStore();
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -117,7 +118,10 @@ export default function ProjectsMembers() {
       fetchMembers();
       subscribeMembersRealtime();
     }
-  }, [fetchMembers, subscribeMembersRealtime]);
+    return () => {
+      cleanup();
+    };
+  }, [fetchMembers, subscribeMembersRealtime, cleanup]);
 
   // 필터링된 팀원 목록
   const filteredMembers = members.filter((member) => {

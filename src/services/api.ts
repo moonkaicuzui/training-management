@@ -314,6 +314,14 @@ export async function updateEmployee(
   return employeeService.getEmployee(id);
 }
 
+export async function batchUpsertEmployees(
+  employees: Omit<Employee, 'updated_at'>[]
+): Promise<number> {
+  const result = await employeeService.batchUpsertEmployees(employees);
+  invalidateEmployeeCache();
+  return result;
+}
+
 // ========== Training Program API ==========
 
 export async function getPrograms(filters?: ProgramFilters): Promise<TrainingProgram[]> {
@@ -1610,3 +1618,203 @@ export const createCAPA = capaService.createCAPA;
 export const updateCAPA = capaService.updateCAPA;
 export const updateCAPAStage = capaService.updateCAPAStage;
 export const getAllCAPAs = capaService.getAllCAPAs;
+
+// ========== Project Settings API ==========
+
+import * as projectService from './projectService';
+import type { ProjectSettings } from '@/types/project';
+
+export async function getProjectSettings(projectId: string): Promise<ProjectSettings> {
+  return projectService.getProjectSettings(projectId);
+}
+
+export async function updateProjectSettings(
+  projectId: string,
+  data: Partial<Pick<ProjectSettings, 'projectName' | 'projectDescription' | 'defaultView' | 'notifications'>>
+): Promise<void> {
+  return projectService.updateProjectSettings(projectId, data);
+}
+
+// ========== ROI / Training Costs API ==========
+
+import * as roiService from './roiService';
+
+export async function getTrainingCosts(year?: number) {
+  return roiService.getTrainingCosts(year);
+}
+
+export async function saveTrainingCost(data: Parameters<typeof roiService.saveTrainingCost>[0]) {
+  return roiService.saveTrainingCost(data);
+}
+
+// ========== Certificate API ==========
+
+import * as certificateService from './certificateService';
+import type {
+  Certificate,
+  CertificateTemplate,
+  CertificateFilters,
+} from './certificateService';
+
+export type { Certificate, CertificateTemplate, CertificateFilters };
+
+export function invalidateCertificateCache(): void {
+  apiCache.invalidate('certificates');
+}
+
+export async function getCertificates(filters?: CertificateFilters): Promise<Certificate[]> {
+  return certificateService.getCertificates(filters);
+}
+
+export async function getCertificate(id: string): Promise<Certificate | null> {
+  return certificateService.getCertificate(id);
+}
+
+export async function createCertificate(
+  data: Omit<Certificate, 'created_at'>
+): Promise<Certificate> {
+  const result = await certificateService.createCertificate(data);
+  invalidateCertificateCache();
+  return result;
+}
+
+export async function createCertificatesBatch(
+  certificates: Omit<Certificate, 'created_at'>[]
+): Promise<Certificate[]> {
+  const results = await certificateService.createCertificatesBatch(certificates);
+  invalidateCertificateCache();
+  return results;
+}
+
+export async function revokeCertificate(
+  certificateId: string,
+  revokedBy: string,
+  reason: string
+): Promise<void> {
+  await certificateService.revokeCertificate(certificateId, revokedBy, reason);
+  invalidateCertificateCache();
+}
+
+export async function getCertificateTemplates(activeOnly = true): Promise<CertificateTemplate[]> {
+  return certificateService.getCertificateTemplates(activeOnly);
+}
+
+export async function getCertificateTemplate(id: string): Promise<CertificateTemplate | null> {
+  return certificateService.getCertificateTemplate(id);
+}
+
+export async function createCertificateTemplate(
+  data: Omit<CertificateTemplate, 'template_id' | 'created_at' | 'updated_at'>
+): Promise<CertificateTemplate> {
+  const result = await certificateService.createCertificateTemplate(data);
+  invalidateCertificateCache();
+  return result;
+}
+
+export async function updateCertificateTemplate(
+  templateId: string,
+  updates: Partial<CertificateTemplate>
+): Promise<void> {
+  await certificateService.updateCertificateTemplate(templateId, updates);
+  invalidateCertificateCache();
+}
+
+export async function deleteCertificateTemplate(templateId: string): Promise<void> {
+  await certificateService.deleteCertificateTemplate(templateId);
+  invalidateCertificateCache();
+}
+
+// ========== Competency & Skill Gap API ==========
+
+import * as competencyService from './competencyService';
+import type {
+  Competency,
+  CompetencyCategory,
+  EmployeeCompetency,
+  LearningPath,
+  EmployeeLearningPath,
+  IndividualDevelopmentPlan,
+} from '@/types/curriculum';
+
+export async function getCompetencies(
+  category?: CompetencyCategory
+): Promise<Competency[]> {
+  return competencyService.getCompetencies(category);
+}
+
+export async function createCompetency(
+  data: Omit<Competency, 'competency_id' | 'created_at' | 'updated_at'>
+): Promise<Competency> {
+  return competencyService.createCompetency(data);
+}
+
+export async function updateCompetency(
+  id: string,
+  updates: Partial<Competency>
+): Promise<void> {
+  return competencyService.updateCompetency(id, updates);
+}
+
+export async function deleteCompetency(id: string): Promise<void> {
+  return competencyService.deleteCompetency(id);
+}
+
+export async function getEmployeeCompetencies(
+  employeeId?: string
+): Promise<EmployeeCompetency[]> {
+  return competencyService.getEmployeeCompetencies(employeeId);
+}
+
+export async function updateEmployeeCompetency(
+  data: EmployeeCompetency
+): Promise<void> {
+  return competencyService.updateEmployeeCompetency(data);
+}
+
+export async function getLearningPaths(): Promise<LearningPath[]> {
+  return competencyService.getLearningPaths();
+}
+
+export async function createLearningPath(
+  data: Omit<LearningPath, 'path_id' | 'created_at' | 'updated_at'>
+): Promise<LearningPath> {
+  return competencyService.createLearningPath(data);
+}
+
+export async function updateLearningPath(
+  id: string,
+  updates: Partial<LearningPath>
+): Promise<void> {
+  return competencyService.updateLearningPath(id, updates);
+}
+
+export async function getEmployeeLearningPaths(
+  employeeId?: string
+): Promise<EmployeeLearningPath[]> {
+  return competencyService.getEmployeeLearningPaths(employeeId);
+}
+
+export async function updateEmployeeLearningPath(
+  data: EmployeeLearningPath
+): Promise<void> {
+  return competencyService.updateEmployeeLearningPath(data);
+}
+
+export async function getDevelopmentPlans(
+  employeeId?: string
+): Promise<IndividualDevelopmentPlan[]> {
+  return competencyService.getDevelopmentPlans(employeeId);
+}
+
+export async function createDevelopmentPlan(
+  data: Omit<IndividualDevelopmentPlan, 'plan_id' | 'created_at' | 'updated_at'>
+): Promise<IndividualDevelopmentPlan> {
+  return competencyService.createDevelopmentPlan(data);
+}
+
+export async function updateDevelopmentPlan(
+  id: string,
+  updates: Partial<IndividualDevelopmentPlan>
+): Promise<void> {
+  return competencyService.updateDevelopmentPlan(id, updates);
+}

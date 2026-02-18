@@ -194,7 +194,7 @@ export function VirtualTable<T>({
             position: 'relative',
           }}
         >
-          <Table>
+          <table className="w-full caption-bottom text-sm">
             <TableBody>
               {virtualItems.map((virtualRow) => {
                 const item = data[virtualRow.index];
@@ -234,7 +234,7 @@ export function VirtualTable<T>({
                 );
               })}
             </TableBody>
-          </Table>
+          </table>
         </div>
       </div>
     </div>

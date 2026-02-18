@@ -21,6 +21,7 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
+  limit,
   Timestamp,
 } from '@/services/firebase';
 import type {
@@ -180,6 +181,7 @@ export const getTeams = async (
   }
 
   constraints.push(orderBy('team_name', 'asc'));
+  constraints.push(limit(100));
 
   const q = query(collection(db, COLLECTIONS.TEAMS), ...constraints);
   const snapshot = await getDocs(q);
@@ -324,6 +326,8 @@ export const getTrainees = async (
   if (filters?.team && filters.team !== 'all') {
     constraints.push(where('team_id', '==', filters.team));
   }
+
+  constraints.push(limit(500));
 
   const q = query(collection(db, COLLECTIONS.TRAINEES), ...constraints);
   const snapshot = await getDocs(q);
@@ -491,6 +495,8 @@ export const getColorBlindTests = async (
     constraints.push(where('trainee_id', '==', traineeId));
   }
 
+  constraints.push(limit(200));
+
   const q = query(collection(db, COLLECTIONS.COLOR_BLIND), ...constraints);
   const snapshot = await getDocs(q);
 
@@ -535,6 +541,8 @@ export const getMeetings = async (
   if (filters?.traineeId) {
     constraints.push(where('trainee_id', '==', filters.traineeId));
   }
+
+  constraints.push(limit(500));
 
   const q = query(collection(db, COLLECTIONS.MEETINGS), ...constraints);
   const snapshot = await getDocs(q);
@@ -612,18 +620,23 @@ export const updateMeeting = async (
 export const getResignations = async (
   filters?: NewTQCResignationFilters
 ): Promise<NewTQCResignation[]> => {
-  const q = query(collection(db, COLLECTIONS.RESIGNATIONS));
+  const constraints = [];
+
+  // Server-side filter: reason_category
+  if (filters?.reasonCategory && filters.reasonCategory !== 'all') {
+    constraints.push(where('reason_category', '==', filters.reasonCategory));
+  }
+
+  constraints.push(limit(500));
+
+  const q = query(collection(db, COLLECTIONS.RESIGNATIONS), ...constraints);
   const snapshot = await getDocs(q);
 
   let results = snapshot.docs.map((d) =>
     docToResignation(d.id, d.data() as Record<string, unknown>)
   );
 
-  // Client-side filters
-  if (filters?.reasonCategory && filters.reasonCategory !== 'all') {
-    results = results.filter((r) => r.reason_category === filters.reasonCategory);
-  }
-
+  // Client-side filters (date range - Firestore compound query limitation)
   if (filters?.dateFrom) {
     results = results.filter((r) => r.resign_date >= filters.dateFrom!);
   }

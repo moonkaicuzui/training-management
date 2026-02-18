@@ -18,6 +18,8 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
+  onSnapshot,
+  limit,
   Timestamp,
 } from '@/services/firebase';
 import type { Notification, NotificationType, NotificationPriority } from '@/types/notification';
@@ -99,6 +101,7 @@ export const getNotifications = async (
   }
 
   constraints.push(orderBy('created_at', 'desc'));
+  constraints.push(limit(100));
 
   const q = query(collection(db, NOTIFICATIONS_COLLECTION), ...constraints);
   const snapshot = await getDocs(q);
@@ -252,4 +255,37 @@ export const updateSettings = async (
     logger.error(`[notificationService] updateSettings failed for user ${userId}:`, error);
     throw error;
   }
+};
+
+// ============================================================
+// Real-time Subscription
+// ============================================================
+
+/**
+ * 특정 사용자의 알림 실시간 구독
+ * 최신순으로 정렬, 최대 50건
+ */
+export const subscribeToNotifications = (
+  userId: string,
+  callback: (notifications: Notification[]) => void
+): (() => void) => {
+  const q = query(
+    collection(db, NOTIFICATIONS_COLLECTION),
+    where('recipient_id', '==', userId),
+    orderBy('created_at', 'desc'),
+    limit(50)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const notifications = snapshot.docs.map((d) =>
+        docToNotification(d.id, d.data() as Record<string, unknown>)
+      );
+      callback(notifications);
+    },
+    (error) => {
+      logger.error(`[notificationService] subscribeToNotifications failed for user ${userId}:`, error);
+    }
+  );
 };

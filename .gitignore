@@ -40,3 +40,12 @@ test-results/
 dev-dist/
 functions/lib/
 functions/node_modules/
+
+# Generated artifacts (can be regenerated from scripts)
+scripts/*.pptx
+scripts/*.xlsx
+scripts/*.env
+~$*
+
+# macOS
+**/.DS_Store

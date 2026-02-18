@@ -19,6 +19,7 @@ import {
   serverTimestamp,
   writeBatch,
   onSnapshot,
+  limit,
   Timestamp,
 } from '@/services/firebase';
 import type { Employee, EmployeeFilters } from '@/types';
@@ -224,7 +225,8 @@ export const subscribeToEmployees = (
 ): (() => void) => {
   const q = query(
     collection(db, COLLECTION),
-    orderBy('employee_name', 'asc')
+    orderBy('employee_name', 'asc'),
+    limit(500)
   );
 
   return onSnapshot(q, (snapshot) => {

@@ -4,11 +4,12 @@
  * CAPA 상세 보기 및 워크플로우 단계 전환
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
+  ArrowRight,
   Edit,
   CheckCircle2,
   AlertTriangle,
@@ -23,8 +24,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { useCAPAStore } from '@/stores/capaStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useToast } from '@/hooks/use-toast';
 import {
   CAPA_STATUS_LABELS,
   CAPA_SEVERITY_LABELS,
@@ -34,6 +49,7 @@ import {
   CAPA_STATUS_ORDER,
   type CAPAStatus,
   type CAPASeverity,
+  type CAPAStageUpdate,
 } from '@/types/capa';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -73,13 +89,79 @@ function formatDate(date: Date | Timestamp | undefined): string {
   });
 }
 
+// Stage-specific form data interfaces
+interface InvestigationFormData {
+  rootCauseAnalysis: string;
+  impactAssessment: string;
+  findings: string;
+  investigatedBy: string;
+}
+
+interface ActionFormData {
+  actionNotes: string;
+  plannedBy: string;
+}
+
+interface VerificationFormData {
+  verificationMethod: string;
+  isEffective: boolean;
+  verificationNotes: string;
+  verifiedBy: string;
+}
+
+interface ClosureFormData {
+  finalReview: string;
+  lessonsLearned: string;
+  documentationComplete: boolean;
+  knowledgeShared: boolean;
+  closedBy: string;
+}
+
 export default function CAPADetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const initializedRef = useRef(false);
+  const { toast } = useToast();
 
-  const { currentCAPA, fetchCAPAById, isLoading, error } = useCAPAStore();
+  const { currentCAPA, fetchCAPAById, updateCAPAStage, isLoading, error } = useCAPAStore();
+  const { user } = useAuthStore();
+
+  // Dialog states
+  const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reject form
+  const [rejectReason, setRejectReason] = useState('');
+
+  // Stage-specific form data
+  const [investigationForm, setInvestigationForm] = useState<InvestigationFormData>({
+    rootCauseAnalysis: '',
+    impactAssessment: '',
+    findings: '',
+    investigatedBy: user?.name || '',
+  });
+
+  const [actionForm, setActionForm] = useState<ActionFormData>({
+    actionNotes: '',
+    plannedBy: user?.name || '',
+  });
+
+  const [verificationForm, setVerificationForm] = useState<VerificationFormData>({
+    verificationMethod: '',
+    isEffective: true,
+    verificationNotes: '',
+    verifiedBy: user?.name || '',
+  });
+
+  const [closureForm, setClosureForm] = useState<ClosureFormData>({
+    finalReview: '',
+    lessonsLearned: '',
+    documentationComplete: false,
+    knowledgeShared: false,
+    closedBy: user?.name || '',
+  });
 
   // Load CAPA data
   useEffect(() => {
@@ -93,6 +175,411 @@ export default function CAPADetail() {
   const currentStageIndex = currentCAPA
     ? CAPA_STATUS_ORDER.indexOf(currentCAPA.status)
     : 0;
+
+  // Determine if stage transitions are possible
+  const canAdvance =
+    currentCAPA &&
+    currentCAPA.status !== 'closed' &&
+    currentCAPA.status !== 'rejected' &&
+    currentStageIndex >= 0 &&
+    currentStageIndex < CAPA_STATUS_ORDER.length - 1;
+
+  const canReject =
+    currentCAPA &&
+    currentCAPA.status !== 'closed' &&
+    currentCAPA.status !== 'rejected';
+
+  const nextStatus = canAdvance
+    ? CAPA_STATUS_ORDER[currentStageIndex + 1]
+    : null;
+
+  // Reset forms when dialog opens
+  const handleOpenAdvanceDialog = () => {
+    if (user?.name) {
+      setInvestigationForm((prev) => ({ ...prev, investigatedBy: user.name }));
+      setActionForm((prev) => ({ ...prev, plannedBy: user.name }));
+      setVerificationForm((prev) => ({ ...prev, verifiedBy: user.name }));
+      setClosureForm((prev) => ({ ...prev, closedBy: user.name }));
+    }
+    setAdvanceDialogOpen(true);
+  };
+
+  const handleOpenRejectDialog = () => {
+    setRejectReason('');
+    setRejectDialogOpen(true);
+  };
+
+  // Validate stage-specific form data
+  const isAdvanceFormValid = (): boolean => {
+    if (!currentCAPA) return false;
+
+    switch (currentCAPA.status) {
+      case 'discovery':
+        return (
+          investigationForm.rootCauseAnalysis.trim() !== '' &&
+          investigationForm.impactAssessment.trim() !== '' &&
+          investigationForm.findings.trim() !== '' &&
+          investigationForm.investigatedBy.trim() !== ''
+        );
+      case 'investigation':
+        return (
+          actionForm.actionNotes.trim() !== '' &&
+          actionForm.plannedBy.trim() !== ''
+        );
+      case 'action':
+        return (
+          verificationForm.verificationMethod.trim() !== '' &&
+          verificationForm.verificationNotes.trim() !== '' &&
+          verificationForm.verifiedBy.trim() !== ''
+        );
+      case 'verification':
+        return (
+          closureForm.finalReview.trim() !== '' &&
+          closureForm.closedBy.trim() !== ''
+        );
+      default:
+        return false;
+    }
+  };
+
+  // Handle advance stage submission
+  const handleAdvanceStage = async () => {
+    if (!currentCAPA || !id || !nextStatus) return;
+
+    setIsSubmitting(true);
+    try {
+      const stageUpdate: CAPAStageUpdate = {
+        status: nextStatus,
+      };
+
+      switch (currentCAPA.status) {
+        case 'discovery':
+          stageUpdate.investigation = {
+            rootCauseAnalysis: investigationForm.rootCauseAnalysis,
+            impactAssessment: investigationForm.impactAssessment,
+            findings: investigationForm.findings,
+            investigatedBy: investigationForm.investigatedBy,
+          };
+          break;
+        case 'investigation':
+          stageUpdate.action = {
+            correctiveActions: [],
+            preventiveActions: [],
+            resourcesRequired: actionForm.actionNotes,
+            plannedBy: actionForm.plannedBy,
+          };
+          break;
+        case 'action':
+          stageUpdate.verification = {
+            verificationMethod: verificationForm.verificationMethod,
+            isEffective: verificationForm.isEffective,
+            recurrenceCheck: false,
+            verifiedBy: verificationForm.verifiedBy,
+            verificationNotes: verificationForm.verificationNotes,
+          };
+          break;
+        case 'verification':
+          stageUpdate.closure = {
+            finalReview: closureForm.finalReview,
+            lessonsLearned: closureForm.lessonsLearned || undefined,
+            documentationComplete: closureForm.documentationComplete,
+            knowledgeShared: closureForm.knowledgeShared,
+            closedBy: closureForm.closedBy,
+          };
+          break;
+      }
+
+      await updateCAPAStage(id, stageUpdate);
+      setAdvanceDialogOpen(false);
+      toast({
+        title: t('capa.stageUpdated'),
+        description: t('capa.stageUpdatedDesc'),
+      });
+    } catch {
+      toast({
+        title: 'Error',
+        description: String(error || 'Failed to update stage'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle reject submission
+  const handleReject = async () => {
+    if (!currentCAPA || !id || !rejectReason.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const stageUpdate: CAPAStageUpdate = {
+        status: 'rejected',
+      };
+
+      await updateCAPAStage(id, stageUpdate);
+      setRejectDialogOpen(false);
+      toast({
+        title: t('capa.capaRejected'),
+        description: t('capa.capaRejectedDesc'),
+      });
+    } catch {
+      toast({
+        title: 'Error',
+        description: String(error || 'Failed to reject CAPA'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Render stage-specific form fields
+  const renderStageFields = () => {
+    if (!currentCAPA) return null;
+
+    switch (currentCAPA.status) {
+      case 'discovery':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rootCauseAnalysis">{t('capa.rootCauseAnalysis')} *</Label>
+              <Textarea
+                id="rootCauseAnalysis"
+                value={investigationForm.rootCauseAnalysis}
+                onChange={(e) =>
+                  setInvestigationForm((prev) => ({
+                    ...prev,
+                    rootCauseAnalysis: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.rootCauseAnalysis')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="impactAssessment">{t('capa.impactAssessment')} *</Label>
+              <Textarea
+                id="impactAssessment"
+                value={investigationForm.impactAssessment}
+                onChange={(e) =>
+                  setInvestigationForm((prev) => ({
+                    ...prev,
+                    impactAssessment: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.impactAssessment')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="findings">{t('capa.findings')} *</Label>
+              <Textarea
+                id="findings"
+                value={investigationForm.findings}
+                onChange={(e) =>
+                  setInvestigationForm((prev) => ({
+                    ...prev,
+                    findings: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.findings')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="investigatedBy">{t('capa.investigatedBy')} *</Label>
+              <Input
+                id="investigatedBy"
+                value={investigationForm.investigatedBy}
+                onChange={(e) =>
+                  setInvestigationForm((prev) => ({
+                    ...prev,
+                    investigatedBy: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.investigatedBy')}
+              />
+            </div>
+          </div>
+        );
+
+      case 'investigation':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="actionNotes">{t('capa.actionNotes')} *</Label>
+              <Textarea
+                id="actionNotes"
+                value={actionForm.actionNotes}
+                onChange={(e) =>
+                  setActionForm((prev) => ({
+                    ...prev,
+                    actionNotes: e.target.value,
+                  }))
+                }
+                rows={4}
+                placeholder={t('capa.actionNotesPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="plannedBy">{t('capa.assignedTo')} *</Label>
+              <Input
+                id="plannedBy"
+                value={actionForm.plannedBy}
+                onChange={(e) =>
+                  setActionForm((prev) => ({
+                    ...prev,
+                    plannedBy: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.assignedTo')}
+              />
+            </div>
+          </div>
+        );
+
+      case 'action':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="verificationMethod">{t('capa.verificationMethod')} *</Label>
+              <Input
+                id="verificationMethod"
+                value={verificationForm.verificationMethod}
+                onChange={(e) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    verificationMethod: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.verificationMethod')}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isEffective"
+                checked={verificationForm.isEffective}
+                onCheckedChange={(checked) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    isEffective: checked === true,
+                  }))
+                }
+              />
+              <Label htmlFor="isEffective">{t('capa.isEffective')}</Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="verificationNotes">{t('capa.verificationNotes')} *</Label>
+              <Textarea
+                id="verificationNotes"
+                value={verificationForm.verificationNotes}
+                onChange={(e) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    verificationNotes: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.verificationNotesPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="verifiedBy">{t('capa.verifiedBy')} *</Label>
+              <Input
+                id="verifiedBy"
+                value={verificationForm.verifiedBy}
+                onChange={(e) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    verifiedBy: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.verifiedBy')}
+              />
+            </div>
+          </div>
+        );
+
+      case 'verification':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="finalReview">{t('capa.finalReview')} *</Label>
+              <Textarea
+                id="finalReview"
+                value={closureForm.finalReview}
+                onChange={(e) =>
+                  setClosureForm((prev) => ({
+                    ...prev,
+                    finalReview: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.finalReviewPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lessonsLearned">{t('capa.lessonsLearned')}</Label>
+              <Textarea
+                id="lessonsLearned"
+                value={closureForm.lessonsLearned}
+                onChange={(e) =>
+                  setClosureForm((prev) => ({
+                    ...prev,
+                    lessonsLearned: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder={t('capa.lessonsLearnedPlaceholder')}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="documentationComplete"
+                checked={closureForm.documentationComplete}
+                onCheckedChange={(checked) =>
+                  setClosureForm((prev) => ({
+                    ...prev,
+                    documentationComplete: checked === true,
+                  }))
+                }
+              />
+              <Label htmlFor="documentationComplete">{t('capa.documentationComplete')}</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="knowledgeShared"
+                checked={closureForm.knowledgeShared}
+                onCheckedChange={(checked) =>
+                  setClosureForm((prev) => ({
+                    ...prev,
+                    knowledgeShared: checked === true,
+                  }))
+                }
+              />
+              <Label htmlFor="knowledgeShared">{t('capa.knowledgeShared')}</Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="closedBy">{t('capa.closedBy')} *</Label>
+              <Input
+                id="closedBy"
+                value={closureForm.closedBy}
+                onChange={(e) =>
+                  setClosureForm((prev) => ({
+                    ...prev,
+                    closedBy: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.closedBy')}
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -136,6 +623,18 @@ export default function CAPADetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {canReject && (
+            <Button variant="destructive" size="sm" onClick={handleOpenRejectDialog}>
+              <XCircle className="h-4 w-4 mr-2" />
+              {t('capa.rejectCapa')}
+            </Button>
+          )}
+          {canAdvance && nextStatus && (
+            <Button onClick={handleOpenAdvanceDialog}>
+              <ArrowRight className="h-4 w-4 mr-2" />
+              {t('capa.advanceStage')}: {CAPA_STATUS_LABELS[nextStatus]}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate(`/capa/${id}/edit`)}>
             <Edit className="h-4 w-4 mr-2" />
             {t('common.edit')}
@@ -236,7 +735,7 @@ export default function CAPADetail() {
                 </div>
               )}
               <div className="text-sm text-muted-foreground">
-                발견: {currentCAPA.discovery.discoveredBy} /{' '}
+                {currentCAPA.discovery.discoveredBy} /{' '}
                 {formatDate(currentCAPA.discovery.discoveredAt)}
               </div>
             </CardContent>
@@ -267,7 +766,7 @@ export default function CAPADetail() {
                   <p className="mt-1">{currentCAPA.investigation.findings}</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  조사: {currentCAPA.investigation.investigatedBy} /{' '}
+                  {currentCAPA.investigation.investigatedBy} /{' '}
                   {formatDate(currentCAPA.investigation.investigatedAt)}
                 </div>
               </CardContent>
@@ -296,7 +795,7 @@ export default function CAPADetail() {
                           <div>
                             <p>{action.description}</p>
                             <p className="text-sm text-muted-foreground">
-                              담당: {action.assignedTo} / 기한: {formatDate(action.dueDate)}
+                              {action.assignedTo} / {formatDate(action.dueDate)}
                             </p>
                           </div>
                           <Badge
@@ -325,7 +824,7 @@ export default function CAPADetail() {
                           <div>
                             <p>{action.description}</p>
                             <p className="text-sm text-muted-foreground">
-                              담당: {action.assignedTo} / 기한: {formatDate(action.dueDate)}
+                              {action.assignedTo} / {formatDate(action.dueDate)}
                             </p>
                           </div>
                           <Badge
@@ -342,8 +841,14 @@ export default function CAPADetail() {
                     </div>
                   </div>
                 )}
+                {currentCAPA.action.resourcesRequired && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('capa.actionNotes')}</p>
+                    <p className="mt-1 whitespace-pre-wrap">{currentCAPA.action.resourcesRequired}</p>
+                  </div>
+                )}
                 <div className="text-sm text-muted-foreground">
-                  계획: {currentCAPA.action.plannedBy} /{' '}
+                  {currentCAPA.action.plannedBy} /{' '}
                   {formatDate(currentCAPA.action.plannedAt)}
                 </div>
               </CardContent>
@@ -385,7 +890,7 @@ export default function CAPADetail() {
                   <p className="mt-1">{currentCAPA.verification.verificationNotes}</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  검증: {currentCAPA.verification.verifiedBy} /{' '}
+                  {currentCAPA.verification.verifiedBy} /{' '}
                   {formatDate(currentCAPA.verification.verifiedAt)}
                 </div>
               </CardContent>
@@ -403,12 +908,12 @@ export default function CAPADetail() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">최종 검토</p>
+                  <p className="text-sm text-muted-foreground">{t('capa.finalReview')}</p>
                   <p className="mt-1">{currentCAPA.closure.finalReview}</p>
                 </div>
                 {currentCAPA.closure.lessonsLearned && (
                   <div>
-                    <p className="text-sm text-muted-foreground">교훈</p>
+                    <p className="text-sm text-muted-foreground">{t('capa.lessonsLearned')}</p>
                     <p className="mt-1">{currentCAPA.closure.lessonsLearned}</p>
                   </div>
                 )}
@@ -418,18 +923,18 @@ export default function CAPADetail() {
                       currentCAPA.closure.documentationComplete ? 'default' : 'outline'
                     }
                   >
-                    문서화 {currentCAPA.closure.documentationComplete ? '완료' : '미완료'}
+                    {t('capa.documentationComplete')}: {currentCAPA.closure.documentationComplete ? 'O' : 'X'}
                   </Badge>
                   <Badge
                     variant={
                       currentCAPA.closure.knowledgeShared ? 'default' : 'outline'
                     }
                   >
-                    교훈 공유 {currentCAPA.closure.knowledgeShared ? '완료' : '미완료'}
+                    {t('capa.knowledgeShared')}: {currentCAPA.closure.knowledgeShared ? 'O' : 'X'}
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  종료: {currentCAPA.closure.closedBy} /{' '}
+                  {currentCAPA.closure.closedBy} /{' '}
                   {formatDate(currentCAPA.closure.closedAt)}
                 </div>
               </CardContent>
@@ -465,6 +970,37 @@ export default function CAPADetail() {
                   <span className="text-muted-foreground">{t('capa.dueDate')}</span>
                   <span>{formatDate(currentCAPA.dueDate)}</span>
                 </div>
+              )}
+
+              {/* Stage Transition Buttons in Sidebar */}
+              {(canAdvance || canReject) && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{t('capa.stageTransition')}</p>
+                    {canAdvance && nextStatus && (
+                      <Button
+                        className="w-full"
+                        size="sm"
+                        onClick={handleOpenAdvanceDialog}
+                      >
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        {CAPA_STATUS_LABELS[nextStatus]}
+                      </Button>
+                    )}
+                    {canReject && (
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        size="sm"
+                        onClick={handleOpenRejectDialog}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        {t('capa.rejectCapa')}
+                      </Button>
+                    )}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -503,6 +1039,94 @@ export default function CAPADetail() {
 
         </div>
       </div>
+
+      {/* Advance Stage Dialog */}
+      <Dialog open={advanceDialogOpen} onOpenChange={setAdvanceDialogOpen}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>{t('capa.confirmAdvance')}</DialogTitle>
+            <DialogDescription>{t('capa.confirmAdvanceDesc')}</DialogDescription>
+          </DialogHeader>
+
+          {/* Current → Next stage indicator */}
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <div className="flex items-center gap-2">
+              <Badge className={STATUS_COLORS[currentCAPA.status]}>
+                {CAPA_STATUS_LABELS[currentCAPA.status]}
+              </Badge>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              {nextStatus && (
+                <Badge className={STATUS_COLORS[nextStatus]}>
+                  {CAPA_STATUS_LABELS[nextStatus]}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Stage-specific fields */}
+          <div className="max-h-[400px] overflow-y-auto">
+            {renderStageFields()}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAdvanceDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleAdvanceStage}
+              disabled={isSubmitting || !isAdvanceFormValid()}
+            >
+              {isSubmitting ? t('common.saving') : t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('capa.confirmReject')}</DialogTitle>
+            <DialogDescription>{t('capa.confirmRejectDesc')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejectReason">{t('capa.rejectReason')} *</Label>
+              <Textarea
+                id="rejectReason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                placeholder={t('capa.rejectReasonPlaceholder')}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={isSubmitting || !rejectReason.trim()}
+            >
+              {isSubmitting ? t('common.saving') : t('capa.rejectCapa')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

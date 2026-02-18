@@ -21,6 +21,7 @@ import {
   UserMinus,
   CheckCircle2,
   Loader2,
+  PlusCircle,
 } from 'lucide-react';
 import {
   Card,
@@ -59,6 +60,9 @@ import {
   calculateEmployeeCompletionStatus,
 } from '@/utils/kpiCalculator';
 import type { KPICalculationResult } from '@/utils/kpiCalculator';
+import ROIDashboard from '@/components/dashboard/ROIDashboard';
+import CostInputForm from '@/components/dashboard/CostInputForm';
+import type { TrainingCost } from '@/services/roiService';
 
 // ========== Sub Components ==========
 
@@ -420,6 +424,8 @@ export default function ExecutiveDashboard() {
   const [results, setResults] = useState<TrainingResultRecord[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyTrainingData[]>([]);
   const [tqcStats, setTqcStats] = useState<NewTQCDashboardStats | null>(null);
+  const [trainingCosts, setTrainingCosts] = useState<TrainingCost[]>([]);
+  const [costFormOpen, setCostFormOpen] = useState(false);
 
   // Fetch data on mount
   useEffect(() => {
@@ -427,18 +433,20 @@ export default function ExecutiveDashboard() {
       try {
         setLoading(true);
         setError(null);
-        const [emps, progs, res, monthly, tqc] = await Promise.all([
+        const [emps, progs, res, monthly, tqc, costs] = await Promise.all([
           api.getEmployees(),
           api.getPrograms(),
           api.getResults(),
           api.getMonthlyTrainingData(),
           api.getNewTQCDashboardStats(),
+          api.getTrainingCosts(),
         ]);
         setEmployees(emps);
         setPrograms(progs);
         setResults(res);
         setMonthlyData(monthly);
         setTqcStats(tqc);
+        setTrainingCosts(costs);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
@@ -596,6 +604,16 @@ export default function ExecutiveDashboard() {
     });
   }, [monthlyData]);
 
+  // Refresh training costs after save
+  const handleCostSaved = useCallback(async () => {
+    try {
+      const costs = await api.getTrainingCosts();
+      setTrainingCosts(costs);
+    } catch {
+      // Error handled in service layer
+    }
+  }, []);
+
   // Excel 다운로드 핸들러
   const handleExportExcel = useCallback(async () => {
     const XLSX = await import('xlsx');
@@ -713,9 +731,10 @@ export default function ExecutiveDashboard() {
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">{t('executive.tabOverview')}</TabsTrigger>
           <TabsTrigger value="roi">{t('executive.tabTraining')}</TabsTrigger>
+          <TabsTrigger value="roi-analysis">{t('executive.roi')}</TabsTrigger>
           <TabsTrigger value="benchmark">{t('executive.tabBenchmark')}</TabsTrigger>
           <TabsTrigger value="report">{t('executive.tabHQReport')}</TabsTrigger>
         </TabsList>
@@ -926,6 +945,34 @@ export default function ExecutiveDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ROI Analysis */}
+        <TabsContent value="roi-analysis" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">{t('executive.roi')}</h2>
+              <p className="text-sm text-muted-foreground">{t('executive.roiDescription')}</p>
+            </div>
+            <Button onClick={() => setCostFormOpen(true)}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              {t('executive.addCost')}
+            </Button>
+          </div>
+
+          <ROIDashboard
+            employees={employees}
+            programs={programs}
+            results={filteredResults}
+            trainingCosts={trainingCosts}
+            isLoading={loading}
+          />
+
+          <CostInputForm
+            open={costFormOpen}
+            onClose={() => setCostFormOpen(false)}
+            onSaved={handleCostSaved}
+          />
         </TabsContent>
 
         {/* 벤치마킹 */}

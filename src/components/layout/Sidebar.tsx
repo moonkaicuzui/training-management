@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   ShieldCheck,
   FileWarning,
+  RefreshCcw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -97,6 +98,11 @@ const secondaryItems: NavItem[] = [
     icon: FileBarChart,
   },
   {
+    titleKey: 'nav.department',
+    href: '/department',
+    icon: Building2,
+  },
+  {
     titleKey: 'nav.notifications',
     href: '/notifications',
     icon: Bell,
@@ -110,6 +116,16 @@ const secondaryItems: NavItem[] = [
     titleKey: 'nav.materials',
     href: '/materials',
     icon: FolderOpen,
+  },
+  {
+    titleKey: 'nav.competency',
+    href: '/competency',
+    icon: Grid3X3,
+  },
+  {
+    titleKey: 'nav.skillGap',
+    href: '/skill-gap',
+    icon: BarChart3,
   },
 ];
 
@@ -138,6 +154,11 @@ const adminItems: NavItem[] = [
     titleKey: 'nav.auditLog',
     href: '/audit-log',
     icon: History,
+  },
+  {
+    titleKey: 'nav.dataSync',
+    href: '/data-sync',
+    icon: RefreshCcw,
   },
 ];
 

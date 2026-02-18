@@ -32,6 +32,12 @@ const Evaluation = lazy(() => import('./pages/Evaluation'));
 const Materials = lazy(() => import('./pages/Materials'));
 const ExecutiveDashboard = lazy(() => import('./pages/ExecutiveDashboard'));
 const AuditCompliance = lazy(() => import('./pages/AuditCompliance'));
+const DataSync = lazy(() => import('./pages/DataSync'));
+const DepartmentDashboard = lazy(() => import('./pages/DepartmentDashboard'));
+
+// Competency Matrix & Skill Gap Analysis 페이지
+const Competency = lazy(() => import('./pages/Competency'));
+const SkillGap = lazy(() => import('./pages/SkillGap'));
 
 // New TQC (신입 TQC 교육) 페이지
 const NewTQCDashboard = lazy(() => import('./pages/new-tqc/NewTQCDashboard'));
@@ -195,6 +201,28 @@ function App() {
                       <AuditCompliance />
                     </Suspense>
                   </DevProtectedRoute>
+                } />
+                <Route path="data-sync" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <DataSync />
+                    </Suspense>
+                  </DevProtectedRoute>
+                } />
+                <Route path="department" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DepartmentDashboard />
+                  </Suspense>
+                } />
+                <Route path="competency" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Competency />
+                  </Suspense>
+                } />
+                <Route path="skill-gap" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <SkillGap />
+                  </Suspense>
                 } />
 
                 {/* New TQC (신입 TQC 교육) 라우트 */}

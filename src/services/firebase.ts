@@ -49,6 +49,8 @@ import type {
   DocumentData,
   QueryConstraint,
 } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import type { FirebaseStorage } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import type { Analytics } from 'firebase/analytics';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
@@ -78,6 +80,9 @@ if (getApps().length === 0) {
 
 // Initialize Auth
 const auth: Auth = getAuth(app);
+
+// Initialize Storage
+const storage: FirebaseStorage = getStorage(app);
 
 // Initialize Firestore with ignoreUndefinedProperties and persistent cache
 const db: Firestore = initializeFirestore(app, {
@@ -373,7 +378,7 @@ export const createRetrainingWithStatusUpdate = async (
 };
 
 // Export Firebase instances
-export { app, auth, db, analytics };
+export { app, auth, db, storage, analytics };
 export type { FirebaseUser };
 
 // Export Firestore utilities

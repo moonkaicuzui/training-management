@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import * as api from '@/services/api';
+import type { Certificate } from '@/services/certificateService';
 import {
   Award,
   Download,
@@ -13,6 +14,9 @@ import {
   Calendar,
   User,
   Loader2,
+  Users,
+  Ban,
+  History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,9 +48,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BatchCertificateDialog from '@/components/training/BatchCertificateDialog';
+import CertificateTemplateManager from '@/components/training/CertificateTemplateManager';
 
-// 로컬 타입 정의
+// Local type definitions
 interface TrainingResult {
   result_id: string;
   employee_id: string;
@@ -80,7 +88,7 @@ interface CertificateData {
   issueDate: string;
 }
 
-// 이수증 미리보기 컴포넌트
+// Certificate Preview Component
 function CertificatePreview({ data, onClose }: { data: CertificateData; onClose: () => void }) {
   const { t } = useTranslation();
   const printRef = useRef<HTMLDivElement>(null);
@@ -96,7 +104,7 @@ function CertificatePreview({ data, onClose }: { data: CertificateData; onClose:
       <!DOCTYPE html>
       <html>
         <head>
-          <title>교육 이수증 - ${data.certificateNumber}</title>
+          <title>${t('certificates.certTitle')} - ${data.certificateNumber}</title>
           <style>
             @page { size: A4 landscape; margin: 0; }
             body {
@@ -224,51 +232,73 @@ export default function CertificatesPage() {
   const [results, setResults] = useState<TrainingResult[]>([]);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const [resultsData, programsData, employeesData] = await Promise.all([
-          api.getResults(),
-          api.getPrograms(),
-          api.getEmployees(),
-        ]);
-        // Build lookup maps
-        const empMap = new Map(employeesData.map(e => [e.employee_id, e]));
-        const progMap = new Map(programsData.map(p => [p.program_code, p]));
-        // Map to local types - only PASS results
-        setResults(resultsData.filter(r => r.result === 'PASS').map(r => {
-          const emp = empMap.get(r.employee_id);
-          const prog = progMap.get(r.program_code);
-          return {
-            result_id: r.result_id,
-            employee_id: r.employee_id,
-            employee_name: emp?.employee_name ?? r.employee_id,
-            department: emp?.department ?? '',
-            position: emp?.position ?? '',
-            program_code: r.program_code,
-            program_name: prog?.program_name ?? r.program_code,
-            training_date: r.training_date ?? '',
-            score: r.score ?? null,
-            grade: r.grade ?? null,
-            result: r.result as 'PASS' | 'FAIL',
-          };
-        }));
-        setPrograms(programsData.map(p => ({
-          program_code: p.program_code,
-          program_name: p.program_name ?? p.program_code,
-        })));
-      } catch (err) {
-        console.error('Failed to load data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
+  // Issued certificates state
+  const [issuedCertificates, setIssuedCertificates] = useState<Certificate[]>([]);
+  const [isLoadingIssued, setIsLoadingIssued] = useState(false);
+  const [issuedSearchQuery, setIssuedSearchQuery] = useState('');
+  const [showRevokeDialog, setShowRevokeDialog] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [resultsData, programsData, employeesData] = await Promise.all([
+        api.getResults(),
+        api.getPrograms(),
+        api.getEmployees(),
+      ]);
+      // Build lookup maps
+      const empMap = new Map(employeesData.map(e => [e.employee_id, e]));
+      const progMap = new Map(programsData.map(p => [p.program_code, p]));
+      // Map to local types - only PASS results
+      setResults(resultsData.filter(r => r.result === 'PASS').map(r => {
+        const emp = empMap.get(r.employee_id);
+        const prog = progMap.get(r.program_code);
+        return {
+          result_id: r.result_id,
+          employee_id: r.employee_id,
+          employee_name: emp?.employee_name ?? r.employee_id,
+          department: emp?.department ?? '',
+          position: emp?.position ?? '',
+          program_code: r.program_code,
+          program_name: prog?.program_name ?? r.program_code,
+          training_date: r.training_date ?? '',
+          score: r.score ?? null,
+          grade: r.grade ?? null,
+          result: r.result as 'PASS' | 'FAIL',
+        };
+      }));
+      setPrograms(programsData.map(p => ({
+        program_code: p.program_code,
+        program_name: p.program_name ?? p.program_code,
+      })));
+    } catch (err) {
+      console.error('Failed to load data:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // 이수 가능한 결과 목록 (already filtered to PASS only)
+  const loadIssuedCertificates = useCallback(async () => {
+    try {
+      setIsLoadingIssued(true);
+      const data = await api.getCertificates();
+      setIssuedCertificates(data);
+    } catch (err) {
+      console.error('Failed to load issued certificates:', err);
+    } finally {
+      setIsLoadingIssued(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    loadIssuedCertificates();
+  }, [loadData, loadIssuedCertificates]);
+
+  // Eligible results (already filtered to PASS only)
   const eligibleResults = useMemo(() => {
     return results
       .filter(result => {
@@ -284,13 +314,25 @@ export default function CertificatesPage() {
       .sort((a, b) => b.training_date.localeCompare(a.training_date));
   }, [results, searchQuery, selectedProgram]);
 
-  // 이수증 번호 카운터
+  // Filtered issued certificates
+  const filteredIssuedCertificates = useMemo(() => {
+    if (!issuedSearchQuery) return issuedCertificates;
+    const q = issuedSearchQuery.toLowerCase();
+    return issuedCertificates.filter(
+      (c) =>
+        c.employee_name.toLowerCase().includes(q) ||
+        c.employee_id.toLowerCase().includes(q) ||
+        c.certificate_number.toLowerCase().includes(q) ||
+        c.program_name.toLowerCase().includes(q)
+    );
+  }, [issuedCertificates, issuedSearchQuery]);
+
+  // Certificate counter
   const certificateCounterRef = useRef(0);
 
-  // 이수증 발급 (이벤트 핸들러에서만 호출)
+  // Issue certificate handler (event handler only)
   const handleIssueCertificate = useCallback((result: TrainingResult) => {
     const year = new Date().getFullYear();
-    // 이벤트 핸들러에서만 호출되므로 Math.random 사용 안전
     certificateCounterRef.current += 1;
     const sequence = Date.now() % 100000 + certificateCounterRef.current;
 
@@ -305,12 +347,25 @@ export default function CertificatesPage() {
       trainingDate: result.training_date,
       score: result.score,
       grade: result.grade,
-      issueDate: format(new Date(), 'yyyy년 MM월 dd일'),
+      issueDate: format(new Date(), 'yyyy-MM-dd'),
     };
     setSelectedCertificate(certData);
   }, []);
 
-  // 통계
+  // Revoke certificate handler
+  const handleRevoke = async () => {
+    if (!showRevokeDialog || !revokeReason.trim()) return;
+    try {
+      await api.revokeCertificate(showRevokeDialog, 'current_user', revokeReason);
+      setShowRevokeDialog(null);
+      setRevokeReason('');
+      await loadIssuedCertificates();
+    } catch (err) {
+      console.error('Failed to revoke certificate:', err);
+    }
+  };
+
+  // Statistics
   const stats = useMemo(() => {
     const thisMonth = format(new Date(), 'yyyy-MM');
     return {
@@ -318,8 +373,9 @@ export default function CertificatesPage() {
       totalPrograms: programs.length,
       uniqueEmployees: new Set(eligibleResults.map(r => r.employee_id)).size,
       thisMonthCount: eligibleResults.filter(r => r.training_date.startsWith(thisMonth)).length,
+      totalIssued: issuedCertificates.filter((c) => c.status === 'ISSUED').length,
     };
-  }, [eligibleResults]);
+  }, [eligibleResults, programs, issuedCertificates]);
 
   if (isLoading) {
     return (
@@ -331,7 +387,7 @@ export default function CertificatesPage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('certificates.title')}</h1>
@@ -339,7 +395,7 @@ export default function CertificatesPage() {
         </div>
       </div>
 
-      {/* 통계 카드 */}
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-4">
@@ -361,8 +417,8 @@ export default function CertificatesPage() {
                 <Award className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.totalPrograms}</p>
-                <p className="text-xs text-muted-foreground">{t('certificates.trainingPrograms')}</p>
+                <p className="text-2xl font-bold">{stats.totalIssued}</p>
+                <p className="text-xs text-muted-foreground">{t('certificates.issuedCount')}</p>
               </div>
             </div>
           </CardContent>
@@ -395,117 +451,291 @@ export default function CertificatesPage() {
         </Card>
       </div>
 
-      {/* 필터 */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('certificates.searchPlaceholder')}
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-              <SelectTrigger className="w-full md:w-64">
-                <SelectValue placeholder="프로그램 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 프로그램</SelectItem>
-                {programs.map((program) => (
-                  <SelectItem key={program.program_code} value={program.program_code}>
-                    {program.program_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabbed Content */}
+      <Tabs defaultValue="certificates">
+        <TabsList>
+          <TabsTrigger value="certificates" className="gap-2">
+            <Award className="h-4 w-4" />
+            {t('certificates.tabCertificates')}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            {t('certificates.certificateHistory')}
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <FileText className="h-4 w-4" />
+            {t('certificates.templates')}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* 이수 목록 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>이수 완료 목록</CardTitle>
-          <CardDescription>
-            교육을 이수한 직원의 이수증을 발급할 수 있습니다
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>사번</TableHead>
-                <TableHead>이름</TableHead>
-                <TableHead>부서</TableHead>
-                <TableHead>프로그램</TableHead>
-                <TableHead>교육일</TableHead>
-                <TableHead>점수</TableHead>
-                <TableHead>등급</TableHead>
-                <TableHead className="text-right">액션</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {eligibleResults.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    발급 가능한 이수증이 없습니다
-                  </TableCell>
-                </TableRow>
-              ) : (
-                eligibleResults.map((result) => (
-                  <TableRow key={result.result_id}>
-                    <TableCell className="font-mono">{result.employee_id}</TableCell>
-                    <TableCell className="font-medium">{result.employee_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{result.department}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{result.program_name}</p>
-                        <p className="text-xs text-muted-foreground">{result.program_code}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{result.training_date}</TableCell>
-                    <TableCell>{result.score ?? '-'}</TableCell>
-                    <TableCell>
-                      {result.grade && (
-                        <Badge variant={
-                          result.grade === 'AA' ? 'default' :
-                          result.grade === 'A' ? 'success' :
-                          result.grade === 'B' ? 'warning' : 'secondary'
-                        }>
-                          {result.grade}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => handleIssueCertificate(result)}
-                      >
-                        <Award className="h-4 w-4 mr-1" />
-                        이수증 발급
-                      </Button>
-                    </TableCell>
+        {/* Tab 1: Issuance */}
+        <TabsContent value="certificates" className="space-y-4">
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t('certificates.searchPlaceholder')}
+                    className="pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue placeholder={t('certificates.allPrograms')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('certificates.allPrograms')}</SelectItem>
+                    {programs.map((program) => (
+                      <SelectItem key={program.program_code} value={program.program_code}>
+                        {program.program_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => setShowBatchDialog(true)}>
+                  <Users className="h-4 w-4 mr-2" />
+                  {t('certificates.batchIssue')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Results List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('certificates.listTitle')}</CardTitle>
+              <CardDescription>
+                {t('certificates.listDescription')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('certificates.colEmployeeId')}</TableHead>
+                    <TableHead>{t('certificates.colName')}</TableHead>
+                    <TableHead>{t('certificates.colDepartment')}</TableHead>
+                    <TableHead>{t('certificates.colProgram')}</TableHead>
+                    <TableHead>{t('certificates.colTrainingDate')}</TableHead>
+                    <TableHead>{t('certificates.colScore')}</TableHead>
+                    <TableHead>{t('certificates.colGrade')}</TableHead>
+                    <TableHead className="text-right">{t('certificates.colActions')}</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {eligibleResults.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        {t('certificates.emptyState')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    eligibleResults.map((result) => (
+                      <TableRow key={result.result_id}>
+                        <TableCell className="font-mono">{result.employee_id}</TableCell>
+                        <TableCell className="font-medium">{result.employee_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{result.department}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{result.program_name}</p>
+                            <p className="text-xs text-muted-foreground">{result.program_code}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{result.training_date}</TableCell>
+                        <TableCell>{result.score ?? '-'}</TableCell>
+                        <TableCell>
+                          {result.grade && (
+                            <Badge variant={
+                              result.grade === 'AA' ? 'default' :
+                              result.grade === 'A' ? 'success' :
+                              result.grade === 'B' ? 'warning' : 'secondary'
+                            }>
+                              {result.grade}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => handleIssueCertificate(result)}
+                          >
+                            <Award className="h-4 w-4 mr-1" />
+                            {t('certificates.issueCertificate')}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* 이수증 미리보기 모달 */}
+        {/* Tab 2: Certificate History */}
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('certificates.searchIssuedPlaceholder')}
+                  className="pl-8"
+                  value={issuedSearchQuery}
+                  onChange={(e) => setIssuedSearchQuery(e.target.value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('certificates.certificateHistory')}</CardTitle>
+              <CardDescription>
+                {t('certificates.certificateHistoryDesc')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingIssued ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('certificates.certNumber')}</TableHead>
+                      <TableHead>{t('certificates.colEmployeeId')}</TableHead>
+                      <TableHead>{t('certificates.colName')}</TableHead>
+                      <TableHead>{t('certificates.colProgram')}</TableHead>
+                      <TableHead>{t('certificates.colTrainingDate')}</TableHead>
+                      <TableHead>{t('certificates.issueDate')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredIssuedCertificates.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          {t('certificates.noIssuedCertificates')}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredIssuedCertificates.map((cert) => (
+                        <TableRow key={cert.certificate_id}>
+                          <TableCell className="font-mono text-sm">
+                            {cert.certificate_number}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{cert.employee_id}</TableCell>
+                          <TableCell className="font-medium">{cert.employee_name}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{cert.program_name}</p>
+                              <p className="text-xs text-muted-foreground">{cert.program_code}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{cert.training_date}</TableCell>
+                          <TableCell className="text-sm">{cert.issue_date}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={cert.status === 'ISSUED' ? 'success' : 'destructive'}
+                            >
+                              {cert.status === 'ISSUED'
+                                ? t('certificates.issuedStatus')
+                                : t('certificates.revokedStatus')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {cert.status === 'ISSUED' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setShowRevokeDialog(cert.certificate_id)}
+                              >
+                                <Ban className="h-4 w-4 mr-1" />
+                                {t('certificates.revoke')}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 3: Templates */}
+        <TabsContent value="templates">
+          <CertificateTemplateManager />
+        </TabsContent>
+      </Tabs>
+
+      {/* Certificate Preview Modal */}
       {selectedCertificate && (
         <CertificatePreview
           data={selectedCertificate}
           onClose={() => setSelectedCertificate(null)}
         />
       )}
+
+      {/* Batch Issue Dialog */}
+      <BatchCertificateDialog
+        open={showBatchDialog}
+        onClose={() => setShowBatchDialog(false)}
+        onSuccess={() => {
+          setShowBatchDialog(false);
+          loadIssuedCertificates();
+        }}
+        programs={programs}
+        results={results}
+      />
+
+      {/* Revoke Confirmation Dialog */}
+      <Dialog open={!!showRevokeDialog} onOpenChange={() => setShowRevokeDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('certificates.revokeConfirm')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t('certificates.revokeWarning')}
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('certificates.revokeReason')}</label>
+              <Input
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder={t('certificates.revokeReasonPlaceholder')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevokeDialog(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRevoke}
+              disabled={!revokeReason.trim()}
+            >
+              {t('certificates.revoke')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

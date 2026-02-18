@@ -230,6 +230,12 @@ service cloud.firestore {
         (resource.data.recipient_id == request.auth.uid || isAdmin());
     }
 
+    match /project_settings/{settingsId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
     // ========== 교육 자료 ==========
     match /materials/{materialId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
@@ -277,11 +283,64 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ========== 교육 비용 (ROI 분석용) ==========
+    match /training_costs/{costId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 이수증 (certificates) - 삭제 금지, 취소만 가능 ==========
+    match /certificates/{certificateId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow delete: if false;  // 이수증은 삭제 불가 - 취소(revoke)만 가능
+    }
+
+    // ========== 이수증 템플릿 (certificate_templates) ==========
+    match /certificate_templates/{templateId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
     // ========== 감사 로그 (APPEND-ONLY: 수정/삭제 불가) ==========
     match /auditLogs/{logId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
       allow update, delete: if false;  // 감사 로그는 수정/삭제 불가
+    }
+
+    // ========== 역량 관리 (Competency Matrix & Skill Gap) ==========
+    match /competencies/{competencyId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /employee_competencies/{ecId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /learning_paths/{pathId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /employee_learning_paths/{elpId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    match /development_plans/{planId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
     }
   }
 }

@@ -38,6 +38,9 @@ import type {
   Automation,
   TaskStatus,
   MemberStats,
+  ProjectSettings,
+  DefaultViewType,
+  NotificationPreferences,
 } from '@/types/project';
 
 // ============================================================
@@ -53,6 +56,7 @@ const COLLECTIONS = {
   EVENTS: 'project_events',
   AUTOMATIONS: 'project_automations',
   NOTIFICATIONS: 'project_notifications',
+  SETTINGS: 'project_settings',
 } as const;
 
 // ============================================================
@@ -110,7 +114,8 @@ const convertDocumentDates = <T extends DocumentData>(data: T): T => {
 export const getMembers = async (): Promise<ProjectMember[]> => {
   const q = query(
     collection(db, COLLECTIONS.MEMBERS),
-    orderBy('name', 'asc')
+    orderBy('name', 'asc'),
+    limit(100)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -123,7 +128,8 @@ export const getActiveMembers = async (): Promise<ProjectMember[]> => {
   const q = query(
     collection(db, COLLECTIONS.MEMBERS),
     where('status', '==', 'active'),
-    orderBy('name', 'asc')
+    orderBy('name', 'asc'),
+    limit(100)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -194,7 +200,8 @@ export const subscribeMembersRealtime = (
 ): (() => void) => {
   const q = query(
     collection(db, COLLECTIONS.MEMBERS),
-    orderBy('name', 'asc')
+    orderBy('name', 'asc'),
+    limit(100)
   );
 
   return onSnapshot(q, (snapshot) => {
@@ -244,7 +251,8 @@ export const getProjects = async (): Promise<Project[]> => {
     collection(db, COLLECTIONS.PROJECTS),
     where('status', '!=', 'archived'),
     orderBy('status'),
-    orderBy('updatedAt', 'desc')
+    orderBy('updatedAt', 'desc'),
+    limit(50)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -308,7 +316,8 @@ export const subscribeProjectsRealtime = (
 ): (() => void) => {
   const q = query(
     collection(db, COLLECTIONS.PROJECTS),
-    orderBy('updatedAt', 'desc')
+    orderBy('updatedAt', 'desc'),
+    limit(50)
   );
 
   return onSnapshot(q, (snapshot) => {
@@ -328,7 +337,8 @@ export const getTasksByProject = async (projectId: string): Promise<Task[]> => {
   const q = query(
     collection(db, COLLECTIONS.TASKS),
     where('projectId', '==', projectId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(200)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -433,7 +443,8 @@ export const subscribeTasksRealtime = (
   const q = query(
     collection(db, COLLECTIONS.TASKS),
     where('projectId', '==', projectId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(200)
   );
 
   return onSnapshot(q, (snapshot) => {
@@ -453,7 +464,8 @@ export const getMessagesByTask = async (taskId: string): Promise<Message[]> => {
   const q = query(
     collection(db, COLLECTIONS.MESSAGES),
     where('taskId', '==', taskId),
-    orderBy('createdAt', 'asc')
+    orderBy('createdAt', 'asc'),
+    limit(100)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -521,7 +533,8 @@ export const subscribeMessagesRealtime = (
   const q = query(
     collection(db, COLLECTIONS.MESSAGES),
     where('taskId', '==', taskId),
-    orderBy('createdAt', 'asc')
+    orderBy('createdAt', 'asc'),
+    limit(100)
   );
 
   return onSnapshot(q, (snapshot) => {
@@ -541,7 +554,8 @@ export const getCategories = async (): Promise<Category[]> => {
   const q = query(
     collection(db, COLLECTIONS.CATEGORIES),
     where('isActive', '==', true),
-    orderBy('order', 'asc')
+    orderBy('order', 'asc'),
+    limit(50)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -693,7 +707,8 @@ export const getAutomationsByProject = async (projectId: string): Promise<Automa
   const q = query(
     collection(db, COLLECTIONS.AUTOMATIONS),
     where('projectId', '==', projectId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(50)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) =>
@@ -835,7 +850,9 @@ export const getUnreadMessageCount = async (
   let q = query(collection(db, COLLECTIONS.MESSAGES));
 
   if (taskId) {
-    q = query(q, where('taskId', '==', taskId));
+    q = query(q, where('taskId', '==', taskId), limit(100));
+  } else {
+    q = query(q, limit(500));
   }
 
   const snapshot = await getDocs(q);
@@ -850,6 +867,97 @@ export const getUnreadMessageCount = async (
   });
 
   return unreadCount;
+};
+
+// ============================================================
+// Project Settings Service
+// ============================================================
+
+/** 기본 설정 값 */
+const DEFAULT_SETTINGS: Omit<ProjectSettings, 'projectId' | 'updatedAt'> = {
+  projectName: '',
+  projectDescription: '',
+  defaultView: 'list' as DefaultViewType,
+  notifications: {
+    taskAssigned: true,
+    taskDue: true,
+    taskOverdue: true,
+    comments: true,
+  } as NotificationPreferences,
+};
+
+/** 프로젝트 설정 조회 */
+export const getProjectSettings = async (projectId: string): Promise<ProjectSettings> => {
+  const docRef = doc(db, COLLECTIONS.SETTINGS, projectId);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    // 기본값 반환
+    return {
+      ...DEFAULT_SETTINGS,
+      projectId,
+      updatedAt: new Date(),
+    } as ProjectSettings;
+  }
+
+  return convertDocumentDates({ projectId, ...docSnap.data() }) as ProjectSettings;
+};
+
+/** 프로젝트 설정 업데이트 */
+export const updateProjectSettings = async (
+  projectId: string,
+  data: Partial<Pick<ProjectSettings, 'projectName' | 'projectDescription' | 'defaultView' | 'notifications'>>
+): Promise<void> => {
+  const docRef = doc(db, COLLECTIONS.SETTINGS, projectId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    // 문서가 없으면 기본값과 함께 생성
+    await setDoc(docRef, {
+      ...DEFAULT_SETTINGS,
+      ...data,
+      projectId,
+      updatedAt: serverTimestamp(),
+    });
+  }
+};
+
+// ============================================================
+// Convenience Subscription Aliases
+// ============================================================
+
+/**
+ * 특정 프로젝트의 과제 실시간 구독
+ * subscribeTasksRealtime의 alias로, 일관된 네이밍 제공
+ */
+export const subscribeToTasks = (
+  projectId: string,
+  callback: (tasks: Task[]) => void
+): (() => void) => {
+  const q = query(
+    collection(db, COLLECTIONS.TASKS),
+    where('projectId', '==', projectId),
+    orderBy('createdAt', 'desc'),
+    limit(200)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const tasks = snapshot.docs.map((d) =>
+        convertDocumentDates({ id: d.id, ...d.data() }) as Task
+      );
+      callback(tasks);
+    },
+    (error) => {
+      console.error(`[projectService] subscribeToTasks failed for project ${projectId}:`, error);
+    }
+  );
 };
 
 // Export collections for direct access if needed

@@ -62,6 +62,8 @@ interface ProjectStore {
 
   // Subscription cleanup functions
   unsubscribeFunctions: (() => void)[];
+  tasksUnsubscribe: (() => void) | null;
+  messagesUnsubscribe: (() => void) | null;
 
   // Member Actions
   fetchMembers: () => Promise<void>;
@@ -173,6 +175,8 @@ export const useProjectStore = create<ProjectStore>()(
 
         error: null,
         unsubscribeFunctions: [],
+        tasksUnsubscribe: null,
+        messagesUnsubscribe: null,
 
         // ============================================================
         // Member Actions
@@ -312,7 +316,11 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         selectProject: (projectId: string | null) => {
-          set({ currentProjectId: projectId, currentTaskId: null, tasks: [], messages: [] });
+          // Unsubscribe existing tasks & messages listeners before creating new ones
+          const { tasksUnsubscribe, messagesUnsubscribe } = get();
+          if (tasksUnsubscribe) tasksUnsubscribe();
+          if (messagesUnsubscribe) messagesUnsubscribe();
+          set({ currentProjectId: projectId, currentTaskId: null, tasks: [], messages: [], tasksUnsubscribe: null, messagesUnsubscribe: null });
           if (projectId) {
             get().fetchTasksByProject(projectId);
             get().subscribeTasksRealtime(projectId);
@@ -402,7 +410,10 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         selectTask: (taskId: string | null) => {
-          set({ currentTaskId: taskId, messages: [] });
+          // Unsubscribe existing messages listener before creating new one
+          const { messagesUnsubscribe } = get();
+          if (messagesUnsubscribe) messagesUnsubscribe();
+          set({ currentTaskId: taskId, messages: [], messagesUnsubscribe: null });
           if (taskId) {
             get().fetchMessagesByTask(taskId);
             get().subscribeMessagesRealtime(taskId);
@@ -433,12 +444,14 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         subscribeTasksRealtime: (projectId: string) => {
+          // Unsubscribe existing tasks listener if any
+          const { tasksUnsubscribe } = get();
+          if (tasksUnsubscribe) tasksUnsubscribe();
+
           const unsubscribe = projectService.subscribeTasksRealtime(projectId, (tasks) => {
             set({ tasks });
           });
-          set((state) => ({
-            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
-          }));
+          set({ tasksUnsubscribe: unsubscribe });
         },
 
         // ============================================================
@@ -516,12 +529,14 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         subscribeMessagesRealtime: (taskId: string) => {
+          // Unsubscribe existing messages listener if any
+          const { messagesUnsubscribe } = get();
+          if (messagesUnsubscribe) messagesUnsubscribe();
+
           const unsubscribe = projectService.subscribeMessagesRealtime(taskId, (messages) => {
             set({ messages });
           });
-          set((state) => ({
-            unsubscribeFunctions: [...state.unsubscribeFunctions, unsubscribe],
-          }));
+          set({ messagesUnsubscribe: unsubscribe });
         },
 
         // ============================================================
@@ -820,10 +835,14 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         cleanup: () => {
-          const { unsubscribeFunctions } = get();
+          const { unsubscribeFunctions, tasksUnsubscribe, messagesUnsubscribe } = get();
           unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+          if (tasksUnsubscribe) tasksUnsubscribe();
+          if (messagesUnsubscribe) messagesUnsubscribe();
           set({
             unsubscribeFunctions: [],
+            tasksUnsubscribe: null,
+            messagesUnsubscribe: null,
             currentProjectId: null,
             currentTaskId: null,
             tasks: [],

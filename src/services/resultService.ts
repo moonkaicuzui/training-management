@@ -17,6 +17,7 @@ import {
   getDocs,
   serverTimestamp,
   writeBatch,
+  limit,
   Timestamp,
 } from '@/services/firebase';
 import type { TrainingResultRecord, ResultFilters } from '@/types';
@@ -99,6 +100,8 @@ export const getResults = async (
     constraints.push(where('result', '==', filters.result));
   }
 
+  constraints.push(limit(500));
+
   const q = query(collection(db, COLLECTION), ...constraints);
   const snapshot = await getDocs(q);
 
@@ -144,7 +147,8 @@ export const getResultsByEmployee = async (
 ): Promise<TrainingResultRecord[]> => {
   const q = query(
     collection(db, COLLECTION),
-    where('employee_id', '==', employeeId)
+    where('employee_id', '==', employeeId),
+    limit(200)
   );
   const snapshot = await getDocs(q);
 

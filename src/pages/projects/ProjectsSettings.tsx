@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -36,14 +38,17 @@ import {
   Zap,
   FolderCog,
   AlertTriangle,
+  Loader2,
+  Save,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { CATEGORY_COLORS } from '@/types/project';
-import type { Category, Automation } from '@/types/project';
+import type { Category, Automation, DefaultViewType, NotificationPreferences } from '@/types/project';
 import { AutomationList, AutomationDialog } from '@/components/projects/automation';
 import type { AutomationFormData } from '@/components/projects/automation/constants';
+import { getProjectSettings, updateProjectSettings } from '@/services/api';
 
 export default function ProjectsSettings() {
   const { t } = useTranslation();
@@ -83,6 +88,21 @@ export default function ProjectsSettings() {
   const [isAutomationDialogOpen, setIsAutomationDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
 
+  // 일반 설정 관련 상태
+  const [generalSettings, setGeneralSettings] = useState({
+    projectName: '',
+    projectDescription: '',
+    defaultView: 'list' as DefaultViewType,
+    notifications: {
+      taskAssigned: true,
+      taskDue: true,
+      taskOverdue: true,
+      comments: true,
+    } as NotificationPreferences,
+  });
+  const [isGeneralLoading, setIsGeneralLoading] = useState(false);
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
@@ -93,6 +113,33 @@ export default function ProjectsSettings() {
       }
     }
   }, [fetchCategories, fetchAutomationsByProject, currentProjectId]);
+
+  // 일반 설정 로드
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settingsId = currentProjectId || 'global';
+      setIsGeneralLoading(true);
+      try {
+        const settings = await getProjectSettings(settingsId);
+        setGeneralSettings({
+          projectName: settings.projectName || '',
+          projectDescription: settings.projectDescription || '',
+          defaultView: settings.defaultView || 'list',
+          notifications: settings.notifications || {
+            taskAssigned: true,
+            taskDue: true,
+            taskOverdue: true,
+            comments: true,
+          },
+        });
+      } catch {
+        // 기본값 유지
+      } finally {
+        setIsGeneralLoading(false);
+      }
+    };
+    loadSettings();
+  }, [currentProjectId]);
 
   // 폼 초기화
   const resetForm = () => {
@@ -227,6 +274,27 @@ export default function ProjectsSettings() {
       // 에러는 스토어에서 처리
     }
   }, [currentProjectId, createAutomation]);
+
+  // 일반 설정 저장
+  const handleSaveGeneral = async () => {
+    const settingsId = currentProjectId || 'global';
+    setIsSavingGeneral(true);
+    try {
+      await updateProjectSettings(settingsId, generalSettings);
+      toast({
+        title: t('projects.settings.settingsSaved'),
+        description: t('projects.settings.settingsSavedDesc'),
+      });
+    } catch {
+      toast({
+        title: t('common.error'),
+        description: String(t('common.error')),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingGeneral(false);
+    }
+  };
 
   // 자동화 테스트 실행
   const handleTestAutomation = useCallback((automation: Automation) => {
@@ -408,18 +476,131 @@ export default function ProjectsSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>{t('projects.settings.general')}</Label>
-                <p className="text-sm text-muted-foreground">
-                  {t('projects.settings.futureUpdate')}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('common.export')}</Label>
-                <p className="text-sm text-muted-foreground">
-                  {t('projects.settings.futureUpdate')}
-                </p>
-              </div>
+              {isGeneralLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  {/* 프로젝트 이름 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="projectName">{t('projects.dashboard.projectName')}</Label>
+                    <Input
+                      id="projectName"
+                      value={generalSettings.projectName}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, projectName: e.target.value })
+                      }
+                      placeholder={t('projects.dashboard.projectName')}
+                    />
+                  </div>
+
+                  {/* 프로젝트 설명 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="projectDescription">{t('common.description')}</Label>
+                    <Textarea
+                      id="projectDescription"
+                      value={generalSettings.projectDescription}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, projectDescription: e.target.value })
+                      }
+                      placeholder={t('common.description')}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* 기본 보기 */}
+                  <div className="space-y-2">
+                    <Label>{t('projects.settings.defaultView')}</Label>
+                    <Select
+                      value={generalSettings.defaultView}
+                      onValueChange={(value) =>
+                        setGeneralSettings({
+                          ...generalSettings,
+                          defaultView: value as DefaultViewType,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-[240px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="list">{t('common.list')}</SelectItem>
+                        <SelectItem value="board">{t('projects.tasks.board')}</SelectItem>
+                        <SelectItem value="timeline">{t('projects.tasks.timeline')}</SelectItem>
+                        <SelectItem value="calendar">{t('projects.calendar.title')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 알림 설정 */}
+                  <div className="space-y-4">
+                    <Label>{t('projects.settings.notifications')}</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t('projects.settings.notifyTaskAssigned')}</span>
+                        <Switch
+                          checked={generalSettings.notifications.taskAssigned}
+                          onCheckedChange={(checked) =>
+                            setGeneralSettings({
+                              ...generalSettings,
+                              notifications: { ...generalSettings.notifications, taskAssigned: checked },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t('projects.settings.notifyTaskDue')}</span>
+                        <Switch
+                          checked={generalSettings.notifications.taskDue}
+                          onCheckedChange={(checked) =>
+                            setGeneralSettings({
+                              ...generalSettings,
+                              notifications: { ...generalSettings.notifications, taskDue: checked },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t('projects.settings.notifyTaskOverdue')}</span>
+                        <Switch
+                          checked={generalSettings.notifications.taskOverdue}
+                          onCheckedChange={(checked) =>
+                            setGeneralSettings({
+                              ...generalSettings,
+                              notifications: { ...generalSettings.notifications, taskOverdue: checked },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t('projects.settings.notifyComments')}</span>
+                        <Switch
+                          checked={generalSettings.notifications.comments}
+                          onCheckedChange={(checked) =>
+                            setGeneralSettings({
+                              ...generalSettings,
+                              notifications: { ...generalSettings.notifications, comments: checked },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 저장 버튼 */}
+                  <div className="flex justify-end">
+                    <Button onClick={handleSaveGeneral} disabled={isSavingGeneral}>
+                      {isSavingGeneral ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      {isSavingGeneral ? t('common.saving') : t('common.save')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

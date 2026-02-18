@@ -443,6 +443,31 @@ export interface ProjectNotification {
 }
 
 // ============================================================
+// 프로젝트 설정 타입
+// ============================================================
+
+/** 프로젝트 기본 보기 */
+export type DefaultViewType = 'list' | 'board' | 'timeline' | 'calendar';
+
+/** 알림 설정 */
+export interface NotificationPreferences {
+  taskAssigned: boolean;
+  taskDue: boolean;
+  taskOverdue: boolean;
+  comments: boolean;
+}
+
+/** 프로젝트 설정 */
+export interface ProjectSettings {
+  projectId: string;
+  projectName: string;
+  projectDescription: string;
+  defaultView: DefaultViewType;
+  notifications: NotificationPreferences;
+  updatedAt: Timestamp | Date;
+}
+
+// ============================================================
 // 뷰 관련 타입 (Asana 스타일)
 // ============================================================
 

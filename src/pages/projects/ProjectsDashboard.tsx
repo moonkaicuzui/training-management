@@ -55,6 +55,8 @@ export default function ProjectsDashboard() {
   // Use ref to prevent double initialization (anti-pattern fix)
   const initializedRef = useRef(false);
 
+  const { cleanup } = useProjectStore();
+
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
@@ -63,7 +65,10 @@ export default function ProjectsDashboard() {
       subscribeMembersRealtime();
       subscribeProjectsRealtime();
     }
-  }, [fetchMembers, fetchProjects, subscribeMembersRealtime, subscribeProjectsRealtime]);
+    return () => {
+      cleanup();
+    };
+  }, [fetchMembers, fetchProjects, subscribeMembersRealtime, subscribeProjectsRealtime, cleanup]);
 
   // 통계 계산
   const activeMembers = members.filter((m) => m.status === 'active');

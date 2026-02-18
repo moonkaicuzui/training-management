@@ -4,7 +4,7 @@
 // ============================================================
 
 // 스프레드시트 ID (본인 시트 URL에서 복사)
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+const SPREADSHEET_ID = '1Rv0v_xxe86Hr0ptFphnZKyZZ_7CwmXOkuerd4o7BqOg';
 
 // 시트 이름
 const SHEETS = {
@@ -114,6 +114,26 @@ function doPost(e) {
         break;
       case 'updateResult':
         result = updateResult(payload.data);
+        break;
+      // ========== 동기화 액션 ==========
+      case 'syncCollection':
+        if (!verifyApiKey(e)) {
+          return ContentService
+            .createTextOutput(JSON.stringify({ success: false, error: 'Unauthorized' }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+        result = syncCollection(payload.collection, payload.direction);
+        break;
+      case 'syncAll':
+        if (!verifyApiKey(e)) {
+          return ContentService
+            .createTextOutput(JSON.stringify({ success: false, error: 'Unauthorized' }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+        result = syncAllCollections(payload.direction);
+        break;
+      case 'getSyncStatus':
+        result = getSyncStatus();
         break;
       default:
         result = { error: 'Unknown action: ' + action };
