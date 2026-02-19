@@ -30,7 +30,6 @@ import {
   FileWarning,
   RefreshCcw,
   Search,
-  BrainCircuit,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -45,219 +44,95 @@ interface NavItem {
   badge?: number;
 }
 
-const navItems: NavItem[] = [
-  {
-    titleKey: 'nav.dashboard',
-    href: '/',
-    icon: LayoutDashboard,
-  },
-  {
-    titleKey: 'nav.programs',
-    href: '/programs',
-    icon: BookOpen,
-  },
-  {
-    titleKey: 'nav.progress',
-    href: '/progress',
-    icon: Grid3X3,
-  },
-  {
-    titleKey: 'nav.schedule',
-    href: '/schedule',
-    icon: Calendar,
-  },
-  {
-    titleKey: 'nav.attendance',
-    href: '/attendance',
-    icon: UserCheck,
-  },
-  {
-    titleKey: 'nav.results',
-    href: '/results',
-    icon: ClipboardCheck,
-  },
-  {
-    titleKey: 'nav.employees',
-    href: '/employees',
-    icon: Users,
-  },
+interface NavSection {
+  titleKey: string;
+  items: NavItem[];
+}
+
+// 1. Dashboards
+const dashboardItems: NavItem[] = [
+  { titleKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
+  { titleKey: 'nav.executive', href: '/executive', icon: Building2 },
+  { titleKey: 'nav.department', href: '/department', icon: BarChart3 },
 ];
 
-const secondaryItems: NavItem[] = [
-  {
-    titleKey: 'nav.retraining',
-    href: '/retraining',
-    icon: AlertTriangle,
-  },
-  {
-    titleKey: 'nav.certificates',
-    href: '/certificates',
-    icon: Award,
-  },
-  {
-    titleKey: 'nav.reports',
-    href: '/reports',
-    icon: FileBarChart,
-  },
-  {
-    titleKey: 'nav.department',
-    href: '/department',
-    icon: Building2,
-  },
-  {
-    titleKey: 'nav.notifications',
-    href: '/notifications',
-    icon: Bell,
-  },
-  {
-    titleKey: 'nav.evaluation',
-    href: '/evaluation',
-    icon: BarChart3,
-  },
-  {
-    titleKey: 'nav.materials',
-    href: '/materials',
-    icon: FolderOpen,
-  },
-  {
-    titleKey: 'nav.competency',
-    href: '/competency',
-    icon: Grid3X3,
-  },
-  {
-    titleKey: 'nav.skillGap',
-    href: '/skill-gap',
-    icon: BarChart3,
-  },
+// 2. Training Operations
+const trainingOpsItems: NavItem[] = [
+  { titleKey: 'nav.programs', href: '/programs', icon: BookOpen },
+  { titleKey: 'nav.schedule', href: '/schedule', icon: Calendar },
+  { titleKey: 'nav.attendance', href: '/attendance', icon: UserCheck },
+  { titleKey: 'nav.results', href: '/results', icon: ClipboardCheck },
+  { titleKey: 'nav.progress', href: '/progress', icon: Grid3X3 },
 ];
 
-const adminItems: NavItem[] = [
-  {
-    titleKey: 'nav.executive',
-    href: '/executive',
-    icon: Building2,
-  },
-  {
-    titleKey: 'nav.audit',
-    href: '/audit',
-    icon: Shield,
-  },
-  {
-    titleKey: 'nav.trainers',
-    href: '/trainers',
-    icon: GraduationCap,
-  },
-  {
-    titleKey: 'nav.trainingPlan',
-    href: '/training-plan',
-    icon: CalendarClock,
-  },
-  {
-    titleKey: 'nav.auditLog',
-    href: '/audit-log',
-    icon: History,
-  },
-  {
-    titleKey: 'nav.dataSync',
-    href: '/data-sync',
-    icon: RefreshCcw,
-  },
+// 3. Follow-up Management
+const followUpItems: NavItem[] = [
+  { titleKey: 'nav.retraining', href: '/retraining', icon: AlertTriangle },
+  { titleKey: 'nav.certificates', href: '/certificates', icon: Award },
+  { titleKey: 'nav.evaluation', href: '/evaluation', icon: BarChart3 },
 ];
 
-// 프로젝트 관리 (품질 부서 협업 시스템) 메뉴
-const projectItems: NavItem[] = [
-  {
-    titleKey: 'nav.projects.dashboard',
-    href: '/projects/dashboard',
-    icon: FolderKanban,
-  },
-  {
-    titleKey: 'nav.projects.members',
-    href: '/projects/members',
-    icon: Users,
-  },
-  {
-    titleKey: 'nav.projects.tasks',
-    href: '/projects/tasks',
-    icon: CheckCircle2,
-  },
-  {
-    titleKey: 'nav.projects.calendar',
-    href: '/projects/calendar',
-    icon: CalendarDays,
-  },
-  {
-    titleKey: 'nav.projects.settings',
-    href: '/projects/settings',
-    icon: Settings,
-  },
+// 4. People & Competency
+const peopleItems: NavItem[] = [
+  { titleKey: 'nav.employees', href: '/employees', icon: Users },
+  { titleKey: 'nav.trainers', href: '/trainers', icon: GraduationCap },
+  { titleKey: 'nav.competency', href: '/competency', icon: Grid3X3 },
+  { titleKey: 'nav.skillGap', href: '/skill-gap', icon: BarChart3 },
 ];
 
-// New TQC (신입 TQC 교육) 메뉴
+// 5. New TQC Training
 const newTQCItems: NavItem[] = [
-  {
-    titleKey: 'nav.newTQC.dashboard',
-    href: '/new-tqc/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    titleKey: 'nav.newTQC.trainees',
-    href: '/new-tqc/trainees',
-    icon: UserPlus,
-  },
-  {
-    titleKey: 'nav.newTQC.meetings',
-    href: '/new-tqc/meetings',
-    icon: CalendarDays,
-  },
-  {
-    titleKey: 'nav.newTQC.finalResult',
-    href: '/new-tqc/final-result',
-    icon: ClipboardCheck,
-  },
-  {
-    titleKey: 'nav.newTQC.certificates',
-    href: '/new-tqc/certificates',
-    icon: Award,
-  },
-  {
-    titleKey: 'nav.newTQC.resignations',
-    href: '/new-tqc/resignations',
-    icon: UserMinus,
-  },
-  {
-    titleKey: 'nav.newTQC.settings',
-    href: '/new-tqc/settings',
-    icon: Settings,
-  },
+  { titleKey: 'nav.newTQC.dashboard', href: '/new-tqc/dashboard', icon: LayoutDashboard },
+  { titleKey: 'nav.newTQC.trainees', href: '/new-tqc/trainees', icon: UserPlus },
+  { titleKey: 'nav.newTQC.meetings', href: '/new-tqc/meetings', icon: CalendarDays },
+  { titleKey: 'nav.newTQC.finalResult', href: '/new-tqc/final-result', icon: ClipboardCheck },
+  { titleKey: 'nav.newTQC.certificates', href: '/new-tqc/certificates', icon: Award },
+  { titleKey: 'nav.newTQC.resignations', href: '/new-tqc/resignations', icon: UserMinus },
+  { titleKey: 'nav.newTQC.settings', href: '/new-tqc/settings', icon: Settings },
 ];
 
-// CAPA (시정 및 예방 조치) 메뉴
-const capaItems: NavItem[] = [
-  {
-    titleKey: 'nav.capa.dashboard',
-    href: '/capa',
-    icon: ShieldCheck,
-  },
-  {
-    titleKey: 'nav.capa.new',
-    href: '/capa/new',
-    icon: FileWarning,
-  },
+// 6. Projects
+const projectItems: NavItem[] = [
+  { titleKey: 'nav.projects.dashboard', href: '/projects/dashboard', icon: FolderKanban },
+  { titleKey: 'nav.projects.members', href: '/projects/members', icon: Users },
+  { titleKey: 'nav.projects.tasks', href: '/projects/tasks', icon: CheckCircle2 },
+  { titleKey: 'nav.projects.calendar', href: '/projects/calendar', icon: CalendarDays },
+  { titleKey: 'nav.projects.settings', href: '/projects/settings', icon: Settings },
 ];
 
-// 5PRS (검사 평가) 메뉴
-const fivePrsItems: NavItem[] = [
-  {
-    titleKey: 'nav.fivePrs.dashboard',
-    href: '/five-prs/dashboard',
-    icon: Search,
-  },
-  {
-    titleKey: 'nav.fivePrs.aiInstructions',
-    href: '/five-prs/ai-instructions',
-    icon: BrainCircuit,
-  },
+// 7. Quality Improvement (CAPA + 5PRS)
+const qualityItems: NavItem[] = [
+  { titleKey: 'nav.capa.dashboard', href: '/capa', icon: ShieldCheck },
+  { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
+  { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: Search },
+  { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: GraduationCap },
+];
+
+// 8. Analytics & Reports
+const analyticsItems: NavItem[] = [
+  { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
+  { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
+  { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
+];
+
+// 9. System Admin
+const systemAdminItems: NavItem[] = [
+  { titleKey: 'nav.audit', href: '/audit', icon: Shield },
+  { titleKey: 'nav.auditLog', href: '/audit-log', icon: History },
+  { titleKey: 'nav.materials', href: '/materials', icon: FolderOpen },
+  { titleKey: 'nav.dataSync', href: '/data-sync', icon: RefreshCcw },
+];
+
+const sections: NavSection[] = [
+  { titleKey: 'sidebar.dashboards', items: dashboardItems },
+  { titleKey: 'sidebar.trainingOps', items: trainingOpsItems },
+  { titleKey: 'sidebar.followUp', items: followUpItems },
+  { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
+  { titleKey: 'sidebar.newTQC', items: newTQCItems },
+  { titleKey: 'sidebar.projects', items: projectItems },
+  { titleKey: 'sidebar.qualityImprovement', items: qualityItems },
+  { titleKey: 'sidebar.analyticsReports', items: analyticsItems },
+  { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },
 ];
 
 export function Sidebar() {
@@ -300,208 +175,41 @@ export function Sidebar() {
         </div>
 
         <ScrollArea className="h-[calc(100vh-4rem)] md:h-screen py-4">
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.mainMenu')}
-            </h2>
-            <nav className="space-y-1">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive || (item.href === '/' && location.pathname === '/')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                  {item.badge && (
-                    <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                      {item.badge}
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* New TQC Section */}
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.newTQC')}
-            </h2>
-            <nav className="space-y-1">
-              {newTQCItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* 프로젝트 관리 (품질 부서 협업 시스템) Section */}
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.projects')}
-            </h2>
-            <nav className="space-y-1">
-              {projectItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* CAPA (시정 및 예방 조치) Section */}
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.capa')}
-            </h2>
-            <nav className="space-y-1">
-              {capaItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* 5PRS (검사 평가) Section */}
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.inspection')}
-            </h2>
-            <nav className="space-y-1">
-              {fivePrsItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.management')}
-            </h2>
-            <nav className="space-y-1">
-              {secondaryItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-              {t('sidebar.admin')}
-            </h2>
-            <nav className="space-y-1">
-              {adminItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  {t(item.titleKey)}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
+          {sections.map((section, idx) => (
+            <div key={section.titleKey}>
+              {idx > 0 && <Separator className="my-3" />}
+              <div className="px-3 py-1">
+                <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+                  {t(section.titleKey)}
+                </h2>
+                <nav className="space-y-1">
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                          isActive || (item.href === '/' && location.pathname === '/')
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        )
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {t(item.titleKey)}
+                      {item.badge && (
+                        <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                          {item.badge}
+                        </span>
+                      )}
+                    </NavLink>
+                  ))}
+                </nav>
+              </div>
+            </div>
+          ))}
 
           {/* Quick Stats */}
           <div className="mt-auto px-3 py-4">

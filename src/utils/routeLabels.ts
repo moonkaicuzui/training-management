@@ -35,6 +35,17 @@ const routeLabelMap: Record<string, string> = {
   // CAPA
   capa: 'sidebar.capa',
   new: 'nav.capa.new',
+  // Competency & Skill Gap
+  competency: 'nav.competency',
+  'skill-gap': 'nav.skillGap',
+  // Data Sync & Department
+  'data-sync': 'nav.dataSync',
+  department: 'nav.department',
+  // 5PRS
+  'five-prs': 'nav.fivePrs.dashboard',
+  'training-recommendations': 'nav.fivePrs.trainingRecommendations',
+  // TQC sub-routes
+  'final-result': 'nav.newTQC.finalResult',
 };
 
 export function getRouteLabel(segment: string): string | null {

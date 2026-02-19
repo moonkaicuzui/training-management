@@ -455,3 +455,6 @@ export * from './capa';
 
 // ========== Audit Log (감사 로그) Types ==========
 export * from './auditLog';
+
+// ========== 5PRS Recommendation Types ==========
+export * from './recommendation';

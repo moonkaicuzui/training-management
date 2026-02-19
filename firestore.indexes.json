@@ -303,6 +303,30 @@
         { "fieldPath": "projectId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "defect_training_mappings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "defect_type", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tqc_employee_links",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tqc_id", "order": "ASCENDING" },
+        { "fieldPath": "employee_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "five_prs_enrollment_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year_month", "order": "ASCENDING" },
+        { "fieldPath": "enrolled_at", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

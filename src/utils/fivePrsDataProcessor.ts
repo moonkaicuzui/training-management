@@ -65,6 +65,7 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
   const modelMap: Record<string, {
     totalValidation: number;
     totalReject: number;
+    defects: Record<string, number>;
   }> = {};
 
   const dailyMap: Record<string, {
@@ -143,10 +144,17 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
     // Model
     const model = row['Model'] || 'Unknown';
     if (!modelMap[model]) {
-      modelMap[model] = { totalValidation: 0, totalReject: 0 };
+      modelMap[model] = { totalValidation: 0, totalReject: 0, defects: {} };
     }
     modelMap[model].totalValidation += validationQty;
     modelMap[model].totalReject += rejectQty;
+    if (row['Error'] && rejectQty > 0) {
+      const modelDefectList = parseDefectTypes(row['Error']);
+      modelDefectList.forEach((defect) => {
+        modelMap[model].defects[defect] =
+          (modelMap[model].defects[defect] || 0) + rejectQty / modelDefectList.length;
+      });
+    }
 
     // PO
     const po = row['PO No'] || 'Unknown';
@@ -201,6 +209,7 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
       rejectRate: m.totalValidation > 0
         ? Math.round((m.totalReject / m.totalValidation) * 10000) / 100
         : 0,
+      defects: m.defects,
     }))
     .sort((a, b) => b.rejectRate - a.rejectRate);
 
@@ -264,20 +273,62 @@ export function extractBriefingPayload(
   yearMonth: string,
   lang: string
 ): AiBriefingRequest {
-  const { stats, tqcRecords, defectTypes, buildingRecords } = processed;
+  const { stats, tqcRecords, defectTypes, buildingRecords, modelRecords } = processed;
 
   const topTqcIssues = tqcRecords
     .filter((t) => t.totalValidation >= 100 && t.rejectRate > 0)
     .slice(0, 5)
-    .map((t) => ({
-      name: t.name,
-      id: t.id,
-      rejectRate: t.rejectRate,
-      totalReject: t.totalReject,
-      mainDefect: t.mainDefect,
-    }));
+    .map((t) => {
+      const sortedDefects = Object.entries(t.defects)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([type, count]) => ({ type, count: Math.round(count) }));
+      return {
+        name: t.name,
+        id: t.id,
+        rejectRate: t.rejectRate,
+        totalReject: t.totalReject,
+        totalValidation: t.totalValidation,
+        buildings: t.buildings,
+        defects: sortedDefects,
+        mainDefect: t.mainDefect,
+      };
+    });
 
   const topDefects = defectTypes.slice(0, 5);
+
+  // Build defect→model mapping for top defects
+  const defectModelMap: Record<string, Array<{ model: string; count: number }>> = {};
+  for (const m of modelRecords) {
+    for (const [defect, count] of Object.entries(m.defects)) {
+      if (!defectModelMap[defect]) defectModelMap[defect] = [];
+      defectModelMap[defect].push({ model: m.model, count: Math.round(count) });
+    }
+  }
+  const topDefectModels = topDefects.slice(0, 5).map((d) => ({
+    type: d.type,
+    models: (defectModelMap[d.type] || [])
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3),
+  }));
+
+  // Model defect data
+  const modelDefects = modelRecords
+    .filter((m) => m.totalReject > 0)
+    .slice(0, 8)
+    .map((m) => {
+      const sortedDefects = Object.entries(m.defects)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([type, count]) => ({ type, count: Math.round(count) }));
+      return {
+        model: m.model,
+        rejectRate: m.rejectRate,
+        totalReject: m.totalReject,
+        totalValidation: m.totalValidation,
+        defects: sortedDefects,
+      };
+    });
 
   const buildingIssues = buildingRecords.slice(0, 10).map((b) => ({
     building: b.building,
@@ -304,6 +355,8 @@ export function extractBriefingPayload(
     },
     topTqcIssues,
     topDefects,
+    topDefectModels,
+    modelDefects,
     buildingIssues,
     riskItems: {
       highRiskPOs: [],

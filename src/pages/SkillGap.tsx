@@ -8,9 +8,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, AlertCircle, BookOpen, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,17 +27,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { LazyBarChart } from '@/components/charts/LazyCharts';
 import { CompetencyRadar } from '@/components/competency/CompetencyRadar';
 import { useToast } from '@/hooks/use-toast';
 import * as api from '@/services/api';
 import { cn } from '@/lib/utils';
-import type { Employee, Department } from '@/types';
+import type { Employee, Department, TrainingProgram } from '@/types';
 import type {
   Competency,
   CompetencyCategory,
   EmployeeCompetency,
   CompetencyGapSummary,
+  LearningPath,
 } from '@/types/curriculum';
 import { COMPETENCY_LEVEL_VALUES } from '@/types/curriculum';
 
@@ -56,11 +65,17 @@ export default function SkillGapPage() {
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [employeeCompetencies, setEmployeeCompetencies] = useState<EmployeeCompetency[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [deptFilter, setDeptFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  // Action plan dialog
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [selectedGap, setSelectedGap] = useState<CompetencyGapSummary | null>(null);
 
   useEffect(() => {
     loadData();
@@ -69,19 +84,58 @@ export default function SkillGapPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [comps, empComps, emps] = await Promise.all([
+      const [comps, empComps, emps, progs, paths] = await Promise.all([
         api.getCompetencies(),
         api.getEmployeeCompetencies(),
         api.getEmployees(),
+        api.getPrograms(),
+        api.getLearningPaths(),
       ]);
       setCompetencies(comps.filter((c) => c.is_active));
       setEmployeeCompetencies(empComps);
       setEmployees(emps.filter((e) => e.status === 'ACTIVE'));
+      setPrograms(progs.filter((p) => p.is_active));
+      setLearningPaths(paths.filter((lp) => lp.is_active));
     } catch (error) {
       toast({ title: t('messages.loadError'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Find related training programs for a competency gap
+  const getRelatedPrograms = (competencyId: string): TrainingProgram[] => {
+    // Check learning paths that require this competency
+    const relatedProgramCodes = new Set<string>();
+    for (const path of learningPaths) {
+      const requiresComp = path.required_competencies?.some(
+        (rc) => rc.competency_id === competencyId
+      );
+      if (requiresComp) {
+        path.programs.forEach((p) => relatedProgramCodes.add(p.program_code));
+      }
+    }
+    // If found via learning paths, use those
+    if (relatedProgramCodes.size > 0) {
+      return programs.filter((p) => relatedProgramCodes.has(p.program_code));
+    }
+    // Fallback: match by competency category → program category
+    const comp = competencies.find((c) => c.competency_id === competencyId);
+    if (!comp) return [];
+    const categoryMap: Record<string, string[]> = {
+      TECHNICAL: ['QIP', 'Technical'],
+      QUALITY: ['QIP', 'Quality'],
+      SAFETY: ['Safety'],
+      LEADERSHIP: ['Leadership', 'Promotion'],
+      COMMUNICATION: ['General'],
+      PROCESS: ['Process', 'Production'],
+    };
+    const targetCategories = categoryMap[comp.category] || [];
+    return programs.filter((p) =>
+      targetCategories.some((cat) =>
+        p.category?.toLowerCase().includes(cat.toLowerCase())
+      )
+    ).slice(0, 5);
   };
 
   const departments = useMemo(() => {
@@ -333,56 +387,92 @@ export default function SkillGapPage() {
                 <TableHead className="text-right">{t('skillGap.priorityTable.gapPercent')}</TableHead>
                 <TableHead className="text-right">{t('skillGap.priorityTable.belowTarget')}</TableHead>
                 <TableHead className="text-right">{t('skillGap.priorityTable.total')}</TableHead>
+                <TableHead>{t('skillGap.recommendedPrograms', { defaultValue: 'Recommended' })}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {gapSummaries.map((gap) => (
-                <TableRow key={gap.competency.competency_id}>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        gap.priority === 'HIGH'
-                          ? 'destructive'
-                          : gap.priority === 'MEDIUM'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className={cn(
-                        gap.priority === 'MEDIUM' && 'bg-yellow-500 hover:bg-yellow-600'
+              {gapSummaries.map((gap) => {
+                const relatedProgs = getRelatedPrograms(gap.competency.competency_id);
+                return (
+                  <TableRow key={gap.competency.competency_id}>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          gap.priority === 'HIGH'
+                            ? 'destructive'
+                            : gap.priority === 'MEDIUM'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className={cn(
+                          gap.priority === 'MEDIUM' && 'bg-yellow-500 hover:bg-yellow-600'
+                        )}
+                      >
+                        {t(`skillGap.priority.${gap.priority}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {gap.competency.competency_code}
+                    </TableCell>
+                    <TableCell>{gap.competency.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {t(`competency.category.${gap.competency.category}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      <span
+                        className={cn(
+                          gap.gap_percentage >= 60
+                            ? 'text-destructive'
+                            : gap.gap_percentage >= 30
+                            ? 'text-yellow-600'
+                            : 'text-green-600'
+                        )}
+                      >
+                        {gap.gap_percentage}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">{gap.below_target}</TableCell>
+                    <TableCell className="text-right">{gap.total_employees}</TableCell>
+                    <TableCell>
+                      {relatedProgs.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {relatedProgs.slice(0, 2).map((p) => (
+                            <Badge key={p.program_code} variant="outline" className="text-[10px]">
+                              <BookOpen className="h-3 w-3 mr-1" />
+                              {p.program_code}
+                            </Badge>
+                          ))}
+                          {relatedProgs.length > 2 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              +{relatedProgs.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
                       )}
-                    >
-                      {t(`skillGap.priority.${gap.priority}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {gap.competency.competency_code}
-                  </TableCell>
-                  <TableCell>{gap.competency.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {t(`competency.category.${gap.competency.category}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    <span
-                      className={cn(
-                        gap.gap_percentage >= 60
-                          ? 'text-destructive'
-                          : gap.gap_percentage >= 30
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
-                      )}
-                    >
-                      {gap.gap_percentage}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">{gap.below_target}</TableCell>
-                  <TableCell className="text-right">{gap.total_employees}</TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedGap(gap);
+                          setActionDialogOpen(true);
+                        }}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {gapSummaries.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {t('common.noData')}
                   </TableCell>
                 </TableRow>
@@ -391,6 +481,110 @@ export default function SkillGapPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Action Plan Dialog */}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              {t('skillGap.actionPlan.title', { defaultValue: 'Action Plan' })}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedGap?.competency.name} - {selectedGap?.competency.competency_code}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedGap && (
+            <div className="space-y-4 py-2">
+              {/* Gap Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-destructive">{selectedGap.gap_percentage}%</div>
+                  <div className="text-xs text-muted-foreground">{t('skillGap.actionPlan.gapRate', { defaultValue: 'Gap Rate' })}</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold">{selectedGap.below_target}</div>
+                  <div className="text-xs text-muted-foreground">{t('skillGap.actionPlan.needTraining', { defaultValue: 'Need Training' })}</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{selectedGap.at_target}</div>
+                  <div className="text-xs text-muted-foreground">{t('skillGap.actionPlan.atTarget', { defaultValue: 'At Target' })}</div>
+                </div>
+              </div>
+
+              {/* Recommended Training Programs */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">
+                  {t('skillGap.actionPlan.recommendedPrograms', { defaultValue: 'Recommended Training Programs' })}
+                </h4>
+                {(() => {
+                  const relatedProgs = getRelatedPrograms(selectedGap.competency.competency_id);
+                  if (relatedProgs.length === 0) {
+                    return (
+                      <p className="text-sm text-muted-foreground">
+                        {t('skillGap.actionPlan.noPrograms', { defaultValue: 'No matching programs found. Consider creating a training program for this competency.' })}
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {relatedProgs.map((prog) => (
+                        <div
+                          key={prog.program_code}
+                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                        >
+                          <div>
+                            <div className="text-sm font-medium">{prog.program_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {prog.program_code} · {prog.category}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              window.open(`/schedule?program=${prog.program_code}`, '_blank');
+                            }}
+                          >
+                            {t('skillGap.actionPlan.createSession', { defaultValue: 'Schedule' })}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Related Learning Paths */}
+              {learningPaths.filter((lp) =>
+                lp.required_competencies?.some(
+                  (rc) => rc.competency_id === selectedGap.competency.competency_id
+                )
+              ).length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">
+                    {t('skillGap.actionPlan.relatedPaths', { defaultValue: 'Related Learning Paths' })}
+                  </h4>
+                  <div className="space-y-1">
+                    {learningPaths
+                      .filter((lp) =>
+                        lp.required_competencies?.some(
+                          (rc) => rc.competency_id === selectedGap.competency.competency_id
+                        )
+                      )
+                      .map((lp) => (
+                        <div key={lp.path_id} className="flex items-center gap-2 text-sm p-2 border rounded">
+                          <Badge variant="outline" className="text-[10px]">{lp.type}</Badge>
+                          <span>{lp.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

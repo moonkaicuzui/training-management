@@ -342,5 +342,36 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
+
+    // ========== 5PRS 교육 추천 시스템 ==========
+
+    // 불량유형-교육프로그램 매핑
+    match /defect_training_mappings/{mappingId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // 추천 임계값 설정 (싱글톤)
+    match /recommendation_thresholds/{thresholdId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if false;  // 삭제 불가
+    }
+
+    // TQC-직원 연결
+    match /tqc_employee_links/{linkId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // 5PRS 등록 감사 로그 (APPEND-ONLY)
+    match /five_prs_enrollment_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;  // 감사 로그는 수정/삭제 불가
+    }
   }
 }

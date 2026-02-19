@@ -84,6 +84,7 @@ export interface ModelRecord {
   totalValidation: number;
   totalReject: number;
   rejectRate: number;
+  defects: Record<string, number>;
 }
 
 export interface DailyRecord {
@@ -138,12 +139,26 @@ export interface AiBriefingRequest {
     id: string;
     rejectRate: number;
     totalReject: number;
+    totalValidation: number;
+    buildings: string[];
+    defects: Array<{ type: string; count: number }>;
     mainDefect: string;
   }>;
   topDefects: Array<{
     type: string;
     count: number;
     ratio: number;
+  }>;
+  topDefectModels?: Array<{
+    type: string;
+    models: Array<{ model: string; count: number }>;
+  }>;
+  modelDefects?: Array<{
+    model: string;
+    rejectRate: number;
+    totalReject: number;
+    totalValidation: number;
+    defects: Array<{ type: string; count: number }>;
   }>;
   buildingIssues: Array<{
     building: string;

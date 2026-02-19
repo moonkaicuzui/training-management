@@ -8,6 +8,15 @@ import { google } from "googleapis";
 import * as admin from "firebase-admin";
 import { sendEmail, sendTemplatedEmail } from "./services/emailService";
 import type { TemplateType, SupportedLanguage } from "./services/emailTemplates";
+import { fetchMonthData } from "./services/fivePrsApi";
+import { analyzeFromRawData } from "./services/recommendationEngine";
+import type {
+  RecommendationThreshold,
+  DefectTrainingMapping,
+  TqcEmployeeLink,
+  ServerEmployee,
+  ServerTrainingProgram,
+} from "./services/recommendationEngine";
 
 // Initialize Firebase Admin (idempotent check)
 if (!admin.apps.length) {
@@ -621,7 +630,322 @@ export const aggregateDashboardKPIs = onSchedule(
 );
 
 // =============================================================================
-// 5. onCAPAStatusChange
+// 5. weeklyTrainingRecommendation
+//    Scheduled: Every Monday 6:00 AM Asia/Ho_Chi_Minh
+//    Fetches 5PRS data, analyzes defect patterns, generates training
+//    recommendations, auto-enrolls IMMEDIATE items, and sends summary email.
+// =============================================================================
+
+const DEFAULT_THRESHOLDS: Omit<RecommendationThreshold, never> = {
+  immediate_rate: 5,
+  preventive_rate_min: 3,
+  preventive_rate_max: 5,
+  min_validation_count: 100,
+  surge_multiplier: 2,
+  surge_min_rate: 3,
+  surge_recent_days: 3,
+  surge_past_days: 28,
+};
+
+export const weeklyTrainingRecommendation = onSchedule(
+  {
+    schedule: "0 6 * * 1",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"],
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async () => {
+    logger.info("Running weekly training recommendation analysis...");
+
+    try {
+      // ---------------------------------------------------------------
+      // 1. Load config from Firestore
+      // ---------------------------------------------------------------
+
+      // 1a. Thresholds (get first doc or use defaults)
+      let thresholds: RecommendationThreshold = { ...DEFAULT_THRESHOLDS };
+      try {
+        const thresholdSnap = await db
+          .collection("recommendation_thresholds")
+          .limit(1)
+          .get();
+        if (!thresholdSnap.empty) {
+          const doc = thresholdSnap.docs[0].data();
+          thresholds = {
+            immediate_rate: doc.immediate_rate ?? DEFAULT_THRESHOLDS.immediate_rate,
+            preventive_rate_min: doc.preventive_rate_min ?? DEFAULT_THRESHOLDS.preventive_rate_min,
+            preventive_rate_max: doc.preventive_rate_max ?? DEFAULT_THRESHOLDS.preventive_rate_max,
+            min_validation_count: doc.min_validation_count ?? DEFAULT_THRESHOLDS.min_validation_count,
+            surge_multiplier: doc.surge_multiplier ?? DEFAULT_THRESHOLDS.surge_multiplier,
+            surge_min_rate: doc.surge_min_rate ?? DEFAULT_THRESHOLDS.surge_min_rate,
+            surge_recent_days: doc.surge_recent_days ?? DEFAULT_THRESHOLDS.surge_recent_days,
+            surge_past_days: doc.surge_past_days ?? DEFAULT_THRESHOLDS.surge_past_days,
+          };
+          logger.info("Loaded thresholds from Firestore");
+        } else {
+          logger.info("No thresholds in Firestore, using defaults");
+        }
+      } catch (err) {
+        logger.warn("Failed to load thresholds, using defaults:", err);
+      }
+
+      // 1b. Defect-training mappings (active only)
+      const mappingsSnap = await db
+        .collection("defect_training_mappings")
+        .where("is_active", "==", true)
+        .get();
+      const mappings: DefectTrainingMapping[] = mappingsSnap.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          mapping_id: doc.id,
+          defect_type: d.defect_type,
+          program_codes: d.program_codes || [],
+          description: d.description,
+          is_active: d.is_active,
+        };
+      });
+      logger.info(`Loaded ${mappings.length} active defect-training mappings`);
+
+      // 1c. TQC-Employee links (all)
+      const linksSnap = await db.collection("tqc_employee_links").get();
+      const links: TqcEmployeeLink[] = linksSnap.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          link_id: doc.id,
+          tqc_id: d.tqc_id,
+          tqc_name: d.tqc_name,
+          employee_id: d.employee_id,
+          employee_name: d.employee_name,
+        };
+      });
+      logger.info(`Loaded ${links.length} TQC-employee links`);
+
+      // 1d. Active training programs
+      const programsSnap = await db
+        .collection("training_programs")
+        .where("is_active", "==", true)
+        .get();
+      const programs: ServerTrainingProgram[] = programsSnap.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          program_code: d.program_code || doc.id,
+          program_name: d.program_name,
+          is_active: d.is_active,
+        };
+      });
+      logger.info(`Loaded ${programs.length} active training programs`);
+
+      // 1e. Active employees
+      const employeesSnap = await db
+        .collection("employees")
+        .where("status", "in", ["active", "ACTIVE"])
+        .get();
+      const employees: ServerEmployee[] = employeesSnap.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          employee_id: d.employee_id || doc.id,
+          employee_name: d.employee_name,
+          status: d.status,
+        };
+      });
+      logger.info(`Loaded ${employees.length} active employees`);
+
+      // ---------------------------------------------------------------
+      // 2. Calculate current month (YYYY-MM)
+      // ---------------------------------------------------------------
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      logger.info(`Current month: ${currentMonth}`);
+
+      // ---------------------------------------------------------------
+      // 3. Fetch 5PRS data
+      // ---------------------------------------------------------------
+      const rawData = await fetchMonthData(currentMonth);
+      logger.info(`Fetched ${rawData.length} raw 5PRS rows for ${currentMonth}`);
+
+      if (rawData.length === 0) {
+        logger.info("No 5PRS data for current month. Skipping analysis.");
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // 4. Analyze
+      // ---------------------------------------------------------------
+      const recommendations = analyzeFromRawData(
+        rawData,
+        thresholds,
+        mappings,
+        links,
+        employees,
+        programs
+      );
+
+      const immediateCount = recommendations.filter(
+        (r) => r.priority === "IMMEDIATE"
+      ).length;
+      const preventiveCount = recommendations.filter(
+        (r) => r.priority === "PREVENTIVE"
+      ).length;
+      const surgeCount = recommendations.filter(
+        (r) => r.priority === "SURGE"
+      ).length;
+
+      logger.info(
+        `Recommendations: total=${recommendations.length}, ` +
+          `IMMEDIATE=${immediateCount}, PREVENTIVE=${preventiveCount}, SURGE=${surgeCount}`
+      );
+
+      // ---------------------------------------------------------------
+      // 5. Auto-enroll IMMEDIATE items with linked employees
+      // ---------------------------------------------------------------
+      let autoEnrolledCount = 0;
+      const batch = db.batch();
+      let batchCount = 0;
+
+      for (const rec of recommendations) {
+        if (rec.priority !== "IMMEDIATE" || !rec.linkedEmployee) continue;
+        if (rec.recommendedPrograms.length === 0) continue;
+
+        for (const prog of rec.recommendedPrograms) {
+          // 5a. Create training session
+          const sessionRef = db.collection("training_sessions").doc();
+          const sessionId = sessionRef.id;
+          const sessionDate = new Date();
+          sessionDate.setDate(sessionDate.getDate() + 7); // Schedule 1 week ahead
+
+          batch.set(sessionRef, {
+            session_id: sessionId,
+            program_code: prog.program_code,
+            session_date: sessionDate.toISOString().split("T")[0],
+            session_time: "08:00",
+            trainer_name: "",
+            trainer: "",
+            location: rec.buildings[0] || "",
+            max_attendees: 10,
+            status: "PLANNED",
+            notes: `Auto-created by weekly recommendation (5PRS ${currentMonth}). ` +
+              `TQC: ${rec.tqc_name} (${rec.tqc_id}), Priority: ${rec.priority}, ` +
+              `Defect: ${prog.match_reason}`,
+            created_by: "system:weeklyRecommendation",
+            created_at: new Date().toISOString(),
+            attendees: [rec.linkedEmployee.employee_id],
+          });
+
+          // 5b. Create training result (enrolled status)
+          const resultRef = db.collection("training_results").doc();
+          batch.set(resultRef, {
+            result_id: resultRef.id,
+            session_id: sessionId,
+            employee_id: rec.linkedEmployee.employee_id,
+            program_code: prog.program_code,
+            training_date: sessionDate.toISOString().split("T")[0],
+            score: null,
+            grade: null,
+            result: "ABSENT", // Will be updated after actual training
+            needs_retraining: false,
+            evaluated_by: "",
+            remarks: `Auto-enrolled via 5PRS recommendation. Status: enrolled. ` +
+              `TQC: ${rec.tqc_name}, Reject rate: ${rec.rejectRate}%`,
+            created_at: new Date().toISOString(),
+            updated_at: null,
+            updated_by: null,
+          });
+
+          // 5c. Create enrollment audit log (APPEND-ONLY)
+          const logRef = db.collection("five_prs_enrollment_logs").doc();
+          batch.set(logRef, {
+            log_id: logRef.id,
+            tqc_id: rec.tqc_id,
+            tqc_name: rec.tqc_name,
+            employee_id: rec.linkedEmployee.employee_id,
+            employee_name: rec.linkedEmployee.employee_name,
+            program_code: prog.program_code,
+            program_name: prog.program_name,
+            session_id: sessionId,
+            priority: rec.priority,
+            priority_score: rec.priorityScore,
+            defect_types: rec.topDefects.map((d) => d.type),
+            reject_rate: rec.rejectRate,
+            enrolled_by: "system:weeklyRecommendation",
+            enrolled_at: new Date().toISOString(),
+            year_month: currentMonth,
+          });
+
+          autoEnrolledCount++;
+          batchCount += 3; // 3 docs per enrollment
+
+          // Firestore batch limit is 500 writes
+          if (batchCount >= 450) {
+            await batch.commit();
+            batchCount = 0;
+            logger.info("Committed enrollment batch (limit reached).");
+          }
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      logger.info(`Auto-enrolled ${autoEnrolledCount} training session(s)`);
+
+      // ---------------------------------------------------------------
+      // 6. Send summary email
+      // ---------------------------------------------------------------
+      const emailUser = process.env.GMAIL_USER;
+      const emailPass = process.env.GMAIL_APP_PASSWORD;
+
+      if (emailUser && emailPass) {
+        const summaryHtml = [
+          `<h2>[Q-TRAIN] Weekly Training Recommendation Report</h2>`,
+          `<p><strong>Analysis Period:</strong> ${currentMonth}</p>`,
+          `<p><strong>Total Analyzed TQC Records:</strong> ${recommendations.length}</p>`,
+          `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">`,
+          `  <tr style="background:#f0f0f0;">`,
+          `    <th>Priority</th><th>Count</th>`,
+          `  </tr>`,
+          `  <tr><td>IMMEDIATE</td><td style="text-align:center;font-weight:bold;color:#dc2626;">${immediateCount}</td></tr>`,
+          `  <tr><td>PREVENTIVE</td><td style="text-align:center;font-weight:bold;color:#d97706;">${preventiveCount}</td></tr>`,
+          `  <tr><td>SURGE</td><td style="text-align:center;font-weight:bold;color:#7c3aed;">${surgeCount}</td></tr>`,
+          `</table>`,
+          `<p><strong>Auto-Enrolled Sessions:</strong> ${autoEnrolledCount}</p>`,
+          `<br/>`,
+          `<p style="color:#666;font-size:12px;">This is an automated report from Q-TRAIN Weekly Recommendation System.</p>`,
+        ].join("\n");
+
+        await sendTemplatedEmail(
+          {
+            to: ["ksmoon@hsvina.com", "hwk_qa@hsvina.com"],
+            templateType: "general" as TemplateType,
+            data: {
+              title: "Weekly Training Recommendation Report",
+              body: summaryHtml,
+            },
+            language: "en" as SupportedLanguage,
+            subject: `[Q-TRAIN] Weekly Training Recommendation Report - ${currentMonth}`,
+          },
+          emailUser,
+          emailPass
+        );
+
+        logger.info("Summary email sent successfully.");
+      } else {
+        logger.warn(
+          "Gmail credentials not configured. Skipping summary email."
+        );
+      }
+
+      logger.info("Weekly training recommendation analysis complete.");
+    } catch (error) {
+      logger.error("Error during weekly training recommendation:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 6. onCAPAStatusChange
 //    Firestore trigger: when a CAPA document is updated,
 //    log the status change and create a notification if status becomes 'closed'.
 // =============================================================================

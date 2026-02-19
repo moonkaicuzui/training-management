@@ -129,7 +129,7 @@ export default function Dashboard() {
         setIsDataLoaded(true);
       } catch (err) {
         console.error('Dashboard data fetch error:', err);
-        setError(t('messages.loadError'));
+        setError('messages.loadError');
       }
     };
 
@@ -146,7 +146,7 @@ export default function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <AlertTriangle className="h-12 w-12 text-destructive" />
-        <p className="text-lg text-muted-foreground">{error}</p>
+        <p className="text-lg text-muted-foreground">{t(error)}</p>
         <Button onClick={() => window.location.reload()}>
           {t('common.retry')}
         </Button>
