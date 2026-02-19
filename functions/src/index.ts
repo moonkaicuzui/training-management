@@ -1,5 +1,5 @@
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { setGlobalOptions } from "firebase-functions/v2/options";
@@ -8,8 +8,9 @@ import { google } from "googleapis";
 import * as admin from "firebase-admin";
 import { sendEmail, sendTemplatedEmail } from "./services/emailService";
 import type { TemplateType, SupportedLanguage } from "./services/emailTemplates";
-import { fetchMonthData } from "./services/fivePrsApi";
+import { fetchMonthData, fetchMonthList } from "./services/fivePrsApi";
 import { analyzeFromRawData } from "./services/recommendationEngine";
+import { generateAiBriefing } from "./services/aiService";
 import type {
   RecommendationThreshold,
   DefectTrainingMapping,
@@ -1001,6 +1002,107 @@ export const onCAPAStatusChange = onDocumentUpdated(
         read: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
+    }
+  }
+);
+
+// =============================================================================
+// 7. API Gateway (onRequest)
+//    Handles Firebase Hosting rewrites: /api/** → api function
+//    Routes:
+//      GET  /api/drive/months           — 5PRS month list (proxy to GAS)
+//      GET  /api/drive/data/:yearMonth  — 5PRS raw data   (proxy to GAS)
+//      GET  /api/drive/latest           — 5PRS latest month data
+//      POST /api/ai/briefing            — AI quality briefing (4-provider fallback)
+// =============================================================================
+
+export const api = onRequest(
+  {
+    region: REGION,
+    cors: true,
+    secrets: [
+      "GEMINI_API_KEY",
+      "GEMINI_BACKUP_KEY",
+      "GROQ_API_KEY",
+      "OPENROUTER_API_KEY",
+    ],
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
+  async (req, res) => {
+    const path = req.path;
+
+    try {
+      // ---------------------------------------------------------------
+      // Drive Proxy Routes (5PRS GAS API)
+      // ---------------------------------------------------------------
+
+      if (req.method === "GET" && path === "/api/drive/months") {
+        logger.info("API: GET /api/drive/months");
+        const months = await fetchMonthList();
+        res.json({ success: true, months });
+        return;
+      }
+
+      const dataMatch = path.match(/^\/api\/drive\/data\/(.+)$/);
+      if (req.method === "GET" && dataMatch) {
+        const yearMonth = decodeURIComponent(dataMatch[1]);
+        logger.info(`API: GET /api/drive/data/${yearMonth}`);
+        const data = await fetchMonthData(yearMonth);
+        res.json({ success: true, data, row_count: data.length });
+        return;
+      }
+
+      if (req.method === "GET" && path === "/api/drive/latest") {
+        logger.info("API: GET /api/drive/latest");
+        const months = await fetchMonthList();
+        if (!months.length) {
+          res.json({ success: true, data: [], row_count: 0 });
+          return;
+        }
+        const latestMonth = months[0].year_month;
+        const data = await fetchMonthData(latestMonth);
+        res.json({
+          success: true,
+          data,
+          row_count: data.length,
+          yearMonth: latestMonth,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // AI Briefing Route (4-provider fallback)
+      // ---------------------------------------------------------------
+
+      if (req.method === "POST" && path === "/api/ai/briefing") {
+        logger.info("API: POST /api/ai/briefing");
+        const body = req.body;
+
+        if (!body || !body.stats) {
+          res.status(400).json({ error: "Invalid request body: stats required" });
+          return;
+        }
+
+        const result = await generateAiBriefing(body);
+
+        res.json({
+          success: true,
+          briefing: result.briefing,
+          provider: result.provider,
+          cached: false,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // 404
+      // ---------------------------------------------------------------
+      res.status(404).json({ error: `Not found: ${req.method} ${path}` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Internal server error";
+      logger.error(`API error [${req.method} ${path}]:`, err);
+      res.status(500).json({ error: msg });
     }
   }
 );
