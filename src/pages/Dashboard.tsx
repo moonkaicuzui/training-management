@@ -31,6 +31,8 @@ import {
 } from '@/components/ui/table';
 import { LazyBarChart, LazyPieChart } from '@/components/charts/LazyCharts';
 import { KPICard } from '@/components/dashboard/KPICard';
+import { KPIAnomalyBadge } from '@/components/dashboard/KPIAnomalyBadge';
+import { useKPIAnomalies } from '@/hooks/useKPIAnomalies';
 import { useNormalizedTrainingStore } from '@/stores';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { BUILDINGS } from '@/data/constants';
@@ -75,6 +77,24 @@ export default function Dashboard() {
   const gradeDistribution = derived.dashboard.gradeDistribution;
   const retrainingTargets = derived.retraining.targets;
   const expiringTrainings = derived.retraining.expiring;
+
+  // KPI Anomaly detection - build current KPIs from dashboard stats
+  const currentKPIs = useMemo<Record<string, number> | null>(() => {
+    if (!dashboardStats) return null;
+    return {
+      overallCompletionRate: dashboardStats.overallCompletionRate ?? 0,
+      retrainingCount: dashboardStats.retrainingCount ?? 0,
+      totalEmployees: dashboardStats.totalEmployees ?? 0,
+      monthlyCompletions: dashboardStats.monthlyCompletions ?? 0,
+    };
+  }, [dashboardStats]);
+  const { anomalies } = useKPIAnomalies(currentKPIs);
+
+  // Map KPI fields to card indices for anomaly display
+  const anomalyByField: Record<string, typeof anomalies[0]> = {};
+  for (const a of anomalies) {
+    anomalyByField[a.field] = a;
+  }
 
   // Compute building-level statistics from retraining + expiring data
   const buildingStats = useMemo(() => {
@@ -168,6 +188,7 @@ export default function Dashboard() {
       link: '/employees',
       trend: null as number | null,
       sparklineData: undefined as number[] | undefined,
+      anomalyField: 'totalEmployees',
     },
     {
       title: t('dashboard.monthlyCompletions'),
@@ -178,6 +199,7 @@ export default function Dashboard() {
       link: '/results',
       trend: null as number | null,
       sparklineData: completionSparkline.length > 1 ? completionSparkline : undefined,
+      anomalyField: 'monthlyCompletions',
     },
     {
       title: t('dashboard.completionRate'),
@@ -188,6 +210,7 @@ export default function Dashboard() {
       link: '/results',
       trend: null as number | null,
       sparklineData: plannedSparkline.length > 1 ? plannedSparkline : undefined,
+      anomalyField: 'overallCompletionRate',
     },
     {
       title: t('dashboard.retrainingNeeded'),
@@ -198,6 +221,7 @@ export default function Dashboard() {
       link: '/retraining',
       trend: null as number | null,
       sparklineData: undefined as number[] | undefined,
+      anomalyField: 'retrainingCount',
     },
   ];
 
@@ -226,17 +250,23 @@ export default function Dashboard() {
       {/* KPI Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiCards.map((stat, index) => (
-          <KPICard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            color={stat.color}
-            bgColor={stat.bgColor}
-            link={stat.link}
-            trend={stat.trend}
-            sparklineData={stat.sparklineData}
-          />
+          <div key={index} className="relative">
+            <KPICard
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              bgColor={stat.bgColor}
+              link={stat.link}
+              trend={stat.trend}
+              sparklineData={stat.sparklineData}
+            />
+            {anomalyByField[stat.anomalyField] && (
+              <div className="absolute top-2 right-2">
+                <KPIAnomalyBadge anomaly={anomalyByField[stat.anomalyField]} />
+              </div>
+            )}
+          </div>
         ))}
       </div>
 

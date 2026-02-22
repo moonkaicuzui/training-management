@@ -39,6 +39,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ExportDropdown } from '@/components/common/ExportDropdown';
+import { EmployeeSyncStatus } from '@/components/employee/EmployeeSyncStatus';
 import { useExport } from '@/hooks/useExport';
 import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { useTrainingStore } from '@/stores/trainingStore';
@@ -279,9 +280,12 @@ export default function Employees() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('employee.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('employee.description')}
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-muted-foreground">
+              {t('employee.description')}
+            </p>
+            <EmployeeSyncStatus />
+          </div>
         </div>
         <div className="flex gap-2">
           <ExportDropdown

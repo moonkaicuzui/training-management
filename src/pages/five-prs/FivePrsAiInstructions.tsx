@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertCircle, BrainCircuit, Clipboard, Printer, Users, Package } from 'lucide-react';
+import { Loader2, AlertCircle, BrainCircuit, Clipboard, Printer, Users, Package, UserPlus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,10 +16,28 @@ import {
 import { useFivePrsStore } from '@/stores/fivePrsStore';
 import { MonthSelector } from '@/components/five-prs/MonthSelector';
 import { InspectionKPICards } from '@/components/five-prs/InspectionKPICards';
+import { autoEnrollFromRecommendations } from '@/services/fivePrsService';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 export default function FivePrsAiInstructions() {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [isAutoEnrolling, setIsAutoEnrolling] = useState(false);
+  const [enrollResult, setEnrollResult] = useState<{
+    enrolled: number;
+    enrollments: Array<{ employee: string; program: string; priority: string }>;
+    totalRecommendations: number;
+  } | null>(null);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const {
     processedData,
     aiBriefing,
@@ -57,6 +75,28 @@ export default function FivePrsAiInstructions() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleAutoEnroll = async () => {
+    if (!selectedMonth) return;
+    setIsAutoEnrolling(true);
+    try {
+      const result = await autoEnrollFromRecommendations(selectedMonth);
+      setEnrollResult({
+        enrolled: result.enrolled,
+        enrollments: result.enrollments,
+        totalRecommendations: result.totalRecommendations,
+      });
+      setEnrollDialogOpen(true);
+    } catch (err) {
+      toast({
+        title: t('common.error'),
+        description: err instanceof Error ? err.message : 'Auto-enrollment failed',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAutoEnrolling(false);
+    }
   };
 
   const isLoading = isLoadingMonths || isLoadingData;
@@ -151,6 +191,18 @@ export default function FivePrsAiInstructions() {
                           <Button variant="outline" size="sm" onClick={handlePrint}>
                             <Printer className="h-4 w-4 mr-1" />
                             {t('fivePrs.print')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleAutoEnroll}
+                            disabled={isAutoEnrolling}
+                          >
+                            {isAutoEnrolling ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                              <UserPlus className="h-4 w-4 mr-1" />
+                            )}
+                            {t('fivePrs.autoEnroll') || 'Auto Enroll'}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={isLoadingBriefing}>
                             {t('fivePrs.regenerate')}
@@ -298,6 +350,42 @@ export default function FivePrsAiInstructions() {
           {t('fivePrs.selectMonthPrompt')}
         </div>
       )}
+
+      {/* Auto-Enrollment Result Dialog */}
+      <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              {t('fivePrs.autoEnrollResult') || 'Auto-Enrollment Result'}
+            </DialogTitle>
+            <DialogDescription>
+              {enrollResult
+                ? `${enrollResult.enrolled} / ${enrollResult.totalRecommendations} ${t('fivePrs.recommendationsEnrolled') || 'recommendations auto-enrolled'}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {enrollResult && enrollResult.enrollments.length > 0 && (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {enrollResult.enrollments.map((e, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded border text-sm">
+                  <div>
+                    <span className="font-medium">{e.employee}</span>
+                    <span className="text-muted-foreground mx-2">&rarr;</span>
+                    <span>{e.program}</span>
+                  </div>
+                  <Badge variant="destructive">{e.priority}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+          {enrollResult && enrollResult.enrollments.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              {t('fivePrs.noEnrollments') || 'No IMMEDIATE priority items with linked employees found.'}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

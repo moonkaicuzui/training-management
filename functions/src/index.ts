@@ -1,6 +1,6 @@
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
-import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { logger } from "firebase-functions";
@@ -9,8 +9,20 @@ import * as admin from "firebase-admin";
 import { sendEmail, sendTemplatedEmail } from "./services/emailService";
 import type { TemplateType, SupportedLanguage } from "./services/emailTemplates";
 import { fetchMonthData, fetchMonthList } from "./services/fivePrsApi";
+import { fetchAqlMonthList, fetchAqlMonthData } from "./services/aqlApi";
+import { fetchManpowerFromDrive } from "./services/driveService";
+import {
+  readAllEmployees as readSheetEmployees,
+  findEmployeeRow,
+  updateEmployeeRow,
+  appendEmployee as appendSheetEmployee,
+  ensureHeader,
+} from "./services/sheetsService";
+import type { EmployeeRow } from "./services/sheetsService";
 import { analyzeFromRawData } from "./services/recommendationEngine";
 import { generateAiBriefing } from "./services/aiService";
+import { analyzeCAPARootCause } from "./services/capaAiService";
+import { generateExecutiveReport } from "./services/executiveReportService";
 import type {
   RecommendationThreshold,
   DefectTrainingMapping,
@@ -1007,13 +1019,227 @@ export const onCAPAStatusChange = onDocumentUpdated(
 );
 
 // =============================================================================
-// 7. API Gateway (onRequest)
+// 7. monthlyKpiSnapshot
+//    Scheduled: 1st of every month at 02:00 Asia/Ho_Chi_Minh
+//    Calculates and stores monthly KPI snapshot for anomaly detection.
+// =============================================================================
+
+export const monthlyKpiSnapshot = onSchedule(
+  {
+    schedule: "0 2 1 * *",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async () => {
+    logger.info("Running monthly KPI snapshot...");
+
+    try {
+      const now = new Date();
+      // Calculate previous month (we snapshot last month's data on the 1st)
+      const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const yearMonth = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}`;
+
+      // 1. Total active employees
+      const employeesSnap = await db
+        .collection("employees")
+        .where("status", "in", ["active", "ACTIVE"])
+        .get();
+      const totalEmployees = employeesSnap.size;
+
+      // 2. Training results
+      const resultsSnap = await db.collection("training_results").get();
+      let totalPass = 0;
+      let totalFail = 0;
+      let firstTimePass = 0;
+      let totalFirstAttempts = 0;
+      let scoreSum = 0;
+      let scoreCount = 0;
+      let monthlyCompletions = 0;
+      const completedEmployees = new Set<string>();
+      const employeeAttempts = new Map<string, Set<string>>();
+
+      for (const doc of resultsSnap.docs) {
+        const d = doc.data();
+        const date = d.training_date || d.created_at || "";
+        const isInPeriod = typeof date === "string" && date.startsWith(yearMonth);
+
+        if (d.result === "pass") {
+          totalPass++;
+          completedEmployees.add(d.employee_id);
+        } else if (d.result === "fail") {
+          totalFail++;
+        }
+
+        if (d.score && typeof d.score === "number") {
+          scoreSum += d.score;
+          scoreCount++;
+        }
+
+        if (isInPeriod) {
+          monthlyCompletions++;
+        }
+
+        // Track first-time pass
+        const key = `${d.employee_id}_${d.program_code}`;
+        if (!employeeAttempts.has(key)) {
+          employeeAttempts.set(key, new Set());
+          totalFirstAttempts++;
+          if (d.result === "pass") firstTimePass++;
+        }
+        employeeAttempts.get(key)!.add(doc.id);
+      }
+
+      const totalResults = totalPass + totalFail;
+      const passRate = totalResults > 0
+        ? Math.round((totalPass / totalResults) * 10000) / 100
+        : 0;
+      const firstTimePassRate = totalFirstAttempts > 0
+        ? Math.round((firstTimePass / totalFirstAttempts) * 10000) / 100
+        : 0;
+      const averageScore = scoreCount > 0
+        ? Math.round((scoreSum / scoreCount) * 100) / 100
+        : 0;
+      const overallCompletionRate = totalEmployees > 0
+        ? Math.round((completedEmployees.size / totalEmployees) * 10000) / 100
+        : 0;
+
+      // 3. Retraining count
+      let retrainingCount = 0;
+      try {
+        const retrainSnap = await db
+          .collection("retraining_targets")
+          .where("status", "==", "pending")
+          .get();
+        retrainingCount = retrainSnap.size;
+      } catch { /* collection may not exist */ }
+
+      // 4. Expiring certificates
+      let expiringCount = 0;
+      try {
+        const thirtyDays = new Date();
+        thirtyDays.setDate(thirtyDays.getDate() + 30);
+        const expiringSnap = await db
+          .collection("certificates")
+          .where("expiry_date", ">=", admin.firestore.Timestamp.fromDate(now))
+          .where("expiry_date", "<=", admin.firestore.Timestamp.fromDate(thirtyDays))
+          .get();
+        expiringCount = expiringSnap.size;
+      } catch { /* collection may not exist */ }
+
+      // 5. Save snapshot
+      const snapshot = {
+        snapshot_id: yearMonth,
+        year_month: yearMonth,
+        overallCompletionRate,
+        passRate,
+        firstTimePassRate,
+        averageScore,
+        retrainingCount,
+        expiringCount,
+        totalEmployees,
+        monthlyCompletions,
+        calculated_at: now.toISOString(),
+      };
+
+      await db.collection("kpi_snapshots").doc(yearMonth).set(snapshot);
+
+      logger.info(`KPI snapshot saved for ${yearMonth}:`, snapshot);
+    } catch (error) {
+      logger.error("Error during monthly KPI snapshot:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 8. onEmployeeWritten (Firestore → Sheet sync)
+//    When an employee document is created/updated in Firestore,
+//    sync the change to Google Sheet (unless it came from Sheet).
+// =============================================================================
+
+export const onEmployeeWritten = onDocumentWritten(
+  {
+    document: "employees/{employeeId}",
+    region: REGION,
+    secrets: ["EMPLOYEE_SHEET_ID"],
+  },
+  async (event) => {
+    const after = event.data?.after?.data();
+    if (!after) {
+      logger.info("onEmployeeWritten: Document deleted, skipping Sheet sync.");
+      return;
+    }
+
+    // Loop prevention: skip if change came from Sheet
+    if (after._sync_source === "SHEET") {
+      logger.info(
+        `onEmployeeWritten: Change for ${event.params.employeeId} came from SHEET, skipping.`
+      );
+      return;
+    }
+
+    const sheetId = process.env.EMPLOYEE_SHEET_ID;
+    if (!sheetId) {
+      logger.warn("onEmployeeWritten: EMPLOYEE_SHEET_ID not configured, skipping Sheet sync.");
+      return;
+    }
+
+    const employeeId = event.params.employeeId;
+
+    try {
+      const rowData: EmployeeRow = {
+        employee_id: after.employee_id || employeeId,
+        employee_name: after.employee_name || "",
+        department: after.department || "",
+        position: after.position || "",
+        building: after.building || "",
+        line: after.line || "",
+        hire_date: after.hire_date || "",
+        status: after.status || "ACTIVE",
+        updated_at: after.updated_at
+          ? (typeof after.updated_at === "object" && after.updated_at.toDate
+            ? after.updated_at.toDate().toISOString()
+            : String(after.updated_at))
+          : new Date().toISOString(),
+        _sync_source: "APP",
+        _sync_timestamp: new Date().toISOString(),
+      };
+
+      // Find existing row or append new one
+      const existingRow = await findEmployeeRow(sheetId, employeeId);
+      if (existingRow) {
+        await updateEmployeeRow(sheetId, existingRow, rowData);
+        logger.info(
+          `onEmployeeWritten: Updated Sheet row ${existingRow} for ${employeeId}`
+        );
+      } else {
+        await appendSheetEmployee(sheetId, rowData);
+        logger.info(
+          `onEmployeeWritten: Appended new row for ${employeeId} to Sheet`
+        );
+      }
+    } catch (error) {
+      logger.error(
+        `onEmployeeWritten: Failed to sync ${employeeId} to Sheet:`,
+        error
+      );
+    }
+  }
+);
+
+// =============================================================================
+// 9. API Gateway (onRequest)
 //    Handles Firebase Hosting rewrites: /api/** → api function
 //    Routes:
 //      GET  /api/drive/months           — 5PRS month list (proxy to GAS)
 //      GET  /api/drive/data/:yearMonth  — 5PRS raw data   (proxy to GAS)
 //      GET  /api/drive/latest           — 5PRS latest month data
 //      POST /api/ai/briefing            — AI quality briefing (4-provider fallback)
+//      POST /api/employee-sync/from-sheet — Sheet → Firestore sync (GAS calls)
+//      POST /api/employee-sync/full-sync  — Full bidirectional sync
+//      GET  /api/employee-sync/status     — Sync status
 // =============================================================================
 
 export const api = onRequest(
@@ -1025,8 +1251,10 @@ export const api = onRequest(
       "GEMINI_BACKUP_KEY",
       "GROQ_API_KEY",
       "OPENROUTER_API_KEY",
+      "EMPLOYEE_SHEET_ID",
+      "EMPLOYEE_SYNC_API_KEY",
     ],
-    timeoutSeconds: 60,
+    timeoutSeconds: 120,
     memory: "256MiB",
   },
   async (req, res) => {
@@ -1091,6 +1319,367 @@ export const api = onRequest(
           briefing: result.briefing,
           provider: result.provider,
           cached: false,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // POST /api/ai/auto-enroll
+      // ---------------------------------------------------------------
+      if (req.method === "POST" && path === "/api/ai/auto-enroll") {
+        const { yearMonth } = req.body || {};
+        if (!yearMonth) {
+          res.status(400).json({ error: "yearMonth is required" });
+          return;
+        }
+
+        // 1. Load config from Firestore
+        const configDoc = await db.collection("five_prs_config").doc("default").get();
+        const config = configDoc.exists ? configDoc.data() : null;
+        if (!config) {
+          res.status(400).json({ error: "5PRS config not found" });
+          return;
+        }
+
+        // 2. Fetch 5PRS data
+        const rawData = await fetchMonthData(yearMonth);
+
+        // 3. Run analysis
+        const recommendations = analyzeFromRawData(
+          rawData,
+          config.thresholds as RecommendationThreshold,
+          config.mappings as DefectTrainingMapping[],
+          config.links as TqcEmployeeLink[],
+          config.employees as ServerEmployee[],
+          config.programs as ServerTrainingProgram[],
+        );
+
+        // 4. Auto-enroll IMMEDIATE priority items with linked employees
+        const enrolled: Array<{ employee: string; program: string; priority: string }> = [];
+        for (const rec of recommendations) {
+          if (
+            rec.priority === "IMMEDIATE" &&
+            rec.linkedEmployee
+          ) {
+            const programCode = rec.recommendedPrograms?.[0]?.program_code || "";
+            // Log enrollment
+            await db.collection("five_prs_enrollment_logs").add({
+              year_month: yearMonth,
+              employee_id: rec.linkedEmployee.employee_id,
+              program_code: programCode,
+              tqc_name: rec.tqc_name,
+              priority: rec.priority,
+              auto_enrolled: true,
+              created_at: new Date().toISOString(),
+            });
+            enrolled.push({
+              employee: rec.linkedEmployee.employee_name,
+              program: programCode || rec.tqc_name,
+              priority: rec.priority,
+            });
+          }
+        }
+
+        res.json({
+          success: true,
+          enrolled: enrolled.length,
+          enrollments: enrolled,
+          totalRecommendations: recommendations.length,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // POST /api/ai/capa-analysis
+      // ---------------------------------------------------------------
+      if (req.method === "POST" && path === "/api/ai/capa-analysis") {
+        const body = req.body || {};
+        if (!body.problemDescription || !body.affectedArea) {
+          res.status(400).json({
+            error: "problemDescription and affectedArea are required",
+          });
+          return;
+        }
+
+        const result = await analyzeCAPARootCause({
+          problemDescription: body.problemDescription,
+          affectedArea: body.affectedArea,
+          severity: body.severity || "minor",
+          source: body.source || "",
+          language: body.language,
+        });
+
+        res.json({
+          success: true,
+          ...result,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // POST /api/ai/executive-report
+      // ---------------------------------------------------------------
+      if (req.method === "POST" && path === "/api/ai/executive-report") {
+        const body = req.body || {};
+        if (!body.period) {
+          res.status(400).json({ error: "period is required" });
+          return;
+        }
+
+        const result = await generateExecutiveReport({
+          period: body.period,
+          language: body.language || "en",
+          sections: body.sections || {
+            includeKPI: true,
+            includeCAPA: true,
+            includeTQC: true,
+            include5PRS: false,
+            includeTraining: true,
+          },
+        });
+
+        res.json({
+          success: true,
+          report: result.report,
+          provider: result.provider,
+          dataSnapshot: result.dataSnapshot,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // AQL Proxy Routes (AQL GAS API)
+      // ---------------------------------------------------------------
+
+      if (req.method === "GET" && path === "/api/aql/months") {
+        logger.info("API: GET /api/aql/months");
+        const months = await fetchAqlMonthList();
+        res.json({ success: true, months });
+        return;
+      }
+
+      const aqlDataMatch = path.match(/^\/api\/aql\/data\/(.+)$/);
+      if (req.method === "GET" && aqlDataMatch) {
+        const yearMonth = decodeURIComponent(aqlDataMatch[1]);
+        logger.info(`API: GET /api/aql/data/${yearMonth}`);
+        const data = await fetchAqlMonthData(yearMonth);
+        res.json({ success: true, data, row_count: data.length });
+        return;
+      }
+
+      if (req.method === "GET" && path === "/api/aql/manpower") {
+        logger.info("API: GET /api/aql/manpower (via Drive service account)");
+        const result = await fetchManpowerFromDrive();
+        res.json({
+          success: true,
+          data: result.data,
+          row_count: result.data.length,
+          file_name: result.file_name,
+          folder_name: result.folder_name,
+        });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // Employee Sync Routes (Sheet ↔ Firestore)
+      // ---------------------------------------------------------------
+
+      // POST /api/employee-sync/from-sheet — GAS onEdit calls this
+      if (req.method === "POST" && path === "/api/employee-sync/from-sheet") {
+        logger.info("API: POST /api/employee-sync/from-sheet");
+
+        // API key authentication (GAS sends this header)
+        const apiKey = (req.headers["x-api-key"] as string || "").trim();
+        const expectedKey = (process.env.EMPLOYEE_SYNC_API_KEY || "").trim();
+        if (!expectedKey || apiKey !== expectedKey) {
+          res.status(401).json({ error: "Unauthorized: invalid API key" });
+          return;
+        }
+
+        const { action, employee } = req.body || {};
+        if (!employee || !employee.employee_id) {
+          res.status(400).json({ error: "employee.employee_id is required" });
+          return;
+        }
+
+        const employeeId = employee.employee_id;
+        const docRef = db.collection("employees").doc(employeeId);
+
+        if (action === "DELETE") {
+          // Soft delete: set status to INACTIVE
+          await docRef.update({
+            status: "INACTIVE",
+            _sync_source: "SHEET",
+            _sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          logger.info(`employee-sync/from-sheet: Soft-deleted ${employeeId}`);
+        } else {
+          // CREATE or UPDATE: merge data from Sheet
+          const docData: Record<string, unknown> = {
+            employee_id: employeeId,
+            employee_name: employee.employee_name || "",
+            department: employee.department || "",
+            position: employee.position || "",
+            building: employee.building || "",
+            line: employee.line || "",
+            hire_date: employee.hire_date || "",
+            status: employee.status || "ACTIVE",
+            _sync_source: "SHEET",
+            _sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          };
+
+          await docRef.set(docData, { merge: true });
+          logger.info(
+            `employee-sync/from-sheet: ${action || "UPSERT"} ${employeeId}`
+          );
+        }
+
+        res.json({ success: true, employee_id: employeeId, action });
+        return;
+      }
+
+      // POST /api/employee-sync/full-sync — Manual full sync (Sheet wins)
+      if (req.method === "POST" && path === "/api/employee-sync/full-sync") {
+        logger.info("API: POST /api/employee-sync/full-sync");
+
+        const sheetId = process.env.EMPLOYEE_SHEET_ID;
+        if (!sheetId) {
+          res.status(500).json({ error: "EMPLOYEE_SHEET_ID not configured" });
+          return;
+        }
+
+        // Read all from Sheet
+        const sheetEmployees = await readSheetEmployees(sheetId);
+        await ensureHeader(sheetId);
+
+        // Read all from Firestore
+        const firestoreSnapshot = await db.collection("employees").get();
+        const firestoreMap = new Map<string, FirebaseFirestore.DocumentData>();
+        firestoreSnapshot.docs.forEach((doc) => {
+          firestoreMap.set(doc.id, doc.data());
+        });
+
+        let created = 0;
+        let updated = 0;
+        let sheetAppended = 0;
+
+        // Sheet → Firestore (Sheet wins)
+        const batch = db.batch();
+        const processedIds = new Set<string>();
+
+        for (const sheetEmp of sheetEmployees) {
+          processedIds.add(sheetEmp.employee_id);
+          const docRef = db.collection("employees").doc(sheetEmp.employee_id);
+          const existing = firestoreMap.get(sheetEmp.employee_id);
+
+          const docData: Record<string, unknown> = {
+            employee_id: sheetEmp.employee_id,
+            employee_name: sheetEmp.employee_name,
+            department: sheetEmp.department,
+            position: sheetEmp.position,
+            building: sheetEmp.building,
+            line: sheetEmp.line,
+            hire_date: sheetEmp.hire_date,
+            status: sheetEmp.status || "ACTIVE",
+            _sync_source: "SHEET",
+            _sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          };
+
+          if (!existing) {
+            batch.set(docRef, docData);
+            created++;
+          } else {
+            // Check if data differs
+            const changed =
+              existing.employee_name !== sheetEmp.employee_name ||
+              existing.department !== sheetEmp.department ||
+              existing.position !== sheetEmp.position ||
+              existing.building !== sheetEmp.building ||
+              existing.line !== sheetEmp.line ||
+              existing.hire_date !== sheetEmp.hire_date ||
+              existing.status !== (sheetEmp.status || "ACTIVE");
+
+            if (changed) {
+              batch.set(docRef, docData, { merge: true });
+              updated++;
+            }
+          }
+        }
+
+        await batch.commit();
+
+        // Firestore → Sheet (employees not in Sheet)
+        for (const [empId, empData] of firestoreMap) {
+          if (!processedIds.has(empId)) {
+            const rowData: EmployeeRow = {
+              employee_id: empId,
+              employee_name: empData.employee_name || "",
+              department: empData.department || "",
+              position: empData.position || "",
+              building: empData.building || "",
+              line: empData.line || "",
+              hire_date: empData.hire_date || "",
+              status: empData.status || "ACTIVE",
+              updated_at: empData.updated_at
+                ? (typeof empData.updated_at === "object" && empData.updated_at.toDate
+                  ? empData.updated_at.toDate().toISOString()
+                  : String(empData.updated_at))
+                : new Date().toISOString(),
+              _sync_source: "APP",
+              _sync_timestamp: new Date().toISOString(),
+            };
+            await appendSheetEmployee(sheetId, rowData);
+            sheetAppended++;
+          }
+        }
+
+        // Save sync status
+        await db.collection("employee_sync_status").doc("latest").set({
+          last_sync_at: admin.firestore.FieldValue.serverTimestamp(),
+          sync_type: "FULL",
+          sheet_to_firestore: { created, updated },
+          firestore_to_sheet: { appended: sheetAppended },
+          total_sheet_employees: sheetEmployees.length,
+          total_firestore_employees: firestoreMap.size,
+        });
+
+        res.json({
+          success: true,
+          sheet_to_firestore: { created, updated },
+          firestore_to_sheet: { appended: sheetAppended },
+          total_sheet: sheetEmployees.length,
+          total_firestore: firestoreMap.size,
+        });
+        return;
+      }
+
+      // GET /api/employee-sync/status — Sync status
+      if (req.method === "GET" && path === "/api/employee-sync/status") {
+        logger.info("API: GET /api/employee-sync/status");
+
+        const statusDoc = await db
+          .collection("employee_sync_status")
+          .doc("latest")
+          .get();
+
+        if (!statusDoc.exists) {
+          res.json({
+            success: true,
+            status: "NOT_SYNCED",
+            message: "No sync has been performed yet",
+          });
+          return;
+        }
+
+        const data = statusDoc.data();
+        res.json({
+          success: true,
+          status: "SYNCED",
+          ...data,
+          last_sync_at: data?.last_sync_at?.toDate?.()?.toISOString() || null,
         });
         return;
       }

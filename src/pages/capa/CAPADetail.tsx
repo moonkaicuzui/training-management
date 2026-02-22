@@ -37,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
+import { CAPAAISuggestions } from '@/components/capa/CAPAAISuggestions';
 import { useCAPAStore } from '@/stores/capaStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -341,6 +342,23 @@ export default function CAPADetail() {
       case 'discovery':
         return (
           <div className="space-y-4">
+            {/* AI Root Cause Suggestions */}
+            {currentCAPA && (
+              <CAPAAISuggestions
+                capaId={currentCAPA.id}
+                problemDescription={currentCAPA.discovery?.problemDescription || ''}
+                affectedArea={currentCAPA.discovery?.affectedArea || ''}
+                severity={currentCAPA.severity}
+                source={currentCAPA.discovery?.source || ''}
+                onSelectRootCause={(cause) =>
+                  setInvestigationForm((prev) => ({
+                    ...prev,
+                    rootCauseAnalysis: cause,
+                  }))
+                }
+              />
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="rootCauseAnalysis">{t('capa.rootCauseAnalysis')} *</Label>
               <Textarea

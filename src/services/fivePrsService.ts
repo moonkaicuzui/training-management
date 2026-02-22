@@ -65,6 +65,35 @@ export async function fetchLatestData(): Promise<DataResponse> {
 
 // ========== AI Briefing (Cloud Function at /api/ai/briefing) ==========
 
+// ========== Auto-Enrollment (Cloud Function at /api/ai/auto-enroll) ==========
+
+export interface AutoEnrollResponse {
+  success: boolean;
+  enrolled: number;
+  enrollments: Array<{ employee: string; program: string; priority: string }>;
+  totalRecommendations: number;
+  error?: string;
+}
+
+export async function autoEnrollFromRecommendations(
+  yearMonth: string
+): Promise<AutoEnrollResponse> {
+  const res = await fetchWithTimeout('/api/ai/auto-enroll', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ yearMonth }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// ========== AI Briefing (Cloud Function at /api/ai/briefing) ==========
+
 export async function generateAiBriefing(
   data: AiBriefingRequest
 ): Promise<AiBriefingResponse> {

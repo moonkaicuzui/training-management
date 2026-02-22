@@ -47,3 +47,7 @@ export {
 export { TraineeFormDialog } from './TraineeFormDialog';
 export { TeamSettingsDialog, TeamActiveToggle } from './TeamSettingsDialog';
 export { ResignationFormDialog } from './ResignationFormDialog';
+
+// Attrition Risk
+export { AttritionRiskBadge } from './AttritionRiskBadge';
+export { AttritionRiskPopover } from './AttritionRiskPopover';

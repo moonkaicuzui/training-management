@@ -267,19 +267,16 @@ function buildUserPrompt(req: any): string {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-// ========== Main Export ==========
+// ========== Generic AI Fallback ==========
 
 /**
- * Generates an AI briefing using multi-provider fallback.
- * Tries each configured provider in order until one succeeds.
+ * Generic multi-provider AI call with fallback.
+ * Reusable across all AI endpoints (briefing, CAPA analysis, executive report, etc.)
  */
-export async function generateAiBriefing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  request: any
-): Promise<{ briefing: string; provider: string }> {
-  const systemPrompt = buildSystemPrompt(request.lang || "en");
-  const userPrompt = buildUserPrompt(request);
-
+export async function callAIWithFallback(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ text: string; provider: string }> {
   const errors: string[] = [];
 
   for (const provider of PROVIDERS) {
@@ -293,22 +290,22 @@ export async function generateAiBriefing(
 
     try {
       logger.info(`AI Fallback: Trying ${provider.name}...`);
-      const briefing = await callProvider(
+      const text = await callProvider(
         provider.name,
         apiKey,
         systemPrompt,
         userPrompt
       );
 
-      if (!briefing?.trim()) {
+      if (!text?.trim()) {
         errors.push(`${provider.name}: empty response`);
         continue;
       }
 
       logger.info(
-        `AI Fallback: ${provider.name} succeeded (${briefing.length} chars)`
+        `AI Fallback: ${provider.name} succeeded (${text.length} chars)`
       );
-      return { briefing, provider: provider.name };
+      return { text, provider: provider.name };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(`AI Fallback: ${provider.name} failed — ${msg}`);
@@ -319,4 +316,20 @@ export async function generateAiBriefing(
   throw new Error(
     `All AI providers failed:\n${errors.map((e) => `  - ${e}`).join("\n")}`
   );
+}
+
+// ========== Briefing-Specific Export ==========
+
+/**
+ * Generates an AI briefing using multi-provider fallback.
+ * Tries each configured provider in order until one succeeds.
+ */
+export async function generateAiBriefing(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  request: any
+): Promise<{ briefing: string; provider: string }> {
+  const systemPrompt = buildSystemPrompt(request.lang || "en");
+  const userPrompt = buildUserPrompt(request);
+  const result = await callAIWithFallback(systemPrompt, userPrompt);
+  return { briefing: result.text, provider: result.provider };
 }

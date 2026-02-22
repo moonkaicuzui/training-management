@@ -143,6 +143,8 @@ export const createEmployee = async (
 
     await setDoc(docRef, {
       ...data,
+      _sync_source: 'APP',
+      _sync_timestamp: now,
       updated_at: now,
     });
 
@@ -167,6 +169,8 @@ export const updateEmployee = async (
     const docRef = doc(db, COLLECTION, id);
     await updateDoc(docRef, {
       ...updates,
+      _sync_source: 'APP',
+      _sync_timestamp: serverTimestamp(),
       updated_at: serverTimestamp(),
     });
   } catch (error) {
@@ -198,6 +202,8 @@ export const batchUpsertEmployees = async (
         const docRef = doc(db, COLLECTION, emp.employee_id);
         batch.set(docRef, {
           ...emp,
+          _sync_source: 'APP',
+          _sync_timestamp: serverTimestamp(),
           updated_at: serverTimestamp(),
         }, { merge: true });
       }
