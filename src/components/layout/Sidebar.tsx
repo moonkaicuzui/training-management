@@ -1,3 +1,4 @@
+import { useState, useCallback, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -36,12 +37,15 @@ import {
   ListChecks,
   FileSearch,
   PieChart,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useUIStore } from '@/stores/uiStore';
+
+// ─── Types ───────────────────────────────────────────
 
 interface NavItem {
   titleKey: string;
@@ -55,7 +59,14 @@ interface NavSection {
   items: NavItem[];
 }
 
-// 1. Overview & Reports (대시보드 + 분석&리포트 통합)
+interface NavCategory {
+  labelKey: string;
+  sections: NavSection[];
+}
+
+// ─── Navigation Data ─────────────────────────────────
+
+// 1. Overview & Reports
 const overviewItems: NavItem[] = [
   { titleKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
   { titleKey: 'nav.executive', href: '/executive', icon: Building2 },
@@ -102,7 +113,7 @@ const newTQCItems: NavItem[] = [
   { titleKey: 'nav.newTQC.settings', href: '/new-tqc/settings', icon: Settings },
 ];
 
-// 6. Projects & CAPA (프로젝트 + CAPA 통합)
+// 6. Projects & CAPA
 const projectsCapaItems: NavItem[] = [
   { titleKey: 'nav.projects.dashboard', href: '/projects/dashboard', icon: FolderKanban },
   { titleKey: 'nav.projects.members', href: '/projects/members', icon: Users },
@@ -113,7 +124,7 @@ const projectsCapaItems: NavItem[] = [
   { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
 ];
 
-// 7. Inspection Training AQL/5PRS (검사 교육 + AQL + 5PRS 통합)
+// 7. Inspection Training AQL/5PRS
 const inspectionItems: NavItem[] = [
   { titleKey: 'nav.inspection.dashboard', href: '/inspection/dashboard', icon: Microscope },
   { titleKey: 'nav.inspection.result', href: '/inspection/result', icon: ClipboardCheck },
@@ -124,7 +135,7 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: Search },
 ];
 
-// 8. System Admin (시스템 관리 + 알림 통합)
+// 8. System Admin
 const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
   { titleKey: 'nav.audit', href: '/audit', icon: Shield },
@@ -133,21 +144,118 @@ const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.dataSync', href: '/data-sync', icon: RefreshCcw },
 ];
 
-const sections: NavSection[] = [
-  { titleKey: 'sidebar.overview', items: overviewItems },
-  { titleKey: 'sidebar.trainingOps', items: trainingOpsItems },
-  { titleKey: 'sidebar.followUp', items: followUpItems },
-  { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
-  { titleKey: 'sidebar.newTQC', items: newTQCItems },
-  { titleKey: 'sidebar.projectsCapa', items: projectsCapaItems },
-  { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
-  { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },
+// ─── Categories (역할별 상위 그룹) ────────────────────
+
+const categories: NavCategory[] = [
+  {
+    labelKey: 'sidebar.cat.overview',
+    sections: [
+      { titleKey: 'sidebar.overview', items: overviewItems },
+    ],
+  },
+  {
+    labelKey: 'sidebar.cat.training',
+    sections: [
+      { titleKey: 'sidebar.trainingOps', items: trainingOpsItems },
+      { titleKey: 'sidebar.followUp', items: followUpItems },
+    ],
+  },
+  {
+    labelKey: 'sidebar.cat.people',
+    sections: [
+      { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
+      { titleKey: 'sidebar.newTQC', items: newTQCItems },
+    ],
+  },
+  {
+    labelKey: 'sidebar.cat.quality',
+    sections: [
+      { titleKey: 'sidebar.projectsCapa', items: projectsCapaItems },
+      { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
+    ],
+  },
+  {
+    labelKey: 'sidebar.cat.system',
+    sections: [
+      { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },
+    ],
+  },
 ];
+
+// ─── Helpers ─────────────────────────────────────────
+
+const STORAGE_KEY = 'q-train-sidebar-sections';
+
+function loadOpenSections(): Set<string> {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return new Set(JSON.parse(saved));
+  } catch { /* ignore */ }
+  return new Set<string>();
+}
+
+function saveOpenSections(sections: Set<string>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...sections]));
+}
+
+function findSectionForPath(pathname: string): string | null {
+  for (const category of categories) {
+    for (const section of category.sections) {
+      for (const item of section.items) {
+        if (item.href === '/' && pathname === '/') return section.titleKey;
+        if (item.href !== '/' && pathname.startsWith(item.href)) return section.titleKey;
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Component ───────────────────────────────────────
 
 export function Sidebar() {
   const { t } = useTranslation();
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
+
+  const activeSectionKey = useMemo(
+    () => findSectionForPath(location.pathname),
+    [location.pathname]
+  );
+
+  const [openSections, setOpenSections] = useState<Set<string>>(() => {
+    const saved = loadOpenSections();
+    // 현재 라우트에 해당하는 섹션은 항상 열기
+    if (activeSectionKey) saved.add(activeSectionKey);
+    // 저장된 것이 하나도 없으면 첫 섹션(overview) 열기
+    if (saved.size === 0) saved.add('sidebar.overview');
+    return saved;
+  });
+
+  const toggleSection = useCallback((titleKey: string) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(titleKey)) {
+        next.delete(titleKey);
+      } else {
+        next.add(titleKey);
+      }
+      saveOpenSections(next);
+      return next;
+    });
+  }, []);
+
+  // NavLink 클릭 시 해당 섹션이 닫혀 있으면 자동으로 열기
+  const handleNavClick = useCallback((sectionKey: string) => {
+    setSidebarOpen(false);
+    if (!openSections.has(sectionKey)) {
+      setOpenSections((prev) => {
+        const next = new Set(prev);
+        next.add(sectionKey);
+        saveOpenSections(next);
+        return next;
+      });
+    }
+  }, [openSections, setSidebarOpen]);
 
   return (
     <>
@@ -183,46 +291,85 @@ export function Sidebar() {
           </Button>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-4rem)] md:h-screen py-4">
-          {sections.map((section, idx) => (
-            <div key={section.titleKey}>
-              {idx > 0 && <Separator className="my-3" />}
-              <div className="px-3 py-1">
-                <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
-                  {t(section.titleKey)}
-                </h2>
-                <nav className="space-y-1">
-                  {section.items.map((item) => (
-                    <NavLink
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                          isActive || (item.href === '/' && location.pathname === '/')
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        )
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {t(item.titleKey)}
-                      {item.badge && (
-                        <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                          {item.badge}
-                        </span>
-                      )}
-                    </NavLink>
-                  ))}
-                </nav>
+        <ScrollArea className="h-[calc(100vh-4rem)] md:h-screen py-2">
+          {categories.map((category, catIdx) => (
+            <div key={category.labelKey}>
+              {/* Category Label */}
+              <div className={cn('px-5 pt-4 pb-1', catIdx === 0 && 'pt-2')}>
+                <span className="text-[10px] font-bold tracking-widest text-muted-foreground/60 uppercase">
+                  {t(category.labelKey)}
+                </span>
               </div>
+
+              {/* Sections within category */}
+              {category.sections.map((section) => {
+                const isOpen = openSections.has(section.titleKey);
+                const hasActiveItem = section.items.some(
+                  (item) =>
+                    (item.href === '/' && location.pathname === '/') ||
+                    (item.href !== '/' && location.pathname.startsWith(item.href))
+                );
+
+                return (
+                  <Collapsible
+                    key={section.titleKey}
+                    open={isOpen}
+                    onOpenChange={() => toggleSection(section.titleKey)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        className={cn(
+                          'flex w-full items-center justify-between px-5 py-1.5 text-xs font-semibold tracking-tight transition-colors',
+                          hasActiveItem && !isOpen
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <span className="truncate">{t(section.titleKey)}</span>
+                        <ChevronDown
+                          className={cn(
+                            'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
+                            isOpen ? 'rotate-0' : '-rotate-90'
+                          )}
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+
+                    <CollapsibleContent>
+                      <nav className="space-y-0.5 px-3 pb-1">
+                        {section.items.map((item) => (
+                          <NavLink
+                            key={item.href}
+                            to={item.href}
+                            onClick={() => handleNavClick(section.titleKey)}
+                            className={({ isActive }) =>
+                              cn(
+                                'flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                                isActive || (item.href === '/' && location.pathname === '/')
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                              )
+                            }
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{t(item.titleKey)}</span>
+                            {item.badge && (
+                              <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                                {item.badge}
+                              </span>
+                            )}
+                          </NavLink>
+                        ))}
+                      </nav>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
           ))}
 
           {/* Quick Stats */}
-          <div className="mt-auto px-3 py-4">
-            <Separator className="mb-4" />
+          <div className="px-3 py-4">
             <div className="rounded-lg bg-muted p-4">
               <h3 className="text-sm font-semibold mb-2">{t('sidebar.quickStats')}</h3>
               <div className="space-y-2 text-xs text-muted-foreground">

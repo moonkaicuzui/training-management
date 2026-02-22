@@ -115,6 +115,13 @@
     "skillGap": "Phân tích khoảng trống kỹ năng"
   },
   "sidebar": {
+    "cat": {
+      "overview": "Tổng quan",
+      "training": "Đào tạo",
+      "people": "Nhân sự",
+      "quality": "Chất lượng & Dự án",
+      "system": "Hệ thống"
+    },
     "overview": "Tổng quan & Báo cáo",
     "dashboards": "Tổng quan",
     "trainingOps": "Vận hành đào tạo",

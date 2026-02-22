@@ -115,6 +115,13 @@
     "skillGap": "스킬 갭 분석"
   },
   "sidebar": {
+    "cat": {
+      "overview": "대시보드",
+      "training": "교육 관리",
+      "people": "인력 관리",
+      "quality": "품질 & 프로젝트",
+      "system": "시스템"
+    },
     "overview": "대시보드 & 리포트",
     "dashboards": "대시보드",
     "trainingOps": "교육 운영",

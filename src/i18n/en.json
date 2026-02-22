@@ -115,6 +115,13 @@
     "skillGap": "Skill Gap Analysis"
   },
   "sidebar": {
+    "cat": {
+      "overview": "Overview",
+      "training": "Training",
+      "people": "People",
+      "quality": "Quality & Projects",
+      "system": "System"
+    },
     "overview": "Overview & Reports",
     "dashboards": "Dashboards",
     "trainingOps": "Training Operations",
