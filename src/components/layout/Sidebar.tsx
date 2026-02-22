@@ -32,6 +32,9 @@ import {
   Search,
   BookOpenCheck,
   Microscope,
+  ClipboardList,
+  ListChecks,
+  FileSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -66,7 +69,7 @@ const trainingOpsItems: NavItem[] = [
   { titleKey: 'nav.attendance', href: '/attendance', icon: UserCheck },
   { titleKey: 'nav.results', href: '/results', icon: ClipboardCheck },
   { titleKey: 'nav.progress', href: '/progress', icon: Grid3X3 },
-  { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: UserCheck },
+  { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: ClipboardList },
 ];
 
 // 3. Follow-up Management
@@ -109,10 +112,10 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.inspection.dashboard', href: '/inspection/dashboard', icon: Microscope },
   { titleKey: 'nav.inspection.result', href: '/inspection/result', icon: ClipboardCheck },
   { titleKey: 'nav.inspection.history', href: '/inspection/history', icon: History },
-  { titleKey: 'nav.aql.dashboard', href: '/aql', icon: ClipboardCheck },
+  { titleKey: 'nav.aql.dashboard', href: '/aql', icon: ListChecks },
   { titleKey: 'nav.aql.trainingRecommendations', href: '/aql/training-recommendations', icon: GraduationCap },
-  { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: Search },
-  { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: GraduationCap },
+  { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: FileSearch },
+  { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: Search },
 ];
 
 // 8. Quality Improvement (CAPA only)
