@@ -30,7 +30,15 @@
     "name": "이름",
     "saving": "저장 중...",
     "deselectAll": "전체 해제",
-    "selectAll": "전체 선택"
+    "selectAll": "전체 선택",
+    "error": "오류",
+    "copy": "복사",
+    "copied": "복사됨!",
+    "print": "인쇄",
+    "next": "다음",
+    "back": "이전",
+    "optional": "선택사항",
+    "dismiss": "닫기"
   },
   "header": {
     "searchPlaceholder": "직원 ID 또는 이름으로 검색...",
@@ -90,6 +98,18 @@
       "aiInstructions": "AI 업무 지시서",
       "trainingRecommendations": "교육 추천"
     },
+    "aql": {
+      "dashboard": "AQL 대시보드",
+      "trainingRecommendations": "AQL 교육 추천"
+    },
+    "programIntro": "교육 프로그램 소개",
+    "inspection": {
+      "dashboard": "검사 교육 대시보드",
+      "result": "검사 결과 입력",
+      "enrollments": "등록 관리",
+      "history": "이력 조회"
+    },
+    "executiveReport": "경영진 리포트",
     "department": "부서별 대시보드",
     "competency": "역량 매트릭스",
     "skillGap": "스킬 갭 분석"
@@ -101,6 +121,7 @@
     "peopleCompetency": "인력 & 역량",
     "newTQC": "신입 TQC 교육",
     "projects": "프로젝트 관리",
+    "inspection": "검사 교육",
     "qualityImprovement": "품질 개선",
     "analyticsReports": "분석 & 리포트",
     "systemAdmin": "시스템 관리",
@@ -181,7 +202,20 @@
     "importSheetsHelp": "Google Sheets URL을 붙여넣으세요. 시트가 '웹에 게시' 또는 '링크가 있는 모든 사용자' 공유 설정이어야 합니다.",
     "importFetch": "불러오기",
     "importInvalidUrl": "올바른 Google Sheets URL이 아닙니다",
-    "importFetchError": "Google Sheets에서 데이터를 불러올 수 없습니다. 공유 설정을 확인하세요."
+    "importFetchError": "Google Sheets에서 데이터를 불러올 수 없습니다. 공유 설정을 확인하세요.",
+    "syncSuccess": "동기화 완료: {{created}}건 생성, {{updated}}건 업데이트",
+    "syncError": "동기화 실패",
+    "syncNow": "동기화",
+    "syncing": "동기화 중...",
+    "syncConnected": "연결됨",
+    "syncNotSynced": "미동기화",
+    "syncNever": "동기화 기록 없음",
+    "syncJustNow": "방금",
+    "syncMinutesAgo": "{{count}}분 전",
+    "syncHoursAgo": "{{count}}시간 전",
+    "syncDaysAgo": "{{count}}일 전",
+    "syncTooltipTitle": "Google Sheets 동기화",
+    "syncLastSync": "마지막 동기화"
   },
   "program": {
     "title": "교육 프로그램",
@@ -1323,6 +1357,133 @@
     "loadingData": "데이터를 불러오는 중...",
     "retry": "다시 시도"
   },
+  "executiveReport": {
+    "title": "경영진 리포트",
+    "description": "AI 기반 월별 품질 및 교육 리포트 생성",
+    "configuration": "리포트 설정",
+    "configDesc": "기간, 언어, 포함 섹션을 선택하세요",
+    "period": "기간",
+    "language": "언어",
+    "sections": "섹션",
+    "generate": "리포트 생성",
+    "generating": "생성 중...",
+    "generatingReport": "AI가 리포트를 생성하고 있습니다...",
+    "reportTitle": "생성된 리포트",
+    "generateFailed": "리포트 생성에 실패했습니다",
+    "sectionKPI": "KPI 성과",
+    "sectionTraining": "교육 활동",
+    "sectionCAPA": "CAPA 현황",
+    "sectionTQC": "신입 TQC 교육",
+    "section5PRS": "5PRS 검사"
+  },
+  "aql": {
+    "dashboard": {
+      "title": "AQL 대시보드",
+      "description": "AQL 검사 결과 및 검사원 분석",
+      "selectMonth": "월 선택",
+      "totalInspections": "전체 검사",
+      "failRate": "불합격률",
+      "failingInspectors": "불합격 검사원",
+      "totalFails": "총 불합격",
+      "inspectorStats": "검사원 통계",
+      "employeeNo": "사번",
+      "name": "이름",
+      "building": "빌딩",
+      "total": "전체",
+      "pass": "합격",
+      "fail": "불합격",
+      "failRatePercent": "불합격률%",
+      "topDefects": "주요 결함",
+      "buildingAnalysis": "빌딩별 분석",
+      "totalLabel": "전체",
+      "fails": "불합격",
+      "noData": "월을 선택하여 AQL 데이터를 로드하세요"
+    },
+    "recommendations": {
+      "title": "AQL 교육 추천",
+      "description": "AQL Fail 데이터를 분석하여 검사원 및 상사의 교육 등록",
+      "analyze": "분석",
+      "config": "설정",
+      "configTitle": "AQL 설정",
+      "configDescription": "직원 연결, 상사 매핑, 결함-교육 매핑 관리",
+      "employeeLinks": "직원 연결",
+      "supervisors": "상사",
+      "mappings": "결함 매핑",
+      "noResults": "\"분석\" 버튼을 클릭하여 교육 추천을 생성하세요",
+      "totalRecommendations": "전체 추천",
+      "inspectorFail": "검사원 불합격",
+      "supervisorEscalation": "상사 연쇄 등록",
+      "enrolled": "등록 완료",
+      "allPriorities": "전체 우선순위",
+      "critical": "긴급",
+      "high": "높음",
+      "medium": "보통",
+      "allBuildings": "전체 빌딩",
+      "allReasons": "전체 사유",
+      "filterPriority": "우선순위",
+      "filterBuilding": "빌딩",
+      "filterReason": "사유",
+      "filterLinkStatus": "연결 상태",
+      "allLinkStatus": "전체",
+      "linked": "연결됨",
+      "unlinked": "미연결",
+      "searchPlaceholder": "이름 / 사번 검색...",
+      "selectAll": "전체 선택",
+      "selectRow": "{{name}} 선택",
+      "employeeNo": "사번",
+      "name": "이름",
+      "aqlInspector": "AQL 검사원",
+      "supervisor": "직속 상사",
+      "building": "빌딩",
+      "failRate": "불합격률",
+      "priority": "우선순위",
+      "reason": "사유",
+      "programs": "교육 프로그램",
+      "linkStatus": "연결",
+      "actions": "조치",
+      "supervisorFailRateNote": "부하직원 기준 불합격률",
+      "enroll": "등록",
+      "enrolling": "등록 중...",
+      "enrollSelected": "선택 항목 등록",
+      "clearSelection": "선택 해제",
+      "itemsSelected": "{{count}}건 선택됨",
+      "topDefects": "주요 결함",
+      "enrollDialog": {
+        "title": "교육 등록",
+        "employeeInfo": "직원 정보",
+        "selectProgram": "프로그램 선택",
+        "confirm": "등록 확인"
+      },
+      "employeeLinker": "AQL 직원 연결",
+      "existingLinks": "기존 연결",
+      "aqlEmployeeNo": "AQL 사번",
+      "aqlName": "AQL 이름",
+      "qtrainEmployee": "Q-TRAIN 직원",
+      "removeLink": "{{name}} 연결 해제",
+      "noLinks": "아직 연결된 직원이 없습니다",
+      "createLink": "새 연결 생성",
+      "allLinked": "모든 검사원이 연결되었습니다",
+      "saveLink": "연결 저장",
+      "supervisorImporter": "상사 정보 임포터",
+      "autoImport": "Google Drive 자동 임포트",
+      "autoImportDesc": "Google Drive에서 Basic Manpower CSV를 자동으로 가져와 상사 연결을 임포트합니다.",
+      "autoImportButton": "Drive에서 가져오기",
+      "importCsv": "CSV 임포트",
+      "clickToUpload": "CSV 파일을 선택하세요",
+      "csvFormat": "형식: employee_no, employee_name, supervisor_no, supervisor_name, building",
+      "importButton": "임포트",
+      "importing": "임포트 중...",
+      "importSuccess": "{{count}}건의 레코드가 성공적으로 임포트되었습니다.",
+      "importErrors": "{{count}}건의 오류가 발생했습니다:",
+      "importErrorRow": "행 {{row}}: {{message}}",
+      "moreErrors": "...그 외 {{count}}건의 오류",
+      "currentLinksCount": "{{count}}개 연결",
+      "currentSupervisorLinks": "현재 상사 연결",
+      "employeeName": "직원명",
+      "supervisorName": "상사명",
+      "noSupervisorLinks": "임포트된 상사 연결이 없습니다"
+    }
+  },
   "newTQCModule": {
     "finalResult": {
       "title": "최종 결과 입력",
@@ -2365,5 +2526,214 @@
     },
     "loadDataFirst": "먼저 5PRS 데이터를 불러오세요",
     "selectMonthFirst": "월을 선택하고 데이터를 불러오세요"
+  },
+  "programIntro": {
+    "title": "교육 프로그램 소개",
+    "subtitle": "Q-TRAIN 교육 관리 시스템의 교육 체계를 소개합니다",
+    "tabs": {
+      "overview": "전체 교육 체계 개요",
+      "inspection": "AQL/5PRS 검사 교육 프로그램"
+    },
+    "overview": {
+      "qip": {
+        "title": "QIP 교육",
+        "count": "67개 과정",
+        "desc": "품질 개선 프로그램 교육. 이론 학습 및 필기 평가를 통한 품질 역량 향상",
+        "target": "전 직원",
+        "evalType": "필기 평가"
+      },
+      "newEmployee": {
+        "title": "신입 교육",
+        "desc": "신규 입사자 대상 기초 교육. TQC 교육 과정을 통한 기본 역량 확보",
+        "target": "신규 입사자",
+        "evalType": "미팅 평가"
+      },
+      "production": {
+        "title": "생산 교육",
+        "desc": "생산 라인별 맞춤 교육. 공정별 품질 관리 역량 강화",
+        "target": "생산직 직원",
+        "evalType": "실기 평가"
+      },
+      "promotion": {
+        "title": "승진 교육",
+        "desc": "직급 승진 시 필수 교육. 리더십 및 관리 역량 개발",
+        "target": "승진 대상자",
+        "evalType": "종합 평가"
+      },
+      "inspection": {
+        "title": "검사 교육",
+        "badge": "NEW",
+        "desc": "AQL/5PRS 기반 실기 검사 역량 평가. 현장 검사 능력 검증",
+        "target": "QIP 검사원",
+        "evalType": "실기 비교 평가"
+      }
+    },
+    "inspectionDetail": {
+      "purpose": {
+        "title": "프로그램 목적",
+        "desc": "5PRS/AQL 평가 결과에 기반한 실기 검사 역량 평가 프로그램입니다. 불량률이 높은 직원을 대상으로 AQL 검사원과의 비교 평가를 통해 검사 역량을 검증합니다."
+      },
+      "criteria": {
+        "title": "교육 대상 선정 기준",
+        "fivePrs": "5PRS 불량률 5% 이상",
+        "aql": "AQL Fail률 높은 직원",
+        "manual": "관리자 수동 등록",
+        "autoEnroll": "자동 등록",
+        "manualEnroll": "수동 등록"
+      },
+      "process": {
+        "title": "교육 프로세스",
+        "step1": "대상 선정",
+        "step1Desc": "5PRS/AQL 결과 기반 또는 수동 등록",
+        "step2": "AQL Room 이동",
+        "step2Desc": "검사 교육 장소로 이동",
+        "step3": "2카톤(20족) 검사",
+        "step3Desc": "교육생이 20족 검사 수행",
+        "step4": "AQL 검사원 검사",
+        "step4Desc": "AQL 검사원이 동일 20족 검사",
+        "step5": "결과 비교",
+        "step5Desc": "교육생 vs 검사원 결과 비교 (80% 기준)"
+      },
+      "grading": {
+        "title": "평가 기준",
+        "grade": "등급",
+        "matchRate": "일치율",
+        "result": "결과",
+        "pass": "합격",
+        "fail": "불합격"
+      },
+      "strikeRule": {
+        "title": "3회 불합격 규정",
+        "strike1": "1회 FAIL → 재시험 기회 부여",
+        "strike2": "2회 연속 FAIL → 재시험 (경고)",
+        "strike3": "3회 연속 FAIL → 근무지 변경 권고"
+      }
+    }
+  },
+  "inspection": {
+    "dashboard": {
+      "title": "검사 교육 대시보드",
+      "totalInspections": "총 검사 건수",
+      "passRate": "합격률",
+      "pendingEnrollments": "대기 중 등록",
+      "strikeAlerts": "Strike 경고",
+      "recentResults": "최근 검사 결과",
+      "strikeWarnings": "Strike 경고 목록",
+      "noResults": "검사 결과가 없습니다",
+      "noStrikes": "Strike 경고가 없습니다",
+      "startInspection": "검사 결과 입력하기",
+      "manageEnrollments": "등록 관리",
+      "monthlyTrend": "월별 검사 추세"
+    },
+    "result": {
+      "title": "검사 결과 입력",
+      "step1": "교육생 선택",
+      "step2": "검사 정보 입력",
+      "step3": "20족 비교 입력",
+      "step4": "결과 확인 및 제출",
+      "selectEmployee": "교육생을 선택하세요",
+      "fromEnrollment": "등록 목록에서 선택",
+      "directSearch": "직접 검색",
+      "inspectorInfo": "AQL 검사관 정보",
+      "inspectorId": "검사관 ID",
+      "inspectorName": "검사관 이름",
+      "trainerName": "담당 트레이너",
+      "location": "검사 장소",
+      "inspectionDate": "검사 일자",
+      "pairComparison": "족 비교 입력",
+      "pairNumber": "번호",
+      "traineeJudgment": "교육생 판정",
+      "inspectorJudgment": "AQL 검사관",
+      "match": "일치",
+      "matchResult": "일치: {{matched}}/{{total}} ({{rate}}%)",
+      "autoResult": "자동 판정",
+      "grade": "등급",
+      "submit": "결과 제출",
+      "submitting": "제출 중...",
+      "submitSuccess": "검사 결과가 성공적으로 저장되었습니다",
+      "submitError": "저장 중 오류가 발생했습니다",
+      "confirmSubmit": "결과를 제출하시겠습니까?",
+      "notes": "비고",
+      "cartonCount": "카톤 수",
+      "totalPairs": "총 족수",
+      "noEmployeeFound": "검색 결과가 없습니다",
+      "pairGuide": "각 족에 대해 교육생과 AQL 검사관의 판정을 입력하세요. 기본값은 모두 PASS이며, 불일치 항목만 FAIL로 변경하면 됩니다."
+    },
+    "enrollments": {
+      "title": "등록 관리",
+      "newEnrollment": "새 등록",
+      "source": "등록 경로",
+      "status": "상태",
+      "enrolledBy": "등록자",
+      "enrolledAt": "등록일",
+      "scheduledDate": "예정일",
+      "actions": "관리",
+      "cancel": "취소",
+      "schedule": "일정 지정",
+      "complete": "완료",
+      "noEnrollments": "등록된 항목이 없습니다",
+      "emptyGuide": "위의 '새 등록' 버튼을 클릭하여 검사 교육 대상자를 등록하세요. 5PRS/AQL 추천 대상자도 여기에 표시됩니다.",
+      "autoEnroll5PRS": "5PRS 추천 자동 등록",
+      "autoEnrollAQL": "AQL 추천 자동 등록",
+      "autoEnrollResult": "자동 등록 완료: {{enrolled}}명 등록, {{skipped}}명 이미 등록됨",
+      "filterByStatus": "상태별 필터",
+      "filterBySource": "경로별 필터",
+      "allStatuses": "전체 상태",
+      "allSources": "전체 경로",
+      "sourceTypes": {
+        "FIVE_PRS_RECOMMENDATION": "5PRS 추천",
+        "AQL_RECOMMENDATION": "AQL 추천",
+        "MANUAL": "수동 등록"
+      },
+      "statusTypes": {
+        "PENDING": "대기",
+        "SCHEDULED": "예정",
+        "COMPLETED": "완료",
+        "CANCELLED": "취소"
+      }
+    },
+    "history": {
+      "title": "검사 이력",
+      "searchEmployee": "직원 검색",
+      "viewDetail": "상세 보기",
+      "noHistory": "검사 이력이 없습니다",
+      "inspectionId": "검사 ID",
+      "resultId": "결과 ID",
+      "matchRate": "일치율",
+      "inspector": "검사관",
+      "date": "검사일",
+      "pairDetails": "족별 상세",
+      "consecutiveFailures": "연속 불합격",
+      "requiresReassignment": "근무지 변경 권고",
+      "dateFrom": "시작일",
+      "dateTo": "종료일",
+      "clearFilter": "필터 초기화"
+    },
+    "strike": {
+      "label": "Strike",
+      "warning": "경고",
+      "reassignmentRequired": "근무지 변경 필요",
+      "consecutiveFailures": "연속 {{count}}회 불합격",
+      "reassignmentDialog": {
+        "title": "근무지 변경 권고",
+        "message": "이 직원은 3회 연속 검사 불합격으로 근무지 변경이 권고됩니다.",
+        "confirm": "확인"
+      }
+    },
+    "common": {
+      "pass": "합격",
+      "fail": "불합격",
+      "employee": "직원",
+      "program": "프로그램",
+      "matchRate": "일치율",
+      "result": "결과",
+      "date": "일자"
+    },
+    "errors": {
+      "permission": "접근 권한이 없습니다. 관리자에게 문의하세요.",
+      "notFound": "요청한 데이터를 찾을 수 없습니다.",
+      "network": "네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.",
+      "generic": "오류가 발생했습니다. 잠시 후 다시 시도하세요."
+    }
   }
 }

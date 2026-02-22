@@ -327,6 +327,46 @@
         { "fieldPath": "year_month", "order": "ASCENDING" },
         { "fieldPath": "enrolled_at", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "capa_root_cause_kb",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "problem_category", "order": "ASCENDING" },
+        { "fieldPath": "confidence_score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "capa_root_cause_kb",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "problem_area", "order": "ASCENDING" },
+        { "fieldPath": "confidence_score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aql_enrollment_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year_month", "order": "ASCENDING" },
+        { "fieldPath": "enrolled_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aql_supervisor_links",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "employee_no", "order": "ASCENDING" },
+        { "fieldPath": "supervisor_no", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aql_employee_links",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aql_employee_no", "order": "ASCENDING" },
+        { "fieldPath": "employee_id", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

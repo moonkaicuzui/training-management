@@ -1621,6 +1621,16 @@ export const getAllCAPAs = capaService.getAllCAPAs;
 
 // ========== Project Settings API ==========
 
+import * as inspectionService from './inspectionService';
+import type {
+  InspectionResultDetail,
+  InspectionResultInput,
+  InspectionEnrollment,
+  InspectionEnrollmentInput,
+  InspectionEnrollmentFilters,
+  InspectionStrikeInfo,
+} from '@/types/inspection';
+
 import * as projectService from './projectService';
 import type { ProjectSettings } from '@/types/project';
 
@@ -1817,4 +1827,64 @@ export async function updateDevelopmentPlan(
   updates: Partial<IndividualDevelopmentPlan>
 ): Promise<void> {
   return competencyService.updateDevelopmentPlan(id, updates);
+}
+
+// ========== Inspection Training API ==========
+
+export async function getInspectionResults(): Promise<InspectionResultDetail[]> {
+  return inspectionService.getAllResults();
+}
+
+export async function getInspectionResultsByEmployee(
+  employeeId: string
+): Promise<InspectionResultDetail[]> {
+  return inspectionService.getResultsByEmployee(employeeId);
+}
+
+export async function getInspectionDetail(
+  resultId: string
+): Promise<InspectionResultDetail | null> {
+  return inspectionService.getInspectionDetail(resultId);
+}
+
+export async function createInspectionResult(
+  input: InspectionResultInput,
+  createdBy: string
+): Promise<{ resultId: string; inspectionId: string; matchRate: number }> {
+  const result = await inspectionService.createInspectionResult(input, createdBy);
+  invalidateResultCache();
+  invalidateDashboardCache();
+  return result;
+}
+
+export async function getInspectionEnrollments(
+  filters?: InspectionEnrollmentFilters
+): Promise<InspectionEnrollment[]> {
+  return inspectionService.getEnrollments(filters);
+}
+
+export async function createInspectionEnrollment(
+  input: InspectionEnrollmentInput
+): Promise<InspectionEnrollment> {
+  return inspectionService.createEnrollment(input);
+}
+
+export async function updateInspectionEnrollmentStatus(
+  enrollmentId: string,
+  status: InspectionEnrollment['status']
+): Promise<void> {
+  return inspectionService.updateEnrollmentStatus(enrollmentId, status);
+}
+
+export async function getInspectionConsecutiveFailures(
+  employeeId: string
+): Promise<InspectionStrikeInfo> {
+  return inspectionService.getConsecutiveFailures(employeeId);
+}
+
+export async function autoEnrollInspectionFromLogs(
+  source: 'FIVE_PRS_RECOMMENDATION' | 'AQL_RECOMMENDATION',
+  enrolledBy: string
+) {
+  return inspectionService.autoEnrollFromLogs(source, enrolledBy);
 }

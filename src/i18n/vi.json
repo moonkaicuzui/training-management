@@ -30,7 +30,15 @@
     "name": "Tên",
     "saving": "Đang lưu...",
     "deselectAll": "Bỏ chọn tất cả",
-    "selectAll": "Chọn tất cả"
+    "selectAll": "Chọn tất cả",
+    "error": "Lỗi",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép!",
+    "print": "In",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "optional": "Tùy chọn",
+    "dismiss": "Đóng"
   },
   "header": {
     "searchPlaceholder": "Tìm kiếm theo mã hoặc tên nhân viên...",
@@ -90,6 +98,18 @@
       "aiInstructions": "Hướng dẫn AI",
       "trainingRecommendations": "Đề xuất đào tạo"
     },
+    "aql": {
+      "dashboard": "Bảng điều khiển AQL",
+      "trainingRecommendations": "Đề xuất đào tạo AQL"
+    },
+    "programIntro": "Giới thiệu chương trình",
+    "inspection": {
+      "dashboard": "Tổng quan kiểm tra",
+      "result": "Nhập kết quả kiểm tra",
+      "enrollments": "Quản lý đăng ký",
+      "history": "Lịch sử kiểm tra"
+    },
+    "executiveReport": "Báo cáo lãnh đạo",
     "department": "Bảng điều khiển phòng ban",
     "competency": "Ma trận năng lực",
     "skillGap": "Phân tích khoảng trống kỹ năng"
@@ -101,6 +121,7 @@
     "peopleCompetency": "Nhân sự & Năng lực",
     "newTQC": "Đào tạo TQC mới",
     "projects": "Quản lý dự án",
+    "inspection": "Đào tạo kiểm tra",
     "qualityImprovement": "Cải tiến chất lượng",
     "analyticsReports": "Phân tích & Báo cáo",
     "systemAdmin": "Quản trị hệ thống",
@@ -181,7 +202,20 @@
     "importSheetsHelp": "Dán URL Google Sheets. Bảng tính phải được 'Xuất bản lên web' hoặc chia sẻ 'Bất kỳ ai có liên kết'.",
     "importFetch": "Tải",
     "importInvalidUrl": "URL Google Sheets không hợp lệ",
-    "importFetchError": "Không thể tải dữ liệu từ Google Sheets. Kiểm tra cài đặt chia sẻ."
+    "importFetchError": "Không thể tải dữ liệu từ Google Sheets. Kiểm tra cài đặt chia sẻ.",
+    "syncSuccess": "Đồng bộ hoàn tất: tạo {{created}}, cập nhật {{updated}}",
+    "syncError": "Đồng bộ thất bại",
+    "syncNow": "Đồng bộ",
+    "syncing": "Đang đồng bộ...",
+    "syncConnected": "Đã kết nối",
+    "syncNotSynced": "Chưa đồng bộ",
+    "syncNever": "Chưa đồng bộ lần nào",
+    "syncJustNow": "Vừa xong",
+    "syncMinutesAgo": "{{count}} phút trước",
+    "syncHoursAgo": "{{count}} giờ trước",
+    "syncDaysAgo": "{{count}} ngày trước",
+    "syncTooltipTitle": "Đồng bộ Google Sheets",
+    "syncLastSync": "Lần đồng bộ cuối"
   },
   "program": {
     "title": "Chương trình đào tạo",
@@ -1323,6 +1357,133 @@
     "loadingData": "Đang tải dữ liệu...",
     "retry": "Thử lại"
   },
+  "executiveReport": {
+    "title": "Báo cáo lãnh đạo",
+    "description": "Tạo báo cáo chất lượng & đào tạo hàng tháng bằng AI",
+    "configuration": "Cấu hình báo cáo",
+    "configDesc": "Chọn kỳ, ngôn ngữ và các phần cần bao gồm",
+    "period": "Kỳ",
+    "language": "Ngôn ngữ",
+    "sections": "Phần",
+    "generate": "Tạo báo cáo",
+    "generating": "Đang tạo...",
+    "generatingReport": "AI đang tạo báo cáo của bạn...",
+    "reportTitle": "Báo cáo đã tạo",
+    "generateFailed": "Tạo báo cáo thất bại",
+    "sectionKPI": "Hiệu suất KPI",
+    "sectionTraining": "Hoạt động đào tạo",
+    "sectionCAPA": "Tình trạng CAPA",
+    "sectionTQC": "TQC Nhân viên mới",
+    "section5PRS": "Kiểm tra 5PRS"
+  },
+  "aql": {
+    "dashboard": {
+      "title": "Bảng điều khiển AQL",
+      "description": "Kết quả kiểm tra AQL và phân tích thanh tra viên",
+      "selectMonth": "Chọn tháng",
+      "totalInspections": "Tổng kiểm tra",
+      "failRate": "Tỷ lệ lỗi",
+      "failingInspectors": "Thanh tra viên lỗi",
+      "totalFails": "Tổng lỗi",
+      "inspectorStats": "Thống kê thanh tra viên",
+      "employeeNo": "Mã NV",
+      "name": "Tên",
+      "building": "Tòa nhà",
+      "total": "Tổng",
+      "pass": "Đạt",
+      "fail": "Lỗi",
+      "failRatePercent": "Tỷ lệ lỗi%",
+      "topDefects": "Lỗi chính",
+      "buildingAnalysis": "Phân tích theo tòa nhà",
+      "totalLabel": "Tổng",
+      "fails": "lỗi",
+      "noData": "Chọn tháng để tải dữ liệu AQL"
+    },
+    "recommendations": {
+      "title": "Đề xuất đào tạo AQL",
+      "description": "Phân tích dữ liệu AQL Fail và đăng ký đào tạo cho thanh tra viên + quản lý",
+      "analyze": "Phân tích",
+      "config": "Cấu hình",
+      "configTitle": "Cấu hình AQL",
+      "configDescription": "Quản lý liên kết nhân viên, ánh xạ quản lý và ánh xạ lỗi-đào tạo",
+      "employeeLinks": "Liên kết nhân viên",
+      "supervisors": "Quản lý",
+      "mappings": "Ánh xạ lỗi",
+      "noResults": "Nhấn \"Phân tích\" để tạo đề xuất đào tạo",
+      "totalRecommendations": "Tổng đề xuất",
+      "inspectorFail": "Thanh tra viên lỗi",
+      "supervisorEscalation": "Đăng ký quản lý",
+      "enrolled": "Đã đăng ký",
+      "allPriorities": "Tất cả ưu tiên",
+      "critical": "Khẩn cấp",
+      "high": "Cao",
+      "medium": "Trung bình",
+      "allBuildings": "Tất cả tòa nhà",
+      "allReasons": "Tất cả lý do",
+      "filterPriority": "Ưu tiên",
+      "filterBuilding": "Tòa nhà",
+      "filterReason": "Lý do",
+      "filterLinkStatus": "Trạng thái liên kết",
+      "allLinkStatus": "Tất cả",
+      "linked": "Đã liên kết",
+      "unlinked": "Chưa liên kết",
+      "searchPlaceholder": "Tìm tên / mã NV...",
+      "selectAll": "Chọn tất cả",
+      "selectRow": "Chọn {{name}}",
+      "employeeNo": "Mã NV",
+      "name": "Tên",
+      "aqlInspector": "Thanh tra AQL",
+      "supervisor": "Quản lý trực tiếp",
+      "building": "Tòa nhà",
+      "failRate": "Tỷ lệ lỗi",
+      "priority": "Ưu tiên",
+      "reason": "Lý do",
+      "programs": "Chương trình",
+      "linkStatus": "Liên kết",
+      "actions": "Thao tác",
+      "supervisorFailRateNote": "Tỷ lệ lỗi của nhân viên dưới quyền",
+      "enroll": "Đăng ký",
+      "enrolling": "Đang đăng ký...",
+      "enrollSelected": "Đăng ký đã chọn",
+      "clearSelection": "Bỏ chọn",
+      "itemsSelected": "Đã chọn {{count}}",
+      "topDefects": "Lỗi chính",
+      "enrollDialog": {
+        "title": "Đăng ký đào tạo",
+        "employeeInfo": "Thông tin nhân viên",
+        "selectProgram": "Chọn chương trình",
+        "confirm": "Xác nhận đăng ký"
+      },
+      "employeeLinker": "Liên kết nhân viên AQL",
+      "existingLinks": "Liên kết hiện có",
+      "aqlEmployeeNo": "Mã NV AQL",
+      "aqlName": "Tên AQL",
+      "qtrainEmployee": "Nhân viên Q-TRAIN",
+      "removeLink": "Xóa liên kết {{name}}",
+      "noLinks": "Chưa có liên kết nào",
+      "createLink": "Tạo liên kết mới",
+      "allLinked": "Tất cả thanh tra viên đã được liên kết",
+      "saveLink": "Lưu liên kết",
+      "supervisorImporter": "Nhập thông tin quản lý",
+      "autoImport": "Tự động nhập từ Google Drive",
+      "autoImportDesc": "Tự động lấy CSV Basic Manpower từ Google Drive và nhập liên kết quản lý.",
+      "autoImportButton": "Nhập từ Drive",
+      "importCsv": "Nhập CSV",
+      "clickToUpload": "Nhấn để chọn tệp CSV",
+      "csvFormat": "Định dạng: employee_no, employee_name, supervisor_no, supervisor_name, building",
+      "importButton": "Nhập",
+      "importing": "Đang nhập...",
+      "importSuccess": "{{count}} bản ghi đã nhập thành công.",
+      "importErrors": "{{count}} lỗi đã xảy ra:",
+      "importErrorRow": "Hàng {{row}}: {{message}}",
+      "moreErrors": "...và {{count}} lỗi khác",
+      "currentLinksCount": "{{count}} liên kết",
+      "currentSupervisorLinks": "Liên kết quản lý hiện tại",
+      "employeeName": "Tên nhân viên",
+      "supervisorName": "Tên quản lý",
+      "noSupervisorLinks": "Chưa nhập liên kết quản lý"
+    }
+  },
   "newTQCModule": {
     "finalResult": {
       "title": "Nhập kết quả cuối",
@@ -2365,5 +2526,214 @@
     },
     "loadDataFirst": "Hãy tải dữ liệu 5PRS trước",
     "selectMonthFirst": "Chọn tháng và tải dữ liệu"
+  },
+  "programIntro": {
+    "title": "Giới thiệu chương trình đào tạo",
+    "subtitle": "Tìm hiểu về hệ thống đào tạo của Q-TRAIN",
+    "tabs": {
+      "overview": "Tổng quan hệ thống đào tạo",
+      "inspection": "Đào tạo kiểm tra AQL/5PRS"
+    },
+    "overview": {
+      "qip": {
+        "title": "Đào tạo QIP",
+        "count": "67 chương trình",
+        "desc": "Đào tạo chương trình cải tiến chất lượng. Học lý thuyết và đánh giá viết để nâng cao năng lực chất lượng",
+        "target": "Tất cả nhân viên",
+        "evalType": "Bài kiểm tra viết"
+      },
+      "newEmployee": {
+        "title": "Đào tạo nhân viên mới",
+        "desc": "Đào tạo cơ bản cho nhân viên mới. Năng lực cơ bản thông qua chương trình đào tạo TQC",
+        "target": "Nhân viên mới",
+        "evalType": "Đánh giá cuộc họp"
+      },
+      "production": {
+        "title": "Đào tạo sản xuất",
+        "desc": "Đào tạo tùy chỉnh theo dây chuyền sản xuất. Nâng cao năng lực quản lý chất lượng theo quy trình",
+        "target": "Công nhân sản xuất",
+        "evalType": "Đánh giá thực hành"
+      },
+      "promotion": {
+        "title": "Đào tạo thăng chức",
+        "desc": "Đào tạo bắt buộc khi thăng chức. Phát triển năng lực lãnh đạo và quản lý",
+        "target": "Ứng viên thăng chức",
+        "evalType": "Đánh giá tổng hợp"
+      },
+      "inspection": {
+        "title": "Đào tạo kiểm tra",
+        "badge": "MỚI",
+        "desc": "Đánh giá năng lực kiểm tra thực hành dựa trên AQL/5PRS. Xác minh kỹ năng kiểm tra tại hiện trường",
+        "target": "Kiểm tra viên QIP",
+        "evalType": "So sánh thực hành"
+      }
+    },
+    "inspectionDetail": {
+      "purpose": {
+        "title": "Mục đích chương trình",
+        "desc": "Chương trình đánh giá năng lực kiểm tra thực hành dựa trên kết quả đánh giá 5PRS/AQL. Xác minh năng lực kiểm tra thông qua so sánh với kiểm tra viên AQL cho nhân viên có tỷ lệ lỗi cao."
+      },
+      "criteria": {
+        "title": "Tiêu chí lựa chọn",
+        "fivePrs": "Tỷ lệ lỗi 5PRS từ 5% trở lên",
+        "aql": "Tỷ lệ Fail AQL cao",
+        "manual": "Đăng ký thủ công bởi quản lý",
+        "autoEnroll": "Tự động đăng ký",
+        "manualEnroll": "Đăng ký thủ công"
+      },
+      "process": {
+        "title": "Quy trình đào tạo",
+        "step1": "Lựa chọn",
+        "step1Desc": "Dựa trên kết quả 5PRS/AQL hoặc đăng ký thủ công",
+        "step2": "Di chuyển đến phòng AQL",
+        "step2Desc": "Di chuyển đến địa điểm đào tạo kiểm tra",
+        "step3": "Kiểm tra 2 thùng (20 đôi)",
+        "step3Desc": "Học viên kiểm tra 20 đôi",
+        "step4": "Kiểm tra viên AQL kiểm tra",
+        "step4Desc": "Kiểm tra viên AQL kiểm tra cùng 20 đôi",
+        "step5": "So sánh kết quả",
+        "step5Desc": "So sánh học viên với kiểm tra viên (ngưỡng 80%)"
+      },
+      "grading": {
+        "title": "Tiêu chí chấm điểm",
+        "grade": "Xếp loại",
+        "matchRate": "Tỷ lệ khớp",
+        "result": "Kết quả",
+        "pass": "Đạt",
+        "fail": "Không đạt"
+      },
+      "strikeRule": {
+        "title": "Quy tắc 3 lần không đạt",
+        "strike1": "Lần 1 không đạt → Cơ hội thi lại",
+        "strike2": "2 lần liên tiếp không đạt → Thi lại (Cảnh báo)",
+        "strike3": "3 lần liên tiếp không đạt → Đề xuất chuyển vị trí"
+      }
+    }
+  },
+  "inspection": {
+    "dashboard": {
+      "title": "Tổng quan đào tạo kiểm tra",
+      "totalInspections": "Tổng số kiểm tra",
+      "passRate": "Tỷ lệ đạt",
+      "pendingEnrollments": "Đăng ký đang chờ",
+      "strikeAlerts": "Cảnh báo Strike",
+      "recentResults": "Kết quả gần đây",
+      "strikeWarnings": "Danh sách cảnh báo Strike",
+      "noResults": "Không có kết quả kiểm tra",
+      "noStrikes": "Không có cảnh báo Strike",
+      "startInspection": "Nhập kết quả kiểm tra",
+      "manageEnrollments": "Quản lý đăng ký",
+      "monthlyTrend": "Xu hướng kiểm tra hàng tháng"
+    },
+    "result": {
+      "title": "Nhập kết quả kiểm tra",
+      "step1": "Chọn học viên",
+      "step2": "Thông tin kiểm tra",
+      "step3": "So sánh 20 đôi",
+      "step4": "Xác nhận & Gửi",
+      "selectEmployee": "Chọn một học viên",
+      "fromEnrollment": "Từ danh sách đăng ký",
+      "directSearch": "Tìm kiếm trực tiếp",
+      "inspectorInfo": "Thông tin kiểm tra viên AQL",
+      "inspectorId": "Mã kiểm tra viên",
+      "inspectorName": "Tên kiểm tra viên",
+      "trainerName": "Tên giảng viên",
+      "location": "Địa điểm kiểm tra",
+      "inspectionDate": "Ngày kiểm tra",
+      "pairComparison": "Nhập so sánh từng đôi",
+      "pairNumber": "STT",
+      "traineeJudgment": "Phán đoán học viên",
+      "inspectorJudgment": "Kiểm tra viên AQL",
+      "match": "Khớp",
+      "matchResult": "Khớp: {{matched}}/{{total}} ({{rate}}%)",
+      "autoResult": "Kết quả tự động",
+      "grade": "Xếp loại",
+      "submit": "Gửi kết quả",
+      "submitting": "Đang gửi...",
+      "submitSuccess": "Kết quả kiểm tra đã được lưu thành công",
+      "submitError": "Lỗi khi lưu kết quả",
+      "confirmSubmit": "Gửi kết quả này?",
+      "notes": "Ghi chú",
+      "cartonCount": "Số thùng",
+      "totalPairs": "Tổng số đôi",
+      "noEmployeeFound": "Không tìm thấy nhân viên",
+      "pairGuide": "Nhập phán đoán cho từng đôi từ học viên và kiểm tra viên AQL. Mặc định là PASS cho tất cả — chỉ thay đổi các mục không khớp thành FAIL."
+    },
+    "enrollments": {
+      "title": "Quản lý đăng ký",
+      "newEnrollment": "Đăng ký mới",
+      "source": "Nguồn",
+      "status": "Trạng thái",
+      "enrolledBy": "Người đăng ký",
+      "enrolledAt": "Ngày đăng ký",
+      "scheduledDate": "Ngày dự kiến",
+      "actions": "Thao tác",
+      "cancel": "Hủy",
+      "schedule": "Lên lịch",
+      "complete": "Hoàn thành",
+      "noEnrollments": "Không tìm thấy đăng ký",
+      "emptyGuide": "Nhấn 'Đăng ký mới' ở trên để đăng ký học viên đào tạo kiểm tra. Các học viên được đề xuất từ 5PRS/AQL cũng sẽ hiển thị tại đây.",
+      "autoEnroll5PRS": "Tự động đăng ký từ 5PRS",
+      "autoEnrollAQL": "Tự động đăng ký từ AQL",
+      "autoEnrollResult": "Hoàn tất: {{enrolled}} đã đăng ký, {{skipped}} đã có sẵn",
+      "filterByStatus": "Lọc theo trạng thái",
+      "filterBySource": "Lọc theo nguồn",
+      "allStatuses": "Tất cả trạng thái",
+      "allSources": "Tất cả nguồn",
+      "sourceTypes": {
+        "FIVE_PRS_RECOMMENDATION": "Đề xuất 5PRS",
+        "AQL_RECOMMENDATION": "Đề xuất AQL",
+        "MANUAL": "Thủ công"
+      },
+      "statusTypes": {
+        "PENDING": "Đang chờ",
+        "SCHEDULED": "Đã lên lịch",
+        "COMPLETED": "Hoàn thành",
+        "CANCELLED": "Đã hủy"
+      }
+    },
+    "history": {
+      "title": "Lịch sử kiểm tra",
+      "searchEmployee": "Tìm nhân viên",
+      "viewDetail": "Xem chi tiết",
+      "noHistory": "Không có lịch sử kiểm tra",
+      "inspectionId": "Mã kiểm tra",
+      "resultId": "Mã kết quả",
+      "matchRate": "Tỷ lệ khớp",
+      "inspector": "Kiểm tra viên",
+      "date": "Ngày",
+      "pairDetails": "Chi tiết từng đôi",
+      "consecutiveFailures": "Không đạt liên tiếp",
+      "requiresReassignment": "Đề xuất chuyển vị trí",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày",
+      "clearFilter": "Xóa bộ lọc"
+    },
+    "strike": {
+      "label": "Strike",
+      "warning": "Cảnh báo",
+      "reassignmentRequired": "Cần chuyển vị trí",
+      "consecutiveFailures": "{{count}} lần không đạt liên tiếp",
+      "reassignmentDialog": {
+        "title": "Đề xuất chuyển vị trí",
+        "message": "Nhân viên này đã không đạt 3 lần kiểm tra liên tiếp và được đề xuất chuyển vị trí làm việc.",
+        "confirm": "Xác nhận"
+      }
+    },
+    "common": {
+      "pass": "Đạt",
+      "fail": "Không đạt",
+      "employee": "Nhân viên",
+      "program": "Chương trình",
+      "matchRate": "Tỷ lệ khớp",
+      "result": "Kết quả",
+      "date": "Ngày"
+    },
+    "errors": {
+      "permission": "Không có quyền truy cập. Vui lòng liên hệ quản trị viên.",
+      "notFound": "Không tìm thấy dữ liệu yêu cầu.",
+      "network": "Lỗi mạng. Vui lòng kiểm tra kết nối internet.",
+      "generic": "Đã xảy ra lỗi. Vui lòng thử lại sau."
+    }
   }
 }

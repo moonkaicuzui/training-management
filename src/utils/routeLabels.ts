@@ -46,6 +46,13 @@ const routeLabelMap: Record<string, string> = {
   'training-recommendations': 'nav.fivePrs.trainingRecommendations',
   // TQC sub-routes
   'final-result': 'nav.newTQC.finalResult',
+  // Inspection Training
+  inspection: 'sidebar.inspection',
+  result: 'nav.inspection.result',
+  enrollments: 'nav.inspection.enrollments',
+  history: 'nav.inspection.history',
+  // Program Intro
+  'program-intro': 'nav.programIntro',
 };
 
 export function getRouteLabel(segment: string): string | null {

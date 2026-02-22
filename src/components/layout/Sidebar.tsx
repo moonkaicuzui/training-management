@@ -30,6 +30,8 @@ import {
   FileWarning,
   RefreshCcw,
   Search,
+  BookOpenCheck,
+  Microscope,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -58,6 +60,7 @@ const dashboardItems: NavItem[] = [
 
 // 2. Training Operations
 const trainingOpsItems: NavItem[] = [
+  { titleKey: 'nav.programIntro', href: '/program-intro', icon: BookOpenCheck },
   { titleKey: 'nav.programs', href: '/programs', icon: BookOpen },
   { titleKey: 'nav.schedule', href: '/schedule', icon: Calendar },
   { titleKey: 'nav.attendance', href: '/attendance', icon: UserCheck },
@@ -100,17 +103,28 @@ const projectItems: NavItem[] = [
   { titleKey: 'nav.projects.settings', href: '/projects/settings', icon: Settings },
 ];
 
-// 7. Quality Improvement (CAPA + 5PRS)
+// 7. Inspection Training (검사 교육)
+const inspectionItems: NavItem[] = [
+  { titleKey: 'nav.inspection.dashboard', href: '/inspection/dashboard', icon: Microscope },
+  { titleKey: 'nav.inspection.result', href: '/inspection/result', icon: ClipboardCheck },
+  { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: UserCheck },
+  { titleKey: 'nav.inspection.history', href: '/inspection/history', icon: History },
+];
+
+// 8. Quality Improvement (CAPA + 5PRS + AQL)
 const qualityItems: NavItem[] = [
   { titleKey: 'nav.capa.dashboard', href: '/capa', icon: ShieldCheck },
   { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
   { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: Search },
   { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: GraduationCap },
+  { titleKey: 'nav.aql.dashboard', href: '/aql', icon: ClipboardCheck },
+  { titleKey: 'nav.aql.trainingRecommendations', href: '/aql/training-recommendations', icon: GraduationCap },
 ];
 
 // 8. Analytics & Reports
 const analyticsItems: NavItem[] = [
   { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
+  { titleKey: 'nav.executiveReport', href: '/executive-report', icon: FileBarChart },
   { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
   { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
 ];
@@ -130,6 +144,7 @@ const sections: NavSection[] = [
   { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
   { titleKey: 'sidebar.newTQC', items: newTQCItems },
   { titleKey: 'sidebar.projects', items: projectItems },
+  { titleKey: 'sidebar.inspection', items: inspectionItems },
   { titleKey: 'sidebar.qualityImprovement', items: qualityItems },
   { titleKey: 'sidebar.analyticsReports', items: analyticsItems },
   { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },

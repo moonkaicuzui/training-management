@@ -85,9 +85,10 @@ export type ProgramCategory =
   | 'PRODUCTION'
   | 'RETRAINING'
   | 'NEWCOMER'
-  | 'PROMOTION';
+  | 'PROMOTION'
+  | 'INSPECTION';
 
-export type EvaluationType = 'SCORE' | 'PASS_FAIL';
+export type EvaluationType = 'SCORE' | 'PASS_FAIL' | 'INSPECTION_MATCH';
 
 export type Grade = 'AA' | 'A' | 'B' | 'C';
 
@@ -458,3 +459,6 @@ export * from './auditLog';
 
 // ========== 5PRS Recommendation Types ==========
 export * from './recommendation';
+
+// ========== Inspection Training Types ==========
+export * from './inspection';

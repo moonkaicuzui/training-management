@@ -30,7 +30,15 @@
     "name": "Name",
     "saving": "Saving...",
     "deselectAll": "Deselect All",
-    "selectAll": "Select All"
+    "selectAll": "Select All",
+    "error": "Error",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "print": "Print",
+    "next": "Next",
+    "back": "Back",
+    "optional": "Optional",
+    "dismiss": "Dismiss"
   },
   "header": {
     "searchPlaceholder": "Search by employee ID or name...",
@@ -90,6 +98,18 @@
       "aiInstructions": "AI Instructions",
       "trainingRecommendations": "Training Recommendations"
     },
+    "aql": {
+      "dashboard": "AQL Dashboard",
+      "trainingRecommendations": "AQL Training Recommendations"
+    },
+    "programIntro": "Program Introduction",
+    "inspection": {
+      "dashboard": "Inspection Dashboard",
+      "result": "Enter Inspection Result",
+      "enrollments": "Enrollment Management",
+      "history": "Inspection History"
+    },
+    "executiveReport": "Executive Report",
     "department": "Department Dashboard",
     "competency": "Competency Matrix",
     "skillGap": "Skill Gap Analysis"
@@ -101,6 +121,7 @@
     "peopleCompetency": "People & Competency",
     "newTQC": "New TQC Training",
     "projects": "Project Management",
+    "inspection": "Inspection Training",
     "qualityImprovement": "Quality Improvement",
     "analyticsReports": "Analytics & Reports",
     "systemAdmin": "System Admin",
@@ -181,7 +202,20 @@
     "importSheetsHelp": "Paste a Google Sheets URL. The sheet must be 'Published to web' or shared with 'Anyone with the link'.",
     "importFetch": "Fetch",
     "importInvalidUrl": "Invalid Google Sheets URL",
-    "importFetchError": "Cannot fetch data from Google Sheets. Check sharing settings."
+    "importFetchError": "Cannot fetch data from Google Sheets. Check sharing settings.",
+    "syncSuccess": "Sync complete: {{created}} created, {{updated}} updated",
+    "syncError": "Sync failed",
+    "syncNow": "Sync",
+    "syncing": "Syncing...",
+    "syncConnected": "Connected",
+    "syncNotSynced": "Not synced",
+    "syncNever": "Never synced",
+    "syncJustNow": "Just now",
+    "syncMinutesAgo": "{{count}}m ago",
+    "syncHoursAgo": "{{count}}h ago",
+    "syncDaysAgo": "{{count}}d ago",
+    "syncTooltipTitle": "Google Sheets Sync",
+    "syncLastSync": "Last sync"
   },
   "program": {
     "title": "Training Programs",
@@ -1323,6 +1357,133 @@
     "loadingData": "Loading data...",
     "retry": "Retry"
   },
+  "executiveReport": {
+    "title": "Executive Report",
+    "description": "Generate AI-powered monthly quality & training reports",
+    "configuration": "Report Configuration",
+    "configDesc": "Select period, language, and sections to include",
+    "period": "Period",
+    "language": "Language",
+    "sections": "Sections",
+    "generate": "Generate Report",
+    "generating": "Generating...",
+    "generatingReport": "AI is generating your report...",
+    "reportTitle": "Generated Report",
+    "generateFailed": "Report generation failed",
+    "sectionKPI": "KPI Performance",
+    "sectionTraining": "Training Activities",
+    "sectionCAPA": "CAPA Status",
+    "sectionTQC": "TQC New Employee",
+    "section5PRS": "5PRS Inspection"
+  },
+  "aql": {
+    "dashboard": {
+      "title": "AQL Dashboard",
+      "description": "AQL inspection results and inspector analysis",
+      "selectMonth": "Select Month",
+      "totalInspections": "Total Inspections",
+      "failRate": "Fail Rate",
+      "failingInspectors": "Failing Inspectors",
+      "totalFails": "Total Fails",
+      "inspectorStats": "Inspector Statistics",
+      "employeeNo": "Employee No",
+      "name": "Name",
+      "building": "Building",
+      "total": "Total",
+      "pass": "Pass",
+      "fail": "Fail",
+      "failRatePercent": "Fail Rate%",
+      "topDefects": "Top Defects",
+      "buildingAnalysis": "Building Analysis",
+      "totalLabel": "Total",
+      "fails": "fails",
+      "noData": "Select a month to load AQL data"
+    },
+    "recommendations": {
+      "title": "AQL Training Recommendations",
+      "description": "Analyze AQL fail data and enroll inspectors + supervisors for training",
+      "analyze": "Analyze",
+      "config": "Config",
+      "configTitle": "AQL Configuration",
+      "configDescription": "Manage employee links, supervisor mappings, and defect-training mappings",
+      "employeeLinks": "Employee Links",
+      "supervisors": "Supervisors",
+      "mappings": "Defect Mappings",
+      "noResults": "Click \"Analyze\" to generate training recommendations",
+      "totalRecommendations": "Total Recommendations",
+      "inspectorFail": "Inspector Fail",
+      "supervisorEscalation": "Supervisor Escalation",
+      "enrolled": "Enrolled",
+      "allPriorities": "All Priorities",
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "allBuildings": "All Buildings",
+      "allReasons": "All Reasons",
+      "filterPriority": "Priority",
+      "filterBuilding": "Building",
+      "filterReason": "Reason",
+      "filterLinkStatus": "Link Status",
+      "allLinkStatus": "All",
+      "linked": "Linked",
+      "unlinked": "Unlinked",
+      "searchPlaceholder": "Search name / employee no...",
+      "selectAll": "Select all",
+      "selectRow": "Select {{name}}",
+      "employeeNo": "Employee No",
+      "name": "Name",
+      "aqlInspector": "AQL Inspector",
+      "supervisor": "Supervisor",
+      "building": "Building",
+      "failRate": "Fail Rate",
+      "priority": "Priority",
+      "reason": "Reason",
+      "programs": "Programs",
+      "linkStatus": "Link",
+      "actions": "Actions",
+      "supervisorFailRateNote": "Based on subordinate's fail rate",
+      "enroll": "Enroll",
+      "enrolling": "Enrolling...",
+      "enrollSelected": "Enroll Selected",
+      "clearSelection": "Clear Selection",
+      "itemsSelected": "{{count}} selected",
+      "topDefects": "Top Defects",
+      "enrollDialog": {
+        "title": "Enroll in Training",
+        "employeeInfo": "Employee Info",
+        "selectProgram": "Select Program",
+        "confirm": "Confirm Enrollment"
+      },
+      "employeeLinker": "AQL Employee Linker",
+      "existingLinks": "Existing Links",
+      "aqlEmployeeNo": "AQL Employee No",
+      "aqlName": "AQL Name",
+      "qtrainEmployee": "Q-TRAIN Employee",
+      "removeLink": "Remove link for {{name}}",
+      "noLinks": "No links created yet",
+      "createLink": "Create New Link",
+      "allLinked": "All inspectors are linked",
+      "saveLink": "Save Link",
+      "supervisorImporter": "Supervisor Importer",
+      "autoImport": "Auto-Import from Google Drive",
+      "autoImportDesc": "Automatically fetch Basic Manpower CSV from Google Drive and import supervisor links.",
+      "autoImportButton": "Import from Drive",
+      "importCsv": "Import CSV",
+      "clickToUpload": "Click to select a CSV file",
+      "csvFormat": "Format: employee_no, employee_name, supervisor_no, supervisor_name, building",
+      "importButton": "Import",
+      "importing": "Importing...",
+      "importSuccess": "{{count}} records imported successfully.",
+      "importErrors": "{{count}} errors occurred:",
+      "importErrorRow": "Row {{row}}: {{message}}",
+      "moreErrors": "...and {{count}} more errors",
+      "currentLinksCount": "{{count}} links",
+      "currentSupervisorLinks": "Current Supervisor Links",
+      "employeeName": "Employee Name",
+      "supervisorName": "Supervisor Name",
+      "noSupervisorLinks": "No supervisor links imported"
+    }
+  },
   "newTQCModule": {
     "finalResult": {
       "title": "Enter Final Result",
@@ -2365,5 +2526,214 @@
     },
     "loadDataFirst": "Load 5PRS data first",
     "selectMonthFirst": "Select a month and load the data"
+  },
+  "programIntro": {
+    "title": "Program Introduction",
+    "subtitle": "Learn about the Q-TRAIN training management system programs",
+    "tabs": {
+      "overview": "Training System Overview",
+      "inspection": "AQL/5PRS Inspection Training"
+    },
+    "overview": {
+      "qip": {
+        "title": "QIP Training",
+        "count": "67 Programs",
+        "desc": "Quality Improvement Program training. Theory learning and written assessment for quality competency improvement",
+        "target": "All employees",
+        "evalType": "Written Test"
+      },
+      "newEmployee": {
+        "title": "New Employee Training",
+        "desc": "Basic training for new hires. Fundamental competency through TQC training program",
+        "target": "New hires",
+        "evalType": "Meeting Assessment"
+      },
+      "production": {
+        "title": "Production Training",
+        "desc": "Customized training by production line. Quality management competency by process",
+        "target": "Production workers",
+        "evalType": "Practical Assessment"
+      },
+      "promotion": {
+        "title": "Promotion Training",
+        "desc": "Required training for promotion. Leadership and management competency development",
+        "target": "Promotion candidates",
+        "evalType": "Comprehensive Assessment"
+      },
+      "inspection": {
+        "title": "Inspection Training",
+        "badge": "NEW",
+        "desc": "AQL/5PRS-based practical inspection competency assessment. Verification of on-site inspection skills",
+        "target": "QIP Inspectors",
+        "evalType": "Practical Comparison"
+      }
+    },
+    "inspectionDetail": {
+      "purpose": {
+        "title": "Program Purpose",
+        "desc": "A practical inspection competency assessment program based on 5PRS/AQL evaluation results. Verifies inspection competency through comparison with AQL inspectors for employees with high defect rates."
+      },
+      "criteria": {
+        "title": "Selection Criteria",
+        "fivePrs": "5PRS defect rate 5% or higher",
+        "aql": "High AQL Fail rate",
+        "manual": "Manual enrollment by manager",
+        "autoEnroll": "Auto Enrollment",
+        "manualEnroll": "Manual Enrollment"
+      },
+      "process": {
+        "title": "Training Process",
+        "step1": "Selection",
+        "step1Desc": "Based on 5PRS/AQL results or manual enrollment",
+        "step2": "Move to AQL Room",
+        "step2Desc": "Move to inspection training location",
+        "step3": "Inspect 2 Cartons (20 Pairs)",
+        "step3Desc": "Trainee inspects 20 pairs",
+        "step4": "AQL Inspector Inspection",
+        "step4Desc": "AQL inspector inspects same 20 pairs",
+        "step5": "Compare Results",
+        "step5Desc": "Trainee vs Inspector comparison (80% threshold)"
+      },
+      "grading": {
+        "title": "Grading Criteria",
+        "grade": "Grade",
+        "matchRate": "Match Rate",
+        "result": "Result",
+        "pass": "Pass",
+        "fail": "Fail"
+      },
+      "strikeRule": {
+        "title": "3-Strike Rule",
+        "strike1": "1st FAIL → Retest opportunity",
+        "strike2": "2 consecutive FAILs → Retest (Warning)",
+        "strike3": "3 consecutive FAILs → Workplace reassignment recommended"
+      }
+    }
+  },
+  "inspection": {
+    "dashboard": {
+      "title": "Inspection Training Dashboard",
+      "totalInspections": "Total Inspections",
+      "passRate": "Pass Rate",
+      "pendingEnrollments": "Pending Enrollments",
+      "strikeAlerts": "Strike Alerts",
+      "recentResults": "Recent Results",
+      "strikeWarnings": "Strike Warning List",
+      "noResults": "No inspection results",
+      "noStrikes": "No strike warnings",
+      "startInspection": "Enter Inspection Result",
+      "manageEnrollments": "Manage Enrollments",
+      "monthlyTrend": "Monthly Inspection Trend"
+    },
+    "result": {
+      "title": "Enter Inspection Result",
+      "step1": "Select Trainee",
+      "step2": "Inspection Info",
+      "step3": "20-Pair Comparison",
+      "step4": "Review & Submit",
+      "selectEmployee": "Select a trainee",
+      "fromEnrollment": "From enrollment list",
+      "directSearch": "Direct search",
+      "inspectorInfo": "AQL Inspector Info",
+      "inspectorId": "Inspector ID",
+      "inspectorName": "Inspector Name",
+      "trainerName": "Trainer Name",
+      "location": "Inspection Location",
+      "inspectionDate": "Inspection Date",
+      "pairComparison": "Pair Comparison Input",
+      "pairNumber": "No.",
+      "traineeJudgment": "Trainee Judgment",
+      "inspectorJudgment": "AQL Inspector",
+      "match": "Match",
+      "matchResult": "Match: {{matched}}/{{total}} ({{rate}}%)",
+      "autoResult": "Auto Result",
+      "grade": "Grade",
+      "submit": "Submit Result",
+      "submitting": "Submitting...",
+      "submitSuccess": "Inspection result saved successfully",
+      "submitError": "Error saving result",
+      "confirmSubmit": "Submit this result?",
+      "notes": "Notes",
+      "cartonCount": "Carton Count",
+      "totalPairs": "Total Pairs",
+      "noEmployeeFound": "No employees found",
+      "pairGuide": "Enter the judgment for each pair from both the trainee and AQL inspector. Default is PASS for all — only change mismatched items to FAIL."
+    },
+    "enrollments": {
+      "title": "Enrollment Management",
+      "newEnrollment": "New Enrollment",
+      "source": "Source",
+      "status": "Status",
+      "enrolledBy": "Enrolled By",
+      "enrolledAt": "Enrolled At",
+      "scheduledDate": "Scheduled Date",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "schedule": "Schedule",
+      "complete": "Complete",
+      "noEnrollments": "No enrollments found",
+      "emptyGuide": "Click 'New Enrollment' above to register trainees for inspection training. 5PRS/AQL recommended trainees will also appear here.",
+      "autoEnroll5PRS": "Auto-enroll from 5PRS",
+      "autoEnrollAQL": "Auto-enroll from AQL",
+      "autoEnrollResult": "Auto-enrollment complete: {{enrolled}} enrolled, {{skipped}} already registered",
+      "filterByStatus": "Filter by Status",
+      "filterBySource": "Filter by Source",
+      "allStatuses": "All Statuses",
+      "allSources": "All Sources",
+      "sourceTypes": {
+        "FIVE_PRS_RECOMMENDATION": "5PRS Recommendation",
+        "AQL_RECOMMENDATION": "AQL Recommendation",
+        "MANUAL": "Manual"
+      },
+      "statusTypes": {
+        "PENDING": "Pending",
+        "SCHEDULED": "Scheduled",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "history": {
+      "title": "Inspection History",
+      "searchEmployee": "Search Employee",
+      "viewDetail": "View Detail",
+      "noHistory": "No inspection history",
+      "inspectionId": "Inspection ID",
+      "resultId": "Result ID",
+      "matchRate": "Match Rate",
+      "inspector": "Inspector",
+      "date": "Date",
+      "pairDetails": "Pair Details",
+      "consecutiveFailures": "Consecutive Failures",
+      "requiresReassignment": "Reassignment Recommended",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "clearFilter": "Clear Filter"
+    },
+    "strike": {
+      "label": "Strike",
+      "warning": "Warning",
+      "reassignmentRequired": "Reassignment Required",
+      "consecutiveFailures": "{{count}} consecutive failures",
+      "reassignmentDialog": {
+        "title": "Reassignment Recommended",
+        "message": "This employee has failed 3 consecutive inspections and workplace reassignment is recommended.",
+        "confirm": "Confirm"
+      }
+    },
+    "common": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "employee": "Employee",
+      "program": "Program",
+      "matchRate": "Match Rate",
+      "result": "Result",
+      "date": "Date"
+    },
+    "errors": {
+      "permission": "Access denied. Please contact your administrator.",
+      "notFound": "The requested data was not found.",
+      "network": "Network error. Please check your internet connection.",
+      "generic": "An error occurred. Please try again later."
+    }
   }
 }

@@ -373,5 +373,72 @@ service cloud.firestore {
       allow create: if isAuthenticated() && hasAllowedDomain();
       allow update, delete: if false;  // 감사 로그는 수정/삭제 불가
     }
+
+    // ========== AQL 교육 추천 시스템 ==========
+
+    // AQL EMPLOYEE NO ↔ Q-TRAIN 직원 연결
+    match /aql_employee_links/{linkId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // 상사 링크 (Manpower CSV 임포트)
+    match /aql_supervisor_links/{linkId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAuthenticated() && hasAllowedDomain();  // 재임포트 시 전체 교체
+    }
+
+    // AQL 등록 감사 로그 (APPEND-ONLY)
+    match /aql_enrollment_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;  // 감사 로그는 수정/삭제 불가
+    }
+
+    // ========== CAPA 근본원인 지식 DB ==========
+    match /capa_root_cause_kb/{kbId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow delete: if isAdmin();
+    }
+
+    // ========== KPI 월별 스냅샷 (생성 전용, 수정은 admin만) ==========
+    match /kpi_snapshots/{snapshotId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAdmin();
+      allow delete: if false;  // 삭제 불가
+    }
+
+    // ========== 대시보드 메트릭 ==========
+    match /dashboard_metrics/{metricId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 검사 교육 결과 (삭제 불가) ==========
+    match /inspection_results/{id} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow delete: if false;  // 검사 결과는 삭제 불가
+    }
+
+    // ========== 검사 교육 등록 (삭제 불가) ==========
+    match /inspection_enrollments/{id} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if false;  // 등록 기록은 삭제 불가
+    }
+
+    // ========== 직원 동기화 상태 (Cloud Function이 write, 프론트엔드는 read만) ==========
+    match /employee_sync_status/{statusId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow write: if false;  // Cloud Function (Admin SDK)만 쓰기 가능
+    }
   }
 }

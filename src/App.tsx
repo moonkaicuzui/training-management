@@ -65,6 +65,25 @@ const CAPADetail = lazy(() => import('./pages/capa/CAPADetail'));
 const FivePrsOriginalDashboard = lazy(() => import('./pages/five-prs/FivePrsOriginalDashboard'));
 const TrainingRecommendations = lazy(() => import('./pages/five-prs/TrainingRecommendations'));
 
+// AQL (검사 품질 수준) 페이지
+const AqlDashboard = lazy(() => import('./pages/aql/AqlDashboard'));
+const AqlTrainingRecommendations = lazy(() => import('./pages/aql/AqlTrainingRecommendations'));
+
+// 교육 프로그램 소개
+const ProgramIntro = lazy(() => import('./pages/ProgramIntro'));
+
+// 검사 교육 (Inspection Training) 페이지
+const InspectionDashboard = lazy(() => import('./pages/inspection/InspectionDashboard'));
+const InspectionResultForm = lazy(() => import('./pages/inspection/InspectionResultForm'));
+const InspectionEnrollments = lazy(() => import('./pages/inspection/InspectionEnrollments'));
+const InspectionHistory = lazy(() => import('./pages/inspection/InspectionHistory'));
+
+// AI 경영진 보고서
+const ExecutiveReport = lazy(() => import('./pages/ExecutiveReport'));
+
+// 테스트 페이지
+const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
+
 // 로딩 컴포넌트
 function PageLoader() {
   return (
@@ -346,6 +365,66 @@ function App() {
                     </Suspense>
                   } />
                 </Route>
+
+                {/* AQL (검사 품질 수준) 라우트 */}
+                <Route path="aql">
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AqlDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="training-recommendations" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AqlTrainingRecommendations />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* 교육 프로그램 소개 */}
+                <Route path="program-intro" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ProgramIntro />
+                  </Suspense>
+                } />
+
+                {/* 검사 교육 (Inspection Training) 라우트 */}
+                <Route path="inspection">
+                  <Route index element={<Navigate to="/inspection/dashboard" replace />} />
+                  <Route path="dashboard" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <InspectionDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="result" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <InspectionResultForm />
+                    </Suspense>
+                  } />
+                  <Route path="enrollments" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <InspectionEnrollments />
+                    </Suspense>
+                  } />
+                  <Route path="history" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <InspectionHistory />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* AI 경영진 보고서 */}
+                <Route path="executive-report" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ExecutiveReport />
+                  </Suspense>
+                } />
+
+                {/* 테스트 페이지 */}
+                <Route path="test/pptx" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PptxTestPage />
+                  </Suspense>
+                } />
               </Route>
             </Routes>
             <Toaster />
