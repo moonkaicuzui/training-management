@@ -66,6 +66,7 @@ const trainingOpsItems: NavItem[] = [
   { titleKey: 'nav.attendance', href: '/attendance', icon: UserCheck },
   { titleKey: 'nav.results', href: '/results', icon: ClipboardCheck },
   { titleKey: 'nav.progress', href: '/progress', icon: Grid3X3 },
+  { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: UserCheck },
 ];
 
 // 3. Follow-up Management
@@ -103,22 +104,21 @@ const projectItems: NavItem[] = [
   { titleKey: 'nav.projects.settings', href: '/projects/settings', icon: Settings },
 ];
 
-// 7. Inspection Training (검사 교육)
+// 7. Inspection Training AQL/5PRS (검사 교육 + AQL + 5PRS 통합)
 const inspectionItems: NavItem[] = [
   { titleKey: 'nav.inspection.dashboard', href: '/inspection/dashboard', icon: Microscope },
   { titleKey: 'nav.inspection.result', href: '/inspection/result', icon: ClipboardCheck },
-  { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: UserCheck },
   { titleKey: 'nav.inspection.history', href: '/inspection/history', icon: History },
+  { titleKey: 'nav.aql.dashboard', href: '/aql', icon: ClipboardCheck },
+  { titleKey: 'nav.aql.trainingRecommendations', href: '/aql/training-recommendations', icon: GraduationCap },
+  { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: Search },
+  { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: GraduationCap },
 ];
 
-// 8. Quality Improvement (CAPA + 5PRS + AQL)
+// 8. Quality Improvement (CAPA only)
 const qualityItems: NavItem[] = [
   { titleKey: 'nav.capa.dashboard', href: '/capa', icon: ShieldCheck },
   { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
-  { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: Search },
-  { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: GraduationCap },
-  { titleKey: 'nav.aql.dashboard', href: '/aql', icon: ClipboardCheck },
-  { titleKey: 'nav.aql.trainingRecommendations', href: '/aql/training-recommendations', icon: GraduationCap },
 ];
 
 // 8. Analytics & Reports
@@ -144,7 +144,7 @@ const sections: NavSection[] = [
   { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
   { titleKey: 'sidebar.newTQC', items: newTQCItems },
   { titleKey: 'sidebar.projects', items: projectItems },
-  { titleKey: 'sidebar.inspection', items: inspectionItems },
+  { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
   { titleKey: 'sidebar.qualityImprovement', items: qualityItems },
   { titleKey: 'sidebar.analyticsReports', items: analyticsItems },
   { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },

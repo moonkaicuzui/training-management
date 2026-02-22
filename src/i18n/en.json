@@ -122,6 +122,7 @@
     "newTQC": "New TQC Training",
     "projects": "Project Management",
     "inspection": "Inspection Training",
+    "inspectionAqlFivePrs": "Inspection Training AQL/5PRS",
     "qualityImprovement": "Quality Improvement",
     "analyticsReports": "Analytics & Reports",
     "systemAdmin": "System Admin",
