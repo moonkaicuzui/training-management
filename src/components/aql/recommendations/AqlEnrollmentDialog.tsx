@@ -52,8 +52,7 @@ export function AqlEnrollmentDialog({
   // Reset selection when dialog opens with new recommendation
   useEffect(() => {
     if (open && recommendation) {
-      const firstRecommended = recommendation.recommended_programs[0]?.program_code;
-      setSelectedProgram(firstRecommended || '');
+      setSelectedProgram('INS-001');
     }
   }, [open, recommendation]);
 
@@ -108,7 +107,9 @@ export function AqlEnrollmentDialog({
                 <span className="text-muted-foreground">
                   {t('aql.recommendations.name', 'Name')}:
                 </span>{' '}
-                <span className="font-medium">{recommendation.aql_employee_name}</span>
+                <span className="font-medium">
+                  {recommendation.linked_employee?.employee_name || recommendation.aql_employee_name}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">
@@ -176,8 +177,26 @@ export function AqlEnrollmentDialog({
                 />
               </SelectTrigger>
               <SelectContent>
-                {/* Recommended Programs */}
-                {recommendation.recommended_programs.length > 0 && (
+                {/* INS-001 Inspection Training (Primary) */}
+                {(() => {
+                  const ins001 = programs.find((p) => p.program_code === 'INS-001');
+                  return ins001 ? (
+                    <SelectGroup>
+                      <SelectLabel>
+                        {t(
+                          'aql.recommendations.enrollDialog.inspectionTraining',
+                          'Inspection Training'
+                        )}
+                      </SelectLabel>
+                      <SelectItem value="INS-001">
+                        {ins001.program_name} (Default)
+                      </SelectItem>
+                    </SelectGroup>
+                  ) : null;
+                })()}
+
+                {/* Recommended Programs (excluding INS-001) */}
+                {recommendation.recommended_programs.filter((rp) => rp.program_code !== 'INS-001').length > 0 && (
                   <SelectGroup>
                     <SelectLabel>
                       {t(
@@ -185,16 +204,18 @@ export function AqlEnrollmentDialog({
                         'Recommended Programs'
                       )}
                     </SelectLabel>
-                    {recommendation.recommended_programs.map((rp) => (
-                      <SelectItem key={rp.program_code} value={rp.program_code}>
-                        {rp.program_name} ({rp.match_reason})
-                      </SelectItem>
-                    ))}
+                    {recommendation.recommended_programs
+                      .filter((rp) => rp.program_code !== 'INS-001')
+                      .map((rp) => (
+                        <SelectItem key={rp.program_code} value={rp.program_code}>
+                          {rp.program_name} ({rp.match_reason})
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 )}
 
-                {/* All Other Active Programs */}
-                {otherPrograms.length > 0 && (
+                {/* All Other Active Programs (excluding INS-001) */}
+                {otherPrograms.filter((p) => p.program_code !== 'INS-001').length > 0 && (
                   <SelectGroup>
                     <SelectLabel>
                       {t(
@@ -202,11 +223,13 @@ export function AqlEnrollmentDialog({
                         'All Active Programs'
                       )}
                     </SelectLabel>
-                    {otherPrograms.map((p) => (
-                      <SelectItem key={p.program_code} value={p.program_code}>
-                        {p.program_name}
-                      </SelectItem>
-                    ))}
+                    {otherPrograms
+                      .filter((p) => p.program_code !== 'INS-001')
+                      .map((p) => (
+                        <SelectItem key={p.program_code} value={p.program_code}>
+                          {p.program_name}
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 )}
               </SelectContent>

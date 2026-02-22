@@ -168,11 +168,8 @@ export default function AqlTrainingRecommendations() {
     );
     if (selected.length === 0) return;
 
-    // Use first recommended program if available
-    const programCode = selected[0]?.recommended_programs[0]?.program_code;
-    if (!programCode) return;
-
-    await batchEnroll(selected, programCode, selectedMonth);
+    // Always use INS-001 for AQL batch enrollment
+    await batchEnroll(selected, 'INS-001', selectedMonth);
   }, [recommendations, selectedIds, batchEnroll, selectedMonth]);
 
   const handleFilterChange = useCallback(

@@ -23,6 +23,7 @@ import { analyzeFromRawData } from "./services/recommendationEngine";
 import { generateAiBriefing } from "./services/aiService";
 import { analyzeCAPARootCause } from "./services/capaAiService";
 import { generateExecutiveReport } from "./services/executiveReportService";
+import { runWeeklyAqlAnalysisAndEnroll } from "./services/aqlAnalysisService";
 import type {
   RecommendationThreshold,
   DefectTrainingMapping,
@@ -953,6 +954,80 @@ export const weeklyTrainingRecommendation = onSchedule(
       logger.info("Weekly training recommendation analysis complete.");
     } catch (error) {
       logger.error("Error during weekly training recommendation:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 5b. weeklyAqlInspectionEnrollment
+//     Scheduled: Every Monday 6:30 AM Asia/Ho_Chi_Minh
+//     Analyzes AQL inspection data and auto-enrolls CRITICAL/HIGH priority
+//     inspectors into INS-001 (Inspection Competency Training).
+// =============================================================================
+
+export const weeklyAqlInspectionEnrollment = onSchedule(
+  {
+    schedule: "30 6 * * 1",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"],
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async () => {
+    logger.info("Running weekly AQL inspection enrollment...");
+
+    try {
+      const result = await runWeeklyAqlAnalysisAndEnroll();
+
+      logger.info("Weekly AQL analysis complete:", result);
+
+      // Send summary email
+      const emailUser = process.env.GMAIL_USER;
+      const emailPass = process.env.GMAIL_APP_PASSWORD;
+
+      if (emailUser && emailPass) {
+        const summaryHtml = [
+          `<h2>[Q-TRAIN] Weekly AQL Inspection Enrollment Report</h2>`,
+          `<p><strong>Analysis Period:</strong> ${result.yearMonth}</p>`,
+          `<p><strong>Total Inspectors Analyzed:</strong> ${result.totalInspectors}</p>`,
+          `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">`,
+          `  <tr style="background:#f0f0f0;">`,
+          `    <th>Priority</th><th>Count</th>`,
+          `  </tr>`,
+          `  <tr><td>CRITICAL</td><td style="text-align:center;font-weight:bold;color:#dc2626;">${result.criticalCount}</td></tr>`,
+          `  <tr><td>HIGH</td><td style="text-align:center;font-weight:bold;color:#d97706;">${result.highCount}</td></tr>`,
+          `  <tr><td>MEDIUM</td><td style="text-align:center;font-weight:bold;color:#6b7280;">${result.mediumCount}</td></tr>`,
+          `</table>`,
+          `<br/>`,
+          `<p><strong>Auto-Enrolled (INS-001):</strong> ${result.autoEnrolled}</p>`,
+          `<p><strong>Skipped (Already Enrolled):</strong> ${result.skippedAlreadyEnrolled}</p>`,
+          `<p><strong>Skipped (No Employee Link):</strong> ${result.skippedNoLink}</p>`,
+          `<br/>`,
+          `<p style="color:#666;font-size:12px;">This is an automated report from Q-TRAIN AQL Analysis System.</p>`,
+        ].join("\n");
+
+        await sendTemplatedEmail(
+          {
+            to: ["ksmoon@hsvina.com", "hwk_qa@hsvina.com"],
+            templateType: "general" as TemplateType,
+            data: {
+              title: "Weekly AQL Inspection Enrollment Report",
+              body: summaryHtml,
+            },
+            language: "en" as SupportedLanguage,
+            subject: `[Q-TRAIN] AQL Inspection Enrollment Report - ${result.yearMonth}`,
+          },
+          emailUser,
+          emailPass
+        );
+
+        logger.info("AQL summary email sent successfully.");
+      } else {
+        logger.warn("Gmail credentials not configured. Skipping AQL summary email.");
+      }
+    } catch (error) {
+      logger.error("Error during weekly AQL inspection enrollment:", error);
     }
   }
 );

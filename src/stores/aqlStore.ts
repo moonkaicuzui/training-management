@@ -21,6 +21,7 @@ import type {
 import type { DefectTrainingMapping } from '@/types/recommendation';
 import type { Employee, TrainingProgram } from '@/types';
 import * as aqlService from '@/services/aqlService';
+import * as inspectionService from '@/services/inspectionService';
 import * as recommendationService from '@/services/recommendationService';
 import * as api from '@/services/api';
 import { processAqlRawData } from '@/utils/aqlDataProcessor';
@@ -285,7 +286,7 @@ export const useAqlStore = create<AqlState>()(
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
 
-          await aqlService.createAqlEnrollmentLog({
+          const enrollmentLog = await aqlService.createAqlEnrollmentLog({
             aql_employee_no: rec.aql_employee_no,
             aql_employee_name: rec.aql_employee_name,
             employee_id: rec.linked_employee.employee_id,
@@ -301,6 +302,18 @@ export const useAqlStore = create<AqlState>()(
             enrolled_by: 'admin',
             year_month: yearMonth,
           });
+
+          // Also create inspection_enrollments record for INS-001
+          if (programCode === 'INS-001') {
+            await inspectionService.createEnrollment({
+              employee_id: rec.linked_employee.employee_id,
+              employee_name: rec.linked_employee.employee_name,
+              program_code: 'INS-001',
+              source: 'AQL_RECOMMENDATION',
+              source_log_id: enrollmentLog.log_id,
+              enrolled_by: 'admin',
+            });
+          }
 
           set((state) => {
             const idx = state.recommendations.findIndex(
@@ -332,7 +345,7 @@ export const useAqlStore = create<AqlState>()(
           for (const rec of recs) {
             if (!rec.linked_employee) continue;
 
-            await aqlService.createAqlEnrollmentLog({
+            const enrollmentLog = await aqlService.createAqlEnrollmentLog({
               aql_employee_no: rec.aql_employee_no,
               aql_employee_name: rec.aql_employee_name,
               employee_id: rec.linked_employee.employee_id,
@@ -348,6 +361,18 @@ export const useAqlStore = create<AqlState>()(
               enrolled_by: 'admin',
               year_month: yearMonth,
             });
+
+            // Also create inspection_enrollments record for INS-001
+            if (programCode === 'INS-001') {
+              await inspectionService.createEnrollment({
+                employee_id: rec.linked_employee.employee_id,
+                employee_name: rec.linked_employee.employee_name,
+                program_code: 'INS-001',
+                source: 'AQL_RECOMMENDATION',
+                source_log_id: enrollmentLog.log_id,
+                enrolled_by: 'admin',
+              });
+            }
 
             set((state) => {
               const idx = state.recommendations.findIndex(
