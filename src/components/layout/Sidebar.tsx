@@ -35,6 +35,7 @@ import {
   ClipboardList,
   ListChecks,
   FileSearch,
+  PieChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -54,11 +55,14 @@ interface NavSection {
   items: NavItem[];
 }
 
-// 1. Dashboards
-const dashboardItems: NavItem[] = [
+// 1. Overview & Reports (대시보드 + 분석&리포트 통합)
+const overviewItems: NavItem[] = [
   { titleKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
   { titleKey: 'nav.executive', href: '/executive', icon: Building2 },
   { titleKey: 'nav.department', href: '/department', icon: BarChart3 },
+  { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
+  { titleKey: 'nav.executiveReport', href: '/executive-report', icon: PieChart },
+  { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
 ];
 
 // 2. Training Operations
@@ -98,13 +102,15 @@ const newTQCItems: NavItem[] = [
   { titleKey: 'nav.newTQC.settings', href: '/new-tqc/settings', icon: Settings },
 ];
 
-// 6. Projects
-const projectItems: NavItem[] = [
+// 6. Projects & CAPA (프로젝트 + CAPA 통합)
+const projectsCapaItems: NavItem[] = [
   { titleKey: 'nav.projects.dashboard', href: '/projects/dashboard', icon: FolderKanban },
   { titleKey: 'nav.projects.members', href: '/projects/members', icon: Users },
   { titleKey: 'nav.projects.tasks', href: '/projects/tasks', icon: CheckCircle2 },
   { titleKey: 'nav.projects.calendar', href: '/projects/calendar', icon: CalendarDays },
   { titleKey: 'nav.projects.settings', href: '/projects/settings', icon: Settings },
+  { titleKey: 'nav.capa.dashboard', href: '/capa', icon: ShieldCheck },
+  { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
 ];
 
 // 7. Inspection Training AQL/5PRS (검사 교육 + AQL + 5PRS 통합)
@@ -118,22 +124,9 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: Search },
 ];
 
-// 8. Quality Improvement (CAPA only)
-const qualityItems: NavItem[] = [
-  { titleKey: 'nav.capa.dashboard', href: '/capa', icon: ShieldCheck },
-  { titleKey: 'nav.capa.new', href: '/capa/new', icon: FileWarning },
-];
-
-// 8. Analytics & Reports
-const analyticsItems: NavItem[] = [
-  { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
-  { titleKey: 'nav.executiveReport', href: '/executive-report', icon: FileBarChart },
-  { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
-  { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
-];
-
-// 9. System Admin
+// 8. System Admin (시스템 관리 + 알림 통합)
 const systemAdminItems: NavItem[] = [
+  { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
   { titleKey: 'nav.audit', href: '/audit', icon: Shield },
   { titleKey: 'nav.auditLog', href: '/audit-log', icon: History },
   { titleKey: 'nav.materials', href: '/materials', icon: FolderOpen },
@@ -141,15 +134,13 @@ const systemAdminItems: NavItem[] = [
 ];
 
 const sections: NavSection[] = [
-  { titleKey: 'sidebar.dashboards', items: dashboardItems },
+  { titleKey: 'sidebar.overview', items: overviewItems },
   { titleKey: 'sidebar.trainingOps', items: trainingOpsItems },
   { titleKey: 'sidebar.followUp', items: followUpItems },
   { titleKey: 'sidebar.peopleCompetency', items: peopleItems },
   { titleKey: 'sidebar.newTQC', items: newTQCItems },
-  { titleKey: 'sidebar.projects', items: projectItems },
+  { titleKey: 'sidebar.projectsCapa', items: projectsCapaItems },
   { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
-  { titleKey: 'sidebar.qualityImprovement', items: qualityItems },
-  { titleKey: 'sidebar.analyticsReports', items: analyticsItems },
   { titleKey: 'sidebar.systemAdmin', items: systemAdminItems },
 ];
 

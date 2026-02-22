@@ -115,11 +115,13 @@
     "skillGap": "Skill Gap Analysis"
   },
   "sidebar": {
+    "overview": "Overview & Reports",
     "dashboards": "Dashboards",
     "trainingOps": "Training Operations",
     "followUp": "Follow-up",
     "peopleCompetency": "People & Competency",
     "newTQC": "New TQC Training",
+    "projectsCapa": "Projects & CAPA",
     "projects": "Project Management",
     "inspection": "Inspection Training",
     "inspectionAqlFivePrs": "Inspection Training AQL/5PRS",

@@ -115,11 +115,13 @@
     "skillGap": "스킬 갭 분석"
   },
   "sidebar": {
+    "overview": "대시보드 & 리포트",
     "dashboards": "대시보드",
     "trainingOps": "교육 운영",
     "followUp": "후속 관리",
     "peopleCompetency": "인력 & 역량",
     "newTQC": "신입 TQC 교육",
+    "projectsCapa": "프로젝트 & CAPA",
     "projects": "프로젝트 관리",
     "inspection": "검사 교육",
     "inspectionAqlFivePrs": "검사 교육 AQL/5PRS",

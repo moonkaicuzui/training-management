@@ -115,11 +115,13 @@
     "skillGap": "Phân tích khoảng trống kỹ năng"
   },
   "sidebar": {
+    "overview": "Tổng quan & Báo cáo",
     "dashboards": "Tổng quan",
     "trainingOps": "Vận hành đào tạo",
     "followUp": "Theo dõi sau",
     "peopleCompetency": "Nhân sự & Năng lực",
     "newTQC": "Đào tạo TQC mới",
+    "projectsCapa": "Dự án & CAPA",
     "projects": "Quản lý dự án",
     "inspection": "Đào tạo kiểm tra",
     "inspectionAqlFivePrs": "Đào tạo kiểm tra AQL/5PRS",
