@@ -14,6 +14,7 @@ export default function FivePrsDashboard() {
   const { t } = useTranslation();
   const {
     processedData,
+    selectedMonth,
     isLoadingMonths,
     isLoadingData,
     error,
@@ -23,12 +24,14 @@ export default function FivePrsDashboard() {
   const clearError = useFivePrsStore((s) => s.clearError);
 
   useEffect(() => {
-    fetchMonths().then(() => {
-      // After months loaded (or cache hit), fetch data if month is set
-      const month = useFivePrsStore.getState().selectedMonth;
-      if (month) fetchData(month);
-    });
-  }, [fetchMonths, fetchData]);
+    fetchMonths();
+  }, [fetchMonths]);
+
+  useEffect(() => {
+    if (selectedMonth) {
+      fetchData(selectedMonth);
+    }
+  }, [selectedMonth, fetchData]);
 
   const isLoading = isLoadingMonths || isLoadingData;
 
