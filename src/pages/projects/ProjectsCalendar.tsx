@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
+import { format, parse, startOfWeek, getDay, addHours, addMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -19,11 +19,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -34,12 +34,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, GraduationCap } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  CheckCircle2,
+  GraduationCap,
+  MapPin,
+  Repeat,
+  Bell,
+  Link2,
+  FileText,
+  Clock,
+  Trash2,
+} from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CATEGORY_COLORS, TASK_STATUS_COLORS } from '@/types/project';
-import type { CalendarEvent, Task } from '@/types/project';
+import type { CalendarEvent, Task, RecurrenceType, Recurrence, EventReminder } from '@/types/project';
 import type { TrainingSession } from '@/types';
 
 // date-fns localizer 설정
@@ -73,6 +88,20 @@ const SESSION_STATUS_COLORS: Record<string, string> = {
   CANCELLED: '#6B7280',  // Gray
 };
 
+// 알림 프리셋 (분 단위)
+const REMINDER_PRESETS = [
+  { value: '0', labelKey: 'projects.calendar.atTime' },
+  { value: '5', labelKey: 'projects.calendar.minutesBefore', n: 5 },
+  { value: '10', labelKey: 'projects.calendar.minutesBefore', n: 10 },
+  { value: '15', labelKey: 'projects.calendar.minutesBefore', n: 15 },
+  { value: '30', labelKey: 'projects.calendar.minutesBefore', n: 30 },
+  { value: '60', labelKey: 'projects.calendar.hoursBefore', n: 1 },
+  { value: '120', labelKey: 'projects.calendar.hoursBefore', n: 2 },
+  { value: '1440', labelKey: 'projects.calendar.daysBefore', n: 1 },
+  { value: '2880', labelKey: 'projects.calendar.daysBefore', n: 2 },
+  { value: '10080', labelKey: 'projects.calendar.weekBefore' },
+];
+
 // 새 이벤트 폼 타입
 interface EventFormData {
   title: string;
@@ -82,6 +111,13 @@ interface EventFormData {
   allDay: boolean;
   categoryId: string;
   location: string;
+  url: string;
+  recurrenceType: RecurrenceType | 'none';
+  recurrenceInterval: number;
+  recurrenceEndType: 'never' | 'onDate' | 'afterCount';
+  recurrenceEndDate: Date;
+  recurrenceEndCount: number;
+  reminderMinutes: number | null; // null = no reminder
 }
 
 const defaultFormData: EventFormData = {
@@ -92,6 +128,13 @@ const defaultFormData: EventFormData = {
   allDay: false,
   categoryId: '',
   location: '',
+  url: '',
+  recurrenceType: 'none',
+  recurrenceInterval: 1,
+  recurrenceEndType: 'never',
+  recurrenceEndDate: addMonths(new Date(), 3),
+  recurrenceEndCount: 10,
+  reminderMinutes: null,
 };
 
 export default function ProjectsCalendar() {
@@ -151,9 +194,10 @@ export default function ProjectsCalendar() {
   const calendarEvents: CalendarEventItem[] = useMemo(() => {
     const eventItems: CalendarEventItem[] = events.map((event) => {
       const category = categories.find((c) => c.id === event.categoryId);
+      const recurrencePrefix = event.recurrence ? '🔁 ' : '';
       return {
         id: event.id,
-        title: event.title,
+        title: `${recurrencePrefix}${event.title}`,
         start: toDate(event.startDate),
         end: toDate(event.endDate),
         allDay: event.allDay,
@@ -245,11 +289,12 @@ export default function ProjectsCalendar() {
   // 새 이벤트 생성 다이얼로그 열기
   const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
     setSelectedEvent(null);
+    const isAllDay = slotInfo.action === 'select' && slotInfo.slots.length > 1;
     setFormData({
       ...defaultFormData,
       startDate: slotInfo.start,
-      endDate: slotInfo.end,
-      allDay: slotInfo.action === 'select' && slotInfo.slots.length > 1,
+      endDate: slotInfo.end || addHours(slotInfo.start, 1),
+      allDay: isAllDay,
     });
     setIsDialogOpen(true);
   }, []);
@@ -265,27 +310,60 @@ export default function ProjectsCalendar() {
       return;
     }
     if (event.resource) {
-      setSelectedEvent(event.resource);
+      const ev = event.resource;
+      const rec = ev.recurrence;
+      const reminder = ev.reminders?.[0];
+      setSelectedEvent(ev);
       setFormData({
-        title: event.resource.title,
-        description: event.resource.description || '',
+        title: ev.title,
+        description: ev.description || '',
         startDate: event.start,
         endDate: event.end,
         allDay: event.allDay || false,
-        categoryId: event.resource.categoryId || '',
-        location: event.resource.location || '',
+        categoryId: ev.categoryId || '',
+        location: ev.location || '',
+        url: (ev as CalendarEvent & { url?: string }).url || '',
+        recurrenceType: rec?.type || 'none',
+        recurrenceInterval: rec?.interval || 1,
+        recurrenceEndType: rec?.endDate ? 'onDate' : rec?.endCount ? 'afterCount' : 'never',
+        recurrenceEndDate: rec?.endDate ? toDate(rec.endDate) : addMonths(new Date(), 3),
+        recurrenceEndCount: rec?.endCount || 10,
+        reminderMinutes: reminder ? reminder.minutes : null,
       });
       setIsDialogOpen(true);
     }
   }, [navigate]);
 
+  // 반복 설정 빌드
+  const buildRecurrence = (): Recurrence | undefined => {
+    if (formData.recurrenceType === 'none') return undefined;
+    const rec: Recurrence = {
+      type: formData.recurrenceType,
+      interval: formData.recurrenceInterval,
+    };
+    if (formData.recurrenceEndType === 'onDate') {
+      rec.endDate = formData.recurrenceEndDate;
+    } else if (formData.recurrenceEndType === 'afterCount') {
+      rec.endCount = formData.recurrenceEndCount;
+    }
+    return rec;
+  };
+
+  // 알림 설정 빌드
+  const buildReminders = (): EventReminder[] | undefined => {
+    if (formData.reminderMinutes === null) return undefined;
+    return [{ type: 'in_app', minutes: formData.reminderMinutes }];
+  };
+
   // 폼 제출
   const handleSubmit = async () => {
     if (!formData.title.trim()) return;
 
+    const recurrence = buildRecurrence();
+    const reminders = buildReminders();
+
     try {
       if (selectedEvent) {
-        // 수정
         await updateEvent(selectedEvent.id, {
           title: formData.title,
           description: formData.description,
@@ -294,9 +372,10 @@ export default function ProjectsCalendar() {
           allDay: formData.allDay,
           categoryId: formData.categoryId || undefined,
           location: formData.location || undefined,
+          recurrence,
+          reminders,
         });
       } else {
-        // 생성
         await createEvent({
           title: formData.title,
           description: formData.description,
@@ -305,6 +384,8 @@ export default function ProjectsCalendar() {
           allDay: formData.allDay,
           categoryId: formData.categoryId,
           location: formData.location || undefined,
+          recurrence,
+          reminders,
           attendees: [],
           createdBy: user?.id || '',
         });
@@ -344,6 +425,12 @@ export default function ProjectsCalendar() {
 
   // 일정 카테고리 필터링을 위한 카테고리 (event 타입만)
   const eventCategories = categories.filter((c) => c.type === 'event');
+
+  // 현재 선택된 카테고리 (다이얼로그용)
+  const selectedCategory = useMemo(
+    () => eventCategories.find((c) => c.id === formData.categoryId),
+    [eventCategories, formData.categoryId]
+  );
 
   return (
     <div className="space-y-6">
@@ -499,72 +586,49 @@ export default function ProjectsCalendar() {
         </CardContent>
       </Card>
 
-      {/* 일정 추가/수정 다이얼로그 */}
+      {/* 일정 추가/수정 다이얼로그 — Apple Calendar 스타일 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+          {/* Color Strip — 선택된 카테고리 색상 */}
+          <div
+            className="h-2 w-full transition-colors duration-200"
+            style={{
+              backgroundColor: selectedCategory?.color || '#3B82F6',
+            }}
+          />
+
+          <DialogHeader className="px-6 pt-5 pb-0">
+            <DialogTitle className="text-xl">
               {selectedEvent ? t('projects.calendar.editEvent') : t('projects.calendar.newEvent')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="sr-only">
               {selectedEvent ? t('projects.calendar.editEventDesc') : t('projects.calendar.newEventDesc')}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">{t('projects.calendar.eventTitle')} *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder={t('projects.calendar.eventTitle')}
+          <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+            {/* 일정명 — 큰 입력 필드 (Apple 스타일) */}
+            <Input
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder={t('projects.calendar.eventTitle')}
+              className="text-lg font-medium border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary h-12"
+            />
+
+            {/* 카테고리 선택 (색상 도트 포함) */}
+            <div className="flex items-center gap-3">
+              <div
+                className="w-4 h-4 rounded-full shrink-0"
+                style={{
+                  backgroundColor: selectedCategory?.color || '#3B82F6',
+                  boxShadow: `0 0 0 2px white, 0 0 0 4px ${selectedCategory?.color || '#3B82F6'}`,
+                }}
               />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">{t('projects.calendar.eventDescription')}</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder={t('projects.calendar.eventDescription')}
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="startDate">{t('projects.calendar.startDate')}</Label>
-                <Input
-                  id="startDate"
-                  type="datetime-local"
-                  value={format(formData.startDate, "yyyy-MM-dd'T'HH:mm")}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: new Date(e.target.value) })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="endDate">{t('projects.calendar.endDate')}</Label>
-                <Input
-                  id="endDate"
-                  type="datetime-local"
-                  value={format(formData.endDate, "yyyy-MM-dd'T'HH:mm")}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: new Date(e.target.value) })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>{t('projects.tasks.category')}</Label>
               <Select
                 value={formData.categoryId}
                 onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-0 shadow-none px-0 h-8 focus:ring-0">
                   <SelectValue placeholder={t('projects.tasks.category')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -583,32 +647,247 @@ export default function ProjectsCalendar() {
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="location">{t('projects.calendar.location')}</Label>
+            {/* 구분선 */}
+            <div className="border-t" />
+
+            {/* 종일 토글 */}
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                {t('projects.calendar.allDay')}
+              </Label>
+              <Switch
+                checked={formData.allDay}
+                onCheckedChange={(checked) => setFormData({ ...formData, allDay: checked })}
+              />
+            </div>
+
+            {/* 날짜/시간 — 2행 1열 (Apple Calendar 스타일) */}
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                  {t('projects.calendar.startDate')}
+                </Label>
+                <Input
+                  type={formData.allDay ? 'date' : 'datetime-local'}
+                  value={formData.allDay
+                    ? format(formData.startDate, 'yyyy-MM-dd')
+                    : format(formData.startDate, "yyyy-MM-dd'T'HH:mm")
+                  }
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: new Date(e.target.value) })
+                  }
+                  className="border-0 bg-transparent shadow-none px-0 h-9 text-base focus-visible:ring-0"
+                />
+              </div>
+              <div className="border-t" />
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                  {t('projects.calendar.endDate')}
+                </Label>
+                <Input
+                  type={formData.allDay ? 'date' : 'datetime-local'}
+                  value={formData.allDay
+                    ? format(formData.endDate, 'yyyy-MM-dd')
+                    : format(formData.endDate, "yyyy-MM-dd'T'HH:mm")
+                  }
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: new Date(e.target.value) })
+                  }
+                  className="border-0 bg-transparent shadow-none px-0 h-9 text-base focus-visible:ring-0"
+                />
+              </div>
+            </div>
+
+            {/* 반복 일정 */}
+            <div className="flex items-center gap-3">
+              <Repeat className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select
+                value={formData.recurrenceType}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, recurrenceType: value as RecurrenceType | 'none' })
+                }
+              >
+                <SelectTrigger className="border-0 shadow-none px-0 h-8 focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('projects.calendar.noRepeat')}</SelectItem>
+                  <SelectItem value="daily">{t('projects.calendar.daily')}</SelectItem>
+                  <SelectItem value="weekly">{t('projects.calendar.weekly')}</SelectItem>
+                  <SelectItem value="monthly">{t('projects.calendar.monthly')}</SelectItem>
+                  <SelectItem value="yearly">{t('projects.calendar.yearly')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 반복 상세 설정 */}
+            {formData.recurrenceType !== 'none' && (
+              <div className="ml-7 space-y-3 rounded-lg border bg-muted/30 p-3">
+                {/* 반복 간격 */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm shrink-0">{t('projects.calendar.every')}</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={formData.recurrenceInterval}
+                    onChange={(e) =>
+                      setFormData({ ...formData, recurrenceInterval: Math.max(1, parseInt(e.target.value) || 1) })
+                    }
+                    className="w-16 h-8 text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {formData.recurrenceType === 'daily' && t('projects.calendar.days')}
+                    {formData.recurrenceType === 'weekly' && t('projects.calendar.weeks')}
+                    {formData.recurrenceType === 'monthly' && t('projects.calendar.months')}
+                    {formData.recurrenceType === 'yearly' && t('projects.calendar.years')}
+                  </span>
+                </div>
+                {/* 반복 종료 */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {t('projects.calendar.repeatEnd')}
+                  </Label>
+                  <Select
+                    value={formData.recurrenceEndType}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, recurrenceEndType: value as 'never' | 'onDate' | 'afterCount' })
+                    }
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">{t('projects.calendar.never')}</SelectItem>
+                      <SelectItem value="onDate">{t('projects.calendar.onDate')}</SelectItem>
+                      <SelectItem value="afterCount">{t('projects.calendar.afterCount')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.recurrenceEndType === 'onDate' && (
+                    <Input
+                      type="date"
+                      value={format(formData.recurrenceEndDate, 'yyyy-MM-dd')}
+                      onChange={(e) =>
+                        setFormData({ ...formData, recurrenceEndDate: new Date(e.target.value) })
+                      }
+                      className="h-8"
+                    />
+                  )}
+                  {formData.recurrenceEndType === 'afterCount' && (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={formData.recurrenceEndCount}
+                        onChange={(e) =>
+                          setFormData({ ...formData, recurrenceEndCount: Math.max(1, parseInt(e.target.value) || 1) })
+                        }
+                        className="w-20 h-8 text-center"
+                      />
+                      <span className="text-sm text-muted-foreground">{t('projects.calendar.times')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 구분선 */}
+            <div className="border-t" />
+
+            {/* 알림 */}
+            <div className="flex items-center gap-3">
+              <Bell className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select
+                value={formData.reminderMinutes === null ? 'none' : String(formData.reminderMinutes)}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, reminderMinutes: value === 'none' ? null : parseInt(value) })
+                }
+              >
+                <SelectTrigger className="border-0 shadow-none px-0 h-8 focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('projects.calendar.noReminder')}</SelectItem>
+                  {REMINDER_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.n !== undefined
+                        ? t(preset.labelKey, { n: preset.n })
+                        : t(preset.labelKey)
+                      }
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 장소 */}
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
               <Input
-                id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder={t('projects.calendar.location')}
+                className="border-0 shadow-none px-0 h-8 focus-visible:ring-0"
+              />
+            </div>
+
+            {/* URL */}
+            <div className="flex items-center gap-3">
+              <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                placeholder={t('projects.calendar.url')}
+                className="border-0 shadow-none px-0 h-8 focus-visible:ring-0"
+              />
+            </div>
+
+            {/* 구분선 */}
+            <div className="border-t" />
+
+            {/* 메모 */}
+            <div className="flex gap-3">
+              <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-2" />
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder={t('projects.calendar.notes')}
+                rows={3}
+                className="border-0 shadow-none px-0 resize-none focus-visible:ring-0"
               />
             </div>
           </div>
 
-          <DialogFooter className="flex justify-between">
-            {selectedEvent && (
-              <Button variant="destructive" onClick={handleDelete}>
+          {/* Footer — Apple 스타일 */}
+          <div className="border-t px-6 py-4 flex items-center justify-between bg-muted/30">
+            {selectedEvent ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
                 {t('common.delete')}
               </Button>
+            ) : (
+              <div />
             )}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSubmit} disabled={!formData.title || isLoading}>
+              <Button
+                onClick={handleSubmit}
+                disabled={!formData.title || isLoading}
+                style={{ backgroundColor: selectedCategory?.color || undefined }}
+              >
                 {isLoading ? t('common.saving') : selectedEvent ? t('common.edit') : t('common.add')}
               </Button>
             </div>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
