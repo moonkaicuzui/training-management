@@ -91,10 +91,12 @@ export default function Results() {
   const [resultFilter, setResultFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchSessions({ status: 'PLANNED' });
-    fetchPrograms({});
-    fetchEmployees({});
-    fetchResults({});
+    Promise.all([
+      fetchSessions({ status: 'PLANNED' }),
+      fetchPrograms({}),
+      fetchEmployees({}),
+      fetchResults({}),
+    ]);
   }, []);
 
   // Get session info

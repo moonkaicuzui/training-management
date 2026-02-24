@@ -95,9 +95,11 @@ export default function ProjectsDashboard() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchMembers().then(() => linkCurrentUser());
-      fetchProjects();
-      fetchAllTasks();
+      Promise.all([
+        fetchMembers().then(() => linkCurrentUser()),
+        fetchProjects(),
+        fetchAllTasks(),
+      ]);
       subscribeMembersRealtime();
       subscribeProjectsRealtime();
     }

@@ -444,13 +444,11 @@ export default function ProjectsTasks() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      if (currentProjectId) {
-        fetchTasksByProject(currentProjectId);
-      } else {
-        fetchAllTasks();
-      }
-      fetchProjects();
-      fetchCategories();
+      Promise.all([
+        currentProjectId ? fetchTasksByProject(currentProjectId) : fetchAllTasks(),
+        fetchProjects(),
+        fetchCategories(),
+      ]);
     }
   }, [fetchAllTasks, fetchTasksByProject, fetchProjects, fetchCategories, currentProjectId]);
 

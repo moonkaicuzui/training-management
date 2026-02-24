@@ -101,10 +101,12 @@ export default function Schedule() {
   };
 
   useEffect(() => {
-    fetchSessions({
-      status: statusFilter !== 'all' ? statusFilter as SessionStatus : undefined,
-    });
-    fetchPrograms({});
+    Promise.all([
+      fetchSessions({
+        status: statusFilter !== 'all' ? statusFilter as SessionStatus : undefined,
+      }),
+      fetchPrograms({}),
+    ]);
   }, [statusFilter]);
 
   // Navigation handlers based on view mode

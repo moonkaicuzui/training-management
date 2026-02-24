@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -68,7 +68,7 @@ interface NavCategory {
 
 // 1. Overview & Reports
 const overviewItems: NavItem[] = [
-  { titleKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
+  { titleKey: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard },
   { titleKey: 'nav.executive', href: '/executive', icon: Building2 },
   { titleKey: 'nav.department', href: '/department', icon: BarChart3 },
   { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
@@ -198,16 +198,29 @@ function saveOpenSections(sections: Set<string>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...sections]));
 }
 
+/** 경로가 네비게이션 아이템에 매칭되는지 확인 (경로 세그먼트 기반) */
+function isPathMatch(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/';
+  // 정확한 매칭 또는 하위 경로 매칭 (세그먼트 단위)
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 function findSectionForPath(pathname: string): string | null {
+  let bestMatch: { titleKey: string; pathLength: number } | null = null;
+
   for (const category of categories) {
     for (const section of category.sections) {
       for (const item of section.items) {
-        if (item.href === '/' && pathname === '/') return section.titleKey;
-        if (item.href !== '/' && pathname.startsWith(item.href)) return section.titleKey;
+        if (isPathMatch(pathname, item.href)) {
+          // 가장 긴 (=가장 구체적인) 경로 매칭을 선택
+          if (!bestMatch || item.href.length > bestMatch.pathLength) {
+            bestMatch = { titleKey: section.titleKey, pathLength: item.href.length };
+          }
+        }
       }
     }
   }
-  return null;
+  return bestMatch?.titleKey ?? null;
 }
 
 // ─── Component ───────────────────────────────────────
@@ -230,6 +243,18 @@ export function Sidebar() {
     if (saved.size === 0) saved.add('sidebar.overview');
     return saved;
   });
+
+  // 라우트 변경 시 해당 섹션 자동 열기
+  useEffect(() => {
+    if (activeSectionKey && !openSections.has(activeSectionKey)) {
+      setOpenSections((prev) => {
+        const next = new Set(prev);
+        next.add(activeSectionKey);
+        saveOpenSections(next);
+        return next;
+      });
+    }
+  }, [activeSectionKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleSection = useCallback((titleKey: string) => {
     setOpenSections((prev) => {
@@ -305,9 +330,7 @@ export function Sidebar() {
               {category.sections.map((section) => {
                 const isOpen = openSections.has(section.titleKey);
                 const hasActiveItem = section.items.some(
-                  (item) =>
-                    (item.href === '/' && location.pathname === '/') ||
-                    (item.href !== '/' && location.pathname.startsWith(item.href))
+                  (item) => isPathMatch(location.pathname, item.href)
                 );
 
                 return (
@@ -347,11 +370,12 @@ export function Sidebar() {
                           <NavLink
                             key={item.href}
                             to={item.href}
+                            end={item.href === '/'}
                             onClick={() => handleNavClick(section.titleKey)}
                             className={({ isActive }) =>
                               cn(
                                 'flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                                isActive || (item.href === '/' && location.pathname === '/')
+                                isActive
                                   ? 'bg-blue-600 text-white dark:bg-blue-500'
                                   : 'text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300'
                               )
