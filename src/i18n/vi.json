@@ -2073,6 +2073,7 @@
       "taskTitle": "Tên nhiệm vụ",
       "taskDescription": "Mô tả nhiệm vụ",
       "assignee": "Người phụ trách",
+      "startDate": "Ngày bắt đầu",
       "dueDate": "Hạn chót",
       "priority": "Ưu tiên",
       "status": "Trạng thái",

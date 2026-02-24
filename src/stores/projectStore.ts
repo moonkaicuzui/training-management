@@ -354,56 +354,56 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         createTask: async (input: CreateTaskInput) => {
-          set({ isLoading: true, error: null });
+          set({ isTasksLoading: true, error: null });
           try {
             const createdBy = getCurrentUserId();
             const task = await projectService.createTask(input, createdBy);
             set((state) => ({
               tasks: [task, ...state.tasks],
-              isLoading: false,
+              isTasksLoading: false,
             }));
             return task;
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '과제 생성에 실패했습니다.',
-              isLoading: false,
+              isTasksLoading: false,
             });
             throw error;
           }
         },
 
         updateTask: async (taskId: string, input: UpdateTaskInput) => {
-          set({ isLoading: true, error: null });
+          set({ isTasksLoading: true, error: null });
           try {
             await projectService.updateTask(taskId, input);
             set((state) => ({
               tasks: state.tasks.map((t) =>
                 t.id === taskId ? { ...t, ...input, updatedAt: new Date() } : t
               ),
-              isLoading: false,
+              isTasksLoading: false,
             }));
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '과제 수정에 실패했습니다.',
-              isLoading: false,
+              isTasksLoading: false,
             });
             throw error;
           }
         },
 
         deleteTask: async (taskId: string) => {
-          set({ isLoading: true, error: null });
+          set({ isTasksLoading: true, error: null });
           try {
             await projectService.deleteTask(taskId);
             set((state) => ({
               tasks: state.tasks.filter((t) => t.id !== taskId),
               currentTaskId: state.currentTaskId === taskId ? null : state.currentTaskId,
-              isLoading: false,
+              isTasksLoading: false,
             }));
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '과제 삭제에 실패했습니다.',
-              isLoading: false,
+              isTasksLoading: false,
             });
             throw error;
           }

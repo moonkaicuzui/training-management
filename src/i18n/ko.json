@@ -2073,6 +2073,7 @@
       "taskTitle": "과제명",
       "taskDescription": "과제 설명",
       "assignee": "담당자",
+      "startDate": "시작일",
       "dueDate": "마감일",
       "priority": "우선순위",
       "status": "상태",

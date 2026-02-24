@@ -243,28 +243,32 @@ export default function ProjectsTasks() {
   const handleSaveTask = useCallback(async () => {
     if (!taskFormData.title.trim()) return;
 
-    if (selectedTask) {
-      await updateTask(selectedTask.id, {
-        title: taskFormData.title,
-        description: taskFormData.description || undefined,
-        status: taskFormData.status,
-        priority: taskFormData.priority,
-        startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
-        dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
-      });
-    } else {
-      await createTask({
-        projectId: currentProjectId || 'default',
-        title: taskFormData.title,
-        description: taskFormData.description || undefined,
-        priority: taskFormData.priority,
-        startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
-        dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
-      });
+    try {
+      if (selectedTask) {
+        await updateTask(selectedTask.id, {
+          title: taskFormData.title,
+          description: taskFormData.description || undefined,
+          status: taskFormData.status,
+          priority: taskFormData.priority,
+          startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
+          dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
+        });
+      } else {
+        await createTask({
+          projectId: currentProjectId || 'default',
+          title: taskFormData.title,
+          description: taskFormData.description || undefined,
+          priority: taskFormData.priority,
+          startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
+          dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
+        });
+      }
+      setIsDialogOpen(false);
+      setSelectedTask(null);
+    } catch {
+      // 에러는 스토어에서 처리, 다이얼로그는 열린 상태 유지
     }
-    setIsDialogOpen(false);
-    setSelectedTask(null);
-  }, [selectedTask, taskFormData, updateTask, createTask]);
+  }, [selectedTask, taskFormData, updateTask, createTask, currentProjectId]);
 
   // 과제 삭제
   const handleDeleteTask = useCallback(async () => {
@@ -852,6 +856,14 @@ export default function ProjectsTasks() {
             </div>
           )}
 
+          {/* 에러 메시지 (다이얼로그 내) */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           {/* 상세 정보 탭 */}
           {activeTab === 'details' && (
             <div className="grid gap-4 py-4 overflow-y-auto">
@@ -933,7 +945,7 @@ export default function ProjectsTasks() {
               {/* 시작일 및 마감일 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="task-start-date">{t('projects.tasks.dueDate')}</Label>
+                  <Label htmlFor="task-start-date">{t('projects.tasks.startDate')}</Label>
                   <Input
                     id="task-start-date"
                     type="date"

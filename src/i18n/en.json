@@ -2073,6 +2073,7 @@
       "taskTitle": "Task Title",
       "taskDescription": "Task Description",
       "assignee": "Assignee",
+      "startDate": "Start Date",
       "dueDate": "Due Date",
       "priority": "Priority",
       "status": "Status",
