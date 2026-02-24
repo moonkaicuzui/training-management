@@ -91,6 +91,18 @@ export default defineConfig({
               },
             },
           },
+          {
+            urlPattern: /^https:\/\/.*\.cloudfunctions\.net\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'cloud-functions-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hour
+              },
+              networkTimeoutSeconds: 10, // 10초 후 캐시 폴백
+            },
+          },
         ],
         // 오프라인 폴백
         navigateFallback: '/index.html',

@@ -12,6 +12,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   query,
   where,
   getDocs,
@@ -666,13 +667,21 @@ export const createEvent = async (
   const eventId = generateId('event');
   const now = serverTimestamp();
 
-  const eventData = {
+  const eventData: Record<string, unknown> = {
     ...data,
     startDate: data.startDate instanceof Date ? Timestamp.fromDate(data.startDate) : data.startDate,
     endDate: data.endDate instanceof Date ? Timestamp.fromDate(data.endDate) : data.endDate,
     createdAt: now,
     updatedAt: now,
   };
+
+  // recurrence 내부의 endDate도 Timestamp로 변환
+  if (data.recurrence?.endDate instanceof Date) {
+    eventData.recurrence = {
+      ...data.recurrence,
+      endDate: Timestamp.fromDate(data.recurrence.endDate),
+    };
+  }
 
   await setDoc(doc(db, COLLECTIONS.EVENTS, eventId), eventData);
 
@@ -701,6 +710,19 @@ export const updateEvent = async (
   }
   if (data.endDate instanceof Date) {
     updateData.endDate = Timestamp.fromDate(data.endDate);
+  }
+
+  // recurrence 내부의 endDate도 Timestamp로 변환
+  if (data.recurrence?.endDate instanceof Date) {
+    updateData.recurrence = {
+      ...data.recurrence,
+      endDate: Timestamp.fromDate(data.recurrence.endDate),
+    };
+  }
+
+  // recurrence가 명시적으로 undefined면 Firestore에서 필드 삭제 (반복 해제)
+  if (data.recurrence === undefined && 'recurrence' in data) {
+    updateData.recurrence = deleteField();
   }
 
   await updateDoc(docRef, updateData);

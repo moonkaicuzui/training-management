@@ -48,7 +48,9 @@ export interface AqlDataResponse {
 /** Per-inspector aggregated record */
 export interface AqlInspectorRecord {
   employee_no: string;
-  employee_name: string;
+  employee_name: string;          // Resolved from HR employees (by EMPLOYEE NO)
+  tqc_num: string;                // TQC NUM from AQL data
+  official_inspector: string;     // OFFICIAL INSPECTOR (auditor, for reference)
   buildings: string[];
   total_inspections: number;
   pass_count: number;

@@ -38,6 +38,7 @@ import {
   FileSearch,
   PieChart,
   ChevronDown,
+  Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ const overviewItems: NavItem[] = [
   { titleKey: 'nav.executive', href: '/executive', icon: Building2 },
   { titleKey: 'nav.department', href: '/department', icon: BarChart3 },
   { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
+  { titleKey: 'nav.qualityBlog', href: '/quality-blog', icon: Newspaper },
   { titleKey: 'nav.executiveReport', href: '/executive-report', icon: PieChart },
   { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
 ];

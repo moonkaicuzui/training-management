@@ -1,7 +1,7 @@
 /**
  * 프로젝트 캘린더 페이지
  *
- * react-big-calendar를 사용한 일정 관리
+ * Apple Calendar 스타일 react-big-calendar 일정 관리
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
@@ -9,11 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
+import type { ToolbarProps } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addHours, addMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '@/styles/calendar.css';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -49,6 +51,7 @@ import {
   FileText,
   Clock,
   Trash2,
+  Filter,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTrainingStore } from '@/stores/trainingStore';
@@ -67,6 +70,10 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// 시간 범위 제한: 7AM ~ 8PM
+const MIN_TIME = new Date(2020, 0, 1, 7, 0, 0);
+const MAX_TIME = new Date(2020, 0, 1, 20, 0, 0);
+
 // 캘린더 이벤트 타입
 interface CalendarEventItem {
   id: string;
@@ -79,13 +86,14 @@ interface CalendarEventItem {
   sessionResource?: TrainingSession;
   type: 'event' | 'task' | 'session';
   color?: string;
+  categoryId?: string;
 }
 
 // 교육 세션 상태별 색상
 const SESSION_STATUS_COLORS: Record<string, string> = {
-  PLANNED: '#F59E0B',    // Amber
-  COMPLETED: '#10B981',  // Green
-  CANCELLED: '#6B7280',  // Gray
+  PLANNED: '#F59E0B',
+  COMPLETED: '#10B981',
+  CANCELLED: '#6B7280',
 };
 
 // 알림 프리셋 (분 단위)
@@ -117,7 +125,7 @@ interface EventFormData {
   recurrenceEndType: 'never' | 'onDate' | 'afterCount';
   recurrenceEndDate: Date;
   recurrenceEndCount: number;
-  reminderMinutes: number | null; // null = no reminder
+  reminderMinutes: number | null;
 }
 
 const defaultFormData: EventFormData = {
@@ -136,6 +144,86 @@ const defaultFormData: EventFormData = {
   recurrenceEndCount: 10,
   reminderMinutes: null,
 };
+
+// 색상 유틸: hex → pastel 배경 + 진한 텍스트
+function hexToRgb(hex: string) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+    : { r: 59, g: 130, b: 246 };
+}
+
+function getPastelStyle(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+  return {
+    backgroundColor: `rgba(${r}, ${g}, ${b}, 0.15)`,
+    borderLeft: `3px solid ${hex}`,
+    color: hex,
+  };
+}
+
+// ============================================
+// Custom Toolbar Component
+// ============================================
+function CalendarToolbar({ label, onNavigate, onView, view }: ToolbarProps<CalendarEventItem, object>) {
+  const { t } = useTranslation();
+  const views: { key: View; label: string }[] = [
+    { key: 'month', label: t('projects.calendar.monthView') },
+    { key: 'week', label: t('projects.calendar.weekView') },
+    { key: 'day', label: t('projects.calendar.dayView') },
+    { key: 'agenda', label: t('projects.calendar.title') },
+  ];
+
+  return (
+    <div className="flex items-center justify-between mb-4 px-1">
+      {/* Left: Navigation */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onNavigate('PREV')}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-xs font-medium"
+          onClick={() => onNavigate('TODAY')}
+        >
+          {t('projects.calendar.today')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onNavigate('NEXT')}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <span className="text-lg font-semibold ml-2">{label}</span>
+      </div>
+
+      {/* Right: View Switcher (segmented control) */}
+      <div className="flex items-center bg-muted rounded-lg p-0.5">
+        {views.map((v) => (
+          <button
+            key={v.key}
+            onClick={() => onView(v.key)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              view === v.key
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ProjectsCalendar() {
   const { t } = useTranslation();
@@ -162,6 +250,19 @@ export default function ProjectsCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [formData, setFormData] = useState<EventFormData>(defaultFormData);
   const initializedRef = useRef(false);
+
+  // Legend filter state
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  const [showLegend, setShowLegend] = useState(true);
+
+  const toggleFilter = (key: string) => {
+    setHiddenTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -192,74 +293,89 @@ export default function ProjectsCalendar() {
     return new Date(value);
   };
 
-  // 이벤트 + 과제를 캘린더 형식으로 변환
+  // 일정 카테고리 (event 타입만)
+  const eventCategories = categories.filter((c) => c.type === 'event');
+
+  // 이벤트 + 과제를 캘린더 형식으로 변환 + 필터
   const calendarEvents: CalendarEventItem[] = useMemo(() => {
-    const eventItems: CalendarEventItem[] = events.map((event) => {
-      const category = categories.find((c) => c.id === event.categoryId);
-      const recurrencePrefix = event.recurrence ? '🔁 ' : '';
-      return {
-        id: event.id,
-        title: `${recurrencePrefix}${event.title}`,
-        start: toDate(event.startDate),
-        end: toDate(event.endDate),
-        allDay: event.allDay,
-        resource: event,
-        type: 'event' as const,
-        color: category?.color || CATEGORY_COLORS[0],
-      };
-    });
-
-    const taskItems: CalendarEventItem[] = tasks
-      .filter((task) => task.startDate || task.dueDate)
-      .map((task) => {
-        const prefix = task.status === 'done' ? '✓ ' : '◆ ';
-        const start = task.startDate ? toDate(task.startDate) : toDate(task.dueDate!);
-        const end = task.dueDate ? toDate(task.dueDate) : start;
+    const eventItems: CalendarEventItem[] = events
+      .filter((event) => {
+        // 카테고리별 필터
+        if (event.categoryId && hiddenTypes.has(`cat-${event.categoryId}`)) return false;
+        if (!event.categoryId && hiddenTypes.has('events')) return false;
+        return true;
+      })
+      .map((event) => {
+        const category = categories.find((c) => c.id === event.categoryId);
+        const recurrencePrefix = event.recurrence ? '🔁 ' : '';
         return {
-          id: `task-${task.id}`,
-          title: `${prefix}${task.title}`,
-          start,
-          end,
-          allDay: true,
-          taskResource: task,
-          type: 'task' as const,
-          color: TASK_STATUS_COLORS[task.status],
+          id: event.id,
+          title: `${recurrencePrefix}${event.title}`,
+          start: toDate(event.startDate),
+          end: toDate(event.endDate),
+          allDay: event.allDay,
+          resource: event,
+          type: 'event' as const,
+          color: category?.color || CATEGORY_COLORS[0],
+          categoryId: event.categoryId,
         };
       });
 
-    // 교육 세션을 캘린더 아이템으로 변환
-    const sessionItems: CalendarEventItem[] = sessions
-      .filter((s) => s.session_date && s.status !== 'CANCELLED')
-      .map((session) => {
-        const sessionDate = new Date(session.session_date);
-        const statusIcon = session.status === 'COMPLETED' ? '✅ ' : '📚 ';
-        return {
-          id: `session-${session.session_id}`,
-          title: `${statusIcon}${session.trainer_name || '교육'} - ${session.location || ''}`.trim(),
-          start: sessionDate,
-          end: sessionDate,
-          allDay: true,
-          sessionResource: session,
-          type: 'session' as const,
-          color: SESSION_STATUS_COLORS[session.status] || '#F59E0B',
-        };
-      });
+    const taskItems: CalendarEventItem[] = hiddenTypes.has('tasks')
+      ? []
+      : tasks
+          .filter((task) => task.startDate || task.dueDate)
+          .map((task) => {
+            const prefix = task.status === 'done' ? '✓ ' : '◆ ';
+            const start = task.startDate ? toDate(task.startDate) : toDate(task.dueDate!);
+            const end = task.dueDate ? toDate(task.dueDate) : start;
+            return {
+              id: `task-${task.id}`,
+              title: `${prefix}${task.title}`,
+              start,
+              end,
+              allDay: true,
+              taskResource: task,
+              type: 'task' as const,
+              color: TASK_STATUS_COLORS[task.status],
+            };
+          });
+
+    const sessionItems: CalendarEventItem[] = hiddenTypes.has('sessions')
+      ? []
+      : sessions
+          .filter((s) => s.session_date && s.status !== 'CANCELLED')
+          .map((session) => {
+            const sessionDate = new Date(session.session_date);
+            const statusIcon = session.status === 'COMPLETED' ? '✅ ' : '📚 ';
+            return {
+              id: `session-${session.session_id}`,
+              title: `${statusIcon}${session.trainer_name || '교육'} - ${session.location || ''}`.trim(),
+              start: sessionDate,
+              end: sessionDate,
+              allDay: true,
+              sessionResource: session,
+              type: 'session' as const,
+              color: SESSION_STATUS_COLORS[session.status] || '#F59E0B',
+            };
+          });
 
     return [...eventItems, ...taskItems, ...sessionItems];
-  }, [events, tasks, sessions, categories]);
+  }, [events, tasks, sessions, categories, hiddenTypes]);
 
-  // 이벤트 스타일 커스텀
+  // 이벤트 스타일 — Apple Calendar: pastel bg + left border + dark text
   const eventStyleGetter = useCallback((event: CalendarEventItem) => {
     if (event.type === 'task') {
       return {
         style: {
           backgroundColor: 'transparent',
-          borderRadius: '4px',
+          borderRadius: '6px',
           opacity: 0.9,
           color: event.color || '#6B7280',
           border: `2px solid ${event.color || '#6B7280'}`,
-          display: 'block',
-          fontSize: '0.8em',
+          display: 'block' as const,
+          fontSize: '12px',
+          padding: '1px 4px',
         },
       };
     }
@@ -267,23 +383,28 @@ export default function ProjectsCalendar() {
       return {
         style: {
           backgroundColor: event.color || '#F59E0B',
-          borderRadius: '4px',
+          borderRadius: '6px',
           opacity: 0.85,
           color: 'white',
           border: 'none',
-          display: 'block',
-          fontSize: '0.8em',
+          display: 'block' as const,
+          fontSize: '12px',
+          padding: '1px 4px',
         },
       };
     }
+    // Events — pastel style with left border
+    const baseColor = event.color || '#3b82f6';
+    const pastel = getPastelStyle(baseColor);
     return {
       style: {
-        backgroundColor: event.color || '#3b82f6',
-        borderRadius: '4px',
-        opacity: 0.9,
-        color: 'white',
-        border: 'none',
-        display: 'block',
+        ...pastel,
+        borderRadius: '6px',
+        display: 'block' as const,
+        fontSize: '12px',
+        fontWeight: 500,
+        padding: '1px 6px',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
       },
     };
   }, []);
@@ -425,17 +546,19 @@ export default function ProjectsCalendar() {
     showMore: (count: number) => `+${count}`,
   };
 
-  // 일정 카테고리 필터링을 위한 카테고리 (event 타입만)
-  const eventCategories = categories.filter((c) => c.type === 'event');
-
   // 현재 선택된 카테고리 (다이얼로그용)
   const selectedCategory = useMemo(
     () => eventCategories.find((c) => c.id === formData.categoryId),
     [eventCategories, formData.categoryId]
   );
 
+  // Custom toolbar components map
+  const calendarComponents = useMemo(() => ({
+    toolbar: CalendarToolbar,
+  }), []);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
@@ -467,104 +590,94 @@ export default function ProjectsCalendar() {
         </Card>
       )}
 
-      {/* 범례 */}
-      <div className="flex flex-wrap gap-2">
-        {/* 일정 카테고리 */}
-        {eventCategories.map((category) => (
-          <Badge
-            key={category.id}
-            variant="outline"
-            style={{
-              borderColor: category.color,
-              backgroundColor: category.color + '20',
-            }}
-          >
-            <div
-              className="w-2 h-2 rounded-full mr-1"
-              style={{ backgroundColor: category.color }}
-            />
-            {category.name}
-          </Badge>
-        ))}
-
-        {/* 교육 세션 범례 */}
-        <div className="w-px h-5 bg-border self-center mx-1" />
-        <Badge variant="outline" className="gap-1" style={{ borderColor: '#F59E0B', color: '#F59E0B' }}>
-          <GraduationCap className="h-3 w-3" />
-          교육(예정)
-        </Badge>
-        <Badge variant="outline" className="gap-1" style={{ borderColor: '#10B981', color: '#10B981' }}>
-          <GraduationCap className="h-3 w-3" />
-          교육(완료)
-        </Badge>
-
-        {/* 과제 범례 */}
-        <div className="w-px h-5 bg-border self-center mx-1" />
-        <Badge variant="outline" className="gap-1 text-muted-foreground">
-          <CheckCircle2 className="h-3 w-3" />
-          과제
-        </Badge>
-        {(Object.entries(TASK_STATUS_COLORS) as [string, string][]).slice(0, 4).map(([status, color]) => {
-          const labels: Record<string, string> = {
-            todo: '할 일',
-            in_progress: '진행중',
-            delayed_start: '지연(시작)',
-            delayed_complete: '지연(완료)',
-          };
-          return (
-            <Badge
-              key={status}
-              variant="outline"
-              style={{
-                borderColor: color,
-                color,
-              }}
-            >
-              ◆ {labels[status] || status}
+      {/* 범례 — 접기/펼치기 + 필터 토글 */}
+      <div className="space-y-2">
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Filter className="h-3.5 w-3.5" />
+          {showLegend ? '범례 접기' : '범례 펼치기'}
+          {hiddenTypes.size > 0 && (
+            <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+              {hiddenTypes.size} 숨김
             </Badge>
-          );
-        })}
+          )}
+        </button>
+
+        {showLegend && (
+          <div className="flex flex-wrap gap-1.5">
+            {/* 일정 카테고리 */}
+            {eventCategories.map((category) => {
+              const isHidden = hiddenTypes.has(`cat-${category.id}`);
+              return (
+                <Badge
+                  key={category.id}
+                  variant="outline"
+                  className={`cursor-pointer select-none transition-all ${
+                    isHidden ? 'opacity-40 line-through' : ''
+                  }`}
+                  style={{
+                    borderColor: category.color,
+                    backgroundColor: isHidden ? 'transparent' : category.color + '20',
+                  }}
+                  onClick={() => toggleFilter(`cat-${category.id}`)}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full mr-1"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  {category.name}
+                </Badge>
+              );
+            })}
+
+            {/* 교육 세션 범례 */}
+            <div className="w-px h-5 bg-border self-center mx-0.5" />
+            <Badge
+              variant="outline"
+              className={`gap-1 cursor-pointer select-none transition-all ${
+                hiddenTypes.has('sessions') ? 'opacity-40 line-through' : ''
+              }`}
+              style={{ borderColor: '#F59E0B', color: '#F59E0B' }}
+              onClick={() => toggleFilter('sessions')}
+            >
+              <GraduationCap className="h-3 w-3" />
+              교육
+            </Badge>
+
+            {/* 과제 범례 */}
+            <div className="w-px h-5 bg-border self-center mx-0.5" />
+            <Badge
+              variant="outline"
+              className={`gap-1 cursor-pointer select-none transition-all ${
+                hiddenTypes.has('tasks') ? 'opacity-40 line-through' : ''
+              }`}
+              style={{ borderColor: '#6B7280', color: '#6B7280' }}
+              onClick={() => toggleFilter('tasks')}
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              과제
+            </Badge>
+
+            {/* 필터 초기화 */}
+            {hiddenTypes.size > 0 && (
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-secondary/80 text-xs"
+                onClick={() => setHiddenTypes(new Set())}
+              >
+                전체 표시
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 캘린더 */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-lg">
-            {format(currentDate, 'yyyy년 M월', { locale: ko })}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                const newDate = new Date(currentDate);
-                newDate.setMonth(newDate.getMonth() - 1);
-                setCurrentDate(newDate);
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentDate(new Date())}
-            >
-              {t('projects.calendar.today')}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                const newDate = new Date(currentDate);
-                newDate.setMonth(newDate.getMonth() + 1);
-                setCurrentDate(newDate);
-              }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[600px]">
+      <Card className="border-0 shadow-none">
+        <CardContent className="p-4">
+          <div className="h-[650px]">
             <Calendar
               localizer={localizer}
               events={calendarEvents}
@@ -583,6 +696,9 @@ export default function ProjectsCalendar() {
               culture="ko"
               popup
               views={['month', 'week', 'day', 'agenda']}
+              min={MIN_TIME}
+              max={MAX_TIME}
+              components={calendarComponents}
             />
           </div>
         </CardContent>
@@ -609,7 +725,7 @@ export default function ProjectsCalendar() {
           </DialogHeader>
 
           <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
-            {/* 일정명 — 큰 입력 필드 (Apple 스타일) */}
+            {/* 일정명 */}
             <Input
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -617,7 +733,7 @@ export default function ProjectsCalendar() {
               className="text-lg font-medium border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary h-12"
             />
 
-            {/* 카테고리 선택 (색상 도트 포함) */}
+            {/* 카테고리 선택 */}
             <div className="flex items-center gap-3">
               <div
                 className="w-4 h-4 rounded-full shrink-0"
@@ -649,7 +765,6 @@ export default function ProjectsCalendar() {
               </Select>
             </div>
 
-            {/* 구분선 */}
             <div className="border-t" />
 
             {/* 종일 토글 */}
@@ -664,7 +779,7 @@ export default function ProjectsCalendar() {
               />
             </div>
 
-            {/* 날짜/시간 — 2행 1열 (Apple Calendar 스타일) */}
+            {/* 날짜/시간 */}
             <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -726,7 +841,6 @@ export default function ProjectsCalendar() {
             {/* 반복 상세 설정 */}
             {formData.recurrenceType !== 'none' && (
               <div className="ml-7 space-y-3 rounded-lg border bg-muted/30 p-3">
-                {/* 반복 간격 */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm shrink-0">{t('projects.calendar.every')}</Label>
                   <Input
@@ -746,7 +860,6 @@ export default function ProjectsCalendar() {
                     {formData.recurrenceType === 'yearly' && t('projects.calendar.years')}
                   </span>
                 </div>
-                {/* 반복 종료 */}
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider">
                     {t('projects.calendar.repeatEnd')}
@@ -795,7 +908,6 @@ export default function ProjectsCalendar() {
               </div>
             )}
 
-            {/* 구분선 */}
             <div className="border-t" />
 
             {/* 알림 */}
@@ -846,7 +958,6 @@ export default function ProjectsCalendar() {
               />
             </div>
 
-            {/* 구분선 */}
             <div className="border-t" />
 
             {/* 메모 */}
@@ -862,7 +973,7 @@ export default function ProjectsCalendar() {
             </div>
           </div>
 
-          {/* Footer — Apple 스타일 */}
+          {/* Footer */}
           <div className="border-t px-6 py-4 flex items-center justify-between bg-muted/30">
             {selectedEvent ? (
               <Button

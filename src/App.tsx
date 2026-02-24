@@ -78,6 +78,9 @@ const InspectionResultForm = lazy(() => import('./pages/inspection/InspectionRes
 const InspectionEnrollments = lazy(() => import('./pages/inspection/InspectionEnrollments'));
 const InspectionHistory = lazy(() => import('./pages/inspection/InspectionHistory'));
 
+// 품질 블로그
+const QualityBlog = lazy(() => import('./pages/QualityBlog'));
+
 // AI 경영진 보고서
 const ExecutiveReport = lazy(() => import('./pages/ExecutiveReport'));
 
@@ -411,6 +414,13 @@ function App() {
                     </Suspense>
                   } />
                 </Route>
+
+                {/* 품질 블로그 */}
+                <Route path="quality-blog" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <QualityBlog />
+                  </Suspense>
+                } />
 
                 {/* AI 경영진 보고서 */}
                 <Route path="executive-report" element={

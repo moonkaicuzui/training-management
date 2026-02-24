@@ -435,6 +435,13 @@ service cloud.firestore {
       allow delete: if false;  // 등록 기록은 삭제 불가
     }
 
+    // ========== 품질 블로그 ==========
+    match /quality_blog_posts/{postId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAuthenticated() && hasAllowedDomain();
+    }
+
     // ========== 직원 동기화 상태 (Cloud Function이 write, 프론트엔드는 read만) ==========
     match /employee_sync_status/{statusId} {
       allow read: if isAuthenticated() && hasAllowedDomain();

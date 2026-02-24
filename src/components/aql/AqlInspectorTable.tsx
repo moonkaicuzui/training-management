@@ -19,7 +19,7 @@ interface Props {
   isLoading: boolean;
 }
 
-type SortKey = 'employee_no' | 'employee_name' | 'total_inspections' | 'fail_count' | 'fail_rate';
+type SortKey = 'employee_no' | 'employee_name' | 'tqc_num' | 'total_inspections' | 'fail_count' | 'fail_rate';
 
 function getFailRateColor(rate: number): string {
   if (rate > 30) return 'text-red-600 font-bold';
@@ -88,6 +88,12 @@ export function AqlInspectorTable({ records, isLoading }: Props) {
                     </Button>
                   </TableHead>
                   <TableHead className="sticky top-0 bg-background">
+                    <Button variant="ghost" size="sm" onClick={() => handleSort('tqc_num')}>
+                      {t('aql.dashboard.tqcNum', 'TQC NUM')}
+                      <ArrowUpDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="sticky top-0 bg-background">
                     <Button variant="ghost" size="sm" onClick={() => handleSort('employee_name')}>
                       {t('aql.dashboard.name', 'Name')}
                       <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -128,6 +134,7 @@ export function AqlInspectorTable({ records, isLoading }: Props) {
                   return (
                     <TableRow key={rec.employee_no}>
                       <TableCell className="font-mono text-sm">{rec.employee_no}</TableCell>
+                      <TableCell className="font-mono text-sm">{rec.tqc_num || '-'}</TableCell>
                       <TableCell className="font-medium">{rec.employee_name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {rec.buildings.join(', ')}
@@ -159,7 +166,7 @@ export function AqlInspectorTable({ records, isLoading }: Props) {
                 })}
                 {sorted.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       {t('common.noData', 'No data')}
                     </TableCell>
                   </TableRow>

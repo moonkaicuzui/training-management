@@ -171,8 +171,21 @@ export const useAqlStore = create<AqlState>()(
         });
 
         try {
-          const res = await aqlService.fetchAqlMonthData(month);
-          const processed = processAqlRawData(res.data);
+          // Fetch AQL data and employees in parallel
+          const [res, employees] = await Promise.all([
+            aqlService.fetchAqlMonthData(month),
+            get().employees.length > 0
+              ? Promise.resolve(get().employees)
+              : api.getEmployees(),
+          ]);
+
+          // Build employee lookup map: employee_id → employee_name
+          const employeeMap = new Map<string, string>();
+          for (const emp of employees) {
+            employeeMap.set(emp.employee_id, emp.employee_name);
+          }
+
+          const processed = processAqlRawData(res.data, employeeMap);
           _cache.dataAt = Date.now();
           _cache.dataMonth = month;
 
@@ -180,6 +193,9 @@ export const useAqlStore = create<AqlState>()(
             state.rawData = res.data;
             state.processedData = processed;
             state.isLoadingData = false;
+            if (state.employees.length === 0) {
+              state.employees = employees;
+            }
           });
         } catch (error) {
           set((state) => {

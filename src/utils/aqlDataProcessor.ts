@@ -63,7 +63,15 @@ function parseDefectCounts(description: string): Record<string, number> {
 
 // ========== Main Processing ==========
 
-export function processAqlRawData(rows: AqlRawRow[]): AqlProcessedData {
+/**
+ * @param rows Raw AQL data rows
+ * @param employeeMap Optional map of employee_id → employee_name from HR data.
+ *   Used to resolve inspector names from EMPLOYEE NO instead of OFFICIAL INSPECTOR.
+ */
+export function processAqlRawData(
+  rows: AqlRawRow[],
+  employeeMap?: Map<string, string>
+): AqlProcessedData {
   if (!rows || rows.length === 0) {
     return {
       stats: { total: 0, pass: 0, fail: 0, fail_rate: 0, inspectors: 0, failing_inspectors: 0 },
@@ -77,6 +85,8 @@ export function processAqlRawData(rows: AqlRawRow[]): AqlProcessedData {
   const inspectorMap: Record<string, {
     employee_no: string;
     employee_name: string;
+    tqc_num: string;
+    official_inspector: string;
     buildings: Set<string>;
     total: number;
     pass: number;
@@ -108,9 +118,16 @@ export function processAqlRawData(rows: AqlRawRow[]): AqlProcessedData {
 
     // Inspector aggregation
     if (!inspectorMap[employeeNo]) {
+      const tqcNum = (row['TQC NUM'] || '').trim();
+      const officialInspector = (row['OFFICIAL INSPECTOR'] || '').trim();
+      // Resolve name: HR employee data → TQC NUM → EMPLOYEE NO fallback
+      const resolvedName = employeeMap?.get(employeeNo) || tqcNum || employeeNo;
+
       inspectorMap[employeeNo] = {
         employee_no: employeeNo,
-        employee_name: (row['OFFICIAL INSPECTOR'] || '').trim(),
+        employee_name: resolvedName,
+        tqc_num: tqcNum,
+        official_inspector: officialInspector,
         buildings: new Set(),
         total: 0,
         pass: 0,
@@ -159,6 +176,8 @@ export function processAqlRawData(rows: AqlRawRow[]): AqlProcessedData {
     .map((i) => ({
       employee_no: i.employee_no,
       employee_name: i.employee_name,
+      tqc_num: i.tqc_num,
+      official_inspector: i.official_inspector,
       buildings: Array.from(i.buildings),
       total_inspections: i.total,
       pass_count: i.pass,

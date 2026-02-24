@@ -20,7 +20,9 @@ function getDb() {
 
 interface AqlInspectorRecord {
   employee_no: string;
-  employee_name: string;
+  employee_name: string;          // Resolved from HR employees (by EMPLOYEE NO)
+  tqc_num: string;                // TQC NUM from AQL data
+  official_inspector: string;     // OFFICIAL INSPECTOR (auditor, for reference)
   buildings: string[];
   total_inspections: number;
   pass_count: number;
@@ -80,12 +82,17 @@ function parseDefectCounts(description: string): Record<string, number> {
   return counts;
 }
 
-function processRawData(rows: AqlRawRow[]): AqlInspectorRecord[] {
+function processRawData(
+  rows: AqlRawRow[],
+  employeeMap?: Map<string, string>,
+): AqlInspectorRecord[] {
   if (!rows || rows.length === 0) return [];
 
   const inspectorMap: Record<string, {
     employee_no: string;
     employee_name: string;
+    tqc_num: string;
+    official_inspector: string;
     buildings: Set<string>;
     total: number;
     pass: number;
@@ -104,9 +111,16 @@ function processRawData(rows: AqlRawRow[]): AqlInspectorRecord[] {
     if (!isFail && !isPass) continue;
 
     if (!inspectorMap[employeeNo]) {
+      const tqcNum = (row["TQC NUM"] || "").trim();
+      const officialInspector = (row["OFFICIAL INSPECTOR"] || "").trim();
+      // Resolve name: HR employee data → TQC NUM → EMPLOYEE NO fallback
+      const resolvedName = employeeMap?.get(employeeNo) || tqcNum || employeeNo;
+
       inspectorMap[employeeNo] = {
         employee_no: employeeNo,
-        employee_name: (row["OFFICIAL INSPECTOR"] || "").trim(),
+        employee_name: resolvedName,
+        tqc_num: tqcNum,
+        official_inspector: officialInspector,
         buildings: new Set(),
         total: 0,
         pass: 0,
@@ -138,6 +152,8 @@ function processRawData(rows: AqlRawRow[]): AqlInspectorRecord[] {
     .map((i) => ({
       employee_no: i.employee_no,
       employee_name: i.employee_name,
+      tqc_num: i.tqc_num,
+      official_inspector: i.official_inspector,
       buildings: Array.from(i.buildings),
       total_inspections: i.total,
       pass_count: i.pass,
@@ -260,11 +276,7 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
     };
   }
 
-  // 3. Process raw data into inspector records
-  const inspectorRecords = processRawData(rawData);
-  logger.info(`[AQL Analysis] ${inspectorRecords.length} inspectors processed`);
-
-  // 4. Load config from Firestore
+  // 3. Load config from Firestore (needed for employee name resolution)
   const db = getDb();
   const [aqlLinksSnap, employeesSnap] = await Promise.all([
     db.collection("aql_employee_links").get(),
@@ -291,6 +303,14 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
   });
 
   logger.info(`[AQL Analysis] Loaded ${aqlLinks.length} AQL links, ${employees.length} employees`);
+
+  // 4. Build employee lookup map and process raw data
+  const employeeMap = new Map<string, string>();
+  for (const emp of employees) {
+    employeeMap.set(emp.employee_id, emp.employee_name);
+  }
+  const inspectorRecords = processRawData(rawData, employeeMap);
+  logger.info(`[AQL Analysis] ${inspectorRecords.length} inspectors processed`);
 
   // 5. Analyze recommendations
   const recommendations = analyzeInspectors(inspectorRecords, aqlLinks, employees);
