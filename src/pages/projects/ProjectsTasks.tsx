@@ -1004,6 +1004,97 @@ export default function ProjectsTasks() {
                 </Select>
               </div>
 
+              {/* 담당자 선택 */}
+              <div className="grid gap-2">
+                <Label className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {t('projects.tasks.assignee')}
+                </Label>
+                {/* 선택된 담당자 뱃지 */}
+                <div className="flex flex-wrap gap-1.5 min-h-[28px]">
+                  {taskFormData.assignees.map((assigneeId) => {
+                    const member = getMemberById(assigneeId);
+                    return (
+                      <Badge key={assigneeId} variant="secondary" className="gap-1 pr-1">
+                        {member?.name || assigneeId}
+                        <button
+                          type="button"
+                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                          onClick={() => setTaskFormData({
+                            ...taskFormData,
+                            assignees: taskFormData.assignees.filter((id) => id !== assigneeId),
+                          })}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+                {/* 담당자 추가 팝오버 */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-fit gap-1.5">
+                      <UserPlus className="h-3.5 w-3.5" />
+                      {t('projects.tasks.selectAssignees')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="start">
+                    <Input
+                      placeholder={t('projects.tasks.searchMembers')}
+                      value={assigneeSearch}
+                      onChange={(e) => setAssigneeSearch(e.target.value)}
+                      className="mb-2 h-8 text-sm"
+                    />
+                    <div className="max-h-48 overflow-y-auto space-y-0.5">
+                      {members
+                        .filter((m) => m.status === 'active')
+                        .filter((m) =>
+                          !assigneeSearch ||
+                          m.name.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
+                          m.email.toLowerCase().includes(assigneeSearch.toLowerCase())
+                        )
+                        .map((member) => {
+                          const isSelected = taskFormData.assignees.includes(member.id);
+                          return (
+                            <label
+                              key={member.id}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                            >
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setTaskFormData({
+                                      ...taskFormData,
+                                      assignees: [...taskFormData.assignees, member.id],
+                                    });
+                                  } else {
+                                    setTaskFormData({
+                                      ...taskFormData,
+                                      assignees: taskFormData.assignees.filter((id) => id !== member.id),
+                                    });
+                                  }
+                                }}
+                              />
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src={member.photoURL} />
+                                <AvatarFallback className="text-[10px]">
+                                  {member.name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="truncate">{member.name}</span>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {taskFormData.assignees.length === 0 && (
+                  <p className="text-xs text-muted-foreground">{t('projects.tasks.noAssignee')}</p>
+                )}
+              </div>
+
               {/* 카테고리 (선택사항) */}
               {taskCategories.length > 0 && (
                 <div className="grid gap-2">
@@ -1109,96 +1200,6 @@ export default function ProjectsTasks() {
                 </div>
               </div>
 
-              {/* 담당자 선택 */}
-              <div className="grid gap-2">
-                <Label className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {t('projects.tasks.assignee')}
-                </Label>
-                {/* 선택된 담당자 뱃지 */}
-                <div className="flex flex-wrap gap-1.5 min-h-[28px]">
-                  {taskFormData.assignees.map((assigneeId) => {
-                    const member = getMemberById(assigneeId);
-                    return (
-                      <Badge key={assigneeId} variant="secondary" className="gap-1 pr-1">
-                        {member?.name || assigneeId}
-                        <button
-                          type="button"
-                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
-                          onClick={() => setTaskFormData({
-                            ...taskFormData,
-                            assignees: taskFormData.assignees.filter((id) => id !== assigneeId),
-                          })}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-                {/* 담당자 추가 팝오버 */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-fit gap-1.5">
-                      <UserPlus className="h-3.5 w-3.5" />
-                      {t('projects.tasks.selectAssignees')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2" align="start">
-                    <Input
-                      placeholder={t('projects.tasks.searchMembers')}
-                      value={assigneeSearch}
-                      onChange={(e) => setAssigneeSearch(e.target.value)}
-                      className="mb-2 h-8 text-sm"
-                    />
-                    <div className="max-h-48 overflow-y-auto space-y-0.5">
-                      {members
-                        .filter((m) => m.status === 'active')
-                        .filter((m) =>
-                          !assigneeSearch ||
-                          m.name.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
-                          m.email.toLowerCase().includes(assigneeSearch.toLowerCase())
-                        )
-                        .map((member) => {
-                          const isSelected = taskFormData.assignees.includes(member.id);
-                          return (
-                            <label
-                              key={member.id}
-                              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
-                            >
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setTaskFormData({
-                                      ...taskFormData,
-                                      assignees: [...taskFormData.assignees, member.id],
-                                    });
-                                  } else {
-                                    setTaskFormData({
-                                      ...taskFormData,
-                                      assignees: taskFormData.assignees.filter((id) => id !== member.id),
-                                    });
-                                  }
-                                }}
-                              />
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage src={member.photoURL} />
-                                <AvatarFallback className="text-[10px]">
-                                  {member.name.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="truncate">{member.name}</span>
-                            </label>
-                          );
-                        })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                {taskFormData.assignees.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{t('projects.tasks.noAssignee')}</p>
-                )}
-              </div>
             </div>
           )}
 
