@@ -2062,7 +2062,9 @@
       "overdueTasks": "지연",
       "recentActivity": "최근 활동",
       "upcomingDeadlines": "다가오는 마감일",
-      "projectProgress": "프로젝트 진행률"
+      "projectProgress": "프로젝트 진행률",
+      "newProject": "새 프로젝트",
+      "newProjectDesc": "새로운 프로젝트를 생성합니다"
     },
     "tasks": {
       "title": "과제 관리",
@@ -2084,12 +2086,22 @@
       "noTasks": "과제가 없습니다",
       "message": "메시지",
       "reply": "답변",
-      "department": "부서"
+      "department": "부서",
+      "project": "프로젝트",
+      "unassigned": "미분류"
     },
     "calendar": {
       "title": "캘린더",
       "description": "일정과 마감일을 한눈에 확인하세요",
       "newEvent": "새 일정",
+      "editEvent": "일정 수정",
+      "newEventDesc": "새 일정을 추가합니다",
+      "editEventDesc": "일정 정보를 수정합니다",
+      "eventTitle": "일정명",
+      "eventDescription": "일정 설명",
+      "startDate": "시작일",
+      "endDate": "종료일",
+      "location": "장소",
       "today": "오늘",
       "monthView": "월",
       "weekView": "주",

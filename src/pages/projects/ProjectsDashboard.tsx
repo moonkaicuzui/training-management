@@ -4,13 +4,24 @@
  * 프로젝트 현황, 긴급 알림, 팀 성과, 최근 활동 표시
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +32,7 @@ import {
   ArrowRight,
   Calendar,
   TrendingUp,
+  FolderPlus,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
@@ -46,14 +58,33 @@ export default function ProjectsDashboard() {
     error,
     fetchMembers,
     fetchProjects,
+    createProject,
     isMembersLoading,
     isProjectsLoading,
+    isLoading: isStoreLoading,
     subscribeMembersRealtime,
     subscribeProjectsRealtime,
   } = useProjectStore();
 
   // Use ref to prevent double initialization (anti-pattern fix)
   const initializedRef = useRef(false);
+
+  // 프로젝트 생성 다이얼로그 상태
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    try {
+      await createProject(newProjectName.trim(), newProjectDescription.trim());
+      setIsCreateProjectOpen(false);
+      setNewProjectName('');
+      setNewProjectDescription('');
+    } catch {
+      // error handled by store
+    }
+  };
 
   const { cleanup } = useProjectStore();
 
@@ -127,10 +158,16 @@ export default function ProjectsDashboard() {
             {t('projects.dashboard.description')}
           </p>
         </div>
-        <Button onClick={() => navigate('/projects/tasks')}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('projects.newTask')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsCreateProjectOpen(true)}>
+            <FolderPlus className="h-4 w-4 mr-2" />
+            {t('projects.dashboard.newProject')}
+          </Button>
+          <Button onClick={() => navigate('/projects/tasks')}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('projects.newTask')}
+          </Button>
+        </div>
       </div>
 
       {/* 에러 배너 */}
@@ -328,6 +365,45 @@ export default function ProjectsDashboard() {
           <span>{t('projects.settings.title')}</span>
         </Button>
       </div>
+
+      {/* 프로젝트 생성 다이얼로그 */}
+      <Dialog open={isCreateProjectOpen} onOpenChange={setIsCreateProjectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('projects.dashboard.newProject')}</DialogTitle>
+            <DialogDescription>{t('projects.dashboard.newProjectDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="project-name">{t('projects.title')} *</Label>
+              <Input
+                id="project-name"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder={t('projects.dashboard.newProject')}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="project-desc">{t('projects.description')}</Label>
+              <Textarea
+                id="project-desc"
+                value={newProjectDescription}
+                onChange={(e) => setNewProjectDescription(e.target.value)}
+                placeholder={t('projects.description')}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateProjectOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleCreateProject} disabled={!newProjectName.trim() || isStoreLoading}>
+              {isStoreLoading ? t('common.saving') : t('common.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

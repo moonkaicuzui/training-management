@@ -2062,7 +2062,9 @@
       "overdueTasks": "Overdue",
       "recentActivity": "Recent Activity",
       "upcomingDeadlines": "Upcoming Deadlines",
-      "projectProgress": "Project Progress"
+      "projectProgress": "Project Progress",
+      "newProject": "New Project",
+      "newProjectDesc": "Create a new project"
     },
     "tasks": {
       "title": "Task Management",
@@ -2084,12 +2086,22 @@
       "noTasks": "No tasks available",
       "message": "Message",
       "reply": "Reply",
-      "department": "Department"
+      "department": "Department",
+      "project": "Project",
+      "unassigned": "Unassigned"
     },
     "calendar": {
       "title": "Calendar",
       "description": "View schedules and deadlines at a glance",
       "newEvent": "New Event",
+      "editEvent": "Edit Event",
+      "newEventDesc": "Add a new event",
+      "editEventDesc": "Edit event details",
+      "eventTitle": "Event Title",
+      "eventDescription": "Event Description",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "location": "Location",
       "today": "Today",
       "monthView": "Month",
       "weekView": "Week",

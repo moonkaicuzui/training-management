@@ -64,7 +64,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMont
 import { ko } from 'date-fns/locale';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
-import type { ViewType, TaskStatus, Task, TaskPriority, MessageType } from '@/types/project';
+import type { ViewType, TaskStatus, Task, TaskPriority, MessageType, CreateTaskInput, UpdateTaskInput } from '@/types/project';
 
 // Static label maps are moved inside the component to use t()
 
@@ -142,18 +142,24 @@ export default function ProjectsTasks() {
     currentView,
     setCurrentView,
     getMemberById,
+    getProjectById,
     isTasksLoading,
     isMessagesLoading,
     error,
     updateTask,
     createTask,
     deleteTask,
+    fetchAllTasks,
     fetchTasksByProject,
     fetchMessagesByTask,
     createMessage,
     markMessageAsRead,
     resolveMessage,
     members,
+    projects,
+    categories,
+    fetchProjects,
+    fetchCategories,
     currentProjectId,
   } = useProjectStore();
 
@@ -168,6 +174,8 @@ export default function ProjectsTasks() {
     description: '',
     status: 'todo' as TaskStatus,
     priority: 'medium' as TaskPriority,
+    projectId: '',
+    categoryId: '',
     startDate: '',
     dueDate: '',
   });
@@ -181,6 +189,11 @@ export default function ProjectsTasks() {
   const [selectedMentions, setSelectedMentions] = useState<string[]>([]);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 과제용 카테고리 필터
+  const taskCategories = useMemo(() => {
+    return categories.filter(c => c.type === 'task' && c.isActive);
+  }, [categories]);
 
   // 드래그 앤 드롭 핸들러
   const handleDragStart = useCallback((taskId: string) => {
@@ -219,6 +232,8 @@ export default function ProjectsTasks() {
       description: task.description || '',
       status: task.status,
       priority: task.priority,
+      projectId: task.projectId === 'unassigned' ? '' : (task.projectId || ''),
+      categoryId: (task as Task & { categoryId?: string }).categoryId || '',
       startDate: startDate ? format(startDate, 'yyyy-MM-dd') : '',
       dueDate: dueDate ? format(dueDate, 'yyyy-MM-dd') : '',
     });
@@ -233,42 +248,49 @@ export default function ProjectsTasks() {
       description: '',
       status: 'todo',
       priority: 'medium',
+      projectId: currentProjectId || '',
+      categoryId: '',
       startDate: '',
       dueDate: '',
     });
     setIsDialogOpen(true);
-  }, []);
+  }, [currentProjectId]);
 
   // 과제 저장
   const handleSaveTask = useCallback(async () => {
     if (!taskFormData.title.trim()) return;
 
     try {
+      const projectId = taskFormData.projectId || 'unassigned';
+      const categoryId = taskFormData.categoryId || undefined;
       if (selectedTask) {
         await updateTask(selectedTask.id, {
           title: taskFormData.title,
           description: taskFormData.description || undefined,
           status: taskFormData.status,
           priority: taskFormData.priority,
+          projectId,
+          categoryId,
           startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
           dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
-        });
+        } as UpdateTaskInput & { categoryId?: string });
       } else {
         await createTask({
-          projectId: currentProjectId || 'default',
+          projectId,
           title: taskFormData.title,
           description: taskFormData.description || undefined,
           priority: taskFormData.priority,
+          categoryId,
           startDate: taskFormData.startDate ? new Date(taskFormData.startDate) : undefined,
           dueDate: taskFormData.dueDate ? new Date(taskFormData.dueDate) : undefined,
-        });
+        } as CreateTaskInput & { categoryId?: string });
       }
       setIsDialogOpen(false);
       setSelectedTask(null);
     } catch {
       // 에러는 스토어에서 처리, 다이얼로그는 열린 상태 유지
     }
-  }, [selectedTask, taskFormData, updateTask, createTask, currentProjectId]);
+  }, [selectedTask, taskFormData, updateTask, createTask]);
 
   // 과제 삭제
   const handleDeleteTask = useCallback(async () => {
@@ -369,9 +391,15 @@ export default function ProjectsTasks() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchTasksByProject(currentProjectId || 'default');
+      if (currentProjectId) {
+        fetchTasksByProject(currentProjectId);
+      } else {
+        fetchAllTasks();
+      }
+      fetchProjects();
+      fetchCategories();
     }
-  }, [fetchTasksByProject]);
+  }, [fetchAllTasks, fetchTasksByProject, fetchProjects, fetchCategories, currentProjectId]);
 
   // 과제 선택 시 메시지 로드
   useEffect(() => {
@@ -539,6 +567,11 @@ export default function ProjectsTasks() {
                       >
                         {task.priority}
                       </Badge>
+                      {task.projectId && task.projectId !== 'unassigned' && (
+                        <Badge variant="secondary" className="text-xs">
+                          {getProjectById(task.projectId)?.name || task.projectId}
+                        </Badge>
+                      )}
                       {task.dueDate && (
                         <span className="text-sm text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -595,7 +628,12 @@ export default function ProjectsTasks() {
                                   isDragging ? 'opacity-50 scale-95 ring-2 ring-primary' : ''
                                 }`}
                               >
-                                <p className="font-medium text-sm mb-2">{task.title}</p>
+                                <p className="font-medium text-sm mb-1">{task.title}</p>
+                                {task.projectId && task.projectId !== 'unassigned' && (
+                                  <Badge variant="secondary" className="text-xs mb-1">
+                                    {getProjectById(task.projectId)?.name || task.projectId}
+                                  </Badge>
+                                )}
                                 <div className="flex items-center justify-between">
                                   <Badge
                                     variant="outline"
@@ -889,6 +927,60 @@ export default function ProjectsTasks() {
                   rows={3}
                 />
               </div>
+
+              {/* 프로젝트 (선택사항) */}
+              <div className="grid gap-2">
+                <Label>{t('projects.tasks.project')} ({t('common.optional')})</Label>
+                <Select
+                  value={taskFormData.projectId || '_unassigned'}
+                  onValueChange={(value) => setTaskFormData({ ...taskFormData, projectId: value === '_unassigned' ? '' : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('projects.tasks.unassigned')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_unassigned">
+                      {t('projects.tasks.unassigned')}
+                    </SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 카테고리 (선택사항) */}
+              {taskCategories.length > 0 && (
+                <div className="grid gap-2">
+                  <Label>{t('projects.tasks.category')} ({t('common.optional')})</Label>
+                  <Select
+                    value={taskFormData.categoryId || '_none'}
+                    onValueChange={(value) => setTaskFormData({ ...taskFormData, categoryId: value === '_none' ? '' : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('projects.tasks.category')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">
+                        {t('projects.tasks.unassigned')}
+                      </SelectItem>
+                      {taskCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* 상태 및 우선순위 */}
               <div className="grid grid-cols-2 gap-4">

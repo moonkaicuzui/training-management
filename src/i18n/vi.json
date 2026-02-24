@@ -2062,7 +2062,9 @@
       "overdueTasks": "Trễ hạn",
       "recentActivity": "Hoạt động gần đây",
       "upcomingDeadlines": "Hạn chót sắp tới",
-      "projectProgress": "Tiến độ dự án"
+      "projectProgress": "Tiến độ dự án",
+      "newProject": "Dự án mới",
+      "newProjectDesc": "Tạo dự án mới"
     },
     "tasks": {
       "title": "Quản lý nhiệm vụ",
@@ -2084,12 +2086,22 @@
       "noTasks": "Không có nhiệm vụ",
       "message": "Tin nhắn",
       "reply": "Trả lời",
-      "department": "Phòng ban"
+      "department": "Phòng ban",
+      "project": "Dự án",
+      "unassigned": "Chưa phân loại"
     },
     "calendar": {
       "title": "Lịch",
       "description": "Xem lịch trình và hạn chót",
       "newEvent": "Sự kiện mới",
+      "editEvent": "Sửa sự kiện",
+      "newEventDesc": "Thêm sự kiện mới",
+      "editEventDesc": "Sửa thông tin sự kiện",
+      "eventTitle": "Tên sự kiện",
+      "eventDescription": "Mô tả sự kiện",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "location": "Địa điểm",
       "today": "Hôm nay",
       "monthView": "Tháng",
       "weekView": "Tuần",

@@ -80,6 +80,7 @@ interface ProjectStore {
   subscribeProjectsRealtime: () => void;
 
   // Task Actions
+  fetchAllTasks: () => Promise<void>;
   fetchTasksByProject: (projectId: string) => Promise<void>;
   createTask: (input: CreateTaskInput) => Promise<Task>;
   updateTask: (taskId: string, input: UpdateTaskInput) => Promise<void>;
@@ -339,6 +340,19 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
         // Task Actions
         // ============================================================
+
+        fetchAllTasks: async () => {
+          set({ isTasksLoading: true, error: null });
+          try {
+            const tasks = await projectService.getAllTasks();
+            set({ tasks, isTasksLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '과제 목록을 불러오는데 실패했습니다.',
+              isTasksLoading: false,
+            });
+          }
+        },
 
         fetchTasksByProject: async (projectId: string) => {
           set({ isTasksLoading: true, error: null });

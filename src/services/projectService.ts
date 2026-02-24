@@ -346,6 +346,19 @@ export const getTasksByProject = async (projectId: string): Promise<Task[]> => {
   );
 };
 
+/** 전체 과제 조회 (프로젝트 필터 없음) */
+export const getAllTasks = async (): Promise<Task[]> => {
+  const q = query(
+    collection(db, COLLECTIONS.TASKS),
+    orderBy('createdAt', 'desc'),
+    limit(200)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) =>
+    convertDocumentDates({ id: doc.id, ...doc.data() }) as Task
+  );
+};
+
 /** 단일 과제 조회 */
 export const getTask = async (taskId: string): Promise<Task | null> => {
   const docRef = doc(db, COLLECTIONS.TASKS, taskId);

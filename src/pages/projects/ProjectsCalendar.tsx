@@ -375,38 +375,38 @@ export default function ProjectsCalendar() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedEvent ? t('projects.calendar.newEvent') : t('projects.calendar.newEvent')}
+              {selectedEvent ? t('projects.calendar.editEvent') : t('projects.calendar.newEvent')}
             </DialogTitle>
             <DialogDescription>
-              {selectedEvent ? t('projects.calendar.newEvent') : t('projects.calendar.newEvent')}
+              {selectedEvent ? t('projects.calendar.editEventDesc') : t('projects.calendar.newEventDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">{t('projects.tasks.taskTitle')} *</Label>
+              <Label htmlFor="title">{t('projects.calendar.eventTitle')} *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder={t('projects.calendar.newEvent')}
+                placeholder={t('projects.calendar.eventTitle')}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">{t('projects.tasks.taskDescription')}</Label>
+              <Label htmlFor="description">{t('projects.calendar.eventDescription')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder={t('projects.tasks.taskDescription')}
+                placeholder={t('projects.calendar.eventDescription')}
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startDate">{t('projects.tasks.dueDate')}</Label>
+                <Label htmlFor="startDate">{t('projects.calendar.startDate')}</Label>
                 <Input
                   id="startDate"
                   type="datetime-local"
@@ -417,7 +417,7 @@ export default function ProjectsCalendar() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="endDate">{t('projects.tasks.dueDate')}</Label>
+                <Label htmlFor="endDate">{t('projects.calendar.endDate')}</Label>
                 <Input
                   id="endDate"
                   type="datetime-local"
@@ -455,12 +455,12 @@ export default function ProjectsCalendar() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="location">{t('projects.calendar.newEvent')}</Label>
+              <Label htmlFor="location">{t('projects.calendar.location')}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder={t('projects.calendar.newEvent')}
+                placeholder={t('projects.calendar.location')}
               />
             </div>
           </div>
