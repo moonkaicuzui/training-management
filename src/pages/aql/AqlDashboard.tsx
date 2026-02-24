@@ -30,17 +30,13 @@ export default function AqlDashboard() {
     clearError,
   } = useAqlStore();
 
-  // Load months on mount
+  // Load months then auto-fetch data (cache guards prevent redundant calls)
   useEffect(() => {
-    fetchMonths();
-  }, [fetchMonths]);
-
-  // Auto-fetch data when month is selected
-  useEffect(() => {
-    if (selectedMonth) {
-      fetchData(selectedMonth);
-    }
-  }, [selectedMonth, fetchData]);
+    fetchMonths().then(() => {
+      const month = useAqlStore.getState().selectedMonth;
+      if (month) fetchData(month);
+    });
+  }, [fetchMonths, fetchData]);
 
   const handleMonthChange = (yearMonth: string) => {
     setSelectedMonth(yearMonth);

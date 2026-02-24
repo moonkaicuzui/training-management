@@ -71,17 +71,13 @@ export default function AqlTrainingRecommendations() {
   const [enrollTarget, setEnrollTarget] = useState<AqlTrainingRecommendation | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
-  // Load months and config on mount
+  // Load months + config in parallel, then auto-fetch data (cache guards prevent redundant calls)
   useEffect(() => {
-    Promise.all([fetchMonths(), fetchConfig()]);
-  }, [fetchMonths, fetchConfig]);
-
-  // Auto-fetch data when month selected
-  useEffect(() => {
-    if (selectedMonth) {
-      fetchData(selectedMonth);
-    }
-  }, [selectedMonth, fetchData]);
+    Promise.all([fetchMonths(), fetchConfig()]).then(() => {
+      const month = useAqlStore.getState().selectedMonth;
+      if (month) fetchData(month);
+    });
+  }, [fetchMonths, fetchConfig, fetchData]);
 
   // Filter recommendations
   const filteredRecommendations = useMemo(() => {

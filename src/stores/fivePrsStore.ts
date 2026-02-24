@@ -16,6 +16,11 @@ import type {
 import * as fivePrsService from '@/services/fivePrsService';
 import { processRawData, extractBriefingPayload } from '@/utils/fivePrsDataProcessor';
 
+// Cache guard: skip Cloud Function calls if data was fetched recently
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const _cache = { monthsAt: 0, dataAt: 0, dataMonth: '' };
+const isFresh = (ts: number) => ts > 0 && Date.now() - ts < CACHE_TTL_MS;
+
 interface FivePrsState {
   // Data
   months: MonthOption[];
@@ -53,6 +58,8 @@ export const useFivePrsStore = create<FivePrsState>()(
       error: null,
 
       fetchMonths: async () => {
+        if (get().months.length > 0 && isFresh(_cache.monthsAt)) return;
+
         set((state) => {
           state.isLoadingMonths = true;
           state.error = null;
@@ -60,6 +67,7 @@ export const useFivePrsStore = create<FivePrsState>()(
 
         try {
           const res = await fivePrsService.fetchMonths();
+          _cache.monthsAt = Date.now();
           set((state) => {
             state.months = res.months;
             state.isLoadingMonths = false;
@@ -80,6 +88,12 @@ export const useFivePrsStore = create<FivePrsState>()(
         const month = yearMonth || get().selectedMonth;
         if (!month) return;
 
+        // Cache guard: skip if same month data is fresh
+        if (get().processedData && month === _cache.dataMonth && isFresh(_cache.dataAt)) {
+          if (yearMonth) set((state) => { state.selectedMonth = yearMonth; });
+          return;
+        }
+
         set((state) => {
           state.isLoadingData = true;
           state.error = null;
@@ -92,6 +106,8 @@ export const useFivePrsStore = create<FivePrsState>()(
         try {
           const res = await fivePrsService.fetchMonthData(month);
           const processed = processRawData(res.data);
+          _cache.dataAt = Date.now();
+          _cache.dataMonth = month;
 
           set((state) => {
             state.rawData = res.data;

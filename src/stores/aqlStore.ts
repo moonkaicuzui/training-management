@@ -28,6 +28,11 @@ import { processAqlRawData } from '@/utils/aqlDataProcessor';
 import { analyzeAqlRecommendations } from '@/utils/aqlAnalyzer';
 import { parseManpowerCsv } from '@/utils/manpowerCsvParser';
 
+// Cache guard: skip Cloud Function calls if data was fetched recently
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const _cache = { monthsAt: 0, dataAt: 0, dataMonth: '', configAt: 0 };
+const isFresh = (ts: number) => ts > 0 && Date.now() - ts < CACHE_TTL_MS;
+
 interface AqlState {
   // Data
   months: AqlMonthOption[];
@@ -121,6 +126,8 @@ export const useAqlStore = create<AqlState>()(
       // ========== Data ==========
 
       fetchMonths: async () => {
+        if (get().months.length > 0 && isFresh(_cache.monthsAt)) return;
+
         set((state) => {
           state.isLoadingMonths = true;
           state.error = null;
@@ -128,6 +135,7 @@ export const useAqlStore = create<AqlState>()(
 
         try {
           const res = await aqlService.fetchAqlMonths();
+          _cache.monthsAt = Date.now();
           set((state) => {
             state.months = res.months;
             state.isLoadingMonths = false;
@@ -147,6 +155,12 @@ export const useAqlStore = create<AqlState>()(
         const month = yearMonth || get().selectedMonth;
         if (!month) return;
 
+        // Cache guard: skip if same month data is fresh
+        if (get().processedData && month === _cache.dataMonth && isFresh(_cache.dataAt)) {
+          if (yearMonth) set((state) => { state.selectedMonth = yearMonth; });
+          return;
+        }
+
         set((state) => {
           state.isLoadingData = true;
           state.error = null;
@@ -159,6 +173,8 @@ export const useAqlStore = create<AqlState>()(
         try {
           const res = await aqlService.fetchAqlMonthData(month);
           const processed = processAqlRawData(res.data);
+          _cache.dataAt = Date.now();
+          _cache.dataMonth = month;
 
           set((state) => {
             state.rawData = res.data;
@@ -182,6 +198,8 @@ export const useAqlStore = create<AqlState>()(
       // ========== Config ==========
 
       fetchConfig: async () => {
+        if (get().employees.length > 0 && isFresh(_cache.configAt)) return;
+
         set((state) => {
           state.isLoadingConfig = true;
           state.error = null;
@@ -195,6 +213,7 @@ export const useAqlStore = create<AqlState>()(
             api.getEmployees(),
             api.getPrograms(),
           ]);
+          _cache.configAt = Date.now();
 
           set((state) => {
             state.mappings = mappings;
