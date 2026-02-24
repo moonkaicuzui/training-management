@@ -320,7 +320,7 @@ export function Sidebar() {
                       <button
                         className={cn(
                           'flex w-full items-center justify-between px-5 py-1.5 text-xs font-semibold tracking-tight transition-colors',
-                          hasActiveItem && !isOpen
+                          isOpen || hasActiveItem
                             ? 'text-primary'
                             : 'text-muted-foreground hover:text-foreground'
                         )}
@@ -347,7 +347,7 @@ export function Sidebar() {
                                 'flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                                 isActive || (item.href === '/' && location.pathname === '/')
                                   ? 'bg-primary text-primary-foreground'
-                                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                  : 'text-primary/70 hover:bg-primary/10 hover:text-primary'
                               )
                             }
                           >
