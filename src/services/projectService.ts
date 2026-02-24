@@ -41,6 +41,7 @@ import type {
   ProjectSettings,
   DefaultViewType,
   NotificationPreferences,
+  ProjectNotification,
 } from '@/types/project';
 
 // ============================================================
@@ -970,6 +971,153 @@ export const subscribeToTasks = (
     (error) => {
       console.error(`[projectService] subscribeToTasks failed for project ${projectId}:`, error);
     }
+  );
+};
+
+// ============================================================
+// Notification Service
+// ============================================================
+
+/** 알림 생성 */
+export const createNotification = async (
+  data: Omit<ProjectNotification, 'id' | 'createdAt'>
+): Promise<ProjectNotification> => {
+  const notificationId = generateId('notif');
+  const now = serverTimestamp();
+
+  const notifData = {
+    ...data,
+    createdAt: now,
+  };
+
+  await setDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notificationId), notifData);
+
+  return {
+    id: notificationId,
+    ...data,
+    createdAt: new Date(),
+  } as ProjectNotification;
+};
+
+/** 사용자별 알림 조회 */
+export const getNotificationsByUser = async (
+  userId: string,
+  maxCount: number = 50
+): Promise<ProjectNotification[]> => {
+  const q = query(
+    collection(db, COLLECTIONS.NOTIFICATIONS),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(maxCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) =>
+    convertDocumentDates({ id: doc.id, ...doc.data() }) as ProjectNotification
+  );
+};
+
+/** 알림 읽음 처리 */
+export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  const docRef = doc(db, COLLECTIONS.NOTIFICATIONS, notificationId);
+  await updateDoc(docRef, {
+    isRead: true,
+    readAt: serverTimestamp(),
+  });
+};
+
+/** 전체 알림 읽음 처리 */
+export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
+  const q = query(
+    collection(db, COLLECTIONS.NOTIFICATIONS),
+    where('userId', '==', userId),
+    where('isRead', '==', false),
+    limit(100)
+  );
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return;
+
+  const batch = writeBatch(db);
+  snapshot.docs.forEach((d) => {
+    batch.update(d.ref, {
+      isRead: true,
+      readAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+};
+
+/** 알림 실시간 구독 */
+export const subscribeNotificationsRealtime = (
+  userId: string,
+  callback: (notifications: ProjectNotification[]) => void
+): (() => void) => {
+  const q = query(
+    collection(db, COLLECTIONS.NOTIFICATIONS),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map((doc) =>
+      convertDocumentDates({ id: doc.id, ...doc.data() }) as ProjectNotification
+    );
+    callback(notifications);
+  });
+};
+
+// ============================================================
+// Member-Auth Linking Service
+// ============================================================
+
+/** 이메일로 팀원 조회 */
+export const getMemberByEmail = async (email: string): Promise<ProjectMember | null> => {
+  const q = query(
+    collection(db, COLLECTIONS.MEMBERS),
+    where('email', '==', email),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return convertDocumentDates({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() }) as ProjectMember;
+};
+
+/** uid로 팀원 조회 */
+export const getMemberByUid = async (uid: string): Promise<ProjectMember | null> => {
+  const q = query(
+    collection(db, COLLECTIONS.MEMBERS),
+    where('uid', '==', uid),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return convertDocumentDates({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() }) as ProjectMember;
+};
+
+/** 팀원에 Firebase Auth uid 연결 */
+export const linkMemberToAuth = async (memberId: string, uid: string): Promise<void> => {
+  const docRef = doc(db, COLLECTIONS.MEMBERS, memberId);
+  await updateDoc(docRef, {
+    uid,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+/** uid로 배정된 과제 조회 (uid → memberId → 과제) */
+export const getTasksByAssigneeUid = async (uid: string): Promise<Task[]> => {
+  const member = await getMemberByUid(uid);
+  if (!member) return [];
+
+  const q = query(
+    collection(db, COLLECTIONS.TASKS),
+    where('assignees', 'array-contains', member.id),
+    orderBy('createdAt', 'desc'),
+    limit(100)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) =>
+    convertDocumentDates({ id: doc.id, ...doc.data() }) as Task
   );
 };
 

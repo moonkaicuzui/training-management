@@ -2064,7 +2064,9 @@
       "upcomingDeadlines": "다가오는 마감일",
       "projectProgress": "프로젝트 진행률",
       "newProject": "새 프로젝트",
-      "newProjectDesc": "새로운 프로젝트를 생성합니다"
+      "newProjectDesc": "새로운 프로젝트를 생성합니다",
+      "myTasks": "내 과제",
+      "noMyTasks": "배정된 과제가 없습니다"
     },
     "tasks": {
       "title": "과제 관리",
@@ -2088,7 +2090,10 @@
       "reply": "답변",
       "department": "부서",
       "project": "프로젝트",
-      "unassigned": "미분류"
+      "unassigned": "미분류",
+      "selectAssignees": "담당자 선택",
+      "noAssignee": "담당자 없음",
+      "searchMembers": "팀원 검색"
     },
     "calendar": {
       "title": "캘린더",
@@ -2124,7 +2129,9 @@
       "activeMembers": "활성 팀원",
       "name": "이름",
       "email": "이메일",
-      "position": "직책"
+      "position": "직책",
+      "linked": "계정 연동됨",
+      "notLinked": "미연동"
     },
     "settings": {
       "title": "설정",
@@ -2187,6 +2194,14 @@
       "board": "보드",
       "timeline": "타임라인",
       "calendar": "캘린더"
+    },
+    "notifications": {
+      "title": "알림",
+      "noNotifications": "알림이 없습니다",
+      "markAllRead": "모두 읽음",
+      "taskAssigned": "{{memberName}}님이 과제 \"{{taskTitle}}\"에 배정되었습니다",
+      "commentMention": "{{memberName}}님이 댓글에서 회원님을 멘션했습니다",
+      "statusChanged": "과제 \"{{taskTitle}}\"의 상태가 변경되었습니다"
     }
   },
   "sync": {

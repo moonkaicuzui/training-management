@@ -39,6 +39,7 @@ export interface ProjectMember {
   photoURL?: string;
   status: MemberStatus;
   phone?: string;
+  uid?: string; // Firebase Auth UID (연동된 경우)
 
   // 통계 정보 (계산된 값)
   stats?: MemberStats;
@@ -67,6 +68,7 @@ export interface CreateMemberInput {
   position: string;
   phone?: string;
   photoURL?: string;
+  uid?: string;
 }
 
 /** 팀원 수정 입력 */

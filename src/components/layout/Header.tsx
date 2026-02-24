@@ -17,6 +17,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CommandPalette } from '@/components/common/CommandPalette';
 import { NotificationCenter } from '@/components/common/NotificationCenter';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import type { Language } from '@/types';
 import type { UserRole } from '@/types/auth';
@@ -89,6 +90,9 @@ export function Header() {
         </Button>
 
         <div className="flex items-center gap-2">
+          {/* Project Notification Bell */}
+          <NotificationBell />
+
           {/* Notification Center */}
           <NotificationCenter />
 

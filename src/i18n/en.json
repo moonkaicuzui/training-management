@@ -2064,7 +2064,9 @@
       "upcomingDeadlines": "Upcoming Deadlines",
       "projectProgress": "Project Progress",
       "newProject": "New Project",
-      "newProjectDesc": "Create a new project"
+      "newProjectDesc": "Create a new project",
+      "myTasks": "My Tasks",
+      "noMyTasks": "No assigned tasks"
     },
     "tasks": {
       "title": "Task Management",
@@ -2088,7 +2090,10 @@
       "reply": "Reply",
       "department": "Department",
       "project": "Project",
-      "unassigned": "Unassigned"
+      "unassigned": "Unassigned",
+      "selectAssignees": "Select Assignees",
+      "noAssignee": "No assignee",
+      "searchMembers": "Search members"
     },
     "calendar": {
       "title": "Calendar",
@@ -2124,7 +2129,9 @@
       "activeMembers": "Active Members",
       "name": "Name",
       "email": "Email",
-      "position": "Position"
+      "position": "Position",
+      "linked": "Account linked",
+      "notLinked": "Not linked"
     },
     "settings": {
       "title": "Settings",
@@ -2187,6 +2194,14 @@
       "board": "Board",
       "timeline": "Timeline",
       "calendar": "Calendar"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "noNotifications": "No notifications",
+      "markAllRead": "Mark all read",
+      "taskAssigned": "{{memberName}} has been assigned to task \"{{taskTitle}}\"",
+      "commentMention": "{{memberName}} mentioned you in a comment",
+      "statusChanged": "Task \"{{taskTitle}}\" status has been changed"
     }
   },
   "sync": {

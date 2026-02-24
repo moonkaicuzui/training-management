@@ -22,6 +22,7 @@ import type {
   TaskStatus,
   TaskFilter,
   Automation,
+  ProjectNotification,
 } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import { useAuthStore } from '@/stores/authStore';
@@ -39,6 +40,13 @@ interface ProjectStore {
   categories: Category[];
   events: CalendarEvent[];
   automations: Automation[];
+
+  // Notification state
+  notifications: ProjectNotification[];
+  unreadNotificationCount: number;
+
+  // Member-Auth linking
+  currentUserMember: ProjectMember | null;
 
   // Current selections
   currentProjectId: string | null;
@@ -64,6 +72,7 @@ interface ProjectStore {
   unsubscribeFunctions: (() => void)[];
   tasksUnsubscribe: (() => void) | null;
   messagesUnsubscribe: (() => void) | null;
+  notificationsUnsubscribe: (() => void) | null;
 
   // Member Actions
   fetchMembers: () => Promise<void>;
@@ -117,6 +126,17 @@ interface ProjectStore {
   deleteAutomation: (automationId: string) => Promise<void>;
   toggleAutomation: (automationId: string) => Promise<void>;
 
+  // Notification Actions
+  fetchNotifications: () => Promise<void>;
+  subscribeNotificationsRealtime: () => void;
+  markNotificationRead: (notificationId: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
+  createNotification: (data: Omit<ProjectNotification, 'id' | 'createdAt'>) => Promise<void>;
+
+  // Member-Auth Linking Actions
+  linkCurrentUser: () => Promise<void>;
+  fetchMyTasks: () => Task[];
+
   // View Actions
   setCurrentView: (view: ViewType) => void;
   setFilters: (filters: TaskFilter[]) => void;
@@ -160,6 +180,13 @@ export const useProjectStore = create<ProjectStore>()(
         events: [],
         automations: [],
 
+        // Notifications
+        notifications: [],
+        unreadNotificationCount: 0,
+
+        // Member-Auth linking
+        currentUserMember: null,
+
         currentProjectId: null,
         currentTaskId: null,
         currentMemberId: null,
@@ -178,6 +205,7 @@ export const useProjectStore = create<ProjectStore>()(
         unsubscribeFunctions: [],
         tasksUnsubscribe: null,
         messagesUnsubscribe: null,
+        notificationsUnsubscribe: null,
 
         // ============================================================
         // Member Actions
@@ -786,6 +814,112 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         // ============================================================
+        // Notification Actions
+        // ============================================================
+
+        fetchNotifications: async () => {
+          try {
+            const userId = getCurrentUserId();
+            if (userId === 'unknown') return;
+            const notifications = await projectService.getNotificationsByUser(userId);
+            const unreadCount = notifications.filter((n) => !n.isRead).length;
+            set({ notifications, unreadNotificationCount: unreadCount });
+          } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+          }
+        },
+
+        subscribeNotificationsRealtime: () => {
+          const { notificationsUnsubscribe } = get();
+          if (notificationsUnsubscribe) notificationsUnsubscribe();
+
+          const userId = getCurrentUserId();
+          if (userId === 'unknown') return;
+
+          const unsubscribe = projectService.subscribeNotificationsRealtime(userId, (notifications) => {
+            const unreadCount = notifications.filter((n) => !n.isRead).length;
+            set({ notifications, unreadNotificationCount: unreadCount });
+          });
+          set({ notificationsUnsubscribe: unsubscribe });
+        },
+
+        markNotificationRead: async (notificationId: string) => {
+          try {
+            await projectService.markNotificationAsRead(notificationId);
+            set((state) => {
+              const updated = state.notifications.map((n) =>
+                n.id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n
+              );
+              return {
+                notifications: updated,
+                unreadNotificationCount: updated.filter((n) => !n.isRead).length,
+              };
+            });
+          } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+          }
+        },
+
+        markAllNotificationsRead: async () => {
+          try {
+            const userId = getCurrentUserId();
+            await projectService.markAllNotificationsAsRead(userId);
+            set((state) => ({
+              notifications: state.notifications.map((n) => ({ ...n, isRead: true, readAt: new Date() })),
+              unreadNotificationCount: 0,
+            }));
+          } catch (error) {
+            console.error('Failed to mark all notifications as read:', error);
+          }
+        },
+
+        createNotification: async (data) => {
+          try {
+            await projectService.createNotification(data);
+          } catch (error) {
+            console.error('Failed to create notification:', error);
+          }
+        },
+
+        // ============================================================
+        // Member-Auth Linking Actions
+        // ============================================================
+
+        linkCurrentUser: async () => {
+          try {
+            const user = useAuthStore.getState().user;
+            if (!user?.email) return;
+
+            // 먼저 uid로 검색
+            let member = await projectService.getMemberByUid(user.id);
+            if (member) {
+              set({ currentUserMember: member });
+              return;
+            }
+
+            // 이메일로 검색 후 uid 연결
+            member = await projectService.getMemberByEmail(user.email);
+            if (member) {
+              await projectService.linkMemberToAuth(member.id, user.id);
+              set({
+                currentUserMember: { ...member, uid: user.id },
+                members: get().members.map((m) =>
+                  m.id === member!.id ? { ...m, uid: user.id } : m
+                ),
+              });
+            }
+          } catch (error) {
+            console.error('Failed to link current user:', error);
+          }
+        },
+
+        fetchMyTasks: () => {
+          const { currentUserMember, tasks } = get();
+          if (!currentUserMember) return [];
+          return tasks.filter((t) => t.assignees.includes(currentUserMember.id));
+        },
+
+        // ============================================================
         // View Actions
         // ============================================================
 
@@ -849,18 +983,23 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         cleanup: () => {
-          const { unsubscribeFunctions, tasksUnsubscribe, messagesUnsubscribe } = get();
+          const { unsubscribeFunctions, tasksUnsubscribe, messagesUnsubscribe, notificationsUnsubscribe } = get();
           unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
           if (tasksUnsubscribe) tasksUnsubscribe();
           if (messagesUnsubscribe) messagesUnsubscribe();
+          if (notificationsUnsubscribe) notificationsUnsubscribe();
           set({
             unsubscribeFunctions: [],
             tasksUnsubscribe: null,
             messagesUnsubscribe: null,
+            notificationsUnsubscribe: null,
             currentProjectId: null,
             currentTaskId: null,
             tasks: [],
             messages: [],
+            notifications: [],
+            unreadNotificationCount: 0,
+            currentUserMember: null,
           });
         },
 

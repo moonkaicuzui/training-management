@@ -350,12 +350,23 @@ export default function ProjectsMembers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={member.status === 'active' ? 'default' : 'secondary'}
-                          className={member.status === 'active' ? 'bg-green-100 text-green-800' : ''}
-                        >
-                          {STATUS_LABELS[member.status]}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge
+                            variant={member.status === 'active' ? 'default' : 'secondary'}
+                            className={member.status === 'active' ? 'bg-green-100 text-green-800' : ''}
+                          >
+                            {STATUS_LABELS[member.status]}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={member.uid
+                              ? 'border-green-300 text-green-700 text-[10px]'
+                              : 'border-gray-300 text-gray-500 text-[10px]'
+                            }
+                          >
+                            {member.uid ? t('projects.members.linked') : t('projects.members.notLinked')}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

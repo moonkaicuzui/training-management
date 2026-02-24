@@ -58,12 +58,16 @@ export default function ProjectsDashboard() {
     error,
     fetchMembers,
     fetchProjects,
+    fetchAllTasks,
     createProject,
     isMembersLoading,
     isProjectsLoading,
     isLoading: isStoreLoading,
     subscribeMembersRealtime,
     subscribeProjectsRealtime,
+    linkCurrentUser,
+    currentUserMember,
+    fetchMyTasks,
   } = useProjectStore();
 
   // Use ref to prevent double initialization (anti-pattern fix)
@@ -91,15 +95,16 @@ export default function ProjectsDashboard() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchMembers();
+      fetchMembers().then(() => linkCurrentUser());
       fetchProjects();
+      fetchAllTasks();
       subscribeMembersRealtime();
       subscribeProjectsRealtime();
     }
     return () => {
       cleanup();
     };
-  }, [fetchMembers, fetchProjects, subscribeMembersRealtime, subscribeProjectsRealtime, cleanup]);
+  }, [fetchMembers, fetchProjects, fetchAllTasks, subscribeMembersRealtime, subscribeProjectsRealtime, linkCurrentUser, cleanup]);
 
   // 통계 계산
   const activeMembers = members.filter((m) => m.status === 'active');
@@ -329,6 +334,76 @@ export default function ProjectsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 내 과제 */}
+      {currentUserMember && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              {t('projects.dashboard.myTasks')}
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/projects/tasks')}>
+              {t('common.viewAll')} <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const myTasks = fetchMyTasks();
+              if (myTasks.length === 0) {
+                return (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
+                    <p className="text-sm">{t('projects.dashboard.noMyTasks')}</p>
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                  {myTasks.filter((t) => t.status !== 'done').slice(0, 8).map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => navigate('/projects/tasks')}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{task.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px]"
+                            style={{
+                              borderColor: TASK_STATUS_COLORS[task.status],
+                              color: TASK_STATUS_COLORS[task.status],
+                            }}
+                          >
+                            {STATUS_LABELS[task.status]}
+                          </Badge>
+                          {task.dueDate && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {(task.dueDate instanceof Date
+                                ? task.dueDate
+                                : (task.dueDate as { toDate: () => Date }).toDate()
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        className="text-[10px]"
+                        style={{ backgroundColor: TASK_PRIORITY_COLORS[task.priority] }}
+                      >
+                        {task.priority}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 퀵 액션 */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">

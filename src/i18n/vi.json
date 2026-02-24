@@ -2064,7 +2064,9 @@
       "upcomingDeadlines": "Hạn chót sắp tới",
       "projectProgress": "Tiến độ dự án",
       "newProject": "Dự án mới",
-      "newProjectDesc": "Tạo dự án mới"
+      "newProjectDesc": "Tạo dự án mới",
+      "myTasks": "Nhiệm vụ của tôi",
+      "noMyTasks": "Không có nhiệm vụ"
     },
     "tasks": {
       "title": "Quản lý nhiệm vụ",
@@ -2088,7 +2090,10 @@
       "reply": "Trả lời",
       "department": "Phòng ban",
       "project": "Dự án",
-      "unassigned": "Chưa phân loại"
+      "unassigned": "Chưa phân loại",
+      "selectAssignees": "Chọn người phụ trách",
+      "noAssignee": "Không có người phụ trách",
+      "searchMembers": "Tìm kiếm thành viên"
     },
     "calendar": {
       "title": "Lịch",
@@ -2124,7 +2129,9 @@
       "activeMembers": "Thành viên hoạt động",
       "name": "Tên",
       "email": "Email",
-      "position": "Chức vụ"
+      "position": "Chức vụ",
+      "linked": "Đã liên kết",
+      "notLinked": "Chưa liên kết"
     },
     "settings": {
       "title": "Cài đặt",
@@ -2187,6 +2194,14 @@
       "board": "Bảng",
       "timeline": "Dòng thời gian",
       "calendar": "Lịch"
+    },
+    "notifications": {
+      "title": "Thông báo",
+      "noNotifications": "Không có thông báo",
+      "markAllRead": "Đánh dấu tất cả đã đọc",
+      "taskAssigned": "{{memberName}} đã được phân công nhiệm vụ \"{{taskTitle}}\"",
+      "commentMention": "{{memberName}} đã nhắc đến bạn trong bình luận",
+      "statusChanged": "Trạng thái nhiệm vụ \"{{taskTitle}}\" đã thay đổi"
     }
   },
   "sync": {
