@@ -106,11 +106,11 @@ export default function ProjectsSettings() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchCategories();
-      // 현재 프로젝트가 있으면 자동화 규칙 로드
+      const fetches: Promise<void>[] = [fetchCategories()];
       if (currentProjectId) {
-        fetchAutomationsByProject(currentProjectId);
+        fetches.push(fetchAutomationsByProject(currentProjectId));
       }
+      Promise.all(fetches);
     }
   }, [fetchCategories, fetchAutomationsByProject, currentProjectId]);
 

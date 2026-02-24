@@ -32,8 +32,7 @@ export default function InspectionDashboard() {
   } = useInspectionStore();
 
   useEffect(() => {
-    fetchResults();
-    fetchEnrollments();
+    Promise.all([fetchResults(), fetchEnrollments()]);
   }, [fetchResults, fetchEnrollments]);
 
   const totalInspections = results.length;

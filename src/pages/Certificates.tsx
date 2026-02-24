@@ -294,8 +294,7 @@ export default function CertificatesPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
-    loadIssuedCertificates();
+    Promise.all([loadData(), loadIssuedCertificates()]);
   }, [loadData, loadIssuedCertificates]);
 
   // Eligible results (already filtered to PASS only)

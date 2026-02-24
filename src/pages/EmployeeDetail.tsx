@@ -39,8 +39,10 @@ export default function EmployeeDetail() {
 
   // 데이터 로드 함수 메모이제이션
   const loadEmployeeData = useCallback((employeeId: string) => {
-    fetchEmployee(employeeId);
-    fetchEmployeeHistory(employeeId);
+    Promise.all([
+      fetchEmployee(employeeId),
+      fetchEmployeeHistory(employeeId),
+    ]);
   }, [fetchEmployee, fetchEmployeeHistory]);
 
   // 이전 ID 추적으로 불필요한 재로드 방지

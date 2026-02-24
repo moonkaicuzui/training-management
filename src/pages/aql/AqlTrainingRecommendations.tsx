@@ -73,8 +73,7 @@ export default function AqlTrainingRecommendations() {
 
   // Load months and config on mount
   useEffect(() => {
-    fetchMonths();
-    fetchConfig();
+    Promise.all([fetchMonths(), fetchConfig()]);
   }, [fetchMonths, fetchConfig]);
 
   // Auto-fetch data when month selected

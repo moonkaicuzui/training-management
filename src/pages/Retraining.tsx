@@ -44,8 +44,10 @@ export default function Retraining() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchRetrainingTargets();
-    fetchExpiringTrainings(30);
+    Promise.all([
+      fetchRetrainingTargets(),
+      fetchExpiringTrainings(30),
+    ]);
   }, []);
 
   // Filter retraining targets

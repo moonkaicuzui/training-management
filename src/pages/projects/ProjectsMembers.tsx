@@ -115,8 +115,10 @@ export default function ProjectsMembers() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchMembers();
-      subscribeMembersRealtime();
+      Promise.all([
+        fetchMembers(),
+        subscribeMembersRealtime(),
+      ]);
     }
     return () => {
       cleanup();

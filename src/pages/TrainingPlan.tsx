@@ -520,11 +520,13 @@ export default function TrainingPlanPage() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    loadData();
-    fetchRetrainingTargets();
-    fetchExpiringTrainings(30);
-    fetchDashboardStats();
-    fetchPrograms();
+    Promise.all([
+      loadData(),
+      fetchRetrainingTargets(),
+      fetchExpiringTrainings(30),
+      fetchDashboardStats(),
+      fetchPrograms(),
+    ]);
   }, [loadData, fetchRetrainingTargets, fetchExpiringTrainings, fetchDashboardStats, fetchPrograms]);
 
   // 품질 지표 계산

@@ -167,9 +167,11 @@ export default function ProjectsCalendar() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchCategories();
-      fetchAllTasks();
-      fetchSessions();
+      Promise.all([
+        fetchCategories(),
+        fetchAllTasks(),
+        fetchSessions(),
+      ]);
     }
   }, [fetchCategories, fetchAllTasks, fetchSessions]);
 

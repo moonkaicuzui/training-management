@@ -33,8 +33,10 @@ export default function InspectionHistory() {
 
   useEffect(() => {
     if (searchTerm) {
-      fetchResultsByEmployee(searchTerm);
-      checkStrikes(searchTerm);
+      Promise.all([
+        fetchResultsByEmployee(searchTerm),
+        checkStrikes(searchTerm),
+      ]);
     } else {
       fetchResults();
     }

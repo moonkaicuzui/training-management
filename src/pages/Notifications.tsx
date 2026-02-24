@@ -139,8 +139,7 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
-    loadSettings();
+    Promise.all([loadData(), loadSettings()]);
   }, [loadData, loadSettings]);
 
   // 필터링된 알림
