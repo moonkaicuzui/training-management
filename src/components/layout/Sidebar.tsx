@@ -315,14 +315,20 @@ export function Sidebar() {
                     key={section.titleKey}
                     open={isOpen}
                     onOpenChange={() => toggleSection(section.titleKey)}
+                    className={cn(
+                      'transition-colors duration-200',
+                      isOpen && 'bg-blue-50 dark:bg-blue-950/30'
+                    )}
                   >
                     <CollapsibleTrigger asChild>
                       <button
                         className={cn(
                           'flex w-full items-center justify-between px-5 py-1.5 text-xs font-semibold tracking-tight transition-colors',
-                          isOpen || hasActiveItem
-                            ? 'text-primary'
-                            : 'text-muted-foreground hover:text-foreground'
+                          isOpen
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : hasActiveItem
+                              ? 'text-primary'
+                              : 'text-muted-foreground hover:text-foreground'
                         )}
                       >
                         <span className="truncate">{t(section.titleKey)}</span>
@@ -336,7 +342,7 @@ export function Sidebar() {
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <nav className="space-y-0.5 px-3 pb-1">
+                      <nav className="space-y-0.5 px-3 pb-1 border-l-2 border-blue-400 dark:border-blue-500 ml-4 mr-1">
                         {section.items.map((item) => (
                           <NavLink
                             key={item.href}
@@ -346,8 +352,8 @@ export function Sidebar() {
                               cn(
                                 'flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                                 isActive || (item.href === '/' && location.pathname === '/')
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'text-primary/70 hover:bg-primary/10 hover:text-primary'
+                                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                                  : 'text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300'
                               )
                             }
                           >
