@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
@@ -33,11 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
-import { CATEGORY_COLORS } from '@/types/project';
-import type { CalendarEvent } from '@/types/project';
+import { CATEGORY_COLORS, TASK_STATUS_COLORS } from '@/types/project';
+import type { CalendarEvent, Task } from '@/types/project';
 
 // date-fns localizer 설정
 const locales = { ko };
@@ -57,6 +58,8 @@ interface CalendarEventItem {
   end: Date;
   allDay?: boolean;
   resource?: CalendarEvent;
+  taskResource?: Task;
+  type: 'event' | 'task';
   color?: string;
 }
 
@@ -83,11 +86,14 @@ const defaultFormData: EventFormData = {
 
 export default function ProjectsCalendar() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     events,
+    tasks,
     categories,
     error,
     fetchEvents,
+    fetchAllTasks,
     fetchCategories,
     createEvent,
     updateEvent,
@@ -108,8 +114,9 @@ export default function ProjectsCalendar() {
     if (!initializedRef.current) {
       initializedRef.current = true;
       fetchCategories();
+      fetchAllTasks();
     }
-  }, [fetchCategories]);
+  }, [fetchCategories, fetchAllTasks]);
 
   // 날짜 범위 변경 시 이벤트 로드
   useEffect(() => {
@@ -128,9 +135,9 @@ export default function ProjectsCalendar() {
     return new Date(value);
   };
 
-  // 이벤트를 캘린더 형식으로 변환
+  // 이벤트 + 과제를 캘린더 형식으로 변환
   const calendarEvents: CalendarEventItem[] = useMemo(() => {
-    return events.map((event) => {
+    const eventItems: CalendarEventItem[] = events.map((event) => {
       const category = categories.find((c) => c.id === event.categoryId);
       return {
         id: event.id,
@@ -139,13 +146,47 @@ export default function ProjectsCalendar() {
         end: toDate(event.endDate),
         allDay: event.allDay,
         resource: event,
+        type: 'event' as const,
         color: category?.color || CATEGORY_COLORS[0],
       };
     });
-  }, [events, categories]);
+
+    const taskItems: CalendarEventItem[] = tasks
+      .filter((task) => task.startDate || task.dueDate)
+      .map((task) => {
+        const prefix = task.status === 'done' ? '✓ ' : '◆ ';
+        const start = task.startDate ? toDate(task.startDate) : toDate(task.dueDate!);
+        const end = task.dueDate ? toDate(task.dueDate) : start;
+        return {
+          id: `task-${task.id}`,
+          title: `${prefix}${task.title}`,
+          start,
+          end,
+          allDay: true,
+          taskResource: task,
+          type: 'task' as const,
+          color: TASK_STATUS_COLORS[task.status],
+        };
+      });
+
+    return [...eventItems, ...taskItems];
+  }, [events, tasks, categories]);
 
   // 이벤트 스타일 커스텀
   const eventStyleGetter = useCallback((event: CalendarEventItem) => {
+    if (event.type === 'task') {
+      return {
+        style: {
+          backgroundColor: 'transparent',
+          borderRadius: '4px',
+          opacity: 0.9,
+          color: event.color || '#6B7280',
+          border: `2px solid ${event.color || '#6B7280'}`,
+          display: 'block',
+          fontSize: '0.8em',
+        },
+      };
+    }
     return {
       style: {
         backgroundColor: event.color || '#3b82f6',
@@ -170,8 +211,12 @@ export default function ProjectsCalendar() {
     setIsDialogOpen(true);
   }, []);
 
-  // 기존 이벤트 클릭
+  // 기존 이벤트 또는 과제 클릭
   const handleSelectEvent = useCallback((event: CalendarEventItem) => {
+    if (event.type === 'task') {
+      navigate('/projects/tasks');
+      return;
+    }
     if (event.resource) {
       setSelectedEvent(event.resource);
       setFormData({
@@ -185,7 +230,7 @@ export default function ProjectsCalendar() {
       });
       setIsDialogOpen(true);
     }
-  }, []);
+  }, [navigate]);
 
   // 폼 제출
   const handleSubmit = async () => {
@@ -305,6 +350,32 @@ export default function ProjectsCalendar() {
               {category.name}
             </Badge>
           ))}
+          {/* 과제 범례 구분선 */}
+          <div className="w-px h-5 bg-border self-center mx-1" />
+          <Badge variant="outline" className="gap-1 text-muted-foreground">
+            <CheckCircle2 className="h-3 w-3" />
+            과제
+          </Badge>
+          {(Object.entries(TASK_STATUS_COLORS) as [string, string][]).slice(0, 4).map(([status, color]) => {
+            const labels: Record<string, string> = {
+              todo: '할 일',
+              in_progress: '진행중',
+              delayed_start: '지연(시작)',
+              delayed_complete: '지연(완료)',
+            };
+            return (
+              <Badge
+                key={status}
+                variant="outline"
+                style={{
+                  borderColor: color,
+                  color,
+                }}
+              >
+                ◆ {labels[status] || status}
+              </Badge>
+            );
+          })}
         </div>
       )}
 

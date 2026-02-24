@@ -28,6 +28,22 @@ import * as projectService from '@/services/projectService';
 import { useAuthStore } from '@/stores/authStore';
 
 // ============================================================
+// Cache Configuration
+// ============================================================
+
+const CACHE_TTL_MS = 30_000; // 30초
+const isCacheValid = (ts: number | null, len: number) =>
+  ts !== null && len > 0 && Date.now() - ts < CACHE_TTL_MS;
+
+// 캐시 타임스탬프 (스토어 외부 — persist 대상 아님)
+let _membersLastFetched: number | null = null;
+let _projectsLastFetched: number | null = null;
+let _tasksLastFetched: number | null = null;
+let _categoriesLastFetched: number | null = null;
+let _eventsLastFetched: number | null = null;
+let _eventsLastRange: { start: number; end: number } | null = null;
+
+// ============================================================
 // Store Types
 // ============================================================
 
@@ -212,9 +228,11 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         fetchMembers: async () => {
+          if (isCacheValid(_membersLastFetched, get().members.length)) return;
           set({ isMembersLoading: true, error: null });
           try {
             const members = await projectService.getMembers();
+            _membersLastFetched = Date.now();
             set({ members, isMembersLoading: false });
           } catch (error) {
             set({
@@ -294,9 +312,11 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         fetchProjects: async () => {
+          if (isCacheValid(_projectsLastFetched, get().projects.length)) return;
           set({ isProjectsLoading: true, error: null });
           try {
             const projects = await projectService.getProjects();
+            _projectsLastFetched = Date.now();
             set({ projects, isProjectsLoading: false });
           } catch (error) {
             set({
@@ -370,9 +390,11 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         fetchAllTasks: async () => {
+          if (isCacheValid(_tasksLastFetched, get().tasks.length)) return;
           set({ isTasksLoading: true, error: null });
           try {
             const tasks = await projectService.getAllTasks();
+            _tasksLastFetched = Date.now();
             set({ tasks, isTasksLoading: false });
           } catch (error) {
             set({
@@ -383,6 +405,7 @@ export const useProjectStore = create<ProjectStore>()(
         },
 
         fetchTasksByProject: async (projectId: string) => {
+          _tasksLastFetched = null; // 전체 과제 캐시 무효화
           set({ isTasksLoading: true, error: null });
           try {
             const tasks = await projectService.getTasksByProject(projectId);
@@ -586,9 +609,11 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         fetchCategories: async () => {
+          if (isCacheValid(_categoriesLastFetched, get().categories.length)) return;
           set({ isLoading: true, error: null });
           try {
             const categories = await projectService.getCategories();
+            _categoriesLastFetched = Date.now();
             set({ categories, isLoading: false });
           } catch (error) {
             set({
@@ -657,9 +682,19 @@ export const useProjectStore = create<ProjectStore>()(
         // ============================================================
 
         fetchEvents: async (startDate: Date, endDate: Date) => {
+          const rangeStart = startDate.getTime();
+          const rangeEnd = endDate.getTime();
+          if (
+            isCacheValid(_eventsLastFetched, get().events.length) &&
+            _eventsLastRange &&
+            _eventsLastRange.start === rangeStart &&
+            _eventsLastRange.end === rangeEnd
+          ) return;
           set({ isLoading: true, error: null });
           try {
             const events = await projectService.getEventsByDateRange(startDate, endDate);
+            _eventsLastFetched = Date.now();
+            _eventsLastRange = { start: rangeStart, end: rangeEnd };
             set({ events, isLoading: false });
           } catch (error) {
             set({
@@ -988,6 +1023,13 @@ export const useProjectStore = create<ProjectStore>()(
           if (tasksUnsubscribe) tasksUnsubscribe();
           if (messagesUnsubscribe) messagesUnsubscribe();
           if (notificationsUnsubscribe) notificationsUnsubscribe();
+          // 캐시 타임스탬프 리셋
+          _membersLastFetched = null;
+          _projectsLastFetched = null;
+          _tasksLastFetched = null;
+          _categoriesLastFetched = null;
+          _eventsLastFetched = null;
+          _eventsLastRange = null;
           set({
             unsubscribeFunctions: [],
             tasksUnsubscribe: null,
