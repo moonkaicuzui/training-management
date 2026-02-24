@@ -34,11 +34,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, GraduationCap } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useTrainingStore } from '@/stores/trainingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CATEGORY_COLORS, TASK_STATUS_COLORS } from '@/types/project';
 import type { CalendarEvent, Task } from '@/types/project';
+import type { TrainingSession } from '@/types';
 
 // date-fns localizer 설정
 const locales = { ko };
@@ -59,9 +61,17 @@ interface CalendarEventItem {
   allDay?: boolean;
   resource?: CalendarEvent;
   taskResource?: Task;
-  type: 'event' | 'task';
+  sessionResource?: TrainingSession;
+  type: 'event' | 'task' | 'session';
   color?: string;
 }
+
+// 교육 세션 상태별 색상
+const SESSION_STATUS_COLORS: Record<string, string> = {
+  PLANNED: '#F59E0B',    // Amber
+  COMPLETED: '#10B981',  // Green
+  CANCELLED: '#6B7280',  // Gray
+};
 
 // 새 이벤트 폼 타입
 interface EventFormData {
@@ -100,6 +110,7 @@ export default function ProjectsCalendar() {
     deleteEvent,
     isLoading,
   } = useProjectStore();
+  const { sessions, fetchSessions } = useTrainingStore();
   const { user } = useAuthStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -115,8 +126,9 @@ export default function ProjectsCalendar() {
       initializedRef.current = true;
       fetchCategories();
       fetchAllTasks();
+      fetchSessions();
     }
-  }, [fetchCategories, fetchAllTasks]);
+  }, [fetchCategories, fetchAllTasks, fetchSessions]);
 
   // 날짜 범위 변경 시 이벤트 로드
   useEffect(() => {
@@ -169,8 +181,26 @@ export default function ProjectsCalendar() {
         };
       });
 
-    return [...eventItems, ...taskItems];
-  }, [events, tasks, categories]);
+    // 교육 세션을 캘린더 아이템으로 변환
+    const sessionItems: CalendarEventItem[] = sessions
+      .filter((s) => s.session_date && s.status !== 'CANCELLED')
+      .map((session) => {
+        const sessionDate = new Date(session.session_date);
+        const statusIcon = session.status === 'COMPLETED' ? '✅ ' : '📚 ';
+        return {
+          id: `session-${session.session_id}`,
+          title: `${statusIcon}${session.trainer_name || '교육'} - ${session.location || ''}`.trim(),
+          start: sessionDate,
+          end: sessionDate,
+          allDay: true,
+          sessionResource: session,
+          type: 'session' as const,
+          color: SESSION_STATUS_COLORS[session.status] || '#F59E0B',
+        };
+      });
+
+    return [...eventItems, ...taskItems, ...sessionItems];
+  }, [events, tasks, sessions, categories]);
 
   // 이벤트 스타일 커스텀
   const eventStyleGetter = useCallback((event: CalendarEventItem) => {
@@ -182,6 +212,19 @@ export default function ProjectsCalendar() {
           opacity: 0.9,
           color: event.color || '#6B7280',
           border: `2px solid ${event.color || '#6B7280'}`,
+          display: 'block',
+          fontSize: '0.8em',
+        },
+      };
+    }
+    if (event.type === 'session') {
+      return {
+        style: {
+          backgroundColor: event.color || '#F59E0B',
+          borderRadius: '4px',
+          opacity: 0.85,
+          color: 'white',
+          border: 'none',
           display: 'block',
           fontSize: '0.8em',
         },
@@ -215,6 +258,10 @@ export default function ProjectsCalendar() {
   const handleSelectEvent = useCallback((event: CalendarEventItem) => {
     if (event.type === 'task') {
       navigate('/projects/tasks');
+      return;
+    }
+    if (event.type === 'session') {
+      navigate('/schedule');
       return;
     }
     if (event.resource) {
@@ -331,53 +378,64 @@ export default function ProjectsCalendar() {
         </Card>
       )}
 
-      {/* 카테고리 범례 */}
-      {eventCategories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {eventCategories.map((category) => (
+      {/* 범례 */}
+      <div className="flex flex-wrap gap-2">
+        {/* 일정 카테고리 */}
+        {eventCategories.map((category) => (
+          <Badge
+            key={category.id}
+            variant="outline"
+            style={{
+              borderColor: category.color,
+              backgroundColor: category.color + '20',
+            }}
+          >
+            <div
+              className="w-2 h-2 rounded-full mr-1"
+              style={{ backgroundColor: category.color }}
+            />
+            {category.name}
+          </Badge>
+        ))}
+
+        {/* 교육 세션 범례 */}
+        <div className="w-px h-5 bg-border self-center mx-1" />
+        <Badge variant="outline" className="gap-1" style={{ borderColor: '#F59E0B', color: '#F59E0B' }}>
+          <GraduationCap className="h-3 w-3" />
+          교육(예정)
+        </Badge>
+        <Badge variant="outline" className="gap-1" style={{ borderColor: '#10B981', color: '#10B981' }}>
+          <GraduationCap className="h-3 w-3" />
+          교육(완료)
+        </Badge>
+
+        {/* 과제 범례 */}
+        <div className="w-px h-5 bg-border self-center mx-1" />
+        <Badge variant="outline" className="gap-1 text-muted-foreground">
+          <CheckCircle2 className="h-3 w-3" />
+          과제
+        </Badge>
+        {(Object.entries(TASK_STATUS_COLORS) as [string, string][]).slice(0, 4).map(([status, color]) => {
+          const labels: Record<string, string> = {
+            todo: '할 일',
+            in_progress: '진행중',
+            delayed_start: '지연(시작)',
+            delayed_complete: '지연(완료)',
+          };
+          return (
             <Badge
-              key={category.id}
+              key={status}
               variant="outline"
               style={{
-                borderColor: category.color,
-                backgroundColor: category.color + '20',
+                borderColor: color,
+                color,
               }}
             >
-              <div
-                className="w-2 h-2 rounded-full mr-1"
-                style={{ backgroundColor: category.color }}
-              />
-              {category.name}
+              ◆ {labels[status] || status}
             </Badge>
-          ))}
-          {/* 과제 범례 구분선 */}
-          <div className="w-px h-5 bg-border self-center mx-1" />
-          <Badge variant="outline" className="gap-1 text-muted-foreground">
-            <CheckCircle2 className="h-3 w-3" />
-            과제
-          </Badge>
-          {(Object.entries(TASK_STATUS_COLORS) as [string, string][]).slice(0, 4).map(([status, color]) => {
-            const labels: Record<string, string> = {
-              todo: '할 일',
-              in_progress: '진행중',
-              delayed_start: '지연(시작)',
-              delayed_complete: '지연(완료)',
-            };
-            return (
-              <Badge
-                key={status}
-                variant="outline"
-                style={{
-                  borderColor: color,
-                  color,
-                }}
-              >
-                ◆ {labels[status] || status}
-              </Badge>
-            );
-          })}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {/* 캘린더 */}
       <Card>
