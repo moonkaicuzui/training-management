@@ -285,7 +285,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "taskId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },
     {
