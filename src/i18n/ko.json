@@ -2072,7 +2072,14 @@
       "projectListDesc": "전체 프로젝트 현황을 확인하세요",
       "noProjects": "등록된 프로젝트가 없습니다",
       "createdAt": "생성일",
-      "memberCount": "팀원"
+      "memberCount": "팀원",
+      "completionDetail": "완료 현황 상세",
+      "completionDetailDesc": "프로젝트별 과제 완료 현황을 확인하세요",
+      "overallProgress": "전체 진행률",
+      "delayedDetail": "지연 과제 상세",
+      "delayedDetailDesc": "프로젝트별 지연 과제를 확인하세요",
+      "noDelayedTasks": "지연된 과제가 없습니다",
+      "daysOverdue": "{{n}}일 초과"
     },
     "tasks": {
       "title": "과제 관리",

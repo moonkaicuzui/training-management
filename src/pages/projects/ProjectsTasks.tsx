@@ -759,8 +759,8 @@ export default function ProjectsTasks() {
                         {t('projects.calendar.today')}
                       </Button>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      {(['todo', 'in_progress', 'done'] as TaskStatus[]).map((status) => (
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      {(['todo', 'in_progress', 'delayed_start', 'delayed_complete', 'review', 'done'] as TaskStatus[]).map((status) => (
                         <div key={status} className="flex items-center gap-1">
                           <div
                             className="w-3 h-3 rounded"
@@ -850,6 +850,7 @@ export default function ProjectsTasks() {
                                       backgroundColor: TASK_STATUS_COLORS[task.status],
                                     }}
                                     title={`${task.title}\n시작: ${toDate(task.startDate)?.toLocaleDateString() || '-'}\n마감: ${toDate(task.dueDate)?.toLocaleDateString() || '-'}`}
+                                    onClick={() => handleTaskClick(task)}
                                   >
                                     <span className="text-xs text-white truncate">
                                       {task.title}

@@ -2072,7 +2072,14 @@
       "projectListDesc": "View all project status",
       "noProjects": "No projects registered",
       "createdAt": "Created",
-      "memberCount": "Members"
+      "memberCount": "Members",
+      "completionDetail": "Completion Details",
+      "completionDetailDesc": "View task completion status by project",
+      "overallProgress": "Overall Progress",
+      "delayedDetail": "Delayed Tasks Details",
+      "delayedDetailDesc": "View delayed tasks by project",
+      "noDelayedTasks": "No delayed tasks",
+      "daysOverdue": "{{n}} days overdue"
     },
     "tasks": {
       "title": "Task Management",

@@ -2072,7 +2072,14 @@
       "projectListDesc": "Xem tình trạng tất cả dự án",
       "noProjects": "Không có dự án",
       "createdAt": "Ngày tạo",
-      "memberCount": "Thành viên"
+      "memberCount": "Thành viên",
+      "completionDetail": "Chi tiết hoàn thành",
+      "completionDetailDesc": "Xem tình trạng hoàn thành nhiệm vụ theo dự án",
+      "overallProgress": "Tiến độ tổng thể",
+      "delayedDetail": "Chi tiết nhiệm vụ trễ hạn",
+      "delayedDetailDesc": "Xem nhiệm vụ trễ hạn theo dự án",
+      "noDelayedTasks": "Không có nhiệm vụ trễ hạn",
+      "daysOverdue": "Trễ {{n}} ngày"
     },
     "tasks": {
       "title": "Quản lý nhiệm vụ",

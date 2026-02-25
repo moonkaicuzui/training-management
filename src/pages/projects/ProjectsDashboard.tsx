@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
-import type { TaskStatus, Project } from '@/types/project';
+import type { TaskStatus, Task, Project } from '@/types/project';
 
 export default function ProjectsDashboard() {
   const { t } = useTranslation();
@@ -81,6 +81,10 @@ export default function ProjectsDashboard() {
   const [newProjectDescription, setNewProjectDescription] = useState('');
   // 프로젝트 목록 모달 상태
   const [isProjectListOpen, setIsProjectListOpen] = useState(false);
+  // 완료 현황 모달 상태
+  const [isCompletionDetailOpen, setIsCompletionDetailOpen] = useState(false);
+  // 지연 과제 모달 상태
+  const [isDelayedDetailOpen, setIsDelayedDetailOpen] = useState(false);
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
@@ -221,7 +225,10 @@ export default function ProjectsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setIsCompletionDetailOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('projects.dashboard.completedTasks')}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -232,7 +239,10 @@ export default function ProjectsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setIsDelayedDetailOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('projects.dashboard.overdueTasks')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -486,6 +496,167 @@ export default function ProjectsDashboard() {
               {isStoreLoading ? t('common.saving') : t('common.add')}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 완료 현황 상세 모달 */}
+      <Dialog open={isCompletionDetailOpen} onOpenChange={setIsCompletionDetailOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              {t('projects.dashboard.completionDetail')}
+            </DialogTitle>
+            <DialogDescription>{t('projects.dashboard.completionDetailDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[60vh] space-y-6">
+            {/* 전체 진행률 */}
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">{t('projects.dashboard.overallProgress')}</span>
+                <span className="text-2xl font-bold">{completionRate}%</span>
+              </div>
+              <Progress value={completionRate} className="h-3" />
+              <p className="text-xs text-muted-foreground mt-2">
+                {taskStats.done}/{taskStats.total} {t('projects.dashboard.completedTasks')}
+              </p>
+            </div>
+
+            {/* 프로젝트별 리스트 */}
+            <div className="space-y-3">
+              {projects.map((project: Project) => {
+                const projectTasks = tasks.filter((t) => t.projectId === project.id);
+                const doneTasks = projectTasks.filter((t) => t.status === 'done').length;
+                const totalTasks = projectTasks.length;
+                const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+                return (
+                  <div key={project.id} className="flex items-center gap-4 p-3 border rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{project.name}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <Progress value={progress} className="h-2 flex-1" />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {doneTasks}/{totalTasks}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right w-14">
+                      <span className="text-lg font-bold">{progress}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 지연 과제 상세 모달 */}
+      <Dialog open={isDelayedDetailOpen} onOpenChange={setIsDelayedDetailOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              {t('projects.dashboard.delayedDetail')}
+            </DialogTitle>
+            <DialogDescription>{t('projects.dashboard.delayedDetailDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[60vh]">
+            {(() => {
+              const delayedTasks = tasks.filter(
+                (t) => t.status === 'delayed_start' || t.status === 'delayed_complete'
+              );
+
+              if (delayedTasks.length === 0) {
+                return (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-50" />
+                    <p>{t('projects.dashboard.noDelayedTasks')}</p>
+                  </div>
+                );
+              }
+
+              // 프로젝트별 그룹핑
+              const grouped = delayedTasks.reduce<Record<string, Task[]>>((acc, task) => {
+                const projectId = task.projectId || 'unassigned';
+                if (!acc[projectId]) acc[projectId] = [];
+                acc[projectId].push(task);
+                return acc;
+              }, {});
+
+              const now = new Date();
+
+              return (
+                <div className="space-y-4">
+                  {Object.entries(grouped).map(([projectId, groupTasks]) => {
+                    const project = projects.find((p) => p.id === projectId);
+                    return (
+                      <div key={projectId}>
+                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                          {project?.name || t('projects.tasks.unassigned')}
+                        </h4>
+                        <div className="space-y-2">
+                          {groupTasks.map((task) => {
+                            const dueDate = task.dueDate
+                              ? (task.dueDate instanceof Date ? task.dueDate : (task.dueDate as { toDate: () => Date }).toDate())
+                              : null;
+                            const daysOver = dueDate
+                              ? Math.max(0, Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
+                              : 0;
+                            const assigneeNames = task.assignees
+                              ?.map((aId) => members.find((m) => m.id === aId)?.name)
+                              .filter(Boolean)
+                              .join(', ');
+
+                            return (
+                              <div
+                                key={task.id}
+                                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{task.title}</p>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      style={{
+                                        borderColor: TASK_STATUS_COLORS[task.status],
+                                        color: TASK_STATUS_COLORS[task.status],
+                                      }}
+                                    >
+                                      {STATUS_LABELS[task.status]}
+                                    </Badge>
+                                    {dueDate && (
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {dueDate.toLocaleDateString()}
+                                      </span>
+                                    )}
+                                    {daysOver > 0 && (
+                                      <Badge variant="destructive" className="text-[10px]">
+                                        {t('projects.dashboard.daysOverdue', { n: daysOver })}
+                                      </Badge>
+                                    )}
+                                    {assigneeNames && (
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Users className="h-3 w-3" />
+                                        {assigneeNames}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         </DialogContent>
       </Dialog>
 
