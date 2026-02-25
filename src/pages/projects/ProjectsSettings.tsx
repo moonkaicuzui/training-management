@@ -41,6 +41,7 @@ import {
   Loader2,
   Save,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +53,7 @@ import { getProjectSettings, updateProjectSettings } from '@/services/api';
 
 export default function ProjectsSettings() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     categories,
     error,
@@ -69,6 +71,7 @@ export default function ProjectsSettings() {
     toggleAutomation,
     isAutomationsLoading,
     currentProjectId,
+    updateProject,
   } = useProjectStore();
 
   const { user } = useAuthStore();
@@ -102,6 +105,8 @@ export default function ProjectsSettings() {
   });
   const [isGeneralLoading, setIsGeneralLoading] = useState(false);
   const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -274,6 +279,29 @@ export default function ProjectsSettings() {
       // 에러는 스토어에서 처리
     }
   }, [currentProjectId, createAutomation]);
+
+  // 프로젝트 삭제 (아카이브)
+  const handleDeleteProject = async () => {
+    if (!currentProjectId) return;
+    setIsDeletingProject(true);
+    try {
+      await updateProject(currentProjectId, { status: 'archived' });
+      toast({
+        title: t('projects.settings.projectDeleted'),
+        description: t('projects.settings.projectDeletedDesc'),
+      });
+      setIsDeleteDialogOpen(false);
+      navigate('/projects/dashboard');
+    } catch {
+      toast({
+        title: t('common.error'),
+        description: t('common.error'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingProject(false);
+    }
+  };
 
   // 일반 설정 저장
   const handleSaveGeneral = async () => {
@@ -484,27 +512,27 @@ export default function ProjectsSettings() {
                 <>
                   {/* 프로젝트 이름 */}
                   <div className="space-y-2">
-                    <Label htmlFor="projectName">{t('projects.dashboard.projectName')}</Label>
+                    <Label htmlFor="projectName">{t('projects.settings.projectName')}</Label>
                     <Input
                       id="projectName"
                       value={generalSettings.projectName}
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, projectName: e.target.value })
                       }
-                      placeholder={t('projects.dashboard.projectName')}
+                      placeholder={t('projects.settings.projectName')}
                     />
                   </div>
 
                   {/* 프로젝트 설명 */}
                   <div className="space-y-2">
-                    <Label htmlFor="projectDescription">{t('common.description')}</Label>
+                    <Label htmlFor="projectDescription">{t('projects.settings.projectDescription')}</Label>
                     <Textarea
                       id="projectDescription"
                       value={generalSettings.projectDescription}
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, projectDescription: e.target.value })
                       }
-                      placeholder={t('common.description')}
+                      placeholder={t('projects.settings.projectDescription')}
                       rows={3}
                     />
                   </div>
@@ -525,10 +553,10 @@ export default function ProjectsSettings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="list">{t('common.list')}</SelectItem>
-                        <SelectItem value="board">{t('projects.tasks.board')}</SelectItem>
-                        <SelectItem value="timeline">{t('projects.tasks.timeline')}</SelectItem>
-                        <SelectItem value="calendar">{t('projects.calendar.title')}</SelectItem>
+                        <SelectItem value="list">{t('projects.views.list')}</SelectItem>
+                        <SelectItem value="board">{t('projects.views.board')}</SelectItem>
+                        <SelectItem value="timeline">{t('projects.views.timeline')}</SelectItem>
+                        <SelectItem value="calendar">{t('projects.views.calendar')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -599,6 +627,29 @@ export default function ProjectsSettings() {
                       {isSavingGeneral ? t('common.saving') : t('common.save')}
                     </Button>
                   </div>
+
+                  {/* 프로젝트 삭제 영역 */}
+                  {currentProjectId && (
+                    <div className="border-t pt-6 mt-6">
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                        <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5" />
+                          {t('projects.settings.dangerZone')}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {t('projects.settings.deleteProjectWarning')}
+                        </p>
+                        <Button
+                          variant="destructive"
+                          className="mt-4"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t('projects.settings.deleteProject')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </CardContent>
@@ -688,6 +739,38 @@ export default function ProjectsSettings() {
         onSave={handleSaveAutomation}
         isLoading={isLoading}
       />
+
+      {/* 프로젝트 삭제 확인 다이얼로그 */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              {t('projects.settings.deleteProject')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('projects.settings.deleteProjectConfirm')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProject}
+              disabled={isDeletingProject}
+            >
+              {isDeletingProject ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {t('common.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2067,7 +2067,12 @@
       "newProject": "New Project",
       "newProjectDesc": "Create a new project",
       "myTasks": "My Tasks",
-      "noMyTasks": "No assigned tasks"
+      "noMyTasks": "No assigned tasks",
+      "projectList": "Project List",
+      "projectListDesc": "View all project status",
+      "noProjects": "No projects registered",
+      "createdAt": "Created",
+      "memberCount": "Members"
     },
     "tasks": {
       "title": "Task Management",
@@ -2186,7 +2191,13 @@
       "notifyTaskOverdue": "Task Overdue",
       "notifyComments": "New Comments",
       "settingsSaved": "Settings saved",
-      "settingsSavedDesc": "Project settings have been updated."
+      "settingsSavedDesc": "Project settings have been updated.",
+      "dangerZone": "Danger Zone",
+      "deleteProject": "Delete Project",
+      "deleteProjectWarning": "Deleting this project will archive all related data. This action can be reversed.",
+      "deleteProjectConfirm": "Are you sure you want to delete this project? All tasks, team assignments, and settings will be archived.",
+      "projectDeleted": "Project deleted",
+      "projectDeletedDesc": "The project has been archived successfully."
     },
     "status": {
       "planned": "Planned",

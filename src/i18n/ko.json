@@ -2067,7 +2067,12 @@
       "newProject": "새 프로젝트",
       "newProjectDesc": "새로운 프로젝트를 생성합니다",
       "myTasks": "내 과제",
-      "noMyTasks": "배정된 과제가 없습니다"
+      "noMyTasks": "배정된 과제가 없습니다",
+      "projectList": "프로젝트 목록",
+      "projectListDesc": "전체 프로젝트 현황을 확인하세요",
+      "noProjects": "등록된 프로젝트가 없습니다",
+      "createdAt": "생성일",
+      "memberCount": "팀원"
     },
     "tasks": {
       "title": "과제 관리",
@@ -2186,7 +2191,13 @@
       "notifyTaskOverdue": "마감 초과 시",
       "notifyComments": "새 댓글",
       "settingsSaved": "설정이 저장되었습니다",
-      "settingsSavedDesc": "프로젝트 설정이 업데이트되었습니다."
+      "settingsSavedDesc": "프로젝트 설정이 업데이트되었습니다.",
+      "dangerZone": "위험 영역",
+      "deleteProject": "프로젝트 삭제",
+      "deleteProjectWarning": "프로젝트를 삭제하면 모든 관련 데이터가 아카이브됩니다. 이 작업은 되돌릴 수 있습니다.",
+      "deleteProjectConfirm": "정말로 이 프로젝트를 삭제하시겠습니까? 프로젝트와 관련된 모든 과제, 팀원 배정, 설정이 아카이브됩니다.",
+      "projectDeleted": "프로젝트가 삭제되었습니다",
+      "projectDeletedDesc": "프로젝트가 성공적으로 아카이브되었습니다."
     },
     "status": {
       "planned": "예정",

@@ -2067,7 +2067,12 @@
       "newProject": "Dự án mới",
       "newProjectDesc": "Tạo dự án mới",
       "myTasks": "Nhiệm vụ của tôi",
-      "noMyTasks": "Không có nhiệm vụ"
+      "noMyTasks": "Không có nhiệm vụ",
+      "projectList": "Danh sách dự án",
+      "projectListDesc": "Xem tình trạng tất cả dự án",
+      "noProjects": "Không có dự án",
+      "createdAt": "Ngày tạo",
+      "memberCount": "Thành viên"
     },
     "tasks": {
       "title": "Quản lý nhiệm vụ",
@@ -2186,7 +2191,13 @@
       "notifyTaskOverdue": "Khi quá hạn",
       "notifyComments": "Bình luận mới",
       "settingsSaved": "Đã lưu cài đặt",
-      "settingsSavedDesc": "Cài đặt dự án đã được cập nhật."
+      "settingsSavedDesc": "Cài đặt dự án đã được cập nhật.",
+      "dangerZone": "Khu vực nguy hiểm",
+      "deleteProject": "Xóa dự án",
+      "deleteProjectWarning": "Xóa dự án sẽ lưu trữ tất cả dữ liệu liên quan. Hành động này có thể hoàn tác.",
+      "deleteProjectConfirm": "Bạn có chắc muốn xóa dự án này? Tất cả nhiệm vụ, phân công và cài đặt sẽ được lưu trữ.",
+      "projectDeleted": "Đã xóa dự án",
+      "projectDeletedDesc": "Dự án đã được lưu trữ thành công."
     },
     "status": {
       "planned": "Dự kiến",

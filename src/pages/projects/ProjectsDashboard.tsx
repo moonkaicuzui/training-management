@@ -33,10 +33,11 @@ import {
   Calendar,
   TrendingUp,
   FolderPlus,
+  FolderOpen,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
-import type { TaskStatus } from '@/types/project';
+import type { TaskStatus, Project } from '@/types/project';
 
 export default function ProjectsDashboard() {
   const { t } = useTranslation();
@@ -68,6 +69,7 @@ export default function ProjectsDashboard() {
     linkCurrentUser,
     currentUserMember,
     fetchMyTasks,
+    selectProject,
   } = useProjectStore();
 
   // Use ref to prevent double initialization (anti-pattern fix)
@@ -77,6 +79,8 @@ export default function ProjectsDashboard() {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
+  // 프로젝트 목록 모달 상태
+  const [isProjectListOpen, setIsProjectListOpen] = useState(false);
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
@@ -203,7 +207,10 @@ export default function ProjectsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setIsProjectListOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('projects.title')}</CardTitle>
             <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
@@ -479,6 +486,103 @@ export default function ProjectsDashboard() {
               {isStoreLoading ? t('common.saving') : t('common.add')}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 프로젝트 목록 모달 */}
+      <Dialog open={isProjectListOpen} onOpenChange={setIsProjectListOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5" />
+              {t('projects.dashboard.projectList')}
+            </DialogTitle>
+            <DialogDescription>{t('projects.dashboard.projectListDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[60vh]">
+            {projects.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>{t('projects.dashboard.noProjects')}</p>
+                <Button
+                  className="mt-4"
+                  onClick={() => {
+                    setIsProjectListOpen(false);
+                    setIsCreateProjectOpen(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('projects.dashboard.newProject')}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {projects.map((project: Project) => {
+                  const projectTasks = tasks.filter((t) =>
+                    t.projectId === project.id
+                  );
+                  const doneTasks = projectTasks.filter((t) => t.status === 'done').length;
+                  const totalTasks = projectTasks.length;
+                  const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+                  return (
+                    <div
+                      key={project.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        selectProject(project.id);
+                        setIsProjectListOpen(false);
+                        navigate('/projects/tasks');
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium truncate">{project.name}</h3>
+                          <Badge
+                            variant={project.status === 'active' ? 'default' : 'secondary'}
+                          >
+                            {project.status === 'active'
+                              ? t('projects.status.inProgress')
+                              : project.status === 'completed'
+                                ? t('projects.status.completed')
+                                : t('common.inactive')}
+                          </Badge>
+                        </div>
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground mt-1 truncate">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {t('projects.dashboard.memberCount')}: {project.members?.length || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {doneTasks}/{totalTasks} {t('projects.dashboard.completedTasks')}
+                          </span>
+                          {project.createdAt && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {t('projects.dashboard.createdAt')}: {(project.createdAt instanceof Date
+                                ? project.createdAt
+                                : (project.createdAt as { toDate: () => Date }).toDate()
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="ml-4 w-16 text-right">
+                        <div className="text-lg font-bold">{progress}%</div>
+                        <Progress value={progress} className="h-1.5 mt-1" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
