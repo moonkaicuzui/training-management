@@ -84,6 +84,12 @@ const QualityBlog = lazy(() => import('./pages/QualityBlog'));
 // AI 경영진 보고서
 const ExecutiveReport = lazy(() => import('./pages/ExecutiveReport'));
 
+// Metal Detector Inspection (금속 탐지기 점검)
+const MDDashboard = lazy(() => import('./pages/metal-detector/MDDashboard'));
+const MDInputForm = lazy(() => import('./pages/metal-detector/MDInputForm'));
+const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
+const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -428,6 +434,30 @@ function App() {
                     <ExecutiveReport />
                   </Suspense>
                 } />
+
+                {/* Metal Detector Inspection (금속 탐지기 점검) */}
+                <Route path="equipment/metal-detector">
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MDDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="input" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MDInputForm />
+                    </Suspense>
+                  } />
+                  <Route path="history" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MDHistory />
+                    </Suspense>
+                  } />
+                  <Route path="report" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MDReport />
+                    </Suspense>
+                  } />
+                </Route>
 
                 {/* 테스트 페이지 */}
                 <Route path="test/pptx" element={

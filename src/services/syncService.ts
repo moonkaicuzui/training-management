@@ -174,6 +174,8 @@ export const SYNC_COLLECTIONS: SyncCollectionConfig[] = [
   { key: 'training_results', label: 'sync.collections.results', syncMode: 'append_only' },
   { key: 'program_change_logs', label: 'sync.collections.programLogs', syncMode: 'firestore_to_sheets' },
   { key: 'result_edit_logs', label: 'sync.collections.resultLogs', syncMode: 'firestore_to_sheets' },
+  { key: 'md_inspections', label: 'sync.collections.mdInspections', syncMode: 'bidirectional' },
+  { key: 'md_failures', label: 'sync.collections.mdFailures', syncMode: 'firestore_to_sheets' },
 ];
 
 /** Firestore collection name for sync logs */

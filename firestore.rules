@@ -447,5 +447,17 @@ service cloud.firestore {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow write: if false;  // Cloud Function (Admin SDK)만 쓰기 가능
     }
+
+    // ========== 금속 탐지기 점검 ==========
+    match /md_inspections/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+    }
+
+    // ========== 금속 탐지기 불합격 기록 ==========
+    match /md_failures/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+    }
   }
 }

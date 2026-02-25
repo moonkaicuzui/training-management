@@ -57,7 +57,7 @@ export default function Login() {
               <GraduationCap className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Q-TRAIN</CardTitle>
+          <CardTitle className="text-2xl font-bold">QIP Management System</CardTitle>
           <CardDescription>
             {t('auth.loginDescription')}
           </CardDescription>

@@ -109,6 +109,12 @@
       "enrollments": "Quản lý đăng ký",
       "history": "Lịch sử kiểm tra"
     },
+    "equipment": {
+      "mdDashboard": "Bảng điều khiển máy dò kim loại",
+      "mdInput": "Nhập kiểm tra",
+      "mdHistory": "Lịch sử kiểm tra",
+      "mdReport": "Báo cáo"
+    },
     "executiveReport": "Báo cáo lãnh đạo",
     "qualityBlog": "Blog chất lượng",
     "department": "Bảng điều khiển phòng ban",
@@ -133,6 +139,7 @@
     "projects": "Quản lý dự án",
     "inspection": "Đào tạo kiểm tra",
     "inspectionAqlFivePrs": "Đào tạo kiểm tra AQL/5PRS",
+    "equipmentCompliance": "Tuân thủ thiết bị",
     "qualityImprovement": "Cải tiến chất lượng",
     "analyticsReports": "Phân tích & Báo cáo",
     "systemAdmin": "Quản trị hệ thống",
@@ -143,7 +150,7 @@
   },
   "dashboard": {
     "title": "Tổng quan",
-    "welcome": "Chào mừng đến với Hệ thống Quản lý Đào tạo Q-TRAIN",
+    "welcome": "Chào mừng đến với Hệ thống Quản lý QIP",
     "totalEmployees": "Tổng nhân viên",
     "monthlyCompletions": "Hoàn thành tháng này",
     "completionRate": "Tỷ lệ hoàn thành",
@@ -2827,6 +2834,99 @@
       "notFound": "Không tìm thấy dữ liệu yêu cầu.",
       "network": "Lỗi mạng. Vui lòng kiểm tra kết nối internet.",
       "generic": "Đã xảy ra lỗi. Vui lòng thử lại sau."
+    }
+  },
+  "metalDetector": {
+    "title": "Kiểm tra máy dò kim loại",
+    "dashboard": {
+      "title": "Bảng điều khiển máy dò kim loại",
+      "description": "Tình trạng kiểm tra máy dò kim loại tất cả nhà máy",
+      "totalInspections": "Tổng số kiểm tra",
+      "passRate": "Tỷ lệ đạt",
+      "failCount": "Số không đạt",
+      "openCAs": "CA chưa hoàn thành",
+      "factoryChart": "Đạt/Không đạt theo nhà máy",
+      "weeklyTrend": "Xu hướng tỷ lệ đạt hàng tuần"
+    },
+    "input": {
+      "title": "Nhập kiểm tra máy dò kim loại",
+      "description": "Đăng ký kết quả kiểm tra máy dò kim loại hàng ngày",
+      "step1Title": "Nhà máy & Dây chuyền",
+      "step1Desc": "Chọn nhà máy và dây chuyền cần kiểm tra",
+      "step2Title": "Thông tin kiểm tra",
+      "step2Desc": "Nhập ngày kiểm tra, người kiểm tra và thông tin sản phẩm",
+      "step3Title": "Giá trị độ nhạy",
+      "step3Desc": "Nhập giá trị độ nhạy máy dò kim loại (mm)",
+      "step4Title": "Kết quả & Xác nhận",
+      "step4Desc": "Chọn kết quả kiểm tra và xác nhận",
+      "date": "Ngày kiểm tra",
+      "inspector": "Người kiểm tra",
+      "productName": "Tên sản phẩm",
+      "resultLabel": "Kết quả kiểm tra",
+      "remarks": "Ghi chú",
+      "failureDetails": "Chi tiết không đạt",
+      "failureType": "Loại lỗi",
+      "failureDesc": "Mô tả",
+      "summary": "Tóm tắt",
+      "success": "Đã đăng ký kiểm tra",
+      "successDesc": "Kết quả kiểm tra máy dò kim loại đã được đăng ký thành công.",
+      "addAnother": "Thêm mới",
+      "viewHistory": "Xem lịch sử"
+    },
+    "history": {
+      "title": "Lịch sử kiểm tra",
+      "description": "Xem lịch sử kiểm tra máy dò kim loại",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày",
+      "clearFilters": "Xóa bộ lọc",
+      "noData": "Không có lịch sử kiểm tra",
+      "detail": "Chi tiết kiểm tra"
+    },
+    "report": {
+      "title": "Báo cáo tuần",
+      "description": "Tạo báo cáo kiểm tra máy dò kim loại hàng tuần",
+      "selectWeek": "Chọn tuần",
+      "year": "Năm",
+      "week": "Tuần",
+      "generatePDF": "Tạo PDF",
+      "factoryBreakdown": "Chi tiết theo nhà máy",
+      "noDataForWeek": "Không có dữ liệu kiểm tra cho tuần đã chọn"
+    },
+    "factory": {
+      "label": "Nhà máy",
+      "A": "Nhà máy A",
+      "B": "Nhà máy B",
+      "C": "Nhà máy C",
+      "D": "Nhà máy D"
+    },
+    "line": "Dây chuyền",
+    "result": {
+      "pass": "Đạt",
+      "fail": "Không đạt"
+    },
+    "sensitivity": {
+      "fe": "Fe (Sắt)",
+      "sus": "SUS (Thép không gỉ)",
+      "nonFe": "Non-Fe (Kim loại màu)"
+    },
+    "failureTypes": {
+      "sensitivityDrift": "Sai lệch độ nhạy",
+      "equipmentMalfunction": "Hỏng thiết bị",
+      "calibrationError": "Lỗi hiệu chuẩn",
+      "foreignObject": "Phát hiện dị vật",
+      "other": "Khác"
+    },
+    "ca": {
+      "title": "Hành động khắc phục (CA)",
+      "status": {
+        "pending": "Chờ xử lý",
+        "in_progress": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "overdue": "Quá hạn"
+      },
+      "description": "Mô tả CA",
+      "updateStatus": "Cập nhật trạng thái",
+      "update": "Cập nhật"
     }
   }
 }

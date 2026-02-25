@@ -109,6 +109,12 @@
       "enrollments": "Enrollment Management",
       "history": "Inspection History"
     },
+    "equipment": {
+      "mdDashboard": "Metal Detector Dashboard",
+      "mdInput": "Inspection Input",
+      "mdHistory": "Inspection History",
+      "mdReport": "Report"
+    },
     "executiveReport": "Executive Report",
     "qualityBlog": "Quality Blog",
     "department": "Department Dashboard",
@@ -133,6 +139,7 @@
     "projects": "Project Management",
     "inspection": "Inspection Training",
     "inspectionAqlFivePrs": "Inspection Training AQL/5PRS",
+    "equipmentCompliance": "Equipment Compliance",
     "qualityImprovement": "Quality Improvement",
     "analyticsReports": "Analytics & Reports",
     "systemAdmin": "System Admin",
@@ -143,7 +150,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Welcome to Q-TRAIN Training Management System",
+    "welcome": "Welcome to QIP Management System",
     "totalEmployees": "Total Employees",
     "monthlyCompletions": "Monthly Completions",
     "completionRate": "Completion Rate",
@@ -2827,6 +2834,99 @@
       "notFound": "The requested data was not found.",
       "network": "Network error. Please check your internet connection.",
       "generic": "An error occurred. Please try again later."
+    }
+  },
+  "metalDetector": {
+    "title": "Metal Detector Inspection",
+    "dashboard": {
+      "title": "Metal Detector Dashboard",
+      "description": "Metal detector inspection status across all factories",
+      "totalInspections": "Total Inspections",
+      "passRate": "Pass Rate",
+      "failCount": "Fail Count",
+      "openCAs": "Open CAs",
+      "factoryChart": "Pass/Fail by Factory",
+      "weeklyTrend": "Weekly Pass Rate Trend"
+    },
+    "input": {
+      "title": "Metal Detector Inspection Input",
+      "description": "Register daily metal detector inspection results",
+      "step1Title": "Factory & Line",
+      "step1Desc": "Select the factory and line to inspect",
+      "step2Title": "Inspection Info",
+      "step2Desc": "Enter inspection date, inspector, and product info",
+      "step3Title": "Sensitivity Values",
+      "step3Desc": "Enter metal detector sensitivity values (mm)",
+      "step4Title": "Result & Confirmation",
+      "step4Desc": "Select the inspection result and confirm",
+      "date": "Inspection Date",
+      "inspector": "Inspector",
+      "productName": "Product Name",
+      "resultLabel": "Inspection Result",
+      "remarks": "Remarks",
+      "failureDetails": "Failure Details",
+      "failureType": "Failure Type",
+      "failureDesc": "Description",
+      "summary": "Summary",
+      "success": "Inspection Registered",
+      "successDesc": "Metal detector inspection result has been successfully registered.",
+      "addAnother": "Add Another",
+      "viewHistory": "View History"
+    },
+    "history": {
+      "title": "Inspection History",
+      "description": "View metal detector inspection history",
+      "dateFrom": "Date From",
+      "dateTo": "Date To",
+      "clearFilters": "Clear Filters",
+      "noData": "No inspection history found",
+      "detail": "Inspection Detail"
+    },
+    "report": {
+      "title": "Weekly Report",
+      "description": "Generate weekly metal detector inspection report",
+      "selectWeek": "Select Week",
+      "year": "Year",
+      "week": "Week",
+      "generatePDF": "Generate PDF",
+      "factoryBreakdown": "Factory Breakdown",
+      "noDataForWeek": "No inspection data for the selected week"
+    },
+    "factory": {
+      "label": "Factory",
+      "A": "Factory A",
+      "B": "Factory B",
+      "C": "Factory C",
+      "D": "Factory D"
+    },
+    "line": "Line",
+    "result": {
+      "pass": "Pass",
+      "fail": "Fail"
+    },
+    "sensitivity": {
+      "fe": "Fe (Iron)",
+      "sus": "SUS (Stainless)",
+      "nonFe": "Non-Fe (Non-ferrous)"
+    },
+    "failureTypes": {
+      "sensitivityDrift": "Sensitivity Drift",
+      "equipmentMalfunction": "Equipment Malfunction",
+      "calibrationError": "Calibration Error",
+      "foreignObject": "Foreign Object Detected",
+      "other": "Other"
+    },
+    "ca": {
+      "title": "Corrective Action (CA)",
+      "status": {
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "overdue": "Overdue"
+      },
+      "description": "CA Description",
+      "updateStatus": "Update Status",
+      "update": "Update"
     }
   }
 }

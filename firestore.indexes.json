@@ -384,6 +384,32 @@
         { "fieldPath": "employee_id", "order": "ASCENDING" }
       ]
     }
+    ,
+    {
+      "collectionGroup": "md_inspections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "factory", "order": "ASCENDING" },
+        { "fieldPath": "inspectionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "md_inspections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "weekNumber", "order": "ASCENDING" },
+        { "fieldPath": "factory", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "md_failures",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "caStatus", "order": "ASCENDING" },
+        { "fieldPath": "factory", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

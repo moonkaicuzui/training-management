@@ -25,6 +25,7 @@ import * as trainerService from './trainerService';
 import * as trainingPlanService from './trainingPlanService';
 import * as auditComplianceService from './auditComplianceService';
 import * as capaService from './capaService';
+import * as mdInspectionService from './mdInspectionService';
 import { updateResultWithLog } from '@/services/firebase';
 
 import type {
@@ -1888,3 +1889,31 @@ export async function autoEnrollInspectionFromLogs(
 ) {
   return inspectionService.autoEnrollFromLogs(source, enrolledBy);
 }
+
+// ========== Metal Detector Inspection ==========
+
+import type {
+  MDInspection,
+  MDFailure,
+  MDFilters,
+  MDDashboardKPI,
+  MDWeeklyTrend,
+} from '@/types/metalDetector';
+
+export const mdInspection = {
+  getInspections: (filters?: MDFilters) => mdInspectionService.getInspections(filters),
+  getInspectionById: (id: string) => mdInspectionService.getInspectionById(id),
+  createInspection: (data: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>) =>
+    mdInspectionService.createInspection(data),
+  updateInspection: (id: string, data: Partial<Omit<MDInspection, 'id' | 'createdAt'>>) =>
+    mdInspectionService.updateInspection(id, data),
+  getFailures: (inspectionId?: string) => mdInspectionService.getFailures(inspectionId),
+  createFailure: (data: Omit<MDFailure, 'id' | 'createdAt' | 'updatedAt'>) =>
+    mdInspectionService.createFailure(data),
+  updateFailure: (id: string, data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>) =>
+    mdInspectionService.updateFailure(id, data),
+  getDashboardKPIs: (year: number, weekNumber?: number): Promise<MDDashboardKPI> =>
+    mdInspectionService.getDashboardKPIs(year, weekNumber),
+  getWeeklyTrend: (year: number, weekCount?: number): Promise<MDWeeklyTrend[]> =>
+    mdInspectionService.getWeeklyTrend(year, weekCount),
+};

@@ -72,7 +72,7 @@ export function Header() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">
             QT
           </div>
-          <span className="hidden font-semibold md:inline-block">Q-TRAIN</span>
+          <span className="hidden font-semibold md:inline-block">QIP</span>
         </div>
 
         {/* Search Trigger (opens Command Palette) */}

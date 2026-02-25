@@ -39,6 +39,7 @@ import {
   PieChart,
   ChevronDown,
   Newspaper,
+  Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -137,7 +138,15 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: Search },
 ];
 
-// 8. System Admin
+// 8. Equipment Compliance (금속 탐지기 등)
+const equipmentComplianceItems: NavItem[] = [
+  { titleKey: 'nav.equipment.mdDashboard', href: '/equipment/metal-detector', icon: Gauge },
+  { titleKey: 'nav.equipment.mdInput', href: '/equipment/metal-detector/input', icon: ClipboardList },
+  { titleKey: 'nav.equipment.mdHistory', href: '/equipment/metal-detector/history', icon: History },
+  { titleKey: 'nav.equipment.mdReport', href: '/equipment/metal-detector/report', icon: FileBarChart },
+];
+
+// 9. System Admin
 const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
   { titleKey: 'nav.audit', href: '/audit', icon: Shield },
@@ -174,6 +183,7 @@ const categories: NavCategory[] = [
     sections: [
       { titleKey: 'sidebar.projectsCapa', items: projectsCapaItems },
       { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
+      { titleKey: 'sidebar.equipmentCompliance', items: equipmentComplianceItems },
     ],
   },
   {
@@ -307,7 +317,7 @@ export function Sidebar() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">
               QT
             </div>
-            <span className="font-semibold">Q-TRAIN</span>
+            <span className="font-semibold">QIP</span>
           </div>
           <Button
             variant="ghost"
