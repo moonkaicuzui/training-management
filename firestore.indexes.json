@@ -398,6 +398,23 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "weekNumber", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "md_inspections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "weekNumber", "order": "ASCENDING" },
+        { "fieldPath": "inspectionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "md_inspections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
         { "fieldPath": "weekNumber", "order": "ASCENDING" },
         { "fieldPath": "factory", "order": "ASCENDING" }
       ]
