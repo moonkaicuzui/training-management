@@ -31,9 +31,9 @@ import {
   Plus,
   ArrowRight,
   Calendar,
-  TrendingUp,
   FolderPlus,
   FolderOpen,
+  Settings,
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
@@ -125,6 +125,8 @@ export default function ProjectsDashboard() {
     todo: tasks.filter((t) => t.status === 'todo').length,
     inProgress: tasks.filter((t) => t.status === 'in_progress').length,
     delayed: tasks.filter((t) => t.status === 'delayed_start' || t.status === 'delayed_complete').length,
+    delayedStart: tasks.filter((t) => t.status === 'delayed_start').length,
+    delayedComplete: tasks.filter((t) => t.status === 'delayed_complete').length,
     done: tasks.filter((t) => t.status === 'done').length,
   };
 
@@ -221,7 +223,7 @@ export default function ProjectsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeProjects.length}</div>
-            <p className="text-xs text-muted-foreground">{t('projects.dashboard.inProgressTasks')}</p>
+            <p className="text-xs text-muted-foreground">{t('projects.dashboard.activeProjects')}</p>
           </CardContent>
         </Card>
 
@@ -249,7 +251,9 @@ export default function ProjectsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">{taskStats.delayed}</div>
-            <p className="text-xs text-muted-foreground">{t('projects.dashboard.overdueTasks')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('projects.dashboard.delayedStartShort')} {taskStats.delayedStart} / {t('projects.dashboard.delayedCompleteShort')} {taskStats.delayedComplete}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -266,7 +270,7 @@ export default function ProjectsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(['todo', 'in_progress', 'delayed_start', 'delayed_complete', 'done'] as TaskStatus[]).map((status) => {
+              {(['todo', 'in_progress', 'delayed_start', 'delayed_complete', 'review', 'done'] as TaskStatus[]).map((status) => {
                 const count = tasks.filter((t) => t.status === status).length;
                 const percentage = taskStats.total > 0 ? (count / taskStats.total) * 100 : 0;
 
@@ -298,7 +302,7 @@ export default function ProjectsDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              {t('projects.dashboard.recentActivity')}
+              {t('projects.dashboard.urgentTasks')}
             </CardTitle>
             <Badge variant="destructive">{urgentTasks.length}</Badge>
           </CardHeader>
@@ -455,7 +459,7 @@ export default function ProjectsDashboard() {
           className="h-20 flex flex-col items-center justify-center gap-2"
           onClick={() => navigate('/projects/settings')}
         >
-          <TrendingUp className="h-6 w-6" />
+          <Settings className="h-6 w-6" />
           <span>{t('projects.settings.title')}</span>
         </Button>
       </div>
