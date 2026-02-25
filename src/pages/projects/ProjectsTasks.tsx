@@ -71,7 +71,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useProjectStore } from '@/stores/projectStore';
-import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
+import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS, CATEGORY_COLORS } from '@/types/project';
 import type { ViewType, TaskStatus, Task, TaskPriority, MessageType, CreateTaskInput, UpdateTaskInput } from '@/types/project';
 
 // Static label maps are moved inside the component to use t()
@@ -168,6 +168,7 @@ export default function ProjectsTasks() {
     categories,
     fetchProjects,
     fetchCategories,
+    createCategory,
     currentProjectId,
     createNotification,
   } = useProjectStore();
@@ -190,6 +191,12 @@ export default function ProjectsTasks() {
     assignees: [] as string[],
   });
   const [assigneeSearch, setAssigneeSearch] = useState('');
+
+  // 인라인 카테고리 생성 상태
+  const [isTaskCategoryPopoverOpen, setIsTaskCategoryPopoverOpen] = useState(false);
+  const [isNewTaskCategoryMode, setIsNewTaskCategoryMode] = useState(false);
+  const [newTaskCategoryName, setNewTaskCategoryName] = useState('');
+  const [newTaskCategoryColor, setNewTaskCategoryColor] = useState(CATEGORY_COLORS[10]);
 
   // 메시지 관련 상태
   const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
@@ -1094,36 +1101,129 @@ export default function ProjectsTasks() {
                 )}
               </div>
 
-              {/* 카테고리 (선택사항) */}
-              {taskCategories.length > 0 && (
-                <div className="grid gap-2">
-                  <Label>{t('projects.tasks.category')} ({t('common.optional')})</Label>
-                  <Select
-                    value={taskFormData.categoryId || '_none'}
-                    onValueChange={(value) => setTaskFormData({ ...taskFormData, categoryId: value === '_none' ? '' : value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('projects.tasks.category')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">
-                        {t('projects.tasks.unassigned')}
-                      </SelectItem>
-                      {taskCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            />
+              {/* 카테고리 (선택사항 — Popover 기반 인라인 생성 지원) */}
+              <div className="grid gap-2">
+                <Label>{t('projects.tasks.category')} ({t('common.optional')})</Label>
+                <Popover open={isTaskCategoryPopoverOpen} onOpenChange={(open) => {
+                  setIsTaskCategoryPopoverOpen(open);
+                  if (!open) setIsNewTaskCategoryMode(false);
+                }}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" type="button" className="justify-start font-normal">
+                      {taskFormData.categoryId ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: taskCategories.find(c => c.id === taskFormData.categoryId)?.color }}
+                          />
+                          {taskCategories.find(c => c.id === taskFormData.categoryId)?.name}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">{t('projects.tasks.unassigned')}</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="start">
+                    {!isNewTaskCategoryMode ? (
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors ${
+                            !taskFormData.categoryId ? 'bg-accent' : ''
+                          }`}
+                          onClick={() => {
+                            setTaskFormData({ ...taskFormData, categoryId: '' });
+                            setIsTaskCategoryPopoverOpen(false);
+                          }}
+                        >
+                          {t('projects.tasks.unassigned')}
+                        </button>
+                        {taskCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors ${
+                              taskFormData.categoryId === category.id ? 'bg-accent' : ''
+                            }`}
+                            onClick={() => {
+                              setTaskFormData({ ...taskFormData, categoryId: category.id });
+                              setIsTaskCategoryPopoverOpen(false);
+                            }}
+                          >
+                            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
                             {category.name}
+                          </button>
+                        ))}
+                        <div className="border-t my-1" />
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-primary transition-colors"
+                          onClick={() => {
+                            setIsNewTaskCategoryMode(true);
+                            setNewTaskCategoryName('');
+                            setNewTaskCategoryColor(CATEGORY_COLORS[10]);
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {t('projects.calendar.newCategory')}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-3 space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">{t('projects.calendar.categoryName')}</Label>
+                          <Input
+                            value={newTaskCategoryName}
+                            onChange={(e) => setNewTaskCategoryName(e.target.value)}
+                            placeholder={t('projects.calendar.categoryName')}
+                            className="h-8 text-sm"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">{t('projects.calendar.selectColor')}</Label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {CATEGORY_COLORS.map((color) => (
+                              <button
+                                key={color}
+                                type="button"
+                                className={`w-6 h-6 rounded-full border-2 transition-all ${
+                                  newTaskCategoryColor === color ? 'border-foreground scale-110' : 'border-transparent'
+                                }`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => setNewTaskCategoryColor(color)}
+                              />
+                            ))}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsNewTaskCategoryMode(false)}
+                          >
+                            {t('projects.calendar.cancel')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!newTaskCategoryName.trim()}
+                            onClick={async () => {
+                              const created = await createCategory(newTaskCategoryName.trim(), newTaskCategoryColor, 'task');
+                              setTaskFormData({ ...taskFormData, categoryId: created.id });
+                              setIsNewTaskCategoryMode(false);
+                              setIsTaskCategoryPopoverOpen(false);
+                            }}
+                          >
+                            {t('projects.calendar.addCategory')}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
 
               {/* 상태 및 우선순위 */}
               <div className="grid grid-cols-2 gap-4">

@@ -2157,7 +2157,12 @@
       "dayView": "Ngày",
       "previous": "Trước",
       "next": "Sau",
-      "noEvents": "Không có sự kiện"
+      "noEvents": "Không có sự kiện",
+      "newCategory": "Thêm danh mục mới",
+      "categoryName": "Tên danh mục",
+      "selectColor": "Chọn màu",
+      "addCategory": "Thêm",
+      "cancel": "Hủy"
     },
     "members": {
       "title": "Quản lý thành viên",

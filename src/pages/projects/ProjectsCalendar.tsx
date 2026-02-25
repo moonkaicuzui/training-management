@@ -37,6 +37,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Calendar as CalendarIcon,
   Plus,
   ChevronLeft,
@@ -236,6 +241,7 @@ export default function ProjectsCalendar() {
     fetchEvents,
     fetchAllTasks,
     fetchCategories,
+    createCategory,
     createEvent,
     updateEvent,
     deleteEvent,
@@ -254,6 +260,13 @@ export default function ProjectsCalendar() {
   // Legend filter state
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
   const [showLegend, setShowLegend] = useState(true);
+
+  // 인라인 카테고리 생성 상태
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const [isNewCategoryMode, setIsNewCategoryMode] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState(CATEGORY_COLORS[10]); // Blue
+  const seededRef = useRef(false);
 
   const toggleFilter = (key: string) => {
     setHiddenTypes((prev) => {
@@ -275,6 +288,24 @@ export default function ProjectsCalendar() {
       ]);
     }
   }, [fetchCategories, fetchAllTasks, fetchSessions]);
+
+  // 기본 카테고리 자동 시딩: 카테고리가 0개이면 기본 4개 생성
+  useEffect(() => {
+    if (seededRef.current || categories.length > 0) return;
+    seededRef.current = true;
+    const seedDefaults = async () => {
+      const defaults = [
+        { name: '활동', color: '#3B82F6', type: 'event' as const },
+        { name: 'TECH', color: '#8B5CF6', type: 'event' as const },
+        { name: '활동', color: '#3B82F6', type: 'task' as const },
+        { name: 'TECH', color: '#8B5CF6', type: 'task' as const },
+      ];
+      for (const d of defaults) {
+        await createCategory(d.name, d.color, d.type);
+      }
+    };
+    seedDefaults();
+  }, [categories.length, createCategory]);
 
   // 날짜 범위 변경 시 이벤트 로드
   useEffect(() => {
@@ -733,7 +764,7 @@ export default function ProjectsCalendar() {
               className="text-lg font-medium border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary h-12"
             />
 
-            {/* 카테고리 선택 */}
+            {/* 카테고리 선택 (Popover 기반 — 인라인 생성 지원) */}
             <div className="flex items-center gap-3">
               <div
                 className="w-4 h-4 rounded-full shrink-0"
@@ -742,27 +773,113 @@ export default function ProjectsCalendar() {
                   boxShadow: `0 0 0 2px white, 0 0 0 4px ${selectedCategory?.color || '#3B82F6'}`,
                 }}
               />
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-              >
-                <SelectTrigger className="border-0 shadow-none px-0 h-8 focus:ring-0">
-                  <SelectValue placeholder={t('projects.tasks.category')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: category.color }}
+              <Popover open={isCategoryPopoverOpen} onOpenChange={(open) => {
+                setIsCategoryPopoverOpen(open);
+                if (!open) setIsNewCategoryMode(false);
+              }}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 h-8 text-sm hover:bg-accent rounded px-2 -ml-2 transition-colors"
+                  >
+                    {selectedCategory ? (
+                      <>
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedCategory.color }} />
+                        {selectedCategory.name}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">{t('projects.tasks.category')}</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="start">
+                  {!isNewCategoryMode ? (
+                    <div className="py-1">
+                      {eventCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors ${
+                            formData.categoryId === category.id ? 'bg-accent' : ''
+                          }`}
+                          onClick={() => {
+                            setFormData({ ...formData, categoryId: category.id });
+                            setIsCategoryPopoverOpen(false);
+                          }}
+                        >
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                          {category.name}
+                        </button>
+                      ))}
+                      <div className="border-t my-1" />
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-primary transition-colors"
+                        onClick={() => {
+                          setIsNewCategoryMode(true);
+                          setNewCategoryName('');
+                          setNewCategoryColor(CATEGORY_COLORS[10]);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t('projects.calendar.newCategory')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 space-y-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">{t('projects.calendar.categoryName')}</Label>
+                        <Input
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder={t('projects.calendar.categoryName')}
+                          className="h-8 text-sm"
+                          autoFocus
                         />
-                        {category.name}
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">{t('projects.calendar.selectColor')}</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {CATEGORY_COLORS.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={`w-6 h-6 rounded-full border-2 transition-all ${
+                                newCategoryColor === color ? 'border-foreground scale-110' : 'border-transparent'
+                              }`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setNewCategoryColor(color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsNewCategoryMode(false)}
+                        >
+                          {t('projects.calendar.cancel')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!newCategoryName.trim()}
+                          onClick={async () => {
+                            const created = await createCategory(newCategoryName.trim(), newCategoryColor, 'event');
+                            setFormData({ ...formData, categoryId: created.id });
+                            setIsNewCategoryMode(false);
+                            setIsCategoryPopoverOpen(false);
+                          }}
+                        >
+                          {t('projects.calendar.addCategory')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="border-t" />

@@ -2157,7 +2157,12 @@
       "dayView": "Day",
       "previous": "Previous",
       "next": "Next",
-      "noEvents": "No events"
+      "noEvents": "No events",
+      "newCategory": "Add New Category",
+      "categoryName": "Category Name",
+      "selectColor": "Select Color",
+      "addCategory": "Add",
+      "cancel": "Cancel"
     },
     "members": {
       "title": "Team Members",
