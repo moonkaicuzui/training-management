@@ -349,17 +349,17 @@ export default function QualityBlog() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Newspaper className="h-6 w-6" />
             품질 블로그
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             품질 관련 보고서, 개선 사례, 안전 소식을 공유합니다
           </p>
         </div>
-        <Button onClick={openCreateForm}>
+        <Button onClick={openCreateForm} className="shrink-0 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           새 글 작성
         </Button>
