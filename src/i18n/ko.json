@@ -155,10 +155,84 @@
     "techNewModel": "TECH / NEW MODEL"
   },
   "blog": {
+    "title": "품질 블로그",
+    "description": "품질 관련 보고서, 개선 사례, 안전 소식을 공유합니다",
+    "newPost": "새 글 작성",
     "categories": {
+      "all": "전체",
       "qa_activity": "QA 활동",
       "benchmarking": "벤치마킹",
-      "sop": "SOP"
+      "sop": "SOP",
+      "quality": "품질",
+      "safety": "안전",
+      "improvement": "개선",
+      "report": "보고서",
+      "general": "일반"
+    },
+    "search": "검색...",
+    "sort": {
+      "newest": "최신순",
+      "oldest": "오래된순",
+      "mostViewed": "조회 많은순",
+      "mostImages": "사진 많은순"
+    },
+    "empty": {
+      "noPostsAll": "게시글이 없습니다",
+      "noPostsCategory": "{{category}} 카테고리에 게시글이 없습니다",
+      "writeFirst": "첫 번째 글 작성하기"
+    },
+    "detail": {
+      "views": "{{count}}회",
+      "delete": "삭제",
+      "edit": "수정"
+    },
+    "form": {
+      "editTitle": "글 수정",
+      "newTitle": "새 글 작성",
+      "editDesc": "게시글을 수정합니다",
+      "newDesc": "품질 관련 게시글을 작성합니다",
+      "titleLabel": "제목 *",
+      "titlePlaceholder": "게시글 제목",
+      "summaryLabel": "요약",
+      "summaryPlaceholder": "카드에 표시될 요약 (2줄 이내)",
+      "categoryLabel": "카테고리",
+      "statusLabel": "상태",
+      "statusPublished": "게시",
+      "statusDraft": "초안",
+      "coverImage": "커버 이미지",
+      "coverImageHint": "미선택 시 추가 이미지의 첫 번째가 자동으로 커버가 됩니다",
+      "selectImage": "이미지 선택",
+      "keepExisting": "기존 이미지 유지",
+      "additionalImages": "추가 이미지",
+      "tagsLabel": "태그 (쉼표로 구분)",
+      "tagsPlaceholder": "품질, AQL, 개선사례",
+      "contentLabel": "본문 *",
+      "contentPlaceholder": "게시글 내용을 작성하세요...",
+      "cancel": "취소",
+      "saving": "저장 중...",
+      "submit": "게시",
+      "update": "수정",
+      "uploadingCover": "커버 이미지 업로드 중...",
+      "uploadingImages": "이미지 업로드 중... ({{completed}}/{{total}})"
+    },
+    "deleteConfirm": "\"{{title}}\" 글을 삭제하시겠습니까?",
+    "draft": "초안",
+    "anonymous": "익명",
+    "translate": {
+      "button": "번역",
+      "translating": "번역 중...",
+      "viewOriginal": "원문 보기",
+      "poweredBy": "AI 번역",
+      "noTranslation": "번역을 사용할 수 없습니다"
+    },
+    "board": {
+      "no": "번호",
+      "category": "카테고리",
+      "titleColumn": "제목",
+      "author": "작성자",
+      "date": "작성일",
+      "views": "조회",
+      "images": "사진"
     },
     "images": {
       "upload": "이미지 업로드",

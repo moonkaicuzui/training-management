@@ -1,15 +1,16 @@
 /**
  * 품질 블로그 페이지
  *
- * 보고서형 블로그 CRUD — 카드 그리드 + 상세 보기 + 작성/수정 다이얼로그
+ * 게시판형 블로그 CRUD — 게시판 목록 + 상세 보기 + 작성/수정 다이얼로그
  * QA 활동 게시판 확장: 복수 이미지 첨부 + 이미지 압축
- * v2.0: 카드 디자인 개선, 상세뷰 리디자인, 검색/필터 강화
+ * v3.0: 게시판(테이블) 레이아웃, i18n 완전 적용, 이미지 레이아웃 개선, AI 번역 placeholder
  */
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko, vi, enUS } from 'date-fns/locale';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,10 +48,12 @@ import {
   Loader2,
   ArrowUpDown,
   FileText,
+  Languages,
 } from 'lucide-react';
 
 import { useQualityBlogStore } from '@/stores/qualityBlogStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import * as blogService from '@/services/qualityBlogService';
 import { MultiImageUpload } from '@/components/common/MultiImageUpload';
 import { ImageGallery } from '@/components/common/ImageGallery';
@@ -65,45 +68,20 @@ import {
   BLOG_CATEGORY_COLORS,
 } from '@/types/qualityBlog';
 
-// 카테고리 탭
-const CATEGORY_TABS: { value: BlogCategory | 'all'; label: string }[] = [
-  { value: 'all', label: '전체' },
-  { value: 'qa_activity', label: 'QA 활동' },
-  { value: 'benchmarking', label: '벤치마킹' },
-  { value: 'sop', label: 'SOP' },
-  { value: 'quality', label: '품질' },
-  { value: 'safety', label: '안전' },
-  { value: 'improvement', label: '개선' },
-  { value: 'report', label: '보고서' },
-  { value: 'general', label: '일반' },
+// 카테고리 탭 값 (라벨은 i18n에서)
+const CATEGORY_TAB_VALUES: (BlogCategory | 'all')[] = [
+  'all', 'qa_activity', 'benchmarking', 'sop', 'quality', 'safety', 'improvement', 'report', 'general',
 ];
-
-// 카테고리별 기본 그라데이션 배경 (이미지 없는 카드용)
-const CATEGORY_GRADIENTS: Record<BlogCategory, string> = {
-  qa_activity: 'from-amber-400 to-orange-500',
-  benchmarking: 'from-cyan-400 to-blue-500',
-  sop: 'from-pink-400 to-rose-500',
-  quality: 'from-blue-400 to-indigo-500',
-  safety: 'from-red-400 to-rose-500',
-  improvement: 'from-emerald-400 to-green-500',
-  report: 'from-purple-400 to-violet-500',
-  general: 'from-gray-400 to-slate-500',
-};
-
-// 카테고리별 아이콘 (이미지 없는 카드용)
-const CATEGORY_ICONS: Record<BlogCategory, string> = {
-  qa_activity: '\uD83D\uDD0D',
-  benchmarking: '\uD83D\uDCCA',
-  sop: '\uD83D\uDCCB',
-  quality: '\u2705',
-  safety: '\uD83D\uDEE1\uFE0F',
-  improvement: '\uD83D\uDCC8',
-  report: '\uD83D\uDCDD',
-  general: '\uD83D\uDCCC',
-};
 
 // 정렬 옵션
 type SortOption = 'newest' | 'oldest' | 'mostViewed' | 'mostImages';
+
+// AI 번역 지원 언어
+const TRANSLATE_LANGS = [
+  { code: 'ko', flag: '🇰🇷', label: 'KO' },
+  { code: 'en', flag: '🇺🇸', label: 'EN' },
+  { code: 'vi', flag: '🇻🇳', label: 'VI' },
+];
 
 // 폼 상태
 interface BlogFormData {
@@ -131,6 +109,8 @@ const defaultForm: BlogFormData = {
 };
 
 export default function QualityBlog() {
+  const { t } = useTranslation();
+  const { language } = useUIStore();
   const { user } = useAuthStore();
   const {
     posts,
@@ -161,6 +141,15 @@ export default function QualityBlog() {
   const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
+
+  // date-fns locale 동적 전환
+  const getLocale = () => {
+    switch (language) {
+      case 'ko': return ko;
+      case 'vi': return vi;
+      default: return enUS;
+    }
+  };
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -261,7 +250,7 @@ export default function QualityBlog() {
 
       // 커버 이미지 업로드
       if (formData.coverImageFile) {
-        setUploadProgress('커버 이미지 업로드 중...');
+        setUploadProgress(t('blog.form.uploadingCover'));
         coverImage = await blogService.uploadImage(formData.coverImageFile);
       }
 
@@ -271,7 +260,7 @@ export default function QualityBlog() {
         newImageUrls = await blogService.uploadImages(
           formData.imageFiles,
           (completed, total) => {
-            setUploadProgress(`이미지 업로드 중... (${completed}/${total})`);
+            setUploadProgress(t('blog.form.uploadingImages', { completed, total }));
           }
         );
       }
@@ -286,11 +275,11 @@ export default function QualityBlog() {
 
       const tags = formData.tags
         .split(',')
-        .map((t) => t.trim())
+        .map((tg) => tg.trim())
         .filter(Boolean);
 
-      // 작성자 이름: displayName 우선, 없으면 이메일에서 추출
-      const authorName = user?.name || (user?.email ? user.email.split('@')[0].toUpperCase() : '익명');
+      // 작성자 이름
+      const authorName = user?.name || (user?.email ? user.email.split('@')[0].toUpperCase() : t('blog.anonymous'));
 
       if (editingPost) {
         await updatePost(editingPost.id, {
@@ -335,15 +324,10 @@ export default function QualityBlog() {
 
   // 삭제
   const handleDelete = async (post: QualityBlogPost) => {
-    if (!confirm(`"${post.title}" 글을 삭제하시겠습니까?`)) return;
+    if (!confirm(t('blog.deleteConfirm', { title: post.title }))) return;
     await deletePost(post.id);
     setIsDetailOpen(false);
     setViewingPost(null);
-  };
-
-  // 카드 이미지 결정: coverImage → images[0] → null
-  const getCardImage = (post: QualityBlogPost): string | null => {
-    return post.coverImage || (post.images.length > 0 ? post.images[0] : null);
   };
 
   return (
@@ -353,15 +337,15 @@ export default function QualityBlog() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Newspaper className="h-6 w-6" />
-            품질 블로그
+            {t('blog.title')}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            품질 관련 보고서, 개선 사례, 안전 소식을 공유합니다
+            {t('blog.description')}
           </p>
         </div>
         <Button onClick={openCreateForm} className="shrink-0 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
-          새 글 작성
+          {t('blog.newPost')}
         </Button>
       </div>
 
@@ -380,22 +364,22 @@ export default function QualityBlog() {
         {/* 카테고리 탭 - 가로 스크롤 */}
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-1 bg-muted rounded-lg p-0.5 w-max min-w-full">
-            {CATEGORY_TABS.map((tab) => {
-              const count = tab.value === 'all'
+            {CATEGORY_TAB_VALUES.map((tab) => {
+              const count = tab === 'all'
                 ? posts.length
-                : posts.filter((p) => p.category === tab.value).length;
+                : posts.filter((p) => p.category === tab).length;
               return (
                 <button
-                  key={tab.value}
-                  onClick={() => setActiveTab(tab.value)}
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 ${
-                    activeTab === tab.value
+                    activeTab === tab
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {tab.label}
-                  {tab.value !== 'all' && count > 0 && (
+                  {t(`blog.categories.${tab}`)}
+                  {tab !== 'all' && count > 0 && (
                     <span className="text-[10px] ml-0.5 opacity-60">
                       ({count})
                     </span>
@@ -411,7 +395,7 @@ export default function QualityBlog() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="검색..."
+              placeholder={t('blog.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9"
@@ -423,10 +407,10 @@ export default function QualityBlog() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">최신순</SelectItem>
-              <SelectItem value="oldest">오래된순</SelectItem>
-              <SelectItem value="mostViewed">조회 많은순</SelectItem>
-              <SelectItem value="mostImages">사진 많은순</SelectItem>
+              <SelectItem value="newest">{t('blog.sort.newest')}</SelectItem>
+              <SelectItem value="oldest">{t('blog.sort.oldest')}</SelectItem>
+              <SelectItem value="mostViewed">{t('blog.sort.mostViewed')}</SelectItem>
+              <SelectItem value="mostImages">{t('blog.sort.mostImages')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -447,117 +431,121 @@ export default function QualityBlog() {
           </div>
           <p className="text-muted-foreground mb-2">
             {activeTab === 'all'
-              ? '게시글이 없습니다'
-              : `${CATEGORY_TABS.find((t) => t.value === activeTab)?.label} 카테고리에 게시글이 없습니다`}
+              ? t('blog.empty.noPostsAll')
+              : t('blog.empty.noPostsCategory', { category: t(`blog.categories.${activeTab}`) })}
           </p>
           <Button variant="outline" size="sm" onClick={openCreateForm}>
-            <Plus className="h-4 w-4 mr-1" /> 첫 번째 글 작성하기
+            <Plus className="h-4 w-4 mr-1" /> {t('blog.empty.writeFirst')}
           </Button>
         </div>
       )}
 
-      {/* 카드 그리드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredPosts.map((post) => {
-          const cardImage = getCardImage(post);
-          return (
-            <Card
-              key={post.id}
-              className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden group border-0 shadow-sm"
-              onClick={() => openDetail(post)}
-            >
-              {/* 이미지 영역 - 항상 표시 */}
-              <div className="h-48 overflow-hidden relative">
-                {cardImage ? (
-                  <img
-                    src={cardImage}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${CATEGORY_GRADIENTS[post.category]} flex items-center justify-center`}>
-                    <span className="text-5xl opacity-40">{CATEGORY_ICONS[post.category]}</span>
-                  </div>
-                )}
-                {/* 카테고리 뱃지 (이미지 위 오버레이) */}
-                <div className="absolute top-3 left-3">
-                  <Badge
-                    className="text-white text-[11px] font-medium shadow-md border-0"
-                    style={{ backgroundColor: BLOG_CATEGORY_COLORS[post.category] }}
-                  >
-                    {BLOG_CATEGORY_LABELS[post.category]}
-                  </Badge>
-                </div>
-                {/* 초안 뱃지 */}
-                {post.status === 'draft' && (
-                  <div className="absolute top-3 right-3">
-                    <Badge variant="secondary" className="text-[11px] bg-black/50 text-white border-0">
-                      초안
+      {/* 게시판 테이블 */}
+      {filteredPosts.length > 0 && (
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted/50 border-b">
+                <th className="text-center px-3 py-2.5 font-medium text-muted-foreground w-12 hidden sm:table-cell">
+                  {t('blog.board.no')}
+                </th>
+                <th className="text-center px-3 py-2.5 font-medium text-muted-foreground w-20 hidden md:table-cell">
+                  {t('blog.board.category')}
+                </th>
+                <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">
+                  {t('blog.board.titleColumn')}
+                </th>
+                <th className="text-center px-3 py-2.5 font-medium text-muted-foreground w-24 hidden sm:table-cell">
+                  {t('blog.board.author')}
+                </th>
+                <th className="text-center px-3 py-2.5 font-medium text-muted-foreground w-24 hidden md:table-cell">
+                  {t('blog.board.date')}
+                </th>
+                <th className="text-center px-3 py-2.5 font-medium text-muted-foreground w-16">
+                  {t('blog.board.views')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPosts.map((post, index) => (
+                <tr
+                  key={post.id}
+                  className="border-b last:border-b-0 hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => openDetail(post)}
+                >
+                  {/* 번호 */}
+                  <td className="text-center px-3 py-2.5 text-muted-foreground hidden sm:table-cell">
+                    {filteredPosts.length - index}
+                  </td>
+                  {/* 카테고리 */}
+                  <td className="text-center px-3 py-2.5 hidden md:table-cell">
+                    <Badge
+                      variant="secondary"
+                      className="text-[11px] font-medium text-white border-0"
+                      style={{ backgroundColor: BLOG_CATEGORY_COLORS[post.category] }}
+                    >
+                      {t(`blog.categories.${post.category}`)}
                     </Badge>
-                  </div>
-                )}
-                {/* 사진 수 뱃지 */}
-                {post.images.length > 0 && (
-                  <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <Camera className="h-3 w-3" />
-                    {post.images.length}
-                  </div>
-                )}
-                {/* 하단 그라데이션 오버레이 */}
-                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
-              </div>
-
-              <CardContent className="pt-4 pb-3">
-                {/* 제목 */}
-                <h3 className="font-semibold text-base line-clamp-2 mb-1.5 group-hover:text-primary transition-colors leading-snug">
-                  {post.title}
-                </h3>
-
-                {/* 요약 */}
-                {post.summary && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {post.summary}
-                  </p>
-                )}
-
-                {/* 태그 */}
-                {post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {post.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className="text-[11px] text-primary/70 bg-primary/5 px-1.5 py-0.5 rounded">
-                        #{tag}
+                  </td>
+                  {/* 제목 */}
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      {/* 모바일에서 카테고리 뱃지 인라인 */}
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] font-medium text-white border-0 shrink-0 md:hidden"
+                        style={{ backgroundColor: BLOG_CATEGORY_COLORS[post.category] }}
+                      >
+                        {t(`blog.categories.${post.category}`)}
+                      </Badge>
+                      <span className="font-medium line-clamp-1 hover:text-primary transition-colors">
+                        {post.title}
                       </span>
-                    ))}
-                    {post.tags.length > 3 && (
-                      <span className="text-[11px] text-muted-foreground">+{post.tags.length - 3}</span>
-                    )}
-                  </div>
-                )}
-
-                {/* 메타 */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2.5 border-t">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-3 w-3 text-primary/60" />
+                      {post.status === 'draft' && (
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {t('blog.draft')}
+                        </Badge>
+                      )}
+                      {post.images.length > 0 && (
+                        <span className="text-muted-foreground shrink-0 flex items-center gap-0.5">
+                          <Camera className="h-3 w-3" />
+                          <span className="text-[11px]">{post.images.length}</span>
+                        </span>
+                      )}
+                      {post.tags.length > 0 && (
+                        <span className="text-[11px] text-primary/60 hidden lg:inline">
+                          #{post.tags[0]}
+                          {post.tags.length > 1 && `+${post.tags.length - 1}`}
+                        </span>
+                      )}
                     </div>
-                    <span className="font-medium truncate max-w-[120px]">{post.author.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(toDate(post.createdAt), 'M/d', { locale: ko })}
+                    {/* 모바일: 작성자 + 날짜 */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 sm:hidden">
+                      <span>{post.author.name}</span>
+                      <span>·</span>
+                      <span>{format(toDate(post.createdAt), 'M/d', { locale: getLocale() })}</span>
+                    </div>
+                  </td>
+                  {/* 작성자 */}
+                  <td className="text-center px-3 py-2.5 hidden sm:table-cell">
+                    <span className="text-sm truncate max-w-[100px] inline-block">
+                      {post.author.name}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {post.viewCount}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  </td>
+                  {/* 날짜 */}
+                  <td className="text-center px-3 py-2.5 text-muted-foreground hidden md:table-cell">
+                    {format(toDate(post.createdAt), 'PP', { locale: getLocale() })}
+                  </td>
+                  {/* 조회수 */}
+                  <td className="text-center px-3 py-2.5 text-muted-foreground">
+                    {post.viewCount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* 상세 보기 다이얼로그 */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -570,6 +558,9 @@ export default function QualityBlog() {
             const heroImage = allImages[0] || null;
             const restImages = allImages.slice(1);
 
+            // 현재 UI 언어가 아닌 다른 언어 목록 (번역 버튼용)
+            const otherLangs = TRANSLATE_LANGS.filter(l => l.code !== language);
+
             return (
               <>
                 <DialogHeader className="space-y-3">
@@ -579,10 +570,10 @@ export default function QualityBlog() {
                       className="text-white border-0"
                       style={{ backgroundColor: BLOG_CATEGORY_COLORS[viewingPost.category] }}
                     >
-                      {BLOG_CATEGORY_LABELS[viewingPost.category]}
+                      {t(`blog.categories.${viewingPost.category}`)}
                     </Badge>
                     {viewingPost.status === 'draft' && (
-                      <Badge variant="outline">초안</Badge>
+                      <Badge variant="outline">{t('blog.draft')}</Badge>
                     )}
                   </div>
 
@@ -605,23 +596,45 @@ export default function QualityBlog() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
-                        {format(toDate(viewingPost.createdAt), 'yyyy년 M월 d일', { locale: ko })}
+                        {format(toDate(viewingPost.createdAt), 'PPP', { locale: getLocale() })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Eye className="h-3.5 w-3.5" />
-                        {viewingPost.viewCount}회
+                        {t('blog.detail.views', { count: viewingPost.viewCount })}
                       </span>
                     </div>
                   </DialogDescription>
                 </DialogHeader>
 
-                {/* 히어로 이미지 */}
+                {/* AI 번역 버튼 */}
+                <div className="flex items-center gap-2 py-2 border-b">
+                  <Languages className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{t('blog.translate.button')}:</span>
+                  {otherLangs.map((lang) => (
+                    <Button
+                      key={lang.code}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1 opacity-50 cursor-not-allowed"
+                      disabled
+                      title={t('blog.translate.noTranslation')}
+                    >
+                      <span>{lang.flag}</span>
+                      <span>{lang.label}</span>
+                    </Button>
+                  ))}
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    {t('blog.translate.poweredBy')}
+                  </span>
+                </div>
+
+                {/* 히어로 이미지 — object-contain으로 전체 표시 */}
                 {heroImage && (
-                  <div className="rounded-xl overflow-hidden my-4">
+                  <div className="rounded-xl overflow-hidden my-4 bg-muted/50">
                     <img
                       src={heroImage}
                       alt={viewingPost.title}
-                      className="w-full max-h-96 object-cover"
+                      className="w-full max-h-[500px] object-contain"
                     />
                   </div>
                 )}
@@ -669,7 +682,7 @@ export default function QualityBlog() {
                     onClick={() => handleDelete(viewingPost)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    삭제
+                    {t('blog.detail.delete')}
                   </Button>
                   <Button
                     variant="outline"
@@ -677,7 +690,7 @@ export default function QualityBlog() {
                     onClick={() => openEditForm(viewingPost)}
                   >
                     <Edit3 className="h-4 w-4 mr-1" />
-                    수정
+                    {t('blog.detail.edit')}
                   </Button>
                 </div>
               </>
@@ -690,37 +703,37 @@ export default function QualityBlog() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingPost ? '글 수정' : '새 글 작성'}</DialogTitle>
+            <DialogTitle>{editingPost ? t('blog.form.editTitle') : t('blog.form.newTitle')}</DialogTitle>
             <DialogDescription>
-              {editingPost ? '게시글을 수정합니다' : '품질 관련 게시글을 작성합니다'}
+              {editingPost ? t('blog.form.editDesc') : t('blog.form.newDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* 제목 */}
             <div className="space-y-1.5">
-              <Label>제목 *</Label>
+              <Label>{t('blog.form.titleLabel')}</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="게시글 제목"
+                placeholder={t('blog.form.titlePlaceholder')}
               />
             </div>
 
             {/* 요약 */}
             <div className="space-y-1.5">
-              <Label>요약</Label>
+              <Label>{t('blog.form.summaryLabel')}</Label>
               <Input
                 value={formData.summary}
                 onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                placeholder="카드에 표시될 요약 (2줄 이내)"
+                placeholder={t('blog.form.summaryPlaceholder')}
               />
             </div>
 
             {/* 카테고리 + 상태 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>카테고리</Label>
+                <Label>{t('blog.form.categoryLabel')}</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => setFormData({ ...formData, category: v as BlogCategory })}
@@ -729,14 +742,14 @@ export default function QualityBlog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(BLOG_CATEGORY_LABELS).map(([key, label]) => (
+                    {Object.keys(BLOG_CATEGORY_LABELS).map((key) => (
                       <SelectItem key={key} value={key}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: BLOG_CATEGORY_COLORS[key as BlogCategory] }}
                           />
-                          {label}
+                          {t(`blog.categories.${key}`)}
                         </div>
                       </SelectItem>
                     ))}
@@ -744,7 +757,7 @@ export default function QualityBlog() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>상태</Label>
+                <Label>{t('blog.form.statusLabel')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(v) => setFormData({ ...formData, status: v as BlogStatus })}
@@ -753,8 +766,8 @@ export default function QualityBlog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="published">게시</SelectItem>
-                    <SelectItem value="draft">초안</SelectItem>
+                    <SelectItem value="published">{t('blog.form.statusPublished')}</SelectItem>
+                    <SelectItem value="draft">{t('blog.form.statusDraft')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -762,8 +775,8 @@ export default function QualityBlog() {
 
             {/* 커버 이미지 */}
             <div className="space-y-1.5">
-              <Label>커버 이미지</Label>
-              <p className="text-xs text-muted-foreground">미선택 시 추가 이미지의 첫 번째가 자동으로 커버가 됩니다</p>
+              <Label>{t('blog.form.coverImage')}</Label>
+              <p className="text-xs text-muted-foreground">{t('blog.form.coverImageHint')}</p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -772,7 +785,7 @@ export default function QualityBlog() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <ImageIcon className="h-4 w-4 mr-1" />
-                  {formData.coverImageFile ? formData.coverImageFile.name : '이미지 선택'}
+                  {formData.coverImageFile ? formData.coverImageFile.name : t('blog.form.selectImage')}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -785,14 +798,14 @@ export default function QualityBlog() {
                   }}
                 />
                 {editingPost?.coverImage && !formData.coverImageFile && (
-                  <span className="text-xs text-muted-foreground">기존 이미지 유지</span>
+                  <span className="text-xs text-muted-foreground">{t('blog.form.keepExisting')}</span>
                 )}
               </div>
             </div>
 
             {/* 추가 이미지 (다중 업로드) */}
             <div className="space-y-1.5">
-              <Label>추가 이미지</Label>
+              <Label>{t('blog.form.additionalImages')}</Label>
               <MultiImageUpload
                 files={formData.imageFiles}
                 onFilesChange={(files) => setFormData({ ...formData, imageFiles: files })}
@@ -807,21 +820,21 @@ export default function QualityBlog() {
 
             {/* 태그 */}
             <div className="space-y-1.5">
-              <Label>태그 (쉼표로 구분)</Label>
+              <Label>{t('blog.form.tagsLabel')}</Label>
               <Input
                 value={formData.tags}
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                placeholder="품질, AQL, 개선사례"
+                placeholder={t('blog.form.tagsPlaceholder')}
               />
             </div>
 
             {/* 본문 */}
             <div className="space-y-1.5">
-              <Label>본문 *</Label>
+              <Label>{t('blog.form.contentLabel')}</Label>
               <Textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="게시글 내용을 작성하세요..."
+                placeholder={t('blog.form.contentPlaceholder')}
                 rows={12}
                 className="resize-y"
               />
@@ -837,7 +850,7 @@ export default function QualityBlog() {
               </span>
             )}
             <Button variant="outline" onClick={() => setIsFormOpen(false)}>
-              취소
+              {t('blog.form.cancel')}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -846,12 +859,12 @@ export default function QualityBlog() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  저장 중...
+                  {t('blog.form.saving')}
                 </>
               ) : editingPost ? (
-                '수정'
+                t('blog.form.update')
               ) : (
-                '게시'
+                t('blog.form.submit')
               )}
             </Button>
           </div>

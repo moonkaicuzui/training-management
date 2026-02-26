@@ -17,6 +17,15 @@ export interface BlogAuthor {
   department?: string;
 }
 
+/** AI 번역 결과 */
+export interface BlogTranslation {
+  title: string;
+  summary: string;
+  content: string;
+  translatedAt: Date | Timestamp;
+  translatedBy: 'ai' | 'manual';
+}
+
 /** 품질 블로그 포스트 */
 export interface QualityBlogPost {
   id: string;
@@ -33,6 +42,7 @@ export interface QualityBlogPost {
   createdAt: Date | Timestamp;
   updatedAt: Date | Timestamp;
   publishedAt?: Date | Timestamp;
+  translations?: Record<string, BlogTranslation>;
 }
 
 /** 블로그 생성 입력 */

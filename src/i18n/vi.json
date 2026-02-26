@@ -155,10 +155,84 @@
     "techNewModel": "TECH / NEW MODEL"
   },
   "blog": {
+    "title": "Blog Chất lượng",
+    "description": "Chia sẻ báo cáo chất lượng, cải tiến và tin tức an toàn",
+    "newPost": "Viết bài mới",
     "categories": {
+      "all": "Tất cả",
       "qa_activity": "Hoạt động QA",
       "benchmarking": "Đối chuẩn",
-      "sop": "SOP"
+      "sop": "SOP",
+      "quality": "Chất lượng",
+      "safety": "An toàn",
+      "improvement": "Cải tiến",
+      "report": "Báo cáo",
+      "general": "Chung"
+    },
+    "search": "Tìm kiếm...",
+    "sort": {
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất",
+      "mostViewed": "Xem nhiều",
+      "mostImages": "Nhiều ảnh"
+    },
+    "empty": {
+      "noPostsAll": "Chưa có bài viết",
+      "noPostsCategory": "Không có bài viết trong {{category}}",
+      "writeFirst": "Viết bài đầu tiên"
+    },
+    "detail": {
+      "views": "{{count}} lượt xem",
+      "delete": "Xóa",
+      "edit": "Sửa"
+    },
+    "form": {
+      "editTitle": "Sửa bài viết",
+      "newTitle": "Viết bài mới",
+      "editDesc": "Sửa bài viết",
+      "newDesc": "Viết bài về chất lượng",
+      "titleLabel": "Tiêu đề *",
+      "titlePlaceholder": "Tiêu đề bài viết",
+      "summaryLabel": "Tóm tắt",
+      "summaryPlaceholder": "Tóm tắt hiển thị trên thẻ (tối đa 2 dòng)",
+      "categoryLabel": "Danh mục",
+      "statusLabel": "Trạng thái",
+      "statusPublished": "Đã đăng",
+      "statusDraft": "Nháp",
+      "coverImage": "Ảnh bìa",
+      "coverImageHint": "Nếu không chọn, ảnh đầu tiên sẽ được dùng làm bìa",
+      "selectImage": "Chọn ảnh",
+      "keepExisting": "Giữ ảnh cũ",
+      "additionalImages": "Ảnh bổ sung",
+      "tagsLabel": "Thẻ (phân cách bằng dấu phẩy)",
+      "tagsPlaceholder": "Chất lượng, AQL, Cải tiến",
+      "contentLabel": "Nội dung *",
+      "contentPlaceholder": "Viết nội dung bài viết...",
+      "cancel": "Hủy",
+      "saving": "Đang lưu...",
+      "submit": "Đăng",
+      "update": "Cập nhật",
+      "uploadingCover": "Đang tải ảnh bìa...",
+      "uploadingImages": "Đang tải ảnh... ({{completed}}/{{total}})"
+    },
+    "deleteConfirm": "Xóa \"{{title}}\"?",
+    "draft": "Nháp",
+    "anonymous": "Ẩn danh",
+    "translate": {
+      "button": "Dịch",
+      "translating": "Đang dịch...",
+      "viewOriginal": "Xem bản gốc",
+      "poweredBy": "Dịch bằng AI",
+      "noTranslation": "Không có bản dịch"
+    },
+    "board": {
+      "no": "STT",
+      "category": "Danh mục",
+      "titleColumn": "Tiêu đề",
+      "author": "Tác giả",
+      "date": "Ngày",
+      "views": "Lượt xem",
+      "images": "Ảnh"
     },
     "images": {
       "upload": "Tải ảnh lên",

@@ -155,10 +155,84 @@
     "techNewModel": "TECH / NEW MODEL"
   },
   "blog": {
+    "title": "Quality Blog",
+    "description": "Share quality reports, improvement cases, and safety news",
+    "newPost": "New Post",
     "categories": {
+      "all": "All",
       "qa_activity": "QA Activity",
       "benchmarking": "Benchmarking",
-      "sop": "SOP"
+      "sop": "SOP",
+      "quality": "Quality",
+      "safety": "Safety",
+      "improvement": "Improvement",
+      "report": "Report",
+      "general": "General"
+    },
+    "search": "Search...",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "mostViewed": "Most Viewed",
+      "mostImages": "Most Photos"
+    },
+    "empty": {
+      "noPostsAll": "No posts yet",
+      "noPostsCategory": "No posts in {{category}}",
+      "writeFirst": "Write First Post"
+    },
+    "detail": {
+      "views": "{{count}} views",
+      "delete": "Delete",
+      "edit": "Edit"
+    },
+    "form": {
+      "editTitle": "Edit Post",
+      "newTitle": "New Post",
+      "editDesc": "Edit the post",
+      "newDesc": "Write a quality blog post",
+      "titleLabel": "Title *",
+      "titlePlaceholder": "Post title",
+      "summaryLabel": "Summary",
+      "summaryPlaceholder": "Summary for card (max 2 lines)",
+      "categoryLabel": "Category",
+      "statusLabel": "Status",
+      "statusPublished": "Published",
+      "statusDraft": "Draft",
+      "coverImage": "Cover Image",
+      "coverImageHint": "If not selected, first image is used as cover",
+      "selectImage": "Select Image",
+      "keepExisting": "Keep existing",
+      "additionalImages": "Additional Images",
+      "tagsLabel": "Tags (comma separated)",
+      "tagsPlaceholder": "Quality, AQL, Case Study",
+      "contentLabel": "Content *",
+      "contentPlaceholder": "Write your post...",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "submit": "Publish",
+      "update": "Update",
+      "uploadingCover": "Uploading cover image...",
+      "uploadingImages": "Uploading images... ({{completed}}/{{total}})"
+    },
+    "deleteConfirm": "Delete \"{{title}}\"?",
+    "draft": "Draft",
+    "anonymous": "Anonymous",
+    "translate": {
+      "button": "Translate",
+      "translating": "Translating...",
+      "viewOriginal": "View Original",
+      "poweredBy": "AI Translation",
+      "noTranslation": "Translation not available"
+    },
+    "board": {
+      "no": "No.",
+      "category": "Category",
+      "titleColumn": "Title",
+      "author": "Author",
+      "date": "Date",
+      "views": "Views",
+      "images": "Photos"
     },
     "images": {
       "upload": "Upload Images",

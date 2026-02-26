@@ -75,8 +75,8 @@ export function ImageGallery({ images, maxVisible = 4, className }: ImageGallery
     if (count === 3 && index === 0) return 'col-span-2 sm:col-span-4 aspect-video';
     // 4장+: 첫 두 장이 2칸씩
     if (count >= 4 && index < 2) return 'col-span-1 sm:col-span-2 aspect-[4/3]';
-    // 기본
-    return 'aspect-square';
+    // 기본: 4:3 비율 (세로 사진 잘림 방지)
+    return 'aspect-[4/3]';
   };
 
   return (
