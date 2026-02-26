@@ -119,7 +119,11 @@
     "qualityBlog": "품질 블로그",
     "department": "부서별 대시보드",
     "competency": "역량 매트릭스",
-    "skillGap": "스킬 갭 분석"
+    "skillGap": "스킬 갭 분석",
+    "tech": {
+      "models": "신규 모델",
+      "reviewGuidelines": "모델 리뷰지침"
+    }
   },
   "sidebar": {
     "cat": {
@@ -146,7 +150,84 @@
     "quickStats": "빠른 통계",
     "monthlyTrainings": "이번 달 교육",
     "passRate": "합격률",
-    "retrainingNeeded": "재교육 필요"
+    "retrainingNeeded": "재교육 필요",
+    "techNewModel": "TECH / NEW MODEL"
+  },
+  "tech": {
+    "models": {
+      "title": "신규 모델 관리",
+      "description": "시즌별 신규 모델을 등록하고 관리합니다.",
+      "addModel": "모델 추가",
+      "editModel": "모델 수정",
+      "season": "시즌",
+      "modelName": "모델명",
+      "modelNamePlaceholder": "모델명을 입력하세요",
+      "selectSeason": "시즌을 선택하세요",
+      "guidelineCount": "리뷰지침 수",
+      "createdAt": "등록일",
+      "viewGuidelines": "리뷰지침 보기",
+      "noModels": "등록된 모델이 없습니다.",
+      "dialogDescription": "시즌과 모델명을 입력하세요.",
+      "fillRequired": "시즌과 모델명은 필수입니다.",
+      "created": "모델이 등록되었습니다.",
+      "updated": "모델이 수정되었습니다.",
+      "deleted": "모델이 삭제되었습니다.",
+      "saveFailed": "모델 저장에 실패했습니다.",
+      "deleteFailed": "모델 삭제에 실패했습니다.",
+      "deleteConfirm": "모델을 삭제하시겠습니까?",
+      "deleteWarning": "해당 모델의 모든 리뷰지침도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+    },
+    "guidelines": {
+      "title": "모델 리뷰지침",
+      "description": "모델별 리뷰 지침을 관리합니다.",
+      "addGuideline": "지침 추가",
+      "editGuideline": "지침 수정",
+      "filterByModel": "모델 필터",
+      "selectModel": "모델 선택",
+      "selectModelPlaceholder": "모델을 선택하세요",
+      "materialPoint": "자재 포인트",
+      "processPoint": "공정 포인트",
+      "standardInfo": "표준 정보",
+      "processName": "해당 공정",
+      "processNamePlaceholder": "공정명을 입력하세요",
+      "details": "세부 정보",
+      "detailsPlaceholder": "세부 정보를 입력하세요",
+      "referencePhotos": "참조 사진",
+      "uploadPhoto": "사진 업로드 (클릭)",
+      "uploading": "업로드 중...",
+      "photoPreview": "사진 미리보기",
+      "noGuidelines": "등록된 리뷰지침이 없습니다.",
+      "dialogDescription": "리뷰 지침 정보를 입력하세요.",
+      "fillRequired": "모델 선택과 공정명은 필수입니다.",
+      "created": "리뷰지침이 등록되었습니다.",
+      "updated": "리뷰지침이 수정되었습니다.",
+      "deleted": "리뷰지침이 삭제되었습니다.",
+      "saveFailed": "리뷰지침 저장에 실패했습니다.",
+      "deleteFailed": "리뷰지침 삭제에 실패했습니다.",
+      "deleteConfirm": "리뷰지침을 삭제하시겠습니까?",
+      "deleteWarning": "참조 사진도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+    },
+    "materialPoints": {
+      "Upper": "갑피",
+      "Outsole": "겉창",
+      "Midsole": "중창",
+      "Adhesive": "접착제",
+      "Accessories": "부자재"
+    },
+    "processPoints": {
+      "Cutting": "재단",
+      "Stitching": "재봉",
+      "Lasting": "라스팅",
+      "Assembling": "조립",
+      "Finishing": "마무리"
+    },
+    "standardInfos": {
+      "Dimension": "치수",
+      "Weight": "중량",
+      "Color": "색상",
+      "Strength": "강도",
+      "Appearance": "외관"
+    }
   },
   "dashboard": {
     "title": "대시보드",

@@ -386,6 +386,22 @@
     }
     ,
     {
+      "collectionGroup": "tech_models",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "season", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tech_review_guidelines",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "modelId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "md_inspections",
       "queryScope": "COLLECTION",
       "fields": [

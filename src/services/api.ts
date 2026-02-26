@@ -26,6 +26,7 @@ import * as trainingPlanService from './trainingPlanService';
 import * as auditComplianceService from './auditComplianceService';
 import * as capaService from './capaService';
 import * as mdInspectionService from './mdInspectionService';
+import * as techModelService from './techModelService';
 import { updateResultWithLog } from '@/services/firebase';
 
 import type {
@@ -1916,4 +1917,27 @@ export const mdInspection = {
     mdInspectionService.getDashboardKPIs(year, weekNumber),
   getWeeklyTrend: (year: number, weekCount?: number): Promise<MDWeeklyTrend[]> =>
     mdInspectionService.getWeeklyTrend(year, weekCount),
+};
+
+// ========== TECH / NEW MODEL ==========
+
+import type {
+  TechModel,
+  TechReviewGuideline,
+  TechModelFilters,
+} from '@/types/techModel';
+
+export const techModel = {
+  getModels: (filters?: TechModelFilters) => techModelService.getModels(filters),
+  createModel: (data: Omit<TechModel, 'id' | 'createdAt' | 'updatedAt'>) =>
+    techModelService.createModel(data),
+  updateModel: (id: string, data: Partial<Omit<TechModel, 'id' | 'createdAt' | 'createdBy'>>) =>
+    techModelService.updateModel(id, data),
+  deleteModel: (id: string) => techModelService.deleteModel(id),
+  getGuidelines: (modelId?: string) => techModelService.getGuidelines(modelId),
+  createGuideline: (data: Omit<TechReviewGuideline, 'id' | 'createdAt' | 'updatedAt'>) =>
+    techModelService.createGuideline(data),
+  updateGuideline: (id: string, data: Partial<Omit<TechReviewGuideline, 'id' | 'createdAt' | 'createdBy'>>) =>
+    techModelService.updateGuideline(id, data),
+  deleteGuideline: (id: string) => techModelService.deleteGuideline(id),
 };

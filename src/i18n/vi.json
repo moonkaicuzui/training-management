@@ -119,7 +119,11 @@
     "qualityBlog": "Blog chất lượng",
     "department": "Bảng điều khiển phòng ban",
     "competency": "Ma trận năng lực",
-    "skillGap": "Phân tích khoảng trống kỹ năng"
+    "skillGap": "Phân tích khoảng trống kỹ năng",
+    "tech": {
+      "models": "Mẫu mới",
+      "reviewGuidelines": "Hướng dẫn đánh giá"
+    }
   },
   "sidebar": {
     "cat": {
@@ -146,7 +150,84 @@
     "quickStats": "Thống kê nhanh",
     "monthlyTrainings": "Đào tạo tháng này",
     "passRate": "Tỷ lệ đạt",
-    "retrainingNeeded": "Cần đào tạo lại"
+    "retrainingNeeded": "Cần đào tạo lại",
+    "techNewModel": "TECH / NEW MODEL"
+  },
+  "tech": {
+    "models": {
+      "title": "Quản lý mẫu mới",
+      "description": "Đăng ký và quản lý mẫu mới theo mùa.",
+      "addModel": "Thêm mẫu",
+      "editModel": "Sửa mẫu",
+      "season": "Mùa",
+      "modelName": "Tên mẫu",
+      "modelNamePlaceholder": "Nhập tên mẫu",
+      "selectSeason": "Chọn mùa",
+      "guidelineCount": "Hướng dẫn",
+      "createdAt": "Ngày tạo",
+      "viewGuidelines": "Xem hướng dẫn",
+      "noModels": "Chưa có mẫu nào.",
+      "dialogDescription": "Nhập mùa và tên mẫu.",
+      "fillRequired": "Mùa và tên mẫu là bắt buộc.",
+      "created": "Đã tạo mẫu thành công.",
+      "updated": "Đã cập nhật mẫu thành công.",
+      "deleted": "Đã xóa mẫu thành công.",
+      "saveFailed": "Lưu mẫu thất bại.",
+      "deleteFailed": "Xóa mẫu thất bại.",
+      "deleteConfirm": "Xóa mẫu này?",
+      "deleteWarning": "Tất cả hướng dẫn đánh giá cho mẫu này cũng sẽ bị xóa. Hành động này không thể hoàn tác."
+    },
+    "guidelines": {
+      "title": "Hướng dẫn đánh giá mẫu",
+      "description": "Quản lý hướng dẫn đánh giá cho từng mẫu.",
+      "addGuideline": "Thêm hướng dẫn",
+      "editGuideline": "Sửa hướng dẫn",
+      "filterByModel": "Lọc theo mẫu",
+      "selectModel": "Chọn mẫu",
+      "selectModelPlaceholder": "Chọn một mẫu",
+      "materialPoint": "Điểm vật liệu",
+      "processPoint": "Điểm quy trình",
+      "standardInfo": "Thông tin tiêu chuẩn",
+      "processName": "Tên quy trình",
+      "processNamePlaceholder": "Nhập tên quy trình",
+      "details": "Chi tiết",
+      "detailsPlaceholder": "Nhập chi tiết",
+      "referencePhotos": "Ảnh tham khảo",
+      "uploadPhoto": "Tải ảnh lên (Nhấp)",
+      "uploading": "Đang tải lên...",
+      "photoPreview": "Xem trước ảnh",
+      "noGuidelines": "Chưa có hướng dẫn nào.",
+      "dialogDescription": "Nhập thông tin hướng dẫn đánh giá.",
+      "fillRequired": "Mẫu và tên quy trình là bắt buộc.",
+      "created": "Đã tạo hướng dẫn thành công.",
+      "updated": "Đã cập nhật hướng dẫn thành công.",
+      "deleted": "Đã xóa hướng dẫn thành công.",
+      "saveFailed": "Lưu hướng dẫn thất bại.",
+      "deleteFailed": "Xóa hướng dẫn thất bại.",
+      "deleteConfirm": "Xóa hướng dẫn này?",
+      "deleteWarning": "Ảnh tham khảo cũng sẽ bị xóa. Hành động này không thể hoàn tác."
+    },
+    "materialPoints": {
+      "Upper": "Thân giày",
+      "Outsole": "Đế ngoài",
+      "Midsole": "Đế giữa",
+      "Adhesive": "Keo dán",
+      "Accessories": "Phụ kiện"
+    },
+    "processPoints": {
+      "Cutting": "Cắt",
+      "Stitching": "May",
+      "Lasting": "Gò",
+      "Assembling": "Lắp ráp",
+      "Finishing": "Hoàn thiện"
+    },
+    "standardInfos": {
+      "Dimension": "Kích thước",
+      "Weight": "Trọng lượng",
+      "Color": "Màu sắc",
+      "Strength": "Độ bền",
+      "Appearance": "Ngoại quan"
+    }
   },
   "dashboard": {
     "title": "Tổng quan",

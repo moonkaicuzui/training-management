@@ -454,6 +454,16 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && hasAllowedDomain();
     }
 
+    // ========== TECH / NEW MODEL (신규 모델) ==========
+    match /tech_models/{docId} {
+      allow read, write: if isAuthenticated() && hasAllowedDomain();
+    }
+
+    // ========== TECH / NEW MODEL (리뷰 지침) ==========
+    match /tech_review_guidelines/{docId} {
+      allow read, write: if isAuthenticated() && hasAllowedDomain();
+    }
+
     // ========== 금속 탐지기 불합격 기록 ==========
     match /md_failures/{docId} {
       allow read: if isAuthenticated() && hasAllowedDomain();

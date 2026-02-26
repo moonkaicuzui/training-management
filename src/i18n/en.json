@@ -119,7 +119,11 @@
     "qualityBlog": "Quality Blog",
     "department": "Department Dashboard",
     "competency": "Competency Matrix",
-    "skillGap": "Skill Gap Analysis"
+    "skillGap": "Skill Gap Analysis",
+    "tech": {
+      "models": "New Models",
+      "reviewGuidelines": "Review Guidelines"
+    }
   },
   "sidebar": {
     "cat": {
@@ -146,7 +150,84 @@
     "quickStats": "Quick Stats",
     "monthlyTrainings": "Monthly Trainings",
     "passRate": "Pass Rate",
-    "retrainingNeeded": "Retraining Needed"
+    "retrainingNeeded": "Retraining Needed",
+    "techNewModel": "TECH / NEW MODEL"
+  },
+  "tech": {
+    "models": {
+      "title": "New Model Management",
+      "description": "Register and manage new models by season.",
+      "addModel": "Add Model",
+      "editModel": "Edit Model",
+      "season": "Season",
+      "modelName": "Model Name",
+      "modelNamePlaceholder": "Enter model name",
+      "selectSeason": "Select season",
+      "guidelineCount": "Guidelines",
+      "createdAt": "Created",
+      "viewGuidelines": "View Guidelines",
+      "noModels": "No models registered.",
+      "dialogDescription": "Enter season and model name.",
+      "fillRequired": "Season and model name are required.",
+      "created": "Model created successfully.",
+      "updated": "Model updated successfully.",
+      "deleted": "Model deleted successfully.",
+      "saveFailed": "Failed to save model.",
+      "deleteFailed": "Failed to delete model.",
+      "deleteConfirm": "Delete this model?",
+      "deleteWarning": "All review guidelines for this model will also be deleted. This action cannot be undone."
+    },
+    "guidelines": {
+      "title": "Model Review Guidelines",
+      "description": "Manage review guidelines for each model.",
+      "addGuideline": "Add Guideline",
+      "editGuideline": "Edit Guideline",
+      "filterByModel": "Filter by Model",
+      "selectModel": "Select Model",
+      "selectModelPlaceholder": "Select a model",
+      "materialPoint": "Material Point",
+      "processPoint": "Process Point",
+      "standardInfo": "Standard Info",
+      "processName": "Process Name",
+      "processNamePlaceholder": "Enter process name",
+      "details": "Details",
+      "detailsPlaceholder": "Enter details",
+      "referencePhotos": "Reference Photos",
+      "uploadPhoto": "Upload Photos (Click)",
+      "uploading": "Uploading...",
+      "photoPreview": "Photo Preview",
+      "noGuidelines": "No guidelines registered.",
+      "dialogDescription": "Enter review guideline information.",
+      "fillRequired": "Model and process name are required.",
+      "created": "Guideline created successfully.",
+      "updated": "Guideline updated successfully.",
+      "deleted": "Guideline deleted successfully.",
+      "saveFailed": "Failed to save guideline.",
+      "deleteFailed": "Failed to delete guideline.",
+      "deleteConfirm": "Delete this guideline?",
+      "deleteWarning": "Reference photos will also be deleted. This action cannot be undone."
+    },
+    "materialPoints": {
+      "Upper": "Upper",
+      "Outsole": "Outsole",
+      "Midsole": "Midsole",
+      "Adhesive": "Adhesive",
+      "Accessories": "Accessories"
+    },
+    "processPoints": {
+      "Cutting": "Cutting",
+      "Stitching": "Stitching",
+      "Lasting": "Lasting",
+      "Assembling": "Assembling",
+      "Finishing": "Finishing"
+    },
+    "standardInfos": {
+      "Dimension": "Dimension",
+      "Weight": "Weight",
+      "Color": "Color",
+      "Strength": "Strength",
+      "Appearance": "Appearance"
+    }
   },
   "dashboard": {
     "title": "Dashboard",

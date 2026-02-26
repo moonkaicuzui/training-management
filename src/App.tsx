@@ -90,6 +90,10 @@ const MDInputForm = lazy(() => import('./pages/metal-detector/MDInputForm'));
 const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
 const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
 
+// TECH / NEW MODEL 페이지
+const TechModelList = lazy(() => import('./pages/tech/TechModelList'));
+const TechReviewGuidelines = lazy(() => import('./pages/tech/TechReviewGuidelines'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -456,6 +460,20 @@ function App() {
                     <Suspense fallback={<PageLoader />}>
                       <MDReport />
                     </Suspense>
+                  } />
+                </Route>
+
+                {/* TECH / NEW MODEL */}
+                <Route path="tech">
+                  <Route path="models" element={
+                    <DevProtectedRoute requiredEmail="ksmoon@hsvina.com">
+                      <Suspense fallback={<PageLoader />}><TechModelList /></Suspense>
+                    </DevProtectedRoute>
+                  } />
+                  <Route path="review-guidelines" element={
+                    <DevProtectedRoute requiredEmail="ksmoon@hsvina.com">
+                      <Suspense fallback={<PageLoader />}><TechReviewGuidelines /></Suspense>
+                    </DevProtectedRoute>
                   } />
                 </Route>
 

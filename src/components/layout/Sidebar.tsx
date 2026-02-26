@@ -40,6 +40,8 @@ import {
   ChevronDown,
   Newspaper,
   Gauge,
+  Package,
+  FileCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -146,7 +148,13 @@ const equipmentComplianceItems: NavItem[] = [
   { titleKey: 'nav.equipment.mdReport', href: '/equipment/metal-detector/report', icon: FileBarChart },
 ];
 
-// 9. System Admin
+// 9. TECH / NEW MODEL
+const techItems: NavItem[] = [
+  { titleKey: 'nav.tech.models', href: '/tech/models', icon: Package },
+  { titleKey: 'nav.tech.reviewGuidelines', href: '/tech/review-guidelines', icon: FileCheck },
+];
+
+// 10. System Admin
 const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.notifications', href: '/notifications', icon: Bell },
   { titleKey: 'nav.audit', href: '/audit', icon: Shield },
@@ -184,6 +192,7 @@ const categories: NavCategory[] = [
       { titleKey: 'sidebar.projectsCapa', items: projectsCapaItems },
       { titleKey: 'sidebar.inspectionAqlFivePrs', items: inspectionItems },
       { titleKey: 'sidebar.equipmentCompliance', items: equipmentComplianceItems },
+      { titleKey: 'sidebar.techNewModel', items: techItems },
     ],
   },
   {
