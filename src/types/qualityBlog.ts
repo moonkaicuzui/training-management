@@ -5,7 +5,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 /** 블로그 카테고리 */
-export type BlogCategory = 'quality' | 'safety' | 'improvement' | 'report' | 'general';
+export type BlogCategory = 'quality' | 'safety' | 'improvement' | 'report' | 'general' | 'qa_activity' | 'benchmarking' | 'sop';
 
 /** 블로그 상태 */
 export type BlogStatus = 'draft' | 'published';
@@ -74,6 +74,9 @@ export const BLOG_CATEGORY_LABELS: Record<BlogCategory, string> = {
   improvement: '개선',
   report: '보고서',
   general: '일반',
+  qa_activity: 'QA 활동',
+  benchmarking: '벤치마킹',
+  sop: 'SOP',
 };
 
 /** 카테고리 색상 */
@@ -83,4 +86,7 @@ export const BLOG_CATEGORY_COLORS: Record<BlogCategory, string> = {
   improvement: '#10B981',
   report: '#8B5CF6',
   general: '#6B7280',
+  qa_activity: '#F59E0B',
+  benchmarking: '#06B6D4',
+  sop: '#EC4899',
 };

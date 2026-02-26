@@ -20,6 +20,7 @@ import {
 } from '@/services/firebase';
 import { storage } from '@/services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { compressImage } from '@/utils/imageCompression';
 import type {
   QualityBlogPost,
   CreateBlogPostInput,
@@ -167,11 +168,25 @@ export const incrementViewCount = async (id: string): Promise<void> => {
   }
 };
 
-/** Firebase Storage에 이미지 업로드 */
+/** Firebase Storage에 이미지 업로드 (압축 적용) */
 export const uploadImage = async (file: File): Promise<string> => {
-  const ext = file.name.split('.').pop() || 'jpg';
-  const filename = `quality-blog/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { compressedFile } = await compressImage(file);
+  const filename = `quality-blog/images/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
   const storageRef = ref(storage, filename);
-  await uploadBytes(storageRef, file);
+  await uploadBytes(storageRef, compressedFile);
   return getDownloadURL(storageRef);
+};
+
+/** 복수 이미지 압축 + 순차 업로드 → URL 배열 반환 */
+export const uploadImages = async (
+  files: File[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<string[]> => {
+  const urls: string[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const url = await uploadImage(files[i]);
+    urls.push(url);
+    onProgress?.(i + 1, files.length);
+  }
+  return urls;
 };

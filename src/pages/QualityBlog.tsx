@@ -2,9 +2,11 @@
  * 품질 블로그 페이지
  *
  * 보고서형 블로그 CRUD — 카드 그리드 + 상세 보기 + 작성/수정 다이얼로그
+ * QA 활동 게시판 확장: 복수 이미지 첨부 + 이미지 압축
  */
 
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -38,6 +40,7 @@ import {
   Trash2,
   Edit3,
   Image as ImageIcon,
+  Camera,
   Search,
   AlertTriangle,
   Loader2,
@@ -46,6 +49,8 @@ import {
 import { useQualityBlogStore } from '@/stores/qualityBlogStore';
 import { useAuthStore } from '@/stores/authStore';
 import * as blogService from '@/services/qualityBlogService';
+import { MultiImageUpload } from '@/components/common/MultiImageUpload';
+import { ImageGallery } from '@/components/common/ImageGallery';
 import type {
   QualityBlogPost,
   BlogCategory,
@@ -60,6 +65,9 @@ import {
 // 카테고리 탭
 const CATEGORY_TABS: { value: BlogCategory | 'all'; label: string }[] = [
   { value: 'all', label: '전체' },
+  { value: 'qa_activity', label: 'QA 활동' },
+  { value: 'benchmarking', label: '벤치마킹' },
+  { value: 'sop', label: 'SOP' },
   { value: 'quality', label: '품질' },
   { value: 'safety', label: '안전' },
   { value: 'improvement', label: '개선' },
@@ -76,6 +84,8 @@ interface BlogFormData {
   tags: string;
   status: BlogStatus;
   coverImageFile: File | null;
+  imageFiles: File[];
+  existingImages: string[];
 }
 
 const defaultForm: BlogFormData = {
@@ -86,6 +96,8 @@ const defaultForm: BlogFormData = {
   tags: '',
   status: 'published',
   coverImageFile: null,
+  imageFiles: [],
+  existingImages: [],
 };
 
 export default function QualityBlog() {
@@ -100,7 +112,14 @@ export default function QualityBlog() {
     deletePost,
   } = useQualityBlogStore();
 
-  const [activeTab, setActiveTab] = useState<BlogCategory | 'all'>('all');
+  const [searchParams] = useSearchParams();
+  const initialCategory = searchParams.get('category') as BlogCategory | null;
+
+  const [activeTab, setActiveTab] = useState<BlogCategory | 'all'>(
+    initialCategory && Object.keys(BLOG_CATEGORY_LABELS).includes(initialCategory)
+      ? initialCategory
+      : 'all'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -108,6 +127,7 @@ export default function QualityBlog() {
   const [viewingPost, setViewingPost] = useState<QualityBlogPost | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(defaultForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
 
@@ -117,6 +137,13 @@ export default function QualityBlog() {
       fetchPosts();
     }
   }, [fetchPosts]);
+
+  // URL 쿼리 파라미터 변경 시 탭 자동 선택
+  useEffect(() => {
+    if (initialCategory && Object.keys(BLOG_CATEGORY_LABELS).includes(initialCategory)) {
+      setActiveTab(initialCategory);
+    }
+  }, [initialCategory]);
 
   // 필터된 포스트
   const filteredPosts = useMemo(() => {
@@ -154,6 +181,8 @@ export default function QualityBlog() {
       tags: post.tags.join(', '),
       status: post.status,
       coverImageFile: null,
+      imageFiles: [],
+      existingImages: [...post.images],
     });
     setIsDetailOpen(false);
     setIsFormOpen(true);
@@ -169,14 +198,30 @@ export default function QualityBlog() {
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.content.trim()) return;
     setIsSubmitting(true);
+    setUploadProgress('');
 
     try {
       let coverImage = editingPost?.coverImage;
 
       // 커버 이미지 업로드
       if (formData.coverImageFile) {
+        setUploadProgress('커버 이미지 업로드 중...');
         coverImage = await blogService.uploadImage(formData.coverImageFile);
       }
+
+      // 복수 이미지 업로드
+      let newImageUrls: string[] = [];
+      if (formData.imageFiles.length > 0) {
+        newImageUrls = await blogService.uploadImages(
+          formData.imageFiles,
+          (completed, total) => {
+            setUploadProgress(`이미지 업로드 중... (${completed}/${total})`);
+          }
+        );
+      }
+
+      // 기존 이미지 + 신규 이미지 합치기
+      const images = [...formData.existingImages, ...newImageUrls];
 
       const tags = formData.tags
         .split(',')
@@ -192,6 +237,7 @@ export default function QualityBlog() {
           tags,
           status: formData.status,
           coverImage,
+          images,
         });
       } else {
         const input: CreateBlogPostInput = {
@@ -199,7 +245,7 @@ export default function QualityBlog() {
           content: formData.content,
           summary: formData.summary,
           coverImage,
-          images: [],
+          images,
           author: {
             id: user?.id || '',
             name: user?.name || user?.email || '익명',
@@ -219,6 +265,7 @@ export default function QualityBlog() {
       // handled by store
     } finally {
       setIsSubmitting(false);
+      setUploadProgress('');
     }
   };
 
@@ -267,7 +314,7 @@ export default function QualityBlog() {
 
       {/* 카테고리 탭 + 검색 */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+        <div className="flex gap-1 bg-muted rounded-lg p-0.5 flex-wrap">
           {CATEGORY_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -317,12 +364,19 @@ export default function QualityBlog() {
           >
             {/* 커버 이미지 */}
             {post.coverImage && (
-              <div className="h-40 overflow-hidden">
+              <div className="h-40 overflow-hidden relative">
                 <img
                   src={post.coverImage}
                   alt={post.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+                {/* 이미지 개수 배지 */}
+                {post.images.length > 0 && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                    <Camera className="h-3 w-3" />
+                    {post.images.length}
+                  </div>
+                )}
               </div>
             )}
             <CardContent className={post.coverImage ? 'pt-3' : 'pt-5'}>
@@ -339,6 +393,13 @@ export default function QualityBlog() {
                 </Badge>
                 {post.status === 'draft' && (
                   <Badge variant="outline" className="text-xs">초안</Badge>
+                )}
+                {/* 이미지 개수 (커버 이미지 없는 경우) */}
+                {!post.coverImage && post.images.length > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                    <Camera className="h-3 w-3" />
+                    {post.images.length}
+                  </span>
                 )}
               </div>
 
@@ -435,6 +496,13 @@ export default function QualityBlog() {
                     alt={viewingPost.title}
                     className="w-full max-h-80 object-cover"
                   />
+                </div>
+              )}
+
+              {/* 이미지 갤러리 */}
+              {viewingPost.images.length > 0 && (
+                <div className="my-4">
+                  <ImageGallery images={viewingPost.images} />
                 </div>
               )}
 
@@ -588,6 +656,21 @@ export default function QualityBlog() {
               </div>
             </div>
 
+            {/* 추가 이미지 (다중 업로드) */}
+            <div className="space-y-1.5">
+              <Label>추가 이미지</Label>
+              <MultiImageUpload
+                files={formData.imageFiles}
+                onFilesChange={(files) => setFormData({ ...formData, imageFiles: files })}
+                existingImages={formData.existingImages}
+                onRemoveExisting={(index) => {
+                  const next = formData.existingImages.filter((_, i) => i !== index);
+                  setFormData({ ...formData, existingImages: next });
+                }}
+                disabled={isSubmitting}
+              />
+            </div>
+
             {/* 태그 */}
             <div className="space-y-1.5">
               <Label>태그 (쉼표로 구분)</Label>
@@ -613,6 +696,12 @@ export default function QualityBlog() {
 
           {/* Footer */}
           <div className="flex justify-end gap-2 pt-4 border-t">
+            {uploadProgress && (
+              <span className="text-xs text-muted-foreground mr-auto flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {uploadProgress}
+              </span>
+            )}
             <Button variant="outline" onClick={() => setIsFormOpen(false)}>
               취소
             </Button>

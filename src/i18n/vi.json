@@ -117,6 +117,7 @@
     },
     "executiveReport": "Báo cáo lãnh đạo",
     "qualityBlog": "Blog chất lượng",
+    "qaActivityBoard": "Bảng hoạt động QA",
     "department": "Bảng điều khiển phòng ban",
     "competency": "Ma trận năng lực",
     "skillGap": "Phân tích khoảng trống kỹ năng",
@@ -152,6 +153,23 @@
     "passRate": "Tỷ lệ đạt",
     "retrainingNeeded": "Cần đào tạo lại",
     "techNewModel": "TECH / NEW MODEL"
+  },
+  "blog": {
+    "categories": {
+      "qa_activity": "Hoạt động QA",
+      "benchmarking": "Đối chuẩn",
+      "sop": "SOP"
+    },
+    "images": {
+      "upload": "Tải ảnh lên",
+      "dragDrop": "Nhấp hoặc kéo ảnh để thêm",
+      "maxImages": "Tối đa {{max}} ảnh",
+      "compressing": "Đang nén ảnh...",
+      "compressed": "{{original}} → {{compressed}}, tiết kiệm {{percent}}%",
+      "uploading": "Đang tải ảnh... ({{completed}}/{{total}})",
+      "gallery": "Thư viện ảnh",
+      "imageCount": "{{count}} ảnh"
+    }
   },
   "tech": {
     "models": {

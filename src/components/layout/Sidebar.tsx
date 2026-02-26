@@ -42,6 +42,7 @@ import {
   Gauge,
   Package,
   FileCheck,
+  Camera,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,7 @@ const overviewItems: NavItem[] = [
   { titleKey: 'nav.department', href: '/department', icon: BarChart3 },
   { titleKey: 'nav.reports', href: '/reports', icon: FileBarChart },
   { titleKey: 'nav.qualityBlog', href: '/quality-blog', icon: Newspaper },
+  { titleKey: 'nav.qaActivityBoard', href: '/quality-blog?category=qa_activity', icon: Camera },
   { titleKey: 'nav.executiveReport', href: '/executive-report', icon: PieChart },
   { titleKey: 'nav.trainingPlan', href: '/training-plan', icon: CalendarClock },
 ];
@@ -222,8 +224,10 @@ function saveOpenSections(sections: Set<string>) {
 /** 경로가 네비게이션 아이템에 매칭되는지 확인 (경로 세그먼트 기반) */
 function isPathMatch(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
+  // href에서 쿼리 파라미터 제거 후 비교
+  const hrefPath = href.split('?')[0];
   // 정확한 매칭 또는 하위 경로 매칭 (세그먼트 단위)
-  return pathname === href || pathname.startsWith(href + '/');
+  return pathname === hrefPath || pathname.startsWith(hrefPath + '/');
 }
 
 function findSectionForPath(pathname: string): string | null {

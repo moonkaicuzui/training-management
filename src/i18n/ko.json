@@ -117,6 +117,7 @@
     },
     "executiveReport": "경영진 리포트",
     "qualityBlog": "품질 블로그",
+    "qaActivityBoard": "QA 활동 게시판",
     "department": "부서별 대시보드",
     "competency": "역량 매트릭스",
     "skillGap": "스킬 갭 분석",
@@ -152,6 +153,23 @@
     "passRate": "합격률",
     "retrainingNeeded": "재교육 필요",
     "techNewModel": "TECH / NEW MODEL"
+  },
+  "blog": {
+    "categories": {
+      "qa_activity": "QA 활동",
+      "benchmarking": "벤치마킹",
+      "sop": "SOP"
+    },
+    "images": {
+      "upload": "이미지 업로드",
+      "dragDrop": "클릭하거나 이미지를 드래그하여 추가",
+      "maxImages": "최대 {{max}}장",
+      "compressing": "이미지 압축 중...",
+      "compressed": "{{original}} → {{compressed}}, {{percent}}% 절약",
+      "uploading": "이미지 업로드 중... ({{completed}}/{{total}})",
+      "gallery": "이미지 갤러리",
+      "imageCount": "사진 {{count}}장"
+    }
   },
   "tech": {
     "models": {

@@ -117,6 +117,7 @@
     },
     "executiveReport": "Executive Report",
     "qualityBlog": "Quality Blog",
+    "qaActivityBoard": "QA Activity Board",
     "department": "Department Dashboard",
     "competency": "Competency Matrix",
     "skillGap": "Skill Gap Analysis",
@@ -152,6 +153,23 @@
     "passRate": "Pass Rate",
     "retrainingNeeded": "Retraining Needed",
     "techNewModel": "TECH / NEW MODEL"
+  },
+  "blog": {
+    "categories": {
+      "qa_activity": "QA Activity",
+      "benchmarking": "Benchmarking",
+      "sop": "SOP"
+    },
+    "images": {
+      "upload": "Upload Images",
+      "dragDrop": "Click or drag images to add",
+      "maxImages": "Max {{max}} images",
+      "compressing": "Compressing images...",
+      "compressed": "{{original}} → {{compressed}}, {{percent}}% saved",
+      "uploading": "Uploading images... ({{completed}}/{{total}})",
+      "gallery": "Image Gallery",
+      "imageCount": "{{count}} photos"
+    }
   },
   "tech": {
     "models": {
