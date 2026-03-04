@@ -27,6 +27,7 @@ import * as auditComplianceService from './auditComplianceService';
 import * as capaService from './capaService';
 import * as mdInspectionService from './mdInspectionService';
 import * as techModelService from './techModelService';
+import * as aqlService from './aqlService';
 import { updateResultWithLog } from '@/services/firebase';
 
 import type {
@@ -544,6 +545,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const kpiResult = calculateDashboardKPIs(employees, programs, results);
   const stats = toDashboardStats(kpiResult);
+
+  // Override totalEmployees with live Google Drive CSV data
+  try {
+    const manpower = await aqlService.fetchAqlManpower();
+    const activeCount = manpower.data.filter(row => !row.stop_working_date).length;
+    if (activeCount > 0) {
+      stats.totalEmployees = activeCount;
+    }
+  } catch (error) {
+    logger.warn('[api] Failed to fetch manpower from Drive, using Firestore employee count:', error);
+  }
 
   apiCache.set('dashboard:stats', stats);
   return stats;

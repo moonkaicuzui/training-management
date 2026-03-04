@@ -523,12 +523,20 @@ export const aggregateDashboardKPIs = onSchedule(
     logger.info("Running dashboard KPI aggregation...");
 
     try {
-      // 1. Total employees (active)
-      const employeesSnapshot = await db
-        .collection("employees")
-        .where("status", "==", "active")
-        .get();
-      const totalEmployees = employeesSnapshot.size;
+      // 1. Total employees (active) - from Google Drive CSV
+      let totalEmployees = 0;
+      try {
+        const manpowerResult = await fetchManpowerFromDrive();
+        totalEmployees = manpowerResult.data.filter(row => !row.stop_working_date).length;
+        logger.info(`aggregateDashboardKPIs: totalEmployees from Drive CSV = ${totalEmployees}`);
+      } catch (driveError) {
+        logger.warn("aggregateDashboardKPIs: Drive CSV failed, falling back to Firestore", driveError);
+        const employeesSnapshot = await db
+          .collection("employees")
+          .where("status", "==", "active")
+          .get();
+        totalEmployees = employeesSnapshot.size;
+      }
 
       // 2. Total training results and pass/fail counts
       const resultsSnapshot = await db
@@ -1117,12 +1125,20 @@ export const monthlyKpiSnapshot = onSchedule(
       const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
       const yearMonth = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}`;
 
-      // 1. Total active employees
-      const employeesSnap = await db
-        .collection("employees")
-        .where("status", "in", ["active", "ACTIVE"])
-        .get();
-      const totalEmployees = employeesSnap.size;
+      // 1. Total active employees - from Google Drive CSV
+      let totalEmployees = 0;
+      try {
+        const manpowerResult = await fetchManpowerFromDrive();
+        totalEmployees = manpowerResult.data.filter(row => !row.stop_working_date).length;
+        logger.info(`monthlyKpiSnapshot: totalEmployees from Drive CSV = ${totalEmployees}`);
+      } catch (driveError) {
+        logger.warn("monthlyKpiSnapshot: Drive CSV failed, falling back to Firestore", driveError);
+        const employeesSnap = await db
+          .collection("employees")
+          .where("status", "in", ["active", "ACTIVE"])
+          .get();
+        totalEmployees = employeesSnap.size;
+      }
 
       // 2. Training results
       const resultsSnap = await db.collection("training_results").get();
