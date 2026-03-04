@@ -139,7 +139,7 @@
     "trainingOps": "Vận hành đào tạo",
     "followUp": "Theo dõi sau",
     "peopleCompetency": "Nhân sự & Năng lực",
-    "newTQC": "Đào tạo TQC mới",
+    "newTQC": "Quản lý TQC mới",
     "projectsCapa": "Dự án & CAPA",
     "projects": "Quản lý dự án",
     "inspection": "Đào tạo kiểm tra",
@@ -1564,7 +1564,7 @@
     "sectionKPI": "Hiệu suất KPI",
     "sectionTraining": "Hoạt động đào tạo",
     "sectionCAPA": "Tình trạng CAPA",
-    "sectionTQC": "TQC Nhân viên mới",
+    "sectionTQC": "Quản lý TQC mới",
     "section5PRS": "Kiểm tra 5PRS"
   },
   "aql": {
@@ -1938,8 +1938,8 @@
       "trainingEndDate": "Kết thúc đào tạo: {{date}}"
     },
     "dashboard": {
-      "title": "Đào tạo TQC mới",
-      "description": "Bảng điều khiển quản lý và tình trạng đào tạo học viên mới",
+      "title": "Quản lý TQC mới",
+      "description": "Bảng điều khiển quản lý học viên mới và tình trạng nhân sự",
       "registerTrainee": "Đăng ký học viên",
       "settings": "Cài đặt",
       "recentTrainees": "Học viên đăng ký gần đây",
@@ -1959,7 +1959,26 @@
       "retrainingCount": "{{count}} học viên cần đào tạo lại",
       "noRetraining": "Tất cả học viên đã đạt. Không cần đào tạo lại.",
       "failedScore": "Điểm: {{score}}",
-      "viewFinalResult": "Xem kết quả cuối"
+      "viewFinalResult": "Xem kết quả cuối",
+      "hrType3Title": "Tình trạng nhân viên mới HR",
+      "hrType3Total": "Tổng TYPE-3",
+      "hrType3Unregistered": "Chưa đăng ký",
+      "hrType3Desc": "Tình trạng chưa đăng ký trong nhân viên TYPE-3 HR"
+    },
+    "hrEmployees": {
+      "tabHrList": "DS nhân viên mới HR",
+      "tabRegistered": "Học viên đã đăng ký",
+      "registered": "Đã đăng ký",
+      "unregistered": "Chưa đăng ký",
+      "quickRegister": "Đăng ký nhanh",
+      "employeeNo": "Mã NV",
+      "fullName": "Họ tên",
+      "building": "Tòa nhà",
+      "entranceDate": "Ngày vào",
+      "registrationStatus": "Trạng thái đăng ký",
+      "directBoss": "Quản lý trực tiếp",
+      "noHrEmployees": "Không có dữ liệu nhân viên mới HR.",
+      "loadError": "Không thể tải dữ liệu nhân viên mới HR."
     },
     "resignations": {
       "title": "Phân tích nghỉ việc",
@@ -2026,7 +2045,7 @@
     },
     "settings": {
       "title": "Cài đặt",
-      "description": "Quản lý cài đặt mô-đun đào tạo TQC mới",
+      "description": "Quản lý cài đặt mô-đun quản lý TQC mới",
       "teamManagement": "Quản lý đội",
       "trainers": "Người hướng dẫn",
       "trainingStages": "Giai đoạn đào tạo",

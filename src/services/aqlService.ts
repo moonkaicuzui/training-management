@@ -107,6 +107,9 @@ export interface ManpowerApiRow {
   full_name: string;
   direct_boss_name: string;
   building: string;
+  role_type_std: string;
+  stop_working_date: string;
+  entrance_date: string;
 }
 
 export interface ManpowerApiResponse {
@@ -118,6 +121,17 @@ export interface ManpowerApiResponse {
 export async function fetchAqlManpower(): Promise<ManpowerApiResponse> {
   const res = await fetchWithTimeoutStrict('/api/aql/manpower');
   return res.json();
+}
+
+/**
+ * Fetch TYPE-3 (new employees) from manpower data.
+ * Excludes employees with a stop_working_date (resigned).
+ */
+export async function fetchActiveType3Employees(): Promise<ManpowerApiRow[]> {
+  const response = await fetchAqlManpower();
+  return response.data.filter(
+    (row) => row.role_type_std === 'TYPE-3' && !row.stop_working_date
+  );
 }
 
 // ============================================================

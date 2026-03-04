@@ -30,6 +30,8 @@ import type {
 } from '@/types';
 
 import * as api from '@/services/api';
+import { fetchActiveType3Employees } from '@/services/aqlService';
+import type { ManpowerApiRow } from '@/services/aqlService';
 
 // ============================================================
 // State Interface
@@ -57,6 +59,9 @@ interface NewTQCState {
   // Dashboard
   dashboardStats: NewTQCDashboardStats | null;
 
+  // HR TYPE-3 Employees
+  hrType3Employees: ManpowerApiRow[];
+
   // Loading states
   loading: {
     teams: boolean;
@@ -67,6 +72,7 @@ interface NewTQCState {
     dashboard: boolean;
     analysis: boolean;
     saving: boolean;
+    hrEmployees: boolean;
   };
 
   // Error state
@@ -108,6 +114,9 @@ interface NewTQCState {
   // Actions - Dashboard
   fetchDashboardStats: () => Promise<void>;
 
+  // Actions - HR TYPE-3 Employees
+  fetchHrType3Employees: () => Promise<void>;
+
   // Actions - Error handling
   clearError: () => void;
 }
@@ -131,6 +140,7 @@ export const useNewTQCStore = create<NewTQCState>()(
       resignationFilters: {},
       resignationAnalysis: null,
       dashboardStats: null,
+      hrType3Employees: [],
       loading: {
         teams: false,
         trainees: false,
@@ -140,6 +150,7 @@ export const useNewTQCStore = create<NewTQCState>()(
         dashboard: false,
         analysis: false,
         saving: false,
+        hrEmployees: false,
       },
       error: null,
 
@@ -635,6 +646,26 @@ export const useNewTQCStore = create<NewTQCState>()(
         }
       },
 
+      // ========== HR TYPE-3 Employee Actions ==========
+
+      fetchHrType3Employees: async () => {
+        set(state => ({
+          loading: { ...state.loading, hrEmployees: true },
+          error: null,
+        }));
+
+        try {
+          const employees = await fetchActiveType3Employees();
+          set({ hrType3Employees: employees, loading: { ...get().loading, hrEmployees: false } });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to fetch HR TYPE-3 employees';
+          set({
+            error: message,
+            loading: { ...get().loading, hrEmployees: false },
+          });
+        }
+      },
+
       // ========== Error Actions ==========
 
       clearError: () => {
@@ -657,6 +688,7 @@ export const useNewTQCUpcomingMeetings = () => useNewTQCStore(state => state.upc
 export const useNewTQCResignations = () => useNewTQCStore(state => state.resignations);
 export const useNewTQCResignationAnalysis = () => useNewTQCStore(state => state.resignationAnalysis);
 export const useNewTQCDashboardStats = () => useNewTQCStore(state => state.dashboardStats);
+export const useNewTQCHrType3Employees = () => useNewTQCStore(state => state.hrType3Employees);
 export const useNewTQCLoading = () => useNewTQCStore(state => state.loading);
 export const useNewTQCError = () => useNewTQCStore(state => state.error);
 
@@ -699,6 +731,8 @@ export const useNewTQCActions = () =>
       createResignation: state.createResignation,
       // Dashboard
       fetchDashboardStats: state.fetchDashboardStats,
+      // HR TYPE-3 Employees
+      fetchHrType3Employees: state.fetchHrType3Employees,
       // Error
       clearError: state.clearError,
     }))

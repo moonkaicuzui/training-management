@@ -30,6 +30,7 @@ import {
   useNewTQCDashboardStats,
   useNewTQCTrainees,
   useNewTQCUpcomingMeetings,
+  useNewTQCHrType3Employees,
   useNewTQCLoading,
   useNewTQCActions,
 } from '@/stores/newTqcStore';
@@ -41,8 +42,9 @@ export default function NewTQCDashboard() {
   const dashboardStats = useNewTQCDashboardStats();
   const trainees = useNewTQCTrainees();
   const upcomingMeetings = useNewTQCUpcomingMeetings();
+  const hrType3Employees = useNewTQCHrType3Employees();
   const loading = useNewTQCLoading();
-  const { fetchDashboardStats, fetchTrainees, fetchUpcomingMeetings } = useNewTQCActions();
+  const { fetchDashboardStats, fetchTrainees, fetchUpcomingMeetings, fetchHrType3Employees } = useNewTQCActions();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +52,7 @@ export default function NewTQCDashboard() {
         fetchDashboardStats(),
         fetchTrainees(),
         fetchUpcomingMeetings(7),
+        fetchHrType3Employees(),
       ]);
     };
     fetchData();
@@ -61,6 +64,11 @@ export default function NewTQCDashboard() {
 
   // Get trainees who failed the final test and need re-training
   const failedTrainees = trainees.filter(t => t.final_result === 'FAIL');
+
+  // HR TYPE-3 unregistered count
+  const hrUnregisteredCount = hrType3Employees.filter(
+    (emp) => !trainees.some((t) => t.employee_id === emp.employee_no)
+  ).length;
 
   // Get recently added trainees (last 5)
   const recentTrainees = [...trainees]
@@ -92,6 +100,41 @@ export default function NewTQCDashboard() {
 
       {/* Stats Cards */}
       <NewTQCStatsCards stats={dashboardStats} isLoading={loading.dashboard} />
+
+      {/* HR TYPE-3 Employee Stats */}
+      {hrType3Employees.length > 0 && (
+        <Card
+          className="cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => navigate('/new-tqc/trainees?tab=hr')}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-500/10 rounded-full">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('newTqc.dashboard.hrType3Title')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('newTqc.dashboard.hrType3Desc')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{hrType3Employees.length}</p>
+                  <p className="text-xs text-muted-foreground">{t('newTqc.dashboard.hrType3Total')}</p>
+                </div>
+                {hrUnregisteredCount > 0 && (
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-orange-500">{hrUnregisteredCount}</p>
+                    <p className="text-xs text-muted-foreground">{t('newTqc.dashboard.hrType3Unregistered')}</p>
+                  </div>
+                )}
+                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">

@@ -139,7 +139,7 @@
     "trainingOps": "교육 운영",
     "followUp": "후속 관리",
     "peopleCompetency": "인력 & 역량",
-    "newTQC": "신입 TQC 교육",
+    "newTQC": "신입 TQC 관리",
     "projectsCapa": "프로젝트 & CAPA",
     "projects": "프로젝트 관리",
     "inspection": "검사 교육",
@@ -1564,7 +1564,7 @@
     "sectionKPI": "KPI 성과",
     "sectionTraining": "교육 활동",
     "sectionCAPA": "CAPA 현황",
-    "sectionTQC": "신입 TQC 교육",
+    "sectionTQC": "신입 TQC 관리",
     "section5PRS": "5PRS 검사"
   },
   "aql": {
@@ -1938,8 +1938,8 @@
       "trainingEndDate": "교육 종료: {{date}}"
     },
     "dashboard": {
-      "title": "신입 TQC 교육",
-      "description": "신입 교육생 관리 및 교육 현황 대시보드",
+      "title": "신입 TQC 관리",
+      "description": "신입 교육생 관리 및 HR 인력 현황 대시보드",
       "registerTrainee": "교육생 등록",
       "settings": "설정",
       "recentTrainees": "최근 등록 교육생",
@@ -1959,7 +1959,26 @@
       "retrainingCount": "{{count}}명의 교육생이 재교육 필요",
       "noRetraining": "모든 교육생이 합격했습니다. 재교육이 필요하지 않습니다.",
       "failedScore": "점수: {{score}}",
-      "viewFinalResult": "최종 결과 보기"
+      "viewFinalResult": "최종 결과 보기",
+      "hrType3Title": "HR 신입 인원 현황",
+      "hrType3Total": "TYPE-3 총원",
+      "hrType3Unregistered": "미등록",
+      "hrType3Desc": "HR 시스템 TYPE-3 인원 중 미등록 현황"
+    },
+    "hrEmployees": {
+      "tabHrList": "HR 신입 목록",
+      "tabRegistered": "등록 교육생",
+      "registered": "등록됨",
+      "unregistered": "미등록",
+      "quickRegister": "빠른 등록",
+      "employeeNo": "사번",
+      "fullName": "이름",
+      "building": "빌딩",
+      "entranceDate": "입사일",
+      "registrationStatus": "등록 상태",
+      "directBoss": "직속 상관",
+      "noHrEmployees": "HR 신입 인원 데이터가 없습니다.",
+      "loadError": "HR 신입 인원 데이터를 불러오지 못했습니다."
     },
     "resignations": {
       "title": "퇴사 분석",
@@ -2026,7 +2045,7 @@
     },
     "settings": {
       "title": "설정",
-      "description": "신입 TQC 교육 모듈 설정 관리",
+      "description": "신입 TQC 관리 모듈 설정 관리",
       "teamManagement": "팀 관리",
       "trainers": "트레이너",
       "trainingStages": "교육 단계",

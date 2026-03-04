@@ -25,6 +25,9 @@ export interface ManpowerRow {
   full_name: string;
   direct_boss_name: string;
   building: string;
+  role_type_std: string;
+  stop_working_date: string;
+  entrance_date: string;
 }
 
 /**
@@ -122,6 +125,15 @@ function parseCsvToManpowerRows(csvContent: string): ManpowerRow[] {
   const buildingIdx = headers.findIndex(
     (h) => h.trim().toLowerCase() === "building"
   );
+  const roleTypeStdIdx = headers.findIndex(
+    (h) => h.trim().toLowerCase() === "role type std"
+  );
+  const stopWorkingDateIdx = headers.findIndex(
+    (h) => h.trim().toLowerCase() === "stop working date"
+  );
+  const entranceDateIdx = headers.findIndex(
+    (h) => h.trim().toLowerCase() === "entrance date"
+  );
 
   if (employeeNoIdx === -1 || fullNameIdx === -1) {
     logger.warn(
@@ -148,6 +160,12 @@ function parseCsvToManpowerRows(csvContent: string): ManpowerRow[] {
       direct_boss_name:
         directBossIdx >= 0 ? (cols[directBossIdx] || "").trim() : "",
       building: buildingIdx >= 0 ? (cols[buildingIdx] || "").trim() : "",
+      role_type_std:
+        roleTypeStdIdx >= 0 ? (cols[roleTypeStdIdx] || "").trim() : "",
+      stop_working_date:
+        stopWorkingDateIdx >= 0 ? (cols[stopWorkingDateIdx] || "").trim() : "",
+      entrance_date:
+        entranceDateIdx >= 0 ? (cols[entranceDateIdx] || "").trim() : "",
     });
   }
 

@@ -33,6 +33,7 @@ interface TraineeFormDialogProps {
   onSubmit: (data: NewTQCTraineeInput) => Promise<void>;
   trainee?: NewTQCTrainee | null;
   teams: NewTQCTeam[];
+  initialData?: Partial<NewTQCTraineeInput>;
 }
 
 const initialFormData: NewTQCTraineeInput = {
@@ -52,6 +53,7 @@ export function TraineeFormDialog({
   onSubmit,
   trainee,
   teams,
+  initialData,
 }: TraineeFormDialogProps) {
   const { t } = useTranslation();
   const isEdit = !!trainee;
@@ -71,11 +73,13 @@ export function TraineeFormDialog({
         working_area: trainee.working_area,
         introducer: trainee.introducer,
       });
+    } else if (initialData) {
+      setFormData({ ...initialFormData, ...initialData });
     } else {
       setFormData(initialFormData);
     }
     setErrors({});
-  }, [trainee, open]);
+  }, [trainee, initialData, open]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};

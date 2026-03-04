@@ -139,7 +139,7 @@
     "trainingOps": "Training Operations",
     "followUp": "Follow-up",
     "peopleCompetency": "People & Competency",
-    "newTQC": "New TQC Training",
+    "newTQC": "New TQC Management",
     "projectsCapa": "Projects & CAPA",
     "projects": "Project Management",
     "inspection": "Inspection Training",
@@ -1564,7 +1564,7 @@
     "sectionKPI": "KPI Performance",
     "sectionTraining": "Training Activities",
     "sectionCAPA": "CAPA Status",
-    "sectionTQC": "TQC New Employee",
+    "sectionTQC": "New TQC Management",
     "section5PRS": "5PRS Inspection"
   },
   "aql": {
@@ -1938,8 +1938,8 @@
       "trainingEndDate": "Training end: {{date}}"
     },
     "dashboard": {
-      "title": "New TQC Training",
-      "description": "New trainee management and training status dashboard",
+      "title": "New TQC Management",
+      "description": "New trainee management and HR manpower status dashboard",
       "registerTrainee": "Register Trainee",
       "settings": "Settings",
       "recentTrainees": "Recent Trainees",
@@ -1959,7 +1959,26 @@
       "retrainingCount": "{{count}} trainee(s) need re-training",
       "noRetraining": "All trainees passed. No re-training needed.",
       "failedScore": "Score: {{score}}",
-      "viewFinalResult": "View Final Results"
+      "viewFinalResult": "View Final Results",
+      "hrType3Title": "HR New Employee Status",
+      "hrType3Total": "TYPE-3 Total",
+      "hrType3Unregistered": "Unregistered",
+      "hrType3Desc": "Unregistered status among HR TYPE-3 employees"
+    },
+    "hrEmployees": {
+      "tabHrList": "HR New Employees",
+      "tabRegistered": "Registered Trainees",
+      "registered": "Registered",
+      "unregistered": "Unregistered",
+      "quickRegister": "Quick Register",
+      "employeeNo": "Employee No",
+      "fullName": "Full Name",
+      "building": "Building",
+      "entranceDate": "Entrance Date",
+      "registrationStatus": "Registration Status",
+      "directBoss": "Direct Boss",
+      "noHrEmployees": "No HR new employee data available.",
+      "loadError": "Failed to load HR new employee data."
     },
     "resignations": {
       "title": "Resignation Analysis",
@@ -2026,7 +2045,7 @@
     },
     "settings": {
       "title": "Settings",
-      "description": "Manage New TQC training module settings",
+      "description": "Manage New TQC management module settings",
       "teamManagement": "Team Management",
       "trainers": "Trainers",
       "trainingStages": "Training Stages",
