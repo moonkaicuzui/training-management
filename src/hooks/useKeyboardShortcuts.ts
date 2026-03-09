@@ -21,6 +21,9 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      // Ignore synthetic/programmatic keyboard events (e.g., from browser extensions, automation)
+      if (!e.isTrusted) return;
+
       const target = e.target as HTMLElement;
       const isInput =
         target.tagName === 'INPUT' ||
