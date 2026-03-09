@@ -24,63 +24,37 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 
-import { CAPAAISuggestions } from '@/components/capa/CAPAAISuggestions';
 import {
   CAPA_STATUS_LABELS,
   type CAPAStatus,
-  type CAPASeverity,
   type CAPAStageUpdate,
   type CAPA,
 } from '@/types/capa';
 
-// Status badge colors (shared with CAPADetail)
-export const STATUS_COLORS: Record<CAPAStatus, string> = {
-  discovery: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  investigation: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  action: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  verification: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  closed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  rejected: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-};
+// Re-export types and constants from stage-forms/types for backward compatibility
+export type {
+  InvestigationFormData,
+  ActionFormData,
+  VerificationFormData,
+  ClosureFormData,
+} from '@/components/capa/stage-forms/types';
 
-export const SEVERITY_COLORS: Record<CAPASeverity, string> = {
-  critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-  major: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  minor: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-};
+export { STATUS_COLORS, SEVERITY_COLORS } from '@/components/capa/stage-forms/types';
 
-// Stage-specific form data interfaces
-export interface InvestigationFormData {
-  rootCauseAnalysis: string;
-  impactAssessment: string;
-  findings: string;
-  investigatedBy: string;
-}
+import { STATUS_COLORS } from '@/components/capa/stage-forms/types';
+import type {
+  InvestigationFormData,
+  ActionFormData,
+  VerificationFormData,
+  ClosureFormData,
+} from '@/components/capa/stage-forms/types';
 
-export interface ActionFormData {
-  actionNotes: string;
-  plannedBy: string;
-}
-
-export interface VerificationFormData {
-  verificationMethod: string;
-  effectivenessScore: string;
-  isEffective: boolean;
-  verificationNotes: string;
-  verifiedBy: string;
-}
-
-export interface ClosureFormData {
-  finalReview: string;
-  lessonsLearned: string;
-  documentationComplete: boolean;
-  knowledgeShared: boolean;
-  closedBy: string;
-}
+import { InvestigationForm } from '@/components/capa/stage-forms/InvestigationForm';
+import { ActionForm } from '@/components/capa/stage-forms/ActionForm';
+import { VerificationForm } from '@/components/capa/stage-forms/VerificationForm';
+import { ClosureForm } from '@/components/capa/stage-forms/ClosureForm';
 
 // ========== Advance Stage Dialog ==========
 
@@ -302,353 +276,39 @@ export function AdvanceStageDialog({
     switch (currentCAPA.status) {
       case 'discovery':
         return (
-          <div className="space-y-4">
-            {(!currentCAPA.discovery?.immediateActions?.trim()) && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm text-destructive">
-                  {t('capa.validation.immediateActionRequired')}
-                </p>
-              </div>
-            )}
-            {stageValidationErrors.immediateActions && (
-              <p className="text-sm text-destructive">{stageValidationErrors.immediateActions}</p>
-            )}
-
-            <CAPAAISuggestions
-              capaId={currentCAPA.id}
-              problemDescription={currentCAPA.discovery?.problemDescription || ''}
-              affectedArea={currentCAPA.discovery?.affectedArea || ''}
-              severity={currentCAPA.severity}
-              source={currentCAPA.discovery?.source || ''}
-              onSelectRootCause={(cause) =>
-                setInvestigationForm((prev) => ({
-                  ...prev,
-                  rootCauseAnalysis: cause,
-                }))
-              }
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="rootCauseAnalysis">{t('capa.rootCauseAnalysis')} *</Label>
-              <Textarea
-                id="rootCauseAnalysis"
-                value={investigationForm.rootCauseAnalysis}
-                onChange={(e) =>
-                  setInvestigationForm((prev) => ({
-                    ...prev,
-                    rootCauseAnalysis: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.rootCauseAnalysis')}
-                className={stageValidationErrors.rootCauseAnalysis ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.rootCauseAnalysis && (
-                <p className="text-sm text-destructive">{stageValidationErrors.rootCauseAnalysis}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="impactAssessment">{t('capa.impactAssessment')} *</Label>
-              <Textarea
-                id="impactAssessment"
-                value={investigationForm.impactAssessment}
-                onChange={(e) =>
-                  setInvestigationForm((prev) => ({
-                    ...prev,
-                    impactAssessment: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.impactAssessment')}
-                className={stageValidationErrors.impactAssessment ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.impactAssessment && (
-                <p className="text-sm text-destructive">{stageValidationErrors.impactAssessment}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="findings">{t('capa.findings')} *</Label>
-              <Textarea
-                id="findings"
-                value={investigationForm.findings}
-                onChange={(e) =>
-                  setInvestigationForm((prev) => ({
-                    ...prev,
-                    findings: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.findings')}
-                className={stageValidationErrors.findings ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.findings && (
-                <p className="text-sm text-destructive">{stageValidationErrors.findings}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="investigatedBy">{t('capa.investigatedBy')} *</Label>
-              <Input
-                id="investigatedBy"
-                value={investigationForm.investigatedBy}
-                onChange={(e) =>
-                  setInvestigationForm((prev) => ({
-                    ...prev,
-                    investigatedBy: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.investigatedBy')}
-                className={stageValidationErrors.investigatedBy ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.investigatedBy && (
-                <p className="text-sm text-destructive">{stageValidationErrors.investigatedBy}</p>
-              )}
-            </div>
-          </div>
+          <InvestigationForm
+            currentCAPA={currentCAPA}
+            form={investigationForm}
+            onChange={setInvestigationForm}
+            validationErrors={stageValidationErrors}
+          />
         );
-
       case 'investigation':
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="actionNotes">{t('capa.actionNotes')} *</Label>
-              <Textarea
-                id="actionNotes"
-                value={actionForm.actionNotes}
-                onChange={(e) =>
-                  setActionForm((prev) => ({
-                    ...prev,
-                    actionNotes: e.target.value,
-                  }))
-                }
-                rows={4}
-                placeholder={t('capa.actionNotesPlaceholder')}
-                className={stageValidationErrors.actionNotes ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.actionNotes && (
-                <p className="text-sm text-destructive">{stageValidationErrors.actionNotes}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="plannedBy">{t('capa.assignedTo')} *</Label>
-              <Input
-                id="plannedBy"
-                value={actionForm.plannedBy}
-                onChange={(e) =>
-                  setActionForm((prev) => ({
-                    ...prev,
-                    plannedBy: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.assignedTo')}
-                className={stageValidationErrors.plannedBy ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.plannedBy && (
-                <p className="text-sm text-destructive">{stageValidationErrors.plannedBy}</p>
-              )}
-            </div>
-          </div>
+          <ActionForm
+            form={actionForm}
+            onChange={setActionForm}
+            validationErrors={stageValidationErrors}
+          />
         );
-
       case 'action':
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="verificationMethod">{t('capa.verificationMethod')} *</Label>
-              <Input
-                id="verificationMethod"
-                value={verificationForm.verificationMethod}
-                onChange={(e) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    verificationMethod: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.verificationMethod')}
-                className={stageValidationErrors.verificationMethod ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.verificationMethod && (
-                <p className="text-sm text-destructive">{stageValidationErrors.verificationMethod}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="effectivenessScore">{t('capa.form.effectivenessScoreLabel')} *</Label>
-              <Input
-                id="effectivenessScore"
-                type="number"
-                min={0}
-                max={100}
-                value={verificationForm.effectivenessScore}
-                onChange={(e) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    effectivenessScore: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.form.effectivenessScorePlaceholder')}
-                className={stageValidationErrors.effectivenessScore ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.effectivenessScore && (
-                <p className="text-sm text-destructive">{stageValidationErrors.effectivenessScore}</p>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isEffective"
-                checked={verificationForm.isEffective}
-                onCheckedChange={(checked) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    isEffective: checked === true,
-                  }))
-                }
-              />
-              <Label htmlFor="isEffective">{t('capa.isEffective')}</Label>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="verificationNotes">{t('capa.verificationNotes')} *</Label>
-              <Textarea
-                id="verificationNotes"
-                value={verificationForm.verificationNotes}
-                onChange={(e) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    verificationNotes: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.verificationNotesPlaceholder')}
-                className={stageValidationErrors.verificationNotes ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.verificationNotes && (
-                <p className="text-sm text-destructive">{stageValidationErrors.verificationNotes}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="verifiedBy">{t('capa.verifiedBy')} *</Label>
-              <Input
-                id="verifiedBy"
-                value={verificationForm.verifiedBy}
-                onChange={(e) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    verifiedBy: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.verifiedBy')}
-                className={stageValidationErrors.verifiedBy ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.verifiedBy && (
-                <p className="text-sm text-destructive">{stageValidationErrors.verifiedBy}</p>
-              )}
-            </div>
-          </div>
+          <VerificationForm
+            form={verificationForm}
+            onChange={setVerificationForm}
+            validationErrors={stageValidationErrors}
+          />
         );
-
       case 'verification':
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="effectivenessScoreClosure">{t('capa.form.effectivenessScoreLabel')} *</Label>
-              <Input
-                id="effectivenessScoreClosure"
-                type="number"
-                min={0}
-                max={100}
-                value={verificationForm.effectivenessScore}
-                onChange={(e) =>
-                  setVerificationForm((prev) => ({
-                    ...prev,
-                    effectivenessScore: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.form.effectivenessScorePlaceholder')}
-                className={stageValidationErrors.effectivenessScore ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.effectivenessScore && (
-                <p className="text-sm text-destructive">{stageValidationErrors.effectivenessScore}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="finalReview">{t('capa.finalReview')} *</Label>
-              <Textarea
-                id="finalReview"
-                value={closureForm.finalReview}
-                onChange={(e) =>
-                  setClosureForm((prev) => ({
-                    ...prev,
-                    finalReview: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.finalReviewPlaceholder')}
-                className={stageValidationErrors.finalReview ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.finalReview && (
-                <p className="text-sm text-destructive">{stageValidationErrors.finalReview}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lessonsLearned">{t('capa.lessonsLearned')}</Label>
-              <Textarea
-                id="lessonsLearned"
-                value={closureForm.lessonsLearned}
-                onChange={(e) =>
-                  setClosureForm((prev) => ({
-                    ...prev,
-                    lessonsLearned: e.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder={t('capa.lessonsLearnedPlaceholder')}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="documentationComplete"
-                checked={closureForm.documentationComplete}
-                onCheckedChange={(checked) =>
-                  setClosureForm((prev) => ({
-                    ...prev,
-                    documentationComplete: checked === true,
-                  }))
-                }
-              />
-              <Label htmlFor="documentationComplete">{t('capa.documentationComplete')}</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="knowledgeShared"
-                checked={closureForm.knowledgeShared}
-                onCheckedChange={(checked) =>
-                  setClosureForm((prev) => ({
-                    ...prev,
-                    knowledgeShared: checked === true,
-                  }))
-                }
-              />
-              <Label htmlFor="knowledgeShared">{t('capa.knowledgeShared')}</Label>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="closedBy">{t('capa.closedBy')} *</Label>
-              <Input
-                id="closedBy"
-                value={closureForm.closedBy}
-                onChange={(e) =>
-                  setClosureForm((prev) => ({
-                    ...prev,
-                    closedBy: e.target.value,
-                  }))
-                }
-                placeholder={t('capa.closedBy')}
-                className={stageValidationErrors.closedBy ? 'border-destructive' : ''}
-              />
-              {stageValidationErrors.closedBy && (
-                <p className="text-sm text-destructive">{stageValidationErrors.closedBy}</p>
-              )}
-            </div>
-          </div>
+          <ClosureForm
+            verificationForm={verificationForm}
+            onVerificationChange={setVerificationForm}
+            closureForm={closureForm}
+            onClosureChange={setClosureForm}
+            validationErrors={stageValidationErrors}
+          />
         );
-
       default:
         return null;
     }

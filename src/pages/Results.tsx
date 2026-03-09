@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Save, Pencil, History, AlertTriangle, Loader2 } from 'lucide-react';
-import { ExportDropdown } from '@/components/common/ExportDropdown';
 import { useExport } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -15,57 +11,26 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { format, differenceInMonths } from 'date-fns';
-import type { ResultInput, TrainingResult, Employee } from '@/types';
+import { format } from 'date-fns';
+import type { ResultInput } from '@/types';
 import { calculateGrade, programThresholds } from '@/utils/gradeCalculator';
 
-interface ResultEntry {
-  employee_id: string;
-  employee_name: string;
-  score: number | null;
-  result: TrainingResult;
-  remarks: string;
-  isDuplicate?: boolean; // 중복 여부 표시
-}
-
-interface DuplicateInfo {
-  employee_id: string;
-  employee_name: string;
-  existingResult: {
-    training_date: string;
-    score: number | null;
-    result: string;
-    grade: string | null;
-  };
-}
+import { ResultsToolbar } from '@/components/results/ResultsToolbar';
+import { ResultsTable } from '@/components/results/ResultsTable';
+import { ResultInputForm } from '@/components/results/ResultInputDialog';
+import type { ResultEntry } from '@/components/results/ResultInputDialog';
+import { ResultEditDialog, DuplicateWarningDialog } from '@/components/results/ResultEditDialog';
+import type { EditingResultState, DuplicateInfo } from '@/components/results/ResultEditDialog';
 
 export default function Results() {
   const { t } = useTranslation();
@@ -88,13 +53,7 @@ export default function Results() {
   const [selectedSession, setSelectedSession] = useState<string>('');
   const [resultEntries, setResultEntries] = useState<ResultEntry[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingResult, setEditingResult] = useState<{
-    result_id: string;
-    score: number | null;
-    result: 'PASS' | 'FAIL' | 'ABSENT';
-    remarks: string;
-    editReason: string;
-  } | null>(null);
+  const [editingResult, setEditingResult] = useState<EditingResultState | null>(null);
 
   // Duplicate detection state
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
@@ -126,7 +85,7 @@ export default function Results() {
   // Initialize result entries when session is selected
   useEffect(() => {
     if (session && session.attendees.length > 0) {
-      const entries = session.attendees.map(empId => {
+      const entries: ResultEntry[] = session.attendees.map(empId => {
         const emp = employees.find(e => e.employee_id === empId);
         return {
           employee_id: empId,
@@ -136,7 +95,7 @@ export default function Results() {
           remarks: '',
         };
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 세션 선택 시 결과 엔트리 초기화
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- session selection initializes entries
       setResultEntries(entries);
     } else {
       setResultEntries([]);
@@ -156,12 +115,9 @@ export default function Results() {
     const newEntries = [...resultEntries];
     const numScore = score === '' ? null : parseInt(score);
     newEntries[index].score = numScore;
-
-    // Auto-set result based on passing score
     if (program && numScore !== null) {
       newEntries[index].result = numScore >= program.passing_score ? 'PASS' : 'FAIL';
     }
-
     setResultEntries(newEntries);
   };
 
@@ -177,19 +133,12 @@ export default function Results() {
     setResultEntries(newEntries);
   };
 
-  // Check for existing results (duplicates)
   const checkForDuplicates = (resultsToCheck: ResultInput[]): DuplicateInfo[] => {
     const foundDuplicates: DuplicateInfo[] = [];
-
     for (const input of resultsToCheck) {
-      // Check against existing results
       const existing = results.find(
-        (r) =>
-          r.employee_id === input.employee_id &&
-          r.program_code === input.program_code &&
-          r.training_date === input.training_date
+        (r) => r.employee_id === input.employee_id && r.program_code === input.program_code && r.training_date === input.training_date
       );
-
       if (existing) {
         const emp = employees.find((e) => e.employee_id === input.employee_id);
         foundDuplicates.push({
@@ -204,13 +153,25 @@ export default function Results() {
         });
       }
     }
-
     return foundDuplicates;
+  };
+
+  const saveResults = async (resultsToSave: ResultInput[]) => {
+    try {
+      await recordResults(resultsToSave);
+      addToast({ type: 'success', title: t('messages.saveSuccess'), description: t('results.savedCount', { count: resultsToSave.length }) });
+      setSelectedSession('');
+      setResultEntries([]);
+      setDuplicateDialogOpen(false);
+      setDuplicates([]);
+      setPendingResults([]);
+    } catch {
+      addToast({ type: 'error', title: t('messages.saveError') });
+    }
   };
 
   const handleSaveResults = async () => {
     if (!session || !program || isSubmitting) return;
-
     const resultsToSave: ResultInput[] = resultEntries.map((entry) => ({
       session_id: session.session_id,
       employee_id: entry.employee_id,
@@ -222,76 +183,34 @@ export default function Results() {
       remarks: entry.remarks,
     }));
 
-    // Check for duplicates
     const foundDuplicates = checkForDuplicates(resultsToSave);
-
     if (foundDuplicates.length > 0) {
-      // Show duplicate warning dialog
       setDuplicates(foundDuplicates);
       setPendingResults(resultsToSave);
       setDuplicateDialogOpen(true);
       return;
     }
 
-    // No duplicates, save directly
     setIsSubmitting(true);
-    try {
-      await saveResults(resultsToSave);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const saveResults = async (resultsToSave: ResultInput[]) => {
-    try {
-      await recordResults(resultsToSave);
-      addToast({
-        type: 'success',
-        title: t('messages.saveSuccess'),
-        description: t('results.savedCount', { count: resultsToSave.length }),
-      });
-      setSelectedSession('');
-      setResultEntries([]);
-      setDuplicateDialogOpen(false);
-      setDuplicates([]);
-      setPendingResults([]);
-    } catch {
-      addToast({
-        type: 'error',
-        title: t('messages.saveError'),
-      });
-    }
+    try { await saveResults(resultsToSave); }
+    finally { setIsSubmitting(false); }
   };
 
   const handleConfirmWithDuplicates = async () => {
     if (isSubmitting) return;
-
-    // Filter out duplicates and save only non-duplicate results
     const nonDuplicateResults = pendingResults.filter(
       (r) => !duplicates.some((d) => d.employee_id === r.employee_id)
     );
-
     if (nonDuplicateResults.length === 0) {
-      addToast({
-        type: 'error',
-        title: t('results.noDuplicateResults'),
-        description: t('results.allAlreadyEntered'),
-      });
+      addToast({ type: 'error', title: t('results.noDuplicateResults'), description: t('results.allAlreadyEntered') });
       setDuplicateDialogOpen(false);
       return;
     }
-
     setIsSubmitting(true);
     try {
       await saveResults(nonDuplicateResults);
-      addToast({
-        type: 'info',
-        title: t('results.savedExcludingDuplicates'),
-        description: t('results.duplicatesExcluded', { count: duplicates.length }),
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      addToast({ type: 'info', title: t('results.savedExcludingDuplicates'), description: t('results.duplicatesExcluded', { count: duplicates.length }) });
+    } finally { setIsSubmitting(false); }
   };
 
   const handleEditResult = (result: typeof results[0]) => {
@@ -308,14 +227,10 @@ export default function Results() {
   const handleSaveEdit = async () => {
     if (!editingResult || !editingResult.editReason || isEditSubmitting) {
       if (!editingResult?.editReason) {
-        addToast({
-          type: 'error',
-          title: t('messages.editReasonRequired'),
-        });
+        addToast({ type: 'error', title: t('messages.editReasonRequired') });
       }
       return;
     }
-
     setIsEditSubmitting(true);
     try {
       await updateResult(editingResult.result_id, {
@@ -323,52 +238,18 @@ export default function Results() {
         result: editingResult.result,
         remarks: editingResult.remarks,
       }, editingResult.editReason);
-
-      addToast({
-        type: 'success',
-        title: t('messages.saveSuccess'),
-      });
+      addToast({ type: 'success', title: t('messages.saveSuccess') });
       setEditDialogOpen(false);
       setEditingResult(null);
       fetchResults({});
     } catch {
-      addToast({
-        type: 'error',
-        title: t('messages.saveError'),
-      });
-    } finally {
-      setIsEditSubmitting(false);
-    }
+      addToast({ type: 'error', title: t('messages.saveError') });
+    } finally { setIsEditSubmitting(false); }
   };
 
-  // Calculate grade based on score and program thresholds
-  const getGrade = (score: number | null, prog: typeof program) => {
-    if (!score || !prog) return null;
-    return calculateGrade(score, programThresholds(prog.grade_aa, prog.grade_a, prog.grade_b));
-  };
-
-  // Helper: get employee by ID
-  const getEmployee = (employeeId: string): Employee | undefined => {
-    return employees.find(e => e.employee_id === employeeId);
-  };
-
-  // Helper: calculate working experience from hire_date to now
-  const getWorkExperience = (hireDate: string | undefined): string => {
-    if (!hireDate) return '-';
-    try {
-      const totalMonths = differenceInMonths(new Date(), new Date(hireDate));
-      const years = Math.floor(totalMonths / 12);
-      const months = totalMonths % 12;
-      return t('results.yearsMonths', { years, months });
-    } catch {
-      return '-';
-    }
-  };
-
-  // Helper: format test attempt
-  const formatTestAttempt = (attempt: number | undefined): string => {
-    if (attempt == null) return '-';
-    return t('results.nthAttempt', { n: attempt });
+  const getGrade = (score: number | null) => {
+    if (!score || !program) return null;
+    return calculateGrade(score, programThresholds(program.grade_aa, program.grade_a, program.grade_b));
   };
 
   if (loading.sessions || loading.programs || loading.employees) {
@@ -383,19 +264,15 @@ export default function Results() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('results.pageTitle')}</h1>
-          <p className="text-muted-foreground">
-            {t('results.pageDescription')}
-          </p>
+          <p className="text-muted-foreground">{t('results.pageDescription')}</p>
         </div>
       </div>
 
-      {/* Session Selection */}
+      {/* Session Selection & Result Input */}
       <Card>
         <CardHeader>
           <CardTitle>{t('results.inputTitle')}</CardTitle>
-          <CardDescription>
-            {t('results.inputDescription')}
-          </CardDescription>
+          <CardDescription>{t('results.inputDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -408,9 +285,7 @@ export default function Results() {
                   </SelectTrigger>
                   <SelectContent>
                     {plannedSessions.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        {t('results.noAvailableSession')}
-                      </SelectItem>
+                      <SelectItem value="none" disabled>{t('results.noAvailableSession')}</SelectItem>
                     ) : (
                       plannedSessions.map((s) => (
                         <SelectItem key={s.session_id} value={s.session_id}>
@@ -446,96 +321,16 @@ export default function Results() {
               </div>
             )}
 
-            {resultEntries.length > 0 && (
-              <>
-                <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[120px]">{t('results.employeeId')}</TableHead>
-                      <TableHead>{t('results.name')}</TableHead>
-                      <TableHead className="w-[100px] text-center">{t('training.score')}</TableHead>
-                      <TableHead className="w-[100px] text-center">{t('training.grade')}</TableHead>
-                      <TableHead className="w-[150px] text-center">{t('training.result')}</TableHead>
-                      <TableHead>{t('training.notes')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {resultEntries.map((entry, index) => {
-                      const grade = getGrade(entry.score, program);
-                      return (
-                        <TableRow key={entry.employee_id}>
-                          <TableCell className="font-mono">{entry.employee_id}</TableCell>
-                          <TableCell className="font-medium">{entry.employee_name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={entry.score ?? ''}
-                              onChange={(e) => handleScoreChange(index, e.target.value)}
-                              className="w-20 text-center"
-                              placeholder={t('results.scorePlaceholder')}
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {grade && (
-                              <Badge
-                                variant={
-                                  grade === 'AA'
-                                    ? 'gradeAA'
-                                    : grade === 'A'
-                                    ? 'gradeA'
-                                    : grade === 'B'
-                                    ? 'gradeB'
-                                    : 'gradeC'
-                                }
-                              >
-                                {grade}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={entry.result}
-                              onValueChange={(value) => handleResultChange(index, value as TrainingResult)}
-                            >
-                              <SelectTrigger className="w-[120px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PASS">{t('training.pass')}</SelectItem>
-                                <SelectItem value="FAIL">{t('training.fail')}</SelectItem>
-                                <SelectItem value="ABSENT">{t('training.absent')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={entry.remarks}
-                              onChange={(e) => handleRemarksChange(index, e.target.value)}
-                              placeholder={t('results.remarksPlaceholder')}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveResults} disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    {isSubmitting ? t('common.saving') : t('results.saveResults')}
-                  </Button>
-                </div>
-              </>
-            )}
+            <ResultInputForm
+              entries={resultEntries}
+              program={program ?? null}
+              isSubmitting={isSubmitting}
+              onScoreChange={handleScoreChange}
+              onResultChange={handleResultChange}
+              onRemarksChange={handleRemarksChange}
+              onSave={handleSaveResults}
+              getGrade={getGrade}
+            />
 
             {selectedSession && resultEntries.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
@@ -552,332 +347,65 @@ export default function Results() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle>{t('results.recentTitle')}</CardTitle>
-              <CardDescription>
-                {t('results.recentDescription')}
-              </CardDescription>
+              <CardDescription>{t('results.recentDescription')}</CardDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('results.searchPlaceholder')}
-                  className="pl-8 w-full sm:w-[200px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Select value={resultFilter} onValueChange={setResultFilter}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.all')}</SelectItem>
-                  <SelectItem value="PASS">{t('training.pass')}</SelectItem>
-                  <SelectItem value="FAIL">{t('training.fail')}</SelectItem>
-                  <SelectItem value="ABSENT">{t('training.absent')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <ExportDropdown
-                onExportExcel={() =>
-                  exportExcel(filteredResults as unknown as Record<string, unknown>[], {
-                    sheetName: 'Results',
-                    filename: 'training-results',
-                  })
-                }
-                onExportPDF={() =>
-                  exportPDF(
-                    filteredResults as unknown as Record<string, unknown>[],
-                    [
-                      { header: t('training.date'), dataKey: 'training_date' },
-                      { header: t('employee.id'), dataKey: 'employee_id' },
-                      { header: t('common.program'), dataKey: 'program_code' },
-                      { header: t('training.score'), dataKey: 'score' },
-                      { header: t('training.grade'), dataKey: 'grade' },
-                      { header: t('training.result'), dataKey: 'result' },
-                    ],
-                    { title: t('nav.results'), filename: 'training-results' }
-                  )
-                }
-                loading={exporting}
-              />
-            </div>
+            <ResultsToolbar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              resultFilter={resultFilter}
+              onResultFilterChange={setResultFilter}
+              onExportExcel={() =>
+                exportExcel(filteredResults as unknown as Record<string, unknown>[], {
+                  sheetName: 'Results',
+                  filename: 'training-results',
+                })
+              }
+              onExportPDF={() =>
+                exportPDF(
+                  filteredResults as unknown as Record<string, unknown>[],
+                  [
+                    { header: t('training.date'), dataKey: 'training_date' },
+                    { header: t('employee.id'), dataKey: 'employee_id' },
+                    { header: t('common.program'), dataKey: 'program_code' },
+                    { header: t('training.score'), dataKey: 'score' },
+                    { header: t('training.grade'), dataKey: 'grade' },
+                    { header: t('training.result'), dataKey: 'result' },
+                  ],
+                  { title: t('nav.results'), filename: 'training-results' }
+                )
+              }
+              exporting={exporting}
+            />
           </div>
         </CardHeader>
         <CardContent>
-          {loading.results ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">{t('common.loading')}</p>
-            </div>
-          ) : filteredResults.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {t('common.noData')}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('training.date')}</TableHead>
-                  <TableHead>{t('results.employeeId')}</TableHead>
-                  <TableHead>{t('results.area')}</TableHead>
-                  <TableHead>{t('results.position')}</TableHead>
-                  <TableHead>{t('results.entranceDate')}</TableHead>
-                  <TableHead>{t('results.workExperience')}</TableHead>
-                  <TableHead>{t('results.programLabel')}</TableHead>
-                  <TableHead className="text-center">{t('training.score')}</TableHead>
-                  <TableHead className="text-center">{t('training.grade')}</TableHead>
-                  <TableHead className="text-center">{t('training.result')}</TableHead>
-                  <TableHead className="text-center">{t('results.testAttempt')}</TableHead>
-                  <TableHead>{t('results.stopWorkingDate')}</TableHead>
-                  <TableHead>{t('training.trainer')}</TableHead>
-                  <TableHead className="w-[80px]">{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredResults.slice(0, 20).map((result) => {
-                  const emp = getEmployee(result.employee_id);
-                  return (
-                  <TableRow key={result.result_id}>
-                    <TableCell>
-                      {format(new Date(result.training_date), 'yyyy-MM-dd')}
-                    </TableCell>
-                    <TableCell className="font-mono">{result.employee_id}</TableCell>
-                    <TableCell>
-                      {emp ? t(`building.${emp.building}`, { defaultValue: emp.building }) : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {emp ? t(`position.${emp.position}`, { defaultValue: emp.position }) : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {emp?.hire_date ? format(new Date(emp.hire_date), 'yyyy-MM-dd') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {getWorkExperience(emp?.hire_date)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{result.program_code}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {result.score !== null ? t('results.scoreWithUnit', { score: result.score }) : '-'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {result.grade && (
-                        <Badge
-                          variant={
-                            result.grade === 'AA'
-                              ? 'gradeAA'
-                              : result.grade === 'A'
-                              ? 'gradeA'
-                              : result.grade === 'B'
-                              ? 'gradeB'
-                              : 'gradeC'
-                          }
-                        >
-                          {result.grade}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={
-                          result.result === 'PASS'
-                            ? 'success'
-                            : result.result === 'FAIL'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {result.result === 'PASS'
-                          ? t('training.pass')
-                          : result.result === 'FAIL'
-                          ? t('training.fail')
-                          : t('training.absent')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {formatTestAttempt(result.test_attempt)}
-                    </TableCell>
-                    <TableCell>
-                      {result.stop_working_date
-                        ? format(new Date(result.stop_working_date), 'yyyy-MM-dd')
-                        : '-'}
-                    </TableCell>
-                    <TableCell>{result.evaluated_by}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditResult(result)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            </div>
-          )}
+          <ResultsTable
+            results={filteredResults}
+            employees={employees}
+            isLoading={loading.results}
+            onEditResult={handleEditResult}
+          />
         </CardContent>
       </Card>
 
-      {/* Edit Result Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('results.editTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('results.editDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          {editingResult && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t('training.score')}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={editingResult.score ?? ''}
-                    onChange={(e) =>
-                      setEditingResult({
-                        ...editingResult,
-                        score: e.target.value === '' ? null : parseInt(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('training.result')}</Label>
-                  <Select
-                    value={editingResult.result}
-                    onValueChange={(value) =>
-                      setEditingResult({
-                        ...editingResult,
-                        result: value as TrainingResult,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PASS">{t('training.pass')}</SelectItem>
-                      <SelectItem value="FAIL">{t('training.fail')}</SelectItem>
-                      <SelectItem value="ABSENT">{t('training.absent')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('training.notes')}</Label>
-                <Input
-                  value={editingResult.remarks}
-                  onChange={(e) =>
-                    setEditingResult({
-                      ...editingResult,
-                      remarks: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-destructive">{t('results.editReasonLabel')}</Label>
-                <Textarea
-                  value={editingResult.editReason}
-                  onChange={(e) =>
-                    setEditingResult({
-                      ...editingResult,
-                      editReason: e.target.value,
-                    })
-                  }
-                  placeholder={t('results.editReasonPlaceholder')}
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleSaveEdit} disabled={isEditSubmitting}>
-              {isEditSubmitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <History className="h-4 w-4 mr-2" />
-              )}
-              {isEditSubmitting ? t('common.saving') : t('results.saveEdit')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <ResultEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        editingResult={editingResult}
+        onEditingResultChange={setEditingResult}
+        onSave={handleSaveEdit}
+        isSubmitting={isEditSubmitting}
+      />
 
-      {/* Duplicate Warning Dialog */}
-      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
-              <AlertTriangle className="h-5 w-5" />
-              {t('results.duplicateDetected')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('results.duplicateDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 max-h-[300px] overflow-y-auto">
-            {duplicates.map((dup) => (
-              <div
-                key={dup.employee_id}
-                className="p-3 bg-amber-50 border border-amber-200 rounded-lg"
-              >
-                <div className="font-medium text-amber-800">
-                  {dup.employee_name} ({dup.employee_id})
-                </div>
-                <div className="text-sm text-amber-700 mt-1">
-                  {t('results.existingResult')}: {format(new Date(dup.existingResult.training_date), 'yyyy-MM-dd')} |{' '}
-                  {dup.existingResult.score !== null ? t('results.scoreWithUnit', { score: dup.existingResult.score }) : '-'} |{' '}
-                  {dup.existingResult.result === 'PASS'
-                    ? t('training.pass')
-                    : dup.existingResult.result === 'FAIL'
-                    ? t('training.fail')
-                    : t('training.absent')}
-                  {dup.existingResult.grade && ` | ${dup.existingResult.grade} ${t('results.gradeUnit')}`}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-            <p>
-              {t('results.duplicateExplanation', { duplicateCount: duplicates.length, saveCount: pendingResults.length - duplicates.length })}
-            </p>
-            <p className="mt-1">
-              {t('results.duplicateEditHint')}
-            </p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleConfirmWithDuplicates}
-              disabled={pendingResults.length - duplicates.length === 0 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              {isSubmitting ? t('common.saving') : t('results.saveExcludingDuplicates', { count: pendingResults.length - duplicates.length })}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DuplicateWarningDialog
+        open={duplicateDialogOpen}
+        onOpenChange={setDuplicateDialogOpen}
+        duplicates={duplicates}
+        pendingCount={pendingResults.length}
+        isSubmitting={isSubmitting}
+        onConfirm={handleConfirmWithDuplicates}
+      />
     </div>
   );
 }

@@ -7,45 +7,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   LayoutDashboard,
-  Users,
-  CheckCircle2,
-  Clock,
   AlertTriangle,
   Plus,
-  ArrowRight,
-  Calendar,
   FolderPlus,
-  FolderOpen,
-  Settings,
 } from 'lucide-react';
-import { EmptyState } from '@/components/common/EmptyState';
 import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
-import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
-import type { TaskStatus, Task, Project } from '@/types/project';
+import type { TaskStatus } from '@/types/project';
+import { ProjectKPICards } from '@/components/projects/dashboard/ProjectKPICards';
+import { ProjectTaskOverview } from '@/components/projects/dashboard/ProjectTaskOverview';
+import { ProjectMyTasks } from '@/components/projects/dashboard/ProjectMyTasks';
+import { ProjectQuickActions } from '@/components/projects/dashboard/ProjectQuickActions';
+import {
+  CreateProjectDialog,
+  CompletionDetailDialog,
+  DelayedDetailDialog,
+  ProjectListDialog,
+} from '@/components/projects/dashboard/ProjectDashboardDialogs';
 
 export default function ProjectsDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // 상태별 라벨
   const STATUS_LABELS: Record<TaskStatus, string> = {
     todo: t('projects.status.planned'),
     in_progress: t('projects.status.inProgress'),
@@ -54,6 +41,7 @@ export default function ProjectsDashboard() {
     review: t('projects.status.underReview'),
     done: t('projects.status.completed'),
   };
+
   const {
     members,
     projects,
@@ -72,20 +60,35 @@ export default function ProjectsDashboard() {
     currentUserMember,
     fetchMyTasks,
     selectProject,
-  } = useProjectStore(useShallow((state) => ({ members: state.members, projects: state.projects, tasks: state.tasks, error: state.error, fetchMembers: state.fetchMembers, fetchProjects: state.fetchProjects, fetchAllTasks: state.fetchAllTasks, createProject: state.createProject, isMembersLoading: state.isMembersLoading, isProjectsLoading: state.isProjectsLoading, isLoading: state.isLoading, subscribeMembersRealtime: state.subscribeMembersRealtime, subscribeProjectsRealtime: state.subscribeProjectsRealtime, linkCurrentUser: state.linkCurrentUser, currentUserMember: state.currentUserMember, fetchMyTasks: state.fetchMyTasks, selectProject: state.selectProject })));
+  } = useProjectStore(useShallow((state) => ({
+    members: state.members,
+    projects: state.projects,
+    tasks: state.tasks,
+    error: state.error,
+    fetchMembers: state.fetchMembers,
+    fetchProjects: state.fetchProjects,
+    fetchAllTasks: state.fetchAllTasks,
+    createProject: state.createProject,
+    isMembersLoading: state.isMembersLoading,
+    isProjectsLoading: state.isProjectsLoading,
+    isLoading: state.isLoading,
+    subscribeMembersRealtime: state.subscribeMembersRealtime,
+    subscribeProjectsRealtime: state.subscribeProjectsRealtime,
+    linkCurrentUser: state.linkCurrentUser,
+    currentUserMember: state.currentUserMember,
+    fetchMyTasks: state.fetchMyTasks,
+    selectProject: state.selectProject,
+  })));
 
-  // Use ref to prevent double initialization (anti-pattern fix)
   const initializedRef = useRef(false);
+  const cleanup = useProjectStore((s) => s.cleanup);
 
-  // 프로젝트 생성 다이얼로그 상태
+  // 다이얼로그 상태
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
-  // 프로젝트 목록 모달 상태
   const [isProjectListOpen, setIsProjectListOpen] = useState(false);
-  // 완료 현황 모달 상태
   const [isCompletionDetailOpen, setIsCompletionDetailOpen] = useState(false);
-  // 지연 과제 모달 상태
   const [isDelayedDetailOpen, setIsDelayedDetailOpen] = useState(false);
 
   const handleCreateProject = async () => {
@@ -99,8 +102,6 @@ export default function ProjectsDashboard() {
       // error handled by store
     }
   };
-
-  const cleanup = useProjectStore((s) => s.cleanup);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -136,7 +137,6 @@ export default function ProjectsDashboard() {
     ? Math.round((taskStats.done / taskStats.total) * 100)
     : 0;
 
-  // 긴급 과제 (마감 3일 이내 또는 지연)
   const urgentTasks = useMemo(() => {
     const now = new Date();
     return tasks.filter((task) => {
@@ -152,7 +152,6 @@ export default function ProjectsDashboard() {
 
   const isLoading = isMembersLoading || isProjectsLoading;
 
-  // Show loading only if actively fetching AND no data loaded yet
   if (isLoading && members.length === 0 && projects.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -199,569 +198,75 @@ export default function ProjectsDashboard() {
         </Card>
       )}
 
-      {/* 통계 카드 */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate('/projects/members')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('projects.members.title')}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeMembers.length}</div>
-            <p className="text-xs text-muted-foreground">{t('projects.members.activeMembers')}</p>
-          </CardContent>
-        </Card>
+      {/* KPI 카드 */}
+      <ProjectKPICards
+        activeMembersCount={activeMembers.length}
+        activeProjectsCount={activeProjects.length}
+        completionRate={completionRate}
+        taskStats={taskStats}
+        onMembersClick={() => navigate('/projects/members')}
+        onProjectsClick={() => setIsProjectListOpen(true)}
+        onCompletionClick={() => setIsCompletionDetailOpen(true)}
+        onDelayedClick={() => setIsDelayedDetailOpen(true)}
+      />
 
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setIsProjectListOpen(true)}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('projects.title')}</CardTitle>
-            <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeProjects.length}</div>
-            <p className="text-xs text-muted-foreground">{t('projects.dashboard.activeProjects')}</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setIsCompletionDetailOpen(true)}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('projects.dashboard.completedTasks')}</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completionRate}%</div>
-            <Progress value={completionRate} className="h-2 mt-2" />
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setIsDelayedDetailOpen(true)}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('projects.dashboard.overdueTasks')}</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{taskStats.delayed}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('projects.dashboard.delayedStartShort')} {taskStats.delayedStart} / {t('projects.dashboard.delayedCompleteShort')} {taskStats.delayedComplete}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 메인 콘텐츠 그리드 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* 과제 현황 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">{t('projects.dashboard.projectProgress')}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/projects/tasks')}>
-              {t('common.viewAll')} <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(['todo', 'in_progress', 'delayed_start', 'delayed_complete', 'review', 'done'] as TaskStatus[]).map((status) => {
-                const count = tasks.filter((t) => t.status === status).length;
-                const percentage = taskStats.total > 0 ? (count / taskStats.total) * 100 : 0;
-
-                return (
-                  <div key={status} className="flex items-center gap-4">
-                    <div className="w-24 text-sm font-medium">{STATUS_LABELS[status]}</div>
-                    <div className="flex-1">
-                      <div
-                        className="h-2 rounded-full"
-                        style={{
-                          width: `${percentage}%`,
-                          backgroundColor: TASK_STATUS_COLORS[status],
-                          minWidth: count > 0 ? '8px' : '0',
-                        }}
-                      />
-                    </div>
-                    <div className="w-8 text-right text-sm text-muted-foreground">
-                      {count}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 긴급 알림 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              {t('projects.dashboard.urgentTasks')}
-            </CardTitle>
-            <Badge variant="destructive">{urgentTasks.length}</Badge>
-          </CardHeader>
-          <CardContent>
-            {urgentTasks.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title={t('projects.dashboard.urgentEmptyTitle')}
-                description={t('projects.dashboard.urgentEmptyDesc')}
-              />
-            ) : (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                {urgentTasks.slice(0, 5).map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => navigate('/projects/tasks')}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{task.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant="outline"
-                          style={{
-                            borderColor: TASK_STATUS_COLORS[task.status],
-                            color: TASK_STATUS_COLORS[task.status],
-                          }}
-                        >
-                          {STATUS_LABELS[task.status]}
-                        </Badge>
-                        {task.dueDate && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {(task.dueDate instanceof Date
-                              ? task.dueDate
-                              : task.dueDate.toDate()
-                            ).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Badge
-                      style={{
-                        backgroundColor: TASK_PRIORITY_COLORS[task.priority],
-                      }}
-                    >
-                      {task.priority === 'urgent' ? t('projects.priority.urgent') : task.priority === 'high' ? t('projects.priority.high') : t('projects.priority.medium')}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* 과제 현황 + 긴급 알림 */}
+      <ProjectTaskOverview
+        tasks={tasks}
+        urgentTasks={urgentTasks}
+        taskStats={taskStats}
+        statusLabels={STATUS_LABELS}
+      />
 
       {/* 내 과제 */}
       {currentUserMember && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              {t('projects.dashboard.myTasks')}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/projects/tasks')}>
-              {t('common.viewAll')} <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const myTasks = fetchMyTasks();
-              if (myTasks.length === 0) {
-                return (
-                  <EmptyState
-                    icon={CheckCircle2}
-                    title={t('projects.dashboard.noMyTasks')}
-                    description={t('projects.dashboard.noMyTasksDesc')}
-                    actionLabel={t('projects.newTask')}
-                    onAction={() => navigate('/projects/tasks')}
-                  />
-                );
-              }
-              return (
-                <div className="space-y-2 max-h-[280px] overflow-y-auto">
-                  {myTasks.filter((t) => t.status !== 'done').slice(0, 8).map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                      onClick={() => navigate('/projects/tasks')}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{task.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px]"
-                            style={{
-                              borderColor: TASK_STATUS_COLORS[task.status],
-                              color: TASK_STATUS_COLORS[task.status],
-                            }}
-                          >
-                            {STATUS_LABELS[task.status]}
-                          </Badge>
-                          {task.dueDate && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {(task.dueDate instanceof Date
-                                ? task.dueDate
-                                : (task.dueDate as { toDate: () => Date }).toDate()
-                              ).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Badge
-                        className="text-[10px]"
-                        style={{ backgroundColor: TASK_PRIORITY_COLORS[task.priority] }}
-                      >
-                        {task.priority}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
+        <ProjectMyTasks
+          myTasks={fetchMyTasks()}
+          statusLabels={STATUS_LABELS}
+        />
       )}
 
       {/* 퀵 액션 */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/projects/members')}
-        >
-          <Users className="h-6 w-6" />
-          <span>{t('projects.members.title')}</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/projects/tasks')}
-        >
-          <CheckCircle2 className="h-6 w-6" />
-          <span>{t('projects.tasks.title')}</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/projects/calendar')}
-        >
-          <Calendar className="h-6 w-6" />
-          <span>{t('projects.calendar.title')}</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-          onClick={() => navigate('/projects/settings')}
-        >
-          <Settings className="h-6 w-6" />
-          <span>{t('projects.settings.title')}</span>
-        </Button>
-      </div>
+      <ProjectQuickActions />
 
-      {/* 프로젝트 생성 다이얼로그 */}
-      <Dialog open={isCreateProjectOpen} onOpenChange={setIsCreateProjectOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('projects.dashboard.newProject')}</DialogTitle>
-            <DialogDescription>{t('projects.dashboard.newProjectDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="project-name">{t('projects.title')} *</Label>
-              <Input
-                id="project-name"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder={t('projects.dashboard.newProject')}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="project-desc">{t('projects.description')}</Label>
-              <Textarea
-                id="project-desc"
-                value={newProjectDescription}
-                onChange={(e) => setNewProjectDescription(e.target.value)}
-                placeholder={t('projects.description')}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateProjectOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleCreateProject} disabled={!newProjectName.trim() || isStoreLoading}>
-              {isStoreLoading ? t('common.saving') : t('common.add')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* 다이얼로그 */}
+      <CreateProjectDialog
+        open={isCreateProjectOpen}
+        onOpenChange={setIsCreateProjectOpen}
+        projectName={newProjectName}
+        onProjectNameChange={setNewProjectName}
+        projectDescription={newProjectDescription}
+        onProjectDescriptionChange={setNewProjectDescription}
+        onSubmit={handleCreateProject}
+        isLoading={isStoreLoading}
+      />
 
-      {/* 완료 현황 상세 모달 */}
-      <Dialog open={isCompletionDetailOpen} onOpenChange={setIsCompletionDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              {t('projects.dashboard.completionDetail')}
-            </DialogTitle>
-            <DialogDescription>{t('projects.dashboard.completionDetailDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto max-h-[60vh] space-y-6">
-            {/* 전체 진행률 */}
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">{t('projects.dashboard.overallProgress')}</span>
-                <span className="text-2xl font-bold">{completionRate}%</span>
-              </div>
-              <Progress value={completionRate} className="h-3" />
-              <p className="text-xs text-muted-foreground mt-2">
-                {taskStats.done}/{taskStats.total} {t('projects.dashboard.completedTasks')}
-              </p>
-            </div>
+      <CompletionDetailDialog
+        open={isCompletionDetailOpen}
+        onOpenChange={setIsCompletionDetailOpen}
+        completionRate={completionRate}
+        taskStats={taskStats}
+        projects={projects}
+        tasks={tasks}
+      />
 
-            {/* 프로젝트별 리스트 */}
-            <div className="space-y-3">
-              {projects.map((project: Project) => {
-                const projectTasks = tasks.filter((t) => t.projectId === project.id);
-                const doneTasks = projectTasks.filter((t) => t.status === 'done').length;
-                const totalTasks = projectTasks.length;
-                const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+      <DelayedDetailDialog
+        open={isDelayedDetailOpen}
+        onOpenChange={setIsDelayedDetailOpen}
+        tasks={tasks}
+        projects={projects}
+        members={members}
+        statusLabels={STATUS_LABELS}
+      />
 
-                return (
-                  <div key={project.id} className="flex items-center gap-4 p-3 border rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{project.name}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <Progress value={progress} className="h-2 flex-1" />
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {doneTasks}/{totalTasks}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right w-14">
-                      <span className="text-lg font-bold">{progress}%</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 지연 과제 상세 모달 */}
-      <Dialog open={isDelayedDetailOpen} onOpenChange={setIsDelayedDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              {t('projects.dashboard.delayedDetail')}
-            </DialogTitle>
-            <DialogDescription>{t('projects.dashboard.delayedDetailDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto max-h-[60vh]">
-            {(() => {
-              const delayedTasks = tasks.filter(
-                (t) => t.status === 'delayed_start' || t.status === 'delayed_complete'
-              );
-
-              if (delayedTasks.length === 0) {
-                return (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-50" />
-                    <p>{t('projects.dashboard.noDelayedTasks')}</p>
-                  </div>
-                );
-              }
-
-              // 프로젝트별 그룹핑
-              const grouped = delayedTasks.reduce<Record<string, Task[]>>((acc, task) => {
-                const projectId = task.projectId || 'unassigned';
-                if (!acc[projectId]) acc[projectId] = [];
-                acc[projectId].push(task);
-                return acc;
-              }, {});
-
-              const now = new Date();
-
-              return (
-                <div className="space-y-4">
-                  {Object.entries(grouped).map(([projectId, groupTasks]) => {
-                    const project = projects.find((p) => p.id === projectId);
-                    return (
-                      <div key={projectId}>
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">
-                          {project?.name || t('projects.tasks.unassigned')}
-                        </h4>
-                        <div className="space-y-2">
-                          {groupTasks.map((task) => {
-                            const dueDate = task.dueDate
-                              ? (task.dueDate instanceof Date ? task.dueDate : (task.dueDate as { toDate: () => Date }).toDate())
-                              : null;
-                            const daysOver = dueDate
-                              ? Math.max(0, Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
-                              : 0;
-                            const assigneeNames = task.assignees
-                              ?.map((aId) => members.find((m) => m.id === aId)?.name)
-                              .filter(Boolean)
-                              .join(', ');
-
-                            return (
-                              <div
-                                key={task.id}
-                                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate">{task.title}</p>
-                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[10px]"
-                                      style={{
-                                        borderColor: TASK_STATUS_COLORS[task.status],
-                                        color: TASK_STATUS_COLORS[task.status],
-                                      }}
-                                    >
-                                      {STATUS_LABELS[task.status]}
-                                    </Badge>
-                                    {dueDate && (
-                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {dueDate.toLocaleDateString()}
-                                      </span>
-                                    )}
-                                    {daysOver > 0 && (
-                                      <Badge variant="destructive" className="text-[10px]">
-                                        {t('projects.dashboard.daysOverdue', { n: daysOver })}
-                                      </Badge>
-                                    )}
-                                    {assigneeNames && (
-                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Users className="h-3 w-3" />
-                                        {assigneeNames}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 프로젝트 목록 모달 */}
-      <Dialog open={isProjectListOpen} onOpenChange={setIsProjectListOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5" />
-              {t('projects.dashboard.projectList')}
-            </DialogTitle>
-            <DialogDescription>{t('projects.dashboard.projectListDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto max-h-[60vh]">
-            {projects.length === 0 ? (
-              <EmptyState
-                icon={FolderOpen}
-                title={t('projects.dashboard.noProjects')}
-                description={t('projects.dashboard.projectListEmptyDesc')}
-                actionLabel={t('projects.dashboard.newProject')}
-                onAction={() => {
-                  setIsProjectListOpen(false);
-                  setIsCreateProjectOpen(true);
-                }}
-              />
-            ) : (
-              <div className="space-y-3">
-                {projects.map((project: Project) => {
-                  const projectTasks = tasks.filter((t) =>
-                    t.projectId === project.id
-                  );
-                  const doneTasks = projectTasks.filter((t) => t.status === 'done').length;
-                  const totalTasks = projectTasks.length;
-                  const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-
-                  return (
-                    <div
-                      key={project.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => {
-                        selectProject(project.id);
-                        setIsProjectListOpen(false);
-                        navigate('/projects/tasks');
-                      }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium truncate">{project.name}</h3>
-                          <Badge
-                            variant={project.status === 'active' ? 'default' : 'secondary'}
-                          >
-                            {project.status === 'active'
-                              ? t('projects.status.inProgress')
-                              : project.status === 'completed'
-                                ? t('projects.status.completed')
-                                : t('common.inactive')}
-                          </Badge>
-                        </div>
-                        {project.description && (
-                          <p className="text-sm text-muted-foreground mt-1 truncate">
-                            {project.description}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {t('projects.dashboard.memberCount')}: {project.members?.length || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {doneTasks}/{totalTasks} {t('projects.dashboard.completedTasks')}
-                          </span>
-                          {project.createdAt && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {t('projects.dashboard.createdAt')}: {(project.createdAt instanceof Date
-                                ? project.createdAt
-                                : (project.createdAt as { toDate: () => Date }).toDate()
-                              ).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="ml-4 w-16 text-right">
-                        <div className="text-lg font-bold">{progress}%</div>
-                        <Progress value={progress} className="h-1.5 mt-1" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProjectListDialog
+        open={isProjectListOpen}
+        onOpenChange={setIsProjectListOpen}
+        projects={projects}
+        tasks={tasks}
+        onSelectProject={selectProject}
+        onCreateProject={() => setIsCreateProjectOpen(true)}
+      />
     </div>
   );
 }
