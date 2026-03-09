@@ -1,4 +1,6 @@
 import { Star } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import type { TrainingEvaluation } from '@/services/evaluationService';
 
 export function getScoreColor(score: number): string {
   if (score >= 4.5) return 'text-green-600';
@@ -21,4 +23,23 @@ export function renderStars(score: number) {
       <span className={`ml-2 font-medium ${getScoreColor(score)}`}>{score.toFixed(1)}</span>
     </div>
   );
+}
+
+export function getTypeLabel(t: TFunction, type: TrainingEvaluation['evaluationType']): string {
+  const labels: Record<string, string> = {
+    reaction: t('evaluation.typeReaction'),
+    learning: t('evaluation.typeLearning'),
+    behavior: t('evaluation.typeBehavior'),
+    results: t('evaluation.typeResults'),
+  };
+  return labels[type];
+}
+
+export function getStatusLabel(t: TFunction, status: TrainingEvaluation['status']): string {
+  const labels: Record<string, string> = {
+    pending: t('evaluation.statusPending'),
+    submitted: t('evaluation.statusSubmitted'),
+    reviewed: t('evaluation.statusReviewed'),
+  };
+  return labels[status];
 }

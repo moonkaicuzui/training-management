@@ -8,24 +8,11 @@ import {
   calculateEffectiveness,
   type EffectivenessResult,
 } from '@/utils/trainingEffectiveness';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import {
-  Star,
-  TrendingUp,
-  Users,
-  FileText,
-  Download,
-  Plus,
-} from 'lucide-react';
 
+import { EvaluationHeader } from '@/components/evaluation/EvaluationHeader';
+import { EvaluationStatsCards } from '@/components/evaluation/EvaluationStatsCards';
 import EvaluationFilters from '@/components/evaluation/EvaluationFilters';
 import EvaluationTable from '@/components/evaluation/EvaluationTable';
 import {
@@ -38,35 +25,20 @@ import {
   CriteriaTab,
   EffectivenessTab,
 } from '@/components/evaluation/EvaluationCharts';
-
-// ─── UI-only types ──────────────────────────────────────────
-
-interface ProgramStats {
-  programId: string;
-  programName: string;
-  totalEvaluations: number;
-  averageScore: number;
-  completionRate: number;
-  reactionScore: number;
-  learningScore: number;
-  behaviorScore: number;
-  resultsScore: number;
-}
+import { getTypeLabel, getStatusLabel } from '@/components/evaluation/helpers';
+import type { ProgramStats } from '@/components/evaluation/types';
 
 export default function Evaluation() {
   const { t } = useTranslation();
 
-  // Core data
   const [evaluations, setEvaluations] = useState<TrainingEvaluation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  // UI state
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedEvaluation, setSelectedEvaluation] = useState<TrainingEvaluation | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -81,7 +53,6 @@ export default function Evaluation() {
   });
   const [isCreating, setIsCreating] = useState(false);
 
-  // Training effectiveness state
   const [effectivenessResults, setEffectivenessResults] = useState<EffectivenessResult[]>([]);
   const [isLoadingEffectiveness, setIsLoadingEffectiveness] = useState(false);
 
@@ -293,31 +264,7 @@ export default function Evaluation() {
   const averageScore = totalEvaluations > 0 ? evaluations.reduce((sum, e) => sum + e.overallScore, 0) / totalEvaluations : 0;
   const pendingCount = evaluations.filter(e => e.status === 'pending').length;
 
-  const getScoreColor = (score: number) => {
-    if (score >= 4.5) return 'text-green-600';
-    if (score >= 3.5) return 'text-blue-600';
-    if (score >= 2.5) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getTypeLabel = (type: TrainingEvaluation['evaluationType']) => {
-    const labels: Record<string, string> = {
-      reaction: t('evaluation.typeReaction'),
-      learning: t('evaluation.typeLearning'),
-      behavior: t('evaluation.typeBehavior'),
-      results: t('evaluation.typeResults'),
-    };
-    return labels[type];
-  };
-
-  const getStatusLabel = (status: TrainingEvaluation['status']) => {
-    const labels: Record<string, string> = {
-      pending: t('evaluation.statusPending'),
-      submitted: t('evaluation.statusSubmitted'),
-      reviewed: t('evaluation.statusReviewed'),
-    };
-    return labels[status];
-  };
+  // ─── Handlers ─────────────────────────────────────────
 
   const handleExportExcel = async () => {
     const exportData = filteredEvaluations.map(e => ({
@@ -326,9 +273,9 @@ export default function Evaluation() {
       [t('evaluation.exportTrainingDate')]: e.sessionDate,
       [t('evaluation.participantCol')]: e.employeeName,
       [t('evaluation.departmentCol')]: e.department,
-      [t('evaluation.exportType')]: getTypeLabel(e.evaluationType),
+      [t('evaluation.exportType')]: getTypeLabel(t, e.evaluationType),
       [t('evaluation.exportAvgScore')]: e.overallScore,
-      [t('evaluation.statusCol')]: getStatusLabel(e.status),
+      [t('evaluation.statusCol')]: getStatusLabel(t, e.status),
       [t('evaluation.submittedDate')]: e.submittedAt.split('T')[0],
       [t('evaluation.exportFeedback')]: e.feedback,
     }));
@@ -349,25 +296,10 @@ export default function Evaluation() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('evaluation.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('evaluation.description')}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportExcel}>
-            <Download className="mr-2 h-4 w-4" />
-            {t('evaluation.exportExcel')}
-          </Button>
-          <Button onClick={() => setShowNewEvaluationDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('evaluation.newEvaluation')}
-          </Button>
-        </div>
-      </div>
+      <EvaluationHeader
+        onExportExcel={handleExportExcel}
+        onNewEvaluation={() => setShowNewEvaluationDialog(true)}
+      />
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
@@ -383,65 +315,13 @@ export default function Evaluation() {
         </div>
       )}
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('evaluation.totalEvaluations')}</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalEvaluations}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('evaluation.submittedCount', { count: submittedCount })}
-            </p>
-          </CardContent>
-        </Card>
+      <EvaluationStatsCards
+        totalEvaluations={totalEvaluations}
+        submittedCount={submittedCount}
+        averageScore={averageScore}
+        pendingCount={pendingCount}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('evaluation.avgScore')}</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${getScoreColor(averageScore)}`}>
-              {averageScore.toFixed(1)} / 5.0
-            </div>
-            <Progress value={(averageScore / 5) * 100} className="mt-2" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('evaluation.responseRate')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {totalEvaluations > 0 ? Math.round((submittedCount / totalEvaluations) * 100) : 0}%
-            </div>
-            <Progress
-              value={totalEvaluations > 0 ? (submittedCount / totalEvaluations) * 100 : 0}
-              className="mt-2"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('evaluation.pending')}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('evaluation.pendingCount')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">{t('evaluation.overviewTab')}</TabsTrigger>
@@ -491,7 +371,6 @@ export default function Evaluation() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialogs */}
       <EvaluationDetailDialog
         open={showDetailDialog}
         onOpenChange={setShowDetailDialog}

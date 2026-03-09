@@ -5,5 +5,7 @@ export { EffectivenessTab } from './EffectivenessTab';
 export { default as EvaluationFilters } from './EvaluationFilters';
 export { default as EvaluationTable } from './EvaluationTable';
 export { EvaluationDetailDialog, NewEvaluationDialog } from './EvaluationDetailDialog';
+export { EvaluationStatsCards } from './EvaluationStatsCards';
+export { EvaluationHeader } from './EvaluationHeader';
 export type { ProgramStats, EvaluationCriteria } from './types';
-export { getScoreColor, renderStars } from './helpers';
+export { getScoreColor, renderStars, getTypeLabel, getStatusLabel } from './helpers';
