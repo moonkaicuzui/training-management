@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown } from 'lucide-react';
@@ -58,7 +59,7 @@ function MiniSparkline({ data }: { data: number[] }) {
   );
 }
 
-export function KPICard({
+export const KPICard = memo(function KPICard({
   title,
   value,
   icon: Icon,
@@ -121,4 +122,4 @@ export function KPICard({
       </CardContent>
     </Card>
   );
-}
+});

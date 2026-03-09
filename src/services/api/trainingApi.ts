@@ -1,7 +1,6 @@
 // ============================================================
-// Q-TRAIN API Service
-// Firebase Firestore-based API layer
-// All data is stored in and retrieved from Firebase Firestore
+// Q-TRAIN Training API
+// Employee, Program, Session, Result, Dashboard, Progress, Retraining, Search
 // ============================================================
 
 import {
@@ -10,24 +9,13 @@ import {
 } from '@/utils/kpiCalculator';
 import { logger } from '@/utils/logger';
 
-import * as employeeService from './employeeService';
-import * as programService from './programService';
-import * as sessionService from './sessionService';
-import * as resultService from './resultService';
-import * as logService from './logService';
-import * as tqcService from './tqcService';
-import * as attendanceService from './attendanceService';
-import * as materialService from './materialService';
-import * as evaluationService from './evaluationService';
-import * as notificationService from './notificationService';
-import * as auditLogService from './auditLogService';
-import * as trainerService from './trainerService';
-import * as trainingPlanService from './trainingPlanService';
-import * as auditComplianceService from './auditComplianceService';
-import * as capaService from './capaService';
-import * as mdInspectionService from './mdInspectionService';
-import * as techModelService from './techModelService';
-import * as aqlService from './aqlService';
+import * as employeeService from '../employeeService';
+import * as programService from '../programService';
+import * as sessionService from '../sessionService';
+import * as resultService from '../resultService';
+import * as logService from '../logService';
+import * as aqlService from '../aqlService';
+import * as notificationService from '../notificationService';
 import { updateResultWithLog } from '@/services/firebase';
 
 import type {
@@ -51,242 +39,17 @@ import type {
   Grade,
   ProgramChangeLog,
   ResultEditLog,
-  // New TQC Types
-  NewTQCTeam,
-  NewTQCTrainee,
-  NewTQCTraineeFilters,
-  NewTQCColorBlindTest,
-  NewTQCColorBlindTestInput,
-  NewTQCTrainingStage,
-  NewTQCStageUpdate,
-  NewTQCMeeting,
-  NewTQCMeetingFilters,
-  NewTQCMeetingInput,
-  NewTQCMeetingUpdate,
-  NewTQCResignation,
-  NewTQCResignationFilters,
-  NewTQCResignationInput,
-  NewTQCTraineeInput,
-  NewTQCTraineeUpdate,
-  NewTQCTeamInput,
-  NewTQCTeamUpdate,
-  NewTQCDashboardStats,
-  NewTQCResignationAnalysis,
-  NewTQCTraineeWithDetails,
-  // Attendance Types
-  BulkAttendanceInput,
-  Attendance,
-  // AuditLog Types
-  AuditLogEntry,
-  AuditLogFilters,
 } from '@/types';
-import type { TrainingMaterial, MaterialFolder, MaterialFilters } from '@/types/material';
-import type {
-  TrainingEvaluation,
-  EvaluationFilters,
-} from './evaluationService';
-import type {
-  NotificationSettingsData,
-  NotificationQueryFilters,
-} from './notificationService';
-import type { Notification } from '@/types/notification';
 
-// ========== Error Classes ==========
-
-export class ApiError extends Error {
-  code: string;
-  status?: number;
-  details?: unknown;
-
-  constructor(
-    message: string,
-    code: string,
-    status?: number,
-    details?: unknown
-  ) {
-    super(message);
-    this.name = 'ApiError';
-    this.code = code;
-    this.status = status;
-    this.details = details;
-  }
-}
-
-export class NetworkError extends ApiError {
-  constructor(message: string = '네트워크 연결을 확인해주세요') {
-    super(message, 'NETWORK_ERROR');
-    this.name = 'NetworkError';
-  }
-}
-
-export class TimeoutError extends ApiError {
-  constructor(message: string = '요청 시간이 초과되었습니다') {
-    super(message, 'TIMEOUT_ERROR');
-    this.name = 'TimeoutError';
-  }
-}
-
-export class ValidationError extends ApiError {
-  constructor(message: string, details?: unknown) {
-    super(message, 'VALIDATION_ERROR', 400, details);
-    this.name = 'ValidationError';
-  }
-}
-
-export class NotFoundError extends ApiError {
-  constructor(message: string = '요청한 리소스를 찾을 수 없습니다') {
-    super(message, 'NOT_FOUND', 404);
-    this.name = 'NotFoundError';
-  }
-}
-
-// ========== Cache Implementation ==========
-
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
-}
-
-class ApiCache {
-  private cache = new Map<string, CacheEntry<unknown>>();
-
-  set<T>(key: string, data: T, ttl: number = CACHE_TTL): void {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-      ttl,
-    });
-  }
-
-  get<T>(key: string): T | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data as T;
-  }
-
-  invalidate(pattern?: string): void {
-    if (!pattern) {
-      this.cache.clear();
-      return;
-    }
-
-    for (const key of this.cache.keys()) {
-      if (key.includes(pattern)) {
-        this.cache.delete(key);
-      }
-    }
-  }
-
-  has(key: string): boolean {
-    return this.get(key) !== null;
-  }
-}
-
-const apiCache = new ApiCache();
-
-// ========== Retry Logic ==========
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-const RETRY_BACKOFF = 2;
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  retries: number = MAX_RETRIES,
-  delayMs: number = RETRY_DELAY
-): Promise<T> {
-  let lastError: Error;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error as Error;
-
-      if (error instanceof ValidationError || error instanceof NotFoundError) {
-        throw error;
-      }
-
-      if (attempt < retries) {
-        const waitTime = delayMs * Math.pow(RETRY_BACKOFF, attempt);
-        await delay(waitTime);
-      }
-    }
-  }
-
-  throw lastError!;
-}
-
-// ========== Cache Invalidation Helpers ==========
-
-export function invalidateEmployeeCache(): void {
-  apiCache.invalidate('employees');
-}
-
-export function invalidateProgramCache(): void {
-  apiCache.invalidate('programs');
-}
-
-export function invalidateSessionCache(): void {
-  apiCache.invalidate('sessions');
-}
-
-export function invalidateResultCache(): void {
-  apiCache.invalidate('results');
-}
-
-export function invalidateDashboardCache(): void {
-  apiCache.invalidate('dashboard');
-}
-
-export function invalidateMaterialCache(): void {
-  apiCache.invalidate('materials');
-}
-
-export function invalidateEvaluationCache(): void {
-  apiCache.invalidate('evaluations');
-}
-
-export function invalidateNotificationCache(): void {
-  apiCache.invalidate('notifications');
-}
-
-export function invalidateAllCache(): void {
-  apiCache.invalidate();
-}
-
-// ========== Grade Calculation ==========
-
-export function calculateGrade(
-  score: number,
-  gradeAA: number,
-  gradeA: number,
-  gradeB: number
-): Grade {
-  if (score >= gradeAA) return 'AA';
-  if (score >= gradeA) return 'A';
-  if (score >= gradeB) return 'B';
-  return 'C';
-}
-
-export function calculateResult(
-  score: number | null,
-  passingScore: number
-): 'PASS' | 'FAIL' {
-  if (score === null) return 'FAIL';
-  return score >= passingScore ? 'PASS' : 'FAIL';
-}
+import {
+  apiCache,
+  calculateGrade,
+  invalidateEmployeeCache,
+  invalidateProgramCache,
+  invalidateSessionCache,
+  invalidateResultCache,
+  invalidateDashboardCache,
+} from './common';
 
 // ========== Employee API ==========
 
@@ -917,9 +680,35 @@ export async function globalSearch(query: string): Promise<{
   };
 }
 
-// ============================================================
-// New TQC (신입 TQC 교육) API
-// ============================================================
+// ========== New TQC (신입 TQC 교육) API ==========
+
+import * as tqcService from '../tqcService';
+
+import type {
+  NewTQCTeam,
+  NewTQCTrainee,
+  NewTQCTraineeFilters,
+  NewTQCColorBlindTest,
+  NewTQCColorBlindTestInput,
+  NewTQCTrainingStage,
+  NewTQCStageUpdate,
+  NewTQCMeeting,
+  NewTQCMeetingFilters,
+  NewTQCMeetingInput,
+  NewTQCMeetingUpdate,
+  NewTQCResignation,
+  NewTQCResignationFilters,
+  NewTQCResignationInput,
+  NewTQCTraineeInput,
+  NewTQCTraineeUpdate,
+  NewTQCTeamInput,
+  NewTQCTeamUpdate,
+  NewTQCDashboardStats,
+  NewTQCResignationAnalysis,
+  NewTQCTraineeWithDetails,
+} from '@/types';
+
+import { NotFoundError } from './common';
 
 // ========== New TQC Team API ==========
 
@@ -1133,10 +922,6 @@ export async function updateNewTQCTrainingStage(
   });
 
   // Find the trainee_id by querying stages that match this stage_id
-  // Re-fetch the stage to get trainee_id
-  // Since we can't query by stage_id in the stages collection easily,
-  // we need to get all stages or pass trainee_id
-  // For now, we'll search through stages to find the trainee_id
   const allTrainees = await tqcService.getTrainees();
   for (const trainee of allTrainees) {
     const traineeStages = await tqcService.getStagesByTrainee(trainee.trainee_id);
@@ -1470,595 +1255,76 @@ export async function getNewTQCUpcomingMeetings(days: number = 7): Promise<NewTQ
 
 // ========== Attendance API ==========
 
+import * as attendanceService from '../attendanceService';
+import type { BulkAttendanceInput, Attendance } from '@/types';
+
 export async function saveBulkAttendance(input: BulkAttendanceInput): Promise<Attendance[]> {
   const savedRecords = await attendanceService.saveBulkAttendance(input);
   logger.log('Attendance saved:', savedRecords.length, 'records');
   return savedRecords;
 }
 
-// ========== Materials API ==========
-
-export async function getMaterials(filters?: MaterialFilters): Promise<TrainingMaterial[]> {
-  return materialService.getMaterials(filters);
-}
-
-export async function getMaterial(id: string): Promise<TrainingMaterial | null> {
-  return materialService.getMaterial(id);
-}
-
-export async function createMaterial(data: Omit<TrainingMaterial, 'updatedAt'>): Promise<TrainingMaterial> {
-  const result = await materialService.createMaterial(data);
-  invalidateMaterialCache();
-  return result;
-}
-
-export async function updateMaterial(id: string, updates: Partial<TrainingMaterial>): Promise<void> {
-  await materialService.updateMaterial(id, updates);
-  invalidateMaterialCache();
-}
-
-export async function deleteMaterial(id: string): Promise<void> {
-  await materialService.deleteMaterial(id);
-  invalidateMaterialCache();
-}
-
-export async function getFolders(parentId?: string | null): Promise<MaterialFolder[]> {
-  return materialService.getFolders(parentId);
-}
-
-export async function createFolder(data: Omit<MaterialFolder, 'createdAt' | 'updatedAt'>): Promise<MaterialFolder> {
-  const result = await materialService.createFolder(data);
-  invalidateMaterialCache();
-  return result;
-}
-
-export async function updateFolder(id: string, updates: Partial<MaterialFolder>): Promise<void> {
-  await materialService.updateFolder(id, updates);
-  invalidateMaterialCache();
-}
-
-export async function deleteFolder(id: string): Promise<void> {
-  await materialService.deleteFolder(id);
-  invalidateMaterialCache();
-}
-
-// ========== Evaluations API ==========
-
-export async function getEvaluations(filters?: EvaluationFilters): Promise<TrainingEvaluation[]> {
-  return evaluationService.getEvaluations(filters);
-}
-
-export async function getEvaluation(id: string): Promise<TrainingEvaluation | null> {
-  return evaluationService.getEvaluation(id);
-}
-
-export async function getEvaluationsByProgram(programId: string): Promise<TrainingEvaluation[]> {
-  return evaluationService.getEvaluationsByProgram(programId);
-}
-
-export async function createEvaluation(data: Omit<TrainingEvaluation, 'submittedAt'>): Promise<TrainingEvaluation> {
-  const result = await evaluationService.createEvaluation(data);
-  invalidateEvaluationCache();
-  return result;
-}
-
-export async function updateEvaluation(id: string, updates: Partial<TrainingEvaluation>): Promise<void> {
-  await evaluationService.updateEvaluation(id, updates);
-  invalidateEvaluationCache();
-}
-
-// ========== Notifications API ==========
-
-export async function getNotifications(userId?: string, filters?: NotificationQueryFilters): Promise<Notification[]> {
-  return notificationService.getNotifications(userId, filters);
-}
-
-export async function createNotification(data: Omit<Notification, 'created_at'>): Promise<Notification> {
-  const result = await notificationService.createNotification(data);
-  invalidateNotificationCache();
-  return result;
-}
-
-export async function markNotificationAsRead(id: string): Promise<void> {
-  await notificationService.markAsRead(id);
-  invalidateNotificationCache();
-}
-
-export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-  await notificationService.markAllAsRead(userId);
-  invalidateNotificationCache();
-}
-
-export async function deleteNotification(id: string): Promise<void> {
-  await notificationService.deleteNotification(id);
-  invalidateNotificationCache();
-}
-
-export async function batchDeleteNotifications(ids: string[]): Promise<void> {
-  await notificationService.batchDeleteNotifications(ids);
-  invalidateNotificationCache();
-}
-
-export async function getNotificationSettings(userId: string): Promise<NotificationSettingsData | null> {
-  return notificationService.getSettings(userId);
-}
-
-export async function updateNotificationSettings(userId: string, data: Partial<NotificationSettingsData>): Promise<void> {
-  return notificationService.updateSettings(userId, data);
-}
-
-// ========== Audit Logs API ==========
-
-export async function getAuditLogs(filters?: AuditLogFilters): Promise<AuditLogEntry[]> {
-  return auditLogService.getAuditLogs(filters);
-}
-
-export async function createAuditLog(data: Omit<AuditLogEntry, 'changed_at'>): Promise<AuditLogEntry> {
-  return auditLogService.createAuditLog(data);
-}
-
-// ========== Trainer API ==========
-
-export async function getTrainers(status?: string) {
-  return trainerService.getTrainers(status);
-}
-
-export async function getTrainer(id: string) {
-  return trainerService.getTrainer(id);
-}
-
-export async function createTrainer(data: Parameters<typeof trainerService.createTrainer>[0]) {
-  const result = await trainerService.createTrainer(data);
-  return result;
-}
-
-export async function updateTrainer(id: string, updates: Parameters<typeof trainerService.updateTrainer>[1]) {
-  await trainerService.updateTrainer(id, updates);
-}
-
-export async function deleteTrainer(id: string) {
-  await trainerService.deleteTrainer(id);
-}
-
-// ========== Training Plan API ==========
-
-export async function getTrainingPlans() {
-  return trainingPlanService.getTrainingPlans();
-}
-
-export async function getTrainingPlan(id: string) {
-  return trainingPlanService.getTrainingPlan(id);
-}
-
-export async function createTrainingPlan(data: Parameters<typeof trainingPlanService.createTrainingPlan>[0]) {
-  return trainingPlanService.createTrainingPlan(data);
-}
-
-export async function updateTrainingPlan(id: string, updates: Parameters<typeof trainingPlanService.updateTrainingPlan>[1]) {
-  await trainingPlanService.updateTrainingPlan(id, updates);
-}
-
-export async function deleteTrainingPlan(id: string) {
-  await trainingPlanService.deleteTrainingPlan(id);
-}
-
-// ========== Audit Compliance API ==========
-
-export async function getAuditMetrics() {
-  return auditComplianceService.getAuditMetrics();
-}
-
-export async function updateAuditMetric(id: string, updates: Parameters<typeof auditComplianceService.updateAuditMetric>[1]) {
-  await auditComplianceService.updateAuditMetric(id, updates);
-}
-
-export async function createAuditMetric(data: Parameters<typeof auditComplianceService.createAuditMetric>[0]) {
-  return auditComplianceService.createAuditMetric(data);
-}
-
-export async function getAuditFindings() {
-  return auditComplianceService.getAuditFindings();
-}
-
-export async function createAuditFinding(data: Parameters<typeof auditComplianceService.createAuditFinding>[0]) {
-  return auditComplianceService.createAuditFinding(data);
-}
-
-export async function getCorrectiveActions() {
-  return auditComplianceService.getCorrectiveActions();
-}
-
-export async function createCorrectiveAction(data: Parameters<typeof auditComplianceService.createCorrectiveAction>[0]) {
-  return auditComplianceService.createCorrectiveAction(data);
-}
-
-export async function updateCorrectiveAction(id: string, updates: Parameters<typeof auditComplianceService.updateCorrectiveAction>[1]) {
-  await auditComplianceService.updateCorrectiveAction(id, updates);
-}
-
-// ========== CAPA API ==========
-
-export const getCAPAs = capaService.getCAPAs;
-export const getCAPA = capaService.getCAPA;
-export const createCAPA = capaService.createCAPA;
-export const updateCAPA = capaService.updateCAPA;
-export const updateCAPAStage = capaService.updateCAPAStage;
-export const getAllCAPAs = capaService.getAllCAPAs;
-
-// ========== Project Settings API ==========
-
-import * as inspectionService from './inspectionService';
-import type {
-  InspectionResultDetail,
-  InspectionResultInput,
-  InspectionEnrollment,
-  InspectionEnrollmentInput,
-  InspectionEnrollmentFilters,
-  InspectionStrikeInfo,
-} from '@/types/inspection';
-
-import * as projectService from './projectService';
-import type { ProjectSettings } from '@/types/project';
-
-export async function getProjectSettings(projectId: string): Promise<ProjectSettings> {
-  return projectService.getProjectSettings(projectId);
-}
-
-export async function updateProjectSettings(
-  projectId: string,
-  data: Partial<Pick<ProjectSettings, 'projectName' | 'projectDescription' | 'defaultView' | 'notifications'>>
-): Promise<void> {
-  return projectService.updateProjectSettings(projectId, data);
-}
-
-// ========== ROI / Training Costs API ==========
-
-import * as roiService from './roiService';
-
-export async function getTrainingCosts(year?: number) {
-  return roiService.getTrainingCosts(year);
-}
-
-export async function saveTrainingCost(data: Parameters<typeof roiService.saveTrainingCost>[0]) {
-  return roiService.saveTrainingCost(data);
-}
-
-// ========== Certificate API ==========
-
-import * as certificateService from './certificateService';
-import type {
-  Certificate,
-  CertificateTemplate,
-  CertificateFilters,
-} from './certificateService';
-
-export type { Certificate, CertificateTemplate, CertificateFilters };
-
-export function invalidateCertificateCache(): void {
-  apiCache.invalidate('certificates');
-}
-
-export async function getCertificates(filters?: CertificateFilters): Promise<Certificate[]> {
-  return certificateService.getCertificates(filters);
-}
-
-export async function getCertificate(id: string): Promise<Certificate | null> {
-  return certificateService.getCertificate(id);
-}
-
-export async function createCertificate(
-  data: Omit<Certificate, 'created_at'>
-): Promise<Certificate> {
-  const result = await certificateService.createCertificate(data);
-  invalidateCertificateCache();
-  return result;
-}
-
-export async function createCertificatesBatch(
-  certificates: Omit<Certificate, 'created_at'>[]
-): Promise<Certificate[]> {
-  const results = await certificateService.createCertificatesBatch(certificates);
-  invalidateCertificateCache();
-  return results;
-}
-
-export async function revokeCertificate(
-  certificateId: string,
-  revokedBy: string,
-  reason: string
-): Promise<void> {
-  await certificateService.revokeCertificate(certificateId, revokedBy, reason);
-  invalidateCertificateCache();
-}
-
-export async function getCertificateTemplates(activeOnly = true): Promise<CertificateTemplate[]> {
-  return certificateService.getCertificateTemplates(activeOnly);
-}
-
-export async function getCertificateTemplate(id: string): Promise<CertificateTemplate | null> {
-  return certificateService.getCertificateTemplate(id);
-}
-
-export async function createCertificateTemplate(
-  data: Omit<CertificateTemplate, 'template_id' | 'created_at' | 'updated_at'>
-): Promise<CertificateTemplate> {
-  const result = await certificateService.createCertificateTemplate(data);
-  invalidateCertificateCache();
-  return result;
-}
-
-export async function updateCertificateTemplate(
-  templateId: string,
-  updates: Partial<CertificateTemplate>
-): Promise<void> {
-  await certificateService.updateCertificateTemplate(templateId, updates);
-  invalidateCertificateCache();
-}
-
-export async function deleteCertificateTemplate(templateId: string): Promise<void> {
-  await certificateService.deleteCertificateTemplate(templateId);
-  invalidateCertificateCache();
-}
-
-// ========== Competency & Skill Gap API ==========
-
-import * as competencyService from './competencyService';
-import type {
-  Competency,
-  CompetencyCategory,
-  EmployeeCompetency,
-  LearningPath,
-  EmployeeLearningPath,
-  IndividualDevelopmentPlan,
-} from '@/types/curriculum';
-
-export async function getCompetencies(
-  category?: CompetencyCategory
-): Promise<Competency[]> {
-  return competencyService.getCompetencies(category);
-}
-
-export async function createCompetency(
-  data: Omit<Competency, 'competency_id' | 'created_at' | 'updated_at'>
-): Promise<Competency> {
-  return competencyService.createCompetency(data);
-}
-
-export async function updateCompetency(
-  id: string,
-  updates: Partial<Competency>
-): Promise<void> {
-  return competencyService.updateCompetency(id, updates);
-}
-
-export async function deleteCompetency(id: string): Promise<void> {
-  return competencyService.deleteCompetency(id);
-}
-
-export async function getEmployeeCompetencies(
-  employeeId?: string
-): Promise<EmployeeCompetency[]> {
-  return competencyService.getEmployeeCompetencies(employeeId);
-}
-
-export async function updateEmployeeCompetency(
-  data: EmployeeCompetency
-): Promise<void> {
-  return competencyService.updateEmployeeCompetency(data);
-}
-
-export async function getLearningPaths(): Promise<LearningPath[]> {
-  return competencyService.getLearningPaths();
-}
-
-export async function createLearningPath(
-  data: Omit<LearningPath, 'path_id' | 'created_at' | 'updated_at'>
-): Promise<LearningPath> {
-  return competencyService.createLearningPath(data);
-}
-
-export async function updateLearningPath(
-  id: string,
-  updates: Partial<LearningPath>
-): Promise<void> {
-  return competencyService.updateLearningPath(id, updates);
-}
-
-export async function getEmployeeLearningPaths(
-  employeeId?: string
-): Promise<EmployeeLearningPath[]> {
-  return competencyService.getEmployeeLearningPaths(employeeId);
-}
-
-export async function updateEmployeeLearningPath(
-  data: EmployeeLearningPath
-): Promise<void> {
-  return competencyService.updateEmployeeLearningPath(data);
-}
-
-export async function getDevelopmentPlans(
-  employeeId?: string
-): Promise<IndividualDevelopmentPlan[]> {
-  return competencyService.getDevelopmentPlans(employeeId);
-}
-
-export async function createDevelopmentPlan(
-  data: Omit<IndividualDevelopmentPlan, 'plan_id' | 'created_at' | 'updated_at'>
-): Promise<IndividualDevelopmentPlan> {
-  return competencyService.createDevelopmentPlan(data);
-}
-
-export async function updateDevelopmentPlan(
-  id: string,
-  updates: Partial<IndividualDevelopmentPlan>
-): Promise<void> {
-  return competencyService.updateDevelopmentPlan(id, updates);
-}
-
-// ========== Inspection Training API ==========
-
-export async function getInspectionResults(): Promise<InspectionResultDetail[]> {
-  return inspectionService.getAllResults();
-}
-
-export async function getInspectionResultsByEmployee(
-  employeeId: string
-): Promise<InspectionResultDetail[]> {
-  return inspectionService.getResultsByEmployee(employeeId);
-}
-
-export async function getInspectionDetail(
-  resultId: string
-): Promise<InspectionResultDetail | null> {
-  return inspectionService.getInspectionDetail(resultId);
-}
-
-export async function createInspectionResult(
-  input: InspectionResultInput,
-  createdBy: string
-): Promise<{ resultId: string; inspectionId: string; matchRate: number }> {
-  const result = await inspectionService.createInspectionResult(input, createdBy);
-  invalidateResultCache();
-  invalidateDashboardCache();
-
-  // 3-strike out check: if FAIL, check consecutive failures
-  if (result.matchRate < 80) {
-    try {
-      const strikeInfo = await inspectionService.getConsecutiveFailures(input.employee_id);
-      if (strikeInfo.requires_reassignment) {
-        // Get employee name from enrollment or use employee_id as fallback
-        let employeeName = input.employee_id;
-        if (input.enrollment_id) {
-          const enrollments = await inspectionService.getEnrollments({ employee_id: input.employee_id });
-          const enrollment = enrollments.find((e) => e.enrollment_id === input.enrollment_id);
-          if (enrollment) employeeName = enrollment.employee_name;
-        }
-
-        await inspectionService.handleThreeStrikeOut(
-          input.employee_id,
-          employeeName,
-          result.resultId,
-          input.enrollment_id
-        );
+// ========== Certification Expiry Notification API ==========
+
+/**
+ * 자격 만료 예정 직원에 대해 자동 알림을 생성합니다.
+ * - 30일 이내 만료 예정 자격 조회
+ * - 이미 동일 알림이 존재하면 생성하지 않음 (중복 방지)
+ * - type: 'CERTIFICATION_EXPIRY', priority: 'HIGH'
+ */
+export async function checkAndCreateExpiryNotifications(): Promise<number> {
+  try {
+    const expiringItems = await getExpiringTrainings(30);
+
+    if (expiringItems.length === 0) return 0;
+
+    // 기존 CERTIFICATION_EXPIRY 알림 조회 (중복 방지)
+    const existingNotifications = await notificationService.getNotifications(undefined, {
+      type: 'CERTIFICATION_EXPIRY',
+    });
+
+    // 기존 알림의 employee+program 키 세트
+    const existingKeys = new Set<string>();
+    for (const n of existingNotifications) {
+      if (n.related_entity?.type === 'CERTIFICATION') {
+        // notification_id 형식: CERT-EXP-{employee_id}-{program_code}
+        existingKeys.add(n.notification_id);
       }
-    } catch {
-      // Non-blocking: 3-strike handling should not prevent result submission
     }
+
+    let createdCount = 0;
+
+    for (const item of expiringItems) {
+      const notificationId = `CERT-EXP-${item.employee.employee_id}-${item.program.program_code}`;
+
+      // 이미 동일 알림이 존재하면 건너뜀
+      if (existingKeys.has(notificationId)) continue;
+
+      await notificationService.createNotification({
+        notification_id: notificationId,
+        type: 'CERTIFICATION_EXPIRY',
+        priority: 'HIGH',
+        title: `자격 만료 예정: ${item.program.program_name}`,
+        message: `${item.employee.employee_name}님의 ${item.program.program_code} 자격이 ${item.daysUntilExpiry}일 후 만료됩니다. (만료일: ${item.expirationDate})`,
+        recipient_id: item.employee.employee_id,
+        recipient_type: 'EMPLOYEE',
+        related_entity: {
+          type: 'CERTIFICATION',
+          id: `${item.employee.employee_id}-${item.program.program_code}`,
+        },
+        is_read: false,
+      });
+
+      createdCount++;
+    }
+
+    if (createdCount > 0) {
+      logger.info(`[api] Created ${createdCount} certification expiry notifications`);
+    }
+
+    return createdCount;
+  } catch (error) {
+    logger.error('[api] checkAndCreateExpiryNotifications failed:', error);
+    return 0;
   }
-
-  return result;
 }
-
-export async function getInspectionEnrollments(
-  filters?: InspectionEnrollmentFilters
-): Promise<InspectionEnrollment[]> {
-  return inspectionService.getEnrollments(filters);
-}
-
-export async function createInspectionEnrollment(
-  input: InspectionEnrollmentInput
-): Promise<InspectionEnrollment> {
-  return inspectionService.createEnrollment(input);
-}
-
-export async function checkDuplicateInspectionEnrollment(
-  employeeId: string,
-  programCode: string,
-): Promise<InspectionEnrollment | null> {
-  return inspectionService.checkDuplicateEnrollment(employeeId, programCode);
-}
-
-export async function updateInspectionEnrollmentStatus(
-  enrollmentId: string,
-  status: InspectionEnrollment['status']
-): Promise<void> {
-  return inspectionService.updateEnrollmentStatus(enrollmentId, status);
-}
-
-export async function getInspectionConsecutiveFailures(
-  employeeId: string
-): Promise<InspectionStrikeInfo> {
-  return inspectionService.getConsecutiveFailures(employeeId);
-}
-
-export async function autoEnrollInspectionFromLogs(
-  source: 'FIVE_PRS_RECOMMENDATION' | 'AQL_RECOMMENDATION',
-  enrolledBy: string
-) {
-  return inspectionService.autoEnrollFromLogs(source, enrolledBy);
-}
-
-// ========== Metal Detector Inspection ==========
-
-import type {
-  MDInspection,
-  MDFailure,
-  MDFilters,
-  MDDashboardKPI,
-  MDWeeklyTrend,
-} from '@/types/metalDetector';
-
-export const mdInspection = {
-  getInspections: (filters?: MDFilters) => mdInspectionService.getInspections(filters),
-  getInspectionById: (id: string) => mdInspectionService.getInspectionById(id),
-  createInspection: (data: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>) =>
-    mdInspectionService.createInspection(data),
-  updateInspection: (id: string, data: Partial<Omit<MDInspection, 'id' | 'createdAt'>>) =>
-    mdInspectionService.updateInspection(id, data),
-  getFailures: (inspectionId?: string) => mdInspectionService.getFailures(inspectionId),
-  createFailure: (data: Omit<MDFailure, 'id' | 'createdAt' | 'updatedAt'>) =>
-    mdInspectionService.createFailure(data),
-  updateFailure: (id: string, data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>) =>
-    mdInspectionService.updateFailure(id, data),
-  getDashboardKPIs: (year: number, weekNumber?: number): Promise<MDDashboardKPI> =>
-    mdInspectionService.getDashboardKPIs(year, weekNumber),
-  getWeeklyTrend: (year: number, weekCount?: number): Promise<MDWeeklyTrend[]> =>
-    mdInspectionService.getWeeklyTrend(year, weekCount),
-};
-
-// ========== TECH / NEW MODEL ==========
-
-import type {
-  TechModel,
-  TechReviewGuideline,
-  TechModelFilters,
-} from '@/types/techModel';
-
-// ========== INSPECTOR STICKER ==========
-
-import * as inspectorStickerService from './inspectorStickerService';
-import type {
-  InspectorSticker,
-  InspectorStickerInput,
-  InspectorStickerUpdate,
-} from '@/types/inspectorSticker';
-
-export const inspectorSticker = {
-  getStickers: (status?: string): Promise<InspectorSticker[]> =>
-    inspectorStickerService.getStickers(status),
-  getSticker: (id: string): Promise<InspectorSticker | null> =>
-    inspectorStickerService.getSticker(id),
-  getStickerByStickerID: (stickerId: string): Promise<InspectorSticker | null> =>
-    inspectorStickerService.getStickerByStickerID(stickerId),
-  createSticker: (data: InspectorStickerInput): Promise<InspectorSticker> =>
-    inspectorStickerService.createSticker(data),
-  updateSticker: (id: string, updates: InspectorStickerUpdate): Promise<void> =>
-    inspectorStickerService.updateSticker(id, updates),
-  deleteSticker: (id: string): Promise<void> =>
-    inspectorStickerService.deleteSticker(id),
-};
-
-export const techModel = {
-  getModels: (filters?: TechModelFilters) => techModelService.getModels(filters),
-  createModel: (data: Omit<TechModel, 'id' | 'createdAt' | 'updatedAt'>) =>
-    techModelService.createModel(data),
-  updateModel: (id: string, data: Partial<Omit<TechModel, 'id' | 'createdAt' | 'createdBy'>>) =>
-    techModelService.updateModel(id, data),
-  deleteModel: (id: string) => techModelService.deleteModel(id),
-  getGuidelines: (modelId?: string) => techModelService.getGuidelines(modelId),
-  createGuideline: (data: Omit<TechReviewGuideline, 'id' | 'createdAt' | 'updatedAt'>) =>
-    techModelService.createGuideline(data),
-  updateGuideline: (id: string, data: Partial<Omit<TechReviewGuideline, 'id' | 'createdAt' | 'createdBy'>>) =>
-    techModelService.updateGuideline(id, data),
-  deleteGuideline: (id: string) => techModelService.deleteGuideline(id),
-};

@@ -787,7 +787,11 @@
     "markAllRead": "Đánh dấu tất cả đã đọc",
     "empty": "Không có thông báo",
     "noUnread": "Không có thông báo chưa đọc",
-    "viewAll": "Xem tất cả thông báo"
+    "viewAll": "Xem tất cả thông báo",
+    "certificationExpiry": "Chứng chỉ sắp hết hạn",
+    "certificationExpiryTitle": "Chứng chỉ sắp hết hạn: {{programName}}",
+    "certificationExpiryMessage": "Chứng chỉ {{programCode}} của {{employeeName}} sẽ hết hạn sau {{days}} ngày. (Ngày hết hạn: {{expirationDate}})",
+    "certificationExpiryCreated": "Đã tạo {{count}} thông báo hết hạn chứng chỉ"
   },
   "export": {
     "title": "Xuất dữ liệu",
@@ -944,7 +948,35 @@
     "exportTrainingDate": "Ngày đào tạo",
     "exportType": "Loại",
     "exportAvgScore": "Điểm TB",
-    "exportFeedback": "Nhận xét"
+    "exportFeedback": "Nhận xét",
+    "effectivenessTab": "Đo lường hiệu quả đào tạo",
+    "effectiveness": {
+      "noData": "Không có dữ liệu đo lường hiệu quả đào tạo",
+      "noDataDesc": "Cần dữ liệu chất lượng trước và sau đào tạo từ nhân viên đăng ký AQL/5PRS",
+      "measuredEmployees": "Nhân viên đo lường",
+      "measuredDesc": "Nhân viên có dữ liệu so sánh trước/sau",
+      "avgImprovement": "Cải thiện TB",
+      "significantImprovement": "Cải thiện đáng kể",
+      "significantDesc": "Đạt trên 50% cải thiện chất lượng",
+      "noImprovement": "Không cải thiện",
+      "noImprovementDesc": "Không có cải thiện hoặc giảm sút",
+      "programSummaryTitle": "Tóm tắt hiệu quả theo chương trình",
+      "programSummaryDesc": "So sánh thay đổi tỷ lệ lỗi trung bình theo chương trình đào tạo",
+      "individualTitle": "Hiệu quả từng nhân viên",
+      "individualDesc": "So sánh tỷ lệ lỗi trước/sau đào tạo",
+      "programCol": "Chương trình",
+      "employeeCountCol": "Số đo",
+      "beforeCol": "Tỷ lệ lỗi trước",
+      "afterCol": "Tỷ lệ lỗi sau",
+      "improvementCol": "Cải thiện",
+      "ratingCol": "Xếp hạng",
+      "employeeCol": "Nhân viên",
+      "enrolledDateCol": "Ngày đăng ký",
+      "rating_significant": "Đáng kể",
+      "rating_moderate": "Trung bình",
+      "rating_minimal": "Nhỏ",
+      "rating_none": "Không"
+    }
   },
   "validation": {
     "required": "Trường này là bắt buộc"

@@ -34,6 +34,7 @@ import { KPICard } from '@/components/dashboard/KPICard';
 import { KPIAnomalyBadge } from '@/components/dashboard/KPIAnomalyBadge';
 import { useKPIAnomalies } from '@/hooks/useKPIAnomalies';
 import { useNormalizedTrainingStore } from '@/stores';
+import { checkAndCreateExpiryNotifications } from '@/services/api';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { BUILDINGS } from '@/data/constants';
 import type { Building } from '@/types';
@@ -156,6 +157,29 @@ export default function Dashboard() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 자격 만료 자동 알림 체크 (하루 1회)
+  useEffect(() => {
+    if (!isDataLoaded) return;
+
+    const STORAGE_KEY = 'q-train-last-expiry-check';
+    const lastCheck = localStorage.getItem(STORAGE_KEY);
+    const today = new Date().toISOString().substring(0, 10);
+
+    // 오늘 이미 체크했으면 건너뜀
+    if (lastCheck === today) return;
+
+    checkAndCreateExpiryNotifications()
+      .then((count) => {
+        localStorage.setItem(STORAGE_KEY, today);
+        if (count > 0) {
+          console.info(`[Dashboard] Created ${count} certification expiry notifications`);
+        }
+      })
+      .catch((err) => {
+        console.error('[Dashboard] Expiry notification check failed:', err);
+      });
+  }, [isDataLoaded]);
 
   if (loading.views.dashboard) {
     return <PageLoading />;

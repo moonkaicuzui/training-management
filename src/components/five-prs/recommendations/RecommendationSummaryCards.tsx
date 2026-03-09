@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Shield, TrendingUp, Users } from 'lucide-react';
+import { RecommendationSummaryCards as CommonSummaryCards, type SummaryCardConfig } from '@/components/common/recommendations';
 import type { TrainingRecommendation } from '@/types/recommendation';
 
 interface Props {
@@ -20,7 +20,7 @@ export function RecommendationSummaryCards({ recommendations }: Props) {
     (r) => r.priority === 'SURGE'
   ).length;
 
-  const cards = [
+  const cards: SummaryCardConfig[] = [
     {
       title: t('recommendation.totalRecommendations'),
       value: recommendations.length,
@@ -51,25 +51,6 @@ export function RecommendationSummaryCards({ recommendations }: Props) {
     },
   ];
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{card.title}</p>
-                <p className={`text-2xl font-bold ${card.color}`}>
-                  {card.value}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+  return <CommonSummaryCards cards={cards} />;
 }
+

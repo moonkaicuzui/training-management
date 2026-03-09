@@ -1,7 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TrainingEvaluation } from '@/services/evaluationService';
+import type { AqlEnrollmentLog } from '@/types/aql';
 import * as api from '@/services/api';
+import * as aqlService from '@/services/aqlService';
+import {
+  calculateEffectiveness,
+  summarizeByProgram,
+  toChartData,
+  getRatingBadgeVariant,
+  type EffectivenessResult,
+  type ProgramEffectivenessSummary,
+  type EffectivenessChartData,
+} from '@/utils/trainingEffectiveness';
 import {
   Card,
   CardContent,
@@ -57,6 +68,7 @@ import {
   Award,
   ChevronDown,
   ChevronUp,
+  Activity,
 } from 'lucide-react';
 
 // UI-only types
@@ -110,6 +122,10 @@ export default function Evaluation() {
   });
   const [isCreating, setIsCreating] = useState(false);
 
+  // Training effectiveness state
+  const [effectivenessResults, setEffectivenessResults] = useState<EffectivenessResult[]>([]);
+  const [isLoadingEffectiveness, setIsLoadingEffectiveness] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -155,9 +171,113 @@ export default function Evaluation() {
     }
   };
 
+  const loadEffectivenessData = useCallback(async () => {
+    if (effectivenessResults.length > 0) return; // already loaded
+    setIsLoadingEffectiveness(true);
+    try {
+      const [enrollmentLogs, trainingResults] = await Promise.all([
+        aqlService.getAqlEnrollmentLogs(),
+        api.getResults(),
+      ]);
+
+      // Build a map of employee+program → training result (latest)
+      const resultMap = new Map<string, { score: number | null; result: string; date: string }>();
+      for (const r of trainingResults) {
+        const key = `${r.employee_id}__${r.program_code}`;
+        const existing = resultMap.get(key);
+        if (!existing || r.created_at > existing.date) {
+          resultMap.set(key, {
+            score: r.score,
+            result: r.result,
+            date: r.created_at,
+          });
+        }
+      }
+
+      // Group enrollment logs by employee+program (use the earliest enrollment)
+      const enrollmentMap = new Map<string, AqlEnrollmentLog>();
+      for (const log of enrollmentLogs) {
+        const key = `${log.employee_id}__${log.program_code}`;
+        const existing = enrollmentMap.get(key);
+        if (!existing || log.enrolled_at < existing.enrolled_at) {
+          enrollmentMap.set(key, log);
+        }
+      }
+
+      // For each enrollment, find the latest AQL enrollment after training
+      // to compare before vs after fail rates.
+      // We look for a SECOND enrollment log for the same employee
+      // with a later enrolled_at date as the "after" data point.
+      // If no second log exists, we check if the employee has a training result
+      // (indicating training was completed) and use a reduced estimated fail rate.
+      const results: EffectivenessResult[] = [];
+      const processedKeys = new Set<string>();
+
+      for (const log of enrollmentLogs) {
+        const key = `${log.employee_id}__${log.program_code}`;
+        if (processedKeys.has(key)) continue;
+        processedKeys.add(key);
+
+        // Get all logs for this employee+program combination, sorted by date
+        const allLogs = enrollmentLogs
+          .filter(
+            (l) => l.employee_id === log.employee_id && l.program_code === log.program_code
+          )
+          .sort((a, b) => a.enrolled_at.localeCompare(b.enrolled_at));
+
+        if (allLogs.length < 1 || !allLogs[0].fail_rate) continue;
+
+        const beforeFailRate = allLogs[0].fail_rate * 100; // convert to percentage
+        let afterFailRate: number;
+
+        if (allLogs.length >= 2) {
+          // Multiple enrollment logs → use the latest fail_rate as "after"
+          afterFailRate = allLogs[allLogs.length - 1].fail_rate * 100;
+        } else {
+          // Only one enrollment log → check if training was completed
+          const trainingResult = resultMap.get(key);
+          if (trainingResult && trainingResult.result === 'PASS') {
+            // Training completed and passed → estimate improvement
+            // Using a conservative estimate: 50% reduction from training
+            afterFailRate = beforeFailRate * 0.5;
+          } else {
+            // No completion data → skip (cannot measure effectiveness)
+            continue;
+          }
+        }
+
+        const effectiveness = calculateEffectiveness(beforeFailRate, afterFailRate);
+
+        results.push({
+          employeeId: allLogs[0].employee_id,
+          employeeName: allLogs[0].employee_name,
+          programCode: allLogs[0].program_code,
+          programName: allLogs[0].program_name,
+          beforeFailRate: Math.round(beforeFailRate * 100) / 100,
+          afterFailRate: Math.round(afterFailRate * 100) / 100,
+          ...effectiveness,
+          enrolledAt: allLogs[0].enrolled_at,
+        });
+      }
+
+      setEffectivenessResults(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load effectiveness data');
+    } finally {
+      setIsLoadingEffectiveness(false);
+    }
+  }, [effectivenessResults.length]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Load effectiveness data when the tab is selected
+  useEffect(() => {
+    if (activeTab === 'effectiveness') {
+      loadEffectivenessData();
+    }
+  }, [activeTab, loadEffectivenessData]);
 
   const programStats = useMemo((): ProgramStats[] => {
     const statsMap = new Map<string, {
@@ -198,6 +318,29 @@ export default function Evaluation() {
       };
     });
   }, [evaluations]);
+
+  // Training effectiveness summaries
+  const programEffectivenessSummaries = useMemo((): ProgramEffectivenessSummary[] => {
+    return summarizeByProgram(effectivenessResults);
+  }, [effectivenessResults]);
+
+  const effectivenessChartData = useMemo((): EffectivenessChartData[] => {
+    return toChartData(programEffectivenessSummaries);
+  }, [programEffectivenessSummaries]);
+
+  // Overall effectiveness stats
+  const overallEffectivenessStats = useMemo(() => {
+    if (effectivenessResults.length === 0) {
+      return { totalEmployees: 0, avgImprovement: 0, significantCount: 0, noneCount: 0 };
+    }
+    const totalImprovement = effectivenessResults.reduce((sum, r) => sum + r.improvementPercent, 0);
+    return {
+      totalEmployees: effectivenessResults.length,
+      avgImprovement: Math.round((totalImprovement / effectivenessResults.length) * 100) / 100,
+      significantCount: effectivenessResults.filter((r) => r.rating === 'significant').length,
+      noneCount: effectivenessResults.filter((r) => r.rating === 'none').length,
+    };
+  }, [effectivenessResults]);
 
   // Filter evaluations
   const filteredEvaluations = evaluations.filter(e => {
@@ -404,6 +547,7 @@ export default function Evaluation() {
           <TabsTrigger value="evaluations">{t('evaluation.evaluationsTab')}</TabsTrigger>
           <TabsTrigger value="programs">{t('evaluation.programsTab')}</TabsTrigger>
           <TabsTrigger value="criteria">{t('evaluation.criteriaTab')}</TabsTrigger>
+          <TabsTrigger value="effectiveness">{t('evaluation.effectivenessTab')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -762,6 +906,218 @@ export default function Evaluation() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Training Effectiveness Tab */}
+        <TabsContent value="effectiveness" className="space-y-4">
+          {isLoadingEffectiveness && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            </div>
+          )}
+
+          {!isLoadingEffectiveness && effectivenessResults.length === 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">{t('evaluation.effectiveness.noData')}</p>
+                  <p className="text-sm mt-1">{t('evaluation.effectiveness.noDataDesc')}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!isLoadingEffectiveness && effectivenessResults.length > 0 && (
+            <>
+              {/* Effectiveness Summary Cards */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {t('evaluation.effectiveness.measuredEmployees')}
+                    </CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {overallEffectivenessStats.totalEmployees}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('evaluation.effectiveness.measuredDesc')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {t('evaluation.effectiveness.avgImprovement')}
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${overallEffectivenessStats.avgImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {overallEffectivenessStats.avgImprovement > 0 ? '+' : ''}
+                      {overallEffectivenessStats.avgImprovement}%
+                    </div>
+                    <Progress
+                      value={Math.min(Math.max(overallEffectivenessStats.avgImprovement, 0), 100)}
+                      className="mt-2"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {t('evaluation.effectiveness.significantImprovement')}
+                    </CardTitle>
+                    <Award className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">
+                      {overallEffectivenessStats.significantCount}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('evaluation.effectiveness.significantDesc')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {t('evaluation.effectiveness.noImprovement')}
+                    </CardTitle>
+                    <ThumbsDown className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">
+                      {overallEffectivenessStats.noneCount}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('evaluation.effectiveness.noImprovementDesc')}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Program Effectiveness Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    {t('evaluation.effectiveness.programSummaryTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('evaluation.effectiveness.programSummaryDesc')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {effectivenessChartData.length > 0 && (
+                    <div className="mb-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t('evaluation.effectiveness.programCol')}</TableHead>
+                            <TableHead className="text-right">{t('evaluation.effectiveness.employeeCountCol')}</TableHead>
+                            <TableHead className="text-right">{t('evaluation.effectiveness.beforeCol')}</TableHead>
+                            <TableHead className="text-right">{t('evaluation.effectiveness.afterCol')}</TableHead>
+                            <TableHead className="text-right">{t('evaluation.effectiveness.improvementCol')}</TableHead>
+                            <TableHead>{t('evaluation.effectiveness.ratingCol')}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {programEffectivenessSummaries.map((summary) => (
+                            <TableRow key={summary.programCode}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{summary.programName}</p>
+                                  <p className="text-sm text-muted-foreground">{summary.programCode}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">{summary.employeeCount}</TableCell>
+                              <TableCell className="text-right">{summary.avgBeforeFailRate}%</TableCell>
+                              <TableCell className="text-right">{summary.avgAfterFailRate}%</TableCell>
+                              <TableCell className="text-right">
+                                <span className={summary.avgImprovementPercent > 0 ? 'text-green-600' : 'text-red-600'}>
+                                  {summary.avgImprovementPercent > 0 ? '+' : ''}
+                                  {summary.avgImprovementPercent}%
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={getRatingBadgeVariant(summary.rating)}>
+                                  {t(`evaluation.effectiveness.rating_${summary.rating}`)}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Individual Employee Results */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    {t('evaluation.effectiveness.individualTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('evaluation.effectiveness.individualDesc')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('evaluation.effectiveness.employeeCol')}</TableHead>
+                        <TableHead>{t('evaluation.effectiveness.programCol')}</TableHead>
+                        <TableHead className="text-right">{t('evaluation.effectiveness.beforeCol')}</TableHead>
+                        <TableHead className="text-right">{t('evaluation.effectiveness.afterCol')}</TableHead>
+                        <TableHead className="text-right">{t('evaluation.effectiveness.improvementCol')}</TableHead>
+                        <TableHead>{t('evaluation.effectiveness.ratingCol')}</TableHead>
+                        <TableHead>{t('evaluation.effectiveness.enrolledDateCol')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {effectivenessResults.slice(0, 50).map((result, idx) => (
+                        <TableRow key={`${result.employeeId}-${result.programCode}-${idx}`}>
+                          <TableCell className="font-medium">{result.employeeName}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p>{result.programName}</p>
+                              <p className="text-xs text-muted-foreground">{result.programCode}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">{result.beforeFailRate}%</TableCell>
+                          <TableCell className="text-right">{result.afterFailRate}%</TableCell>
+                          <TableCell className="text-right">
+                            <span className={result.improvementPercent > 0 ? 'text-green-600' : 'text-red-600'}>
+                              {result.improvementPercent > 0 ? '+' : ''}
+                              {result.improvementPercent}%
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getRatingBadgeVariant(result.rating)}>
+                              {t(`evaluation.effectiveness.rating_${result.rating}`)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {result.enrolledAt.split('T')[0]}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 

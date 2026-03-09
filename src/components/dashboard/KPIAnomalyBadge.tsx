@@ -10,6 +10,7 @@
  * - Positive deviations (good anomalies) use green accent
  */
 
+import { memo } from 'react';
 import { AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   Tooltip,
@@ -23,7 +24,7 @@ interface KPIAnomalyBadgeProps {
   anomaly?: KPIAnomaly;
 }
 
-export function KPIAnomalyBadge({ anomaly }: KPIAnomalyBadgeProps) {
+export const KPIAnomalyBadge = memo(function KPIAnomalyBadge({ anomaly }: KPIAnomalyBadgeProps) {
   if (!anomaly) return null;
 
   const { severity, direction, isPositive, deviation, fieldLabel, currentValue, mean } = anomaly;
@@ -82,4 +83,4 @@ export function KPIAnomalyBadge({ anomaly }: KPIAnomalyBadgeProps) {
       </Tooltip>
     </TooltipProvider>
   );
-}
+});

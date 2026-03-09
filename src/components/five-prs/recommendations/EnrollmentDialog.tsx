@@ -1,25 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectLabel,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { User, Link2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Link2, AlertTriangle } from 'lucide-react';
+import { EnrollmentDialog as CommonEnrollmentDialog } from '@/components/common/recommendations';
 import type { TrainingRecommendation, RecommendationPriority } from '@/types/recommendation';
 import type { TrainingProgram } from '@/types';
 
@@ -49,45 +31,28 @@ export function EnrollmentDialog({
   isLoading,
 }: EnrollmentDialogProps) {
   const { t } = useTranslation();
-  const [selectedProgram, setSelectedProgram] = useState<string>('');
-
-  // Reset selection when dialog opens with new recommendation
-  useEffect(() => {
-    if (open && recommendation) {
-      const firstRecommended = recommendation.recommendedPrograms[0]?.program_code;
-      setSelectedProgram(firstRecommended || '');
-    }
-  }, [open, recommendation]);
-
-  // Separate recommended vs other programs
-  const otherPrograms = useMemo(() => {
-    if (!recommendation) return programs;
-
-    const codes = new Set(recommendation.recommendedPrograms.map((p) => p.program_code));
-    return programs.filter((p) => !codes.has(p.program_code) && p.is_active);
-  }, [recommendation, programs]);
-
-  const handleConfirm = () => {
-    if (selectedProgram) {
-      onConfirm(selectedProgram);
-    }
-  };
 
   if (!recommendation) return null;
 
   const hasLinkedEmployee = !!recommendation.linkedEmployee;
+  const firstRecommended = recommendation.recommendedPrograms[0]?.program_code;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{t('recommendation.enrollDialog.title')}</DialogTitle>
-          <DialogDescription>
-            {t('recommendation.enrollDialog.description')}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
+    <CommonEnrollmentDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      programs={programs}
+      recommendedPrograms={recommendation.recommendedPrograms}
+      hasLinkedEmployee={hasLinkedEmployee}
+      defaultProgramCode={firstRecommended}
+      title={t('recommendation.enrollDialog.title')}
+      description={t('recommendation.enrollDialog.description')}
+      noLinkedWarning={t('recommendation.enrollDialog.noLinkedEmployee')}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
+      i18nPrefix="recommendation"
+      infoContent={
+        <>
           {/* TQC Info */}
           <div className="rounded-lg border p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -137,78 +102,15 @@ export function EnrollmentDialog({
                   <span className="font-medium">{recommendation.linkedEmployee!.employee_name}</span>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                {t('recommendation.enrollDialog.noLinkedEmployee')}
-              </div>
-            )}
+            ) : null}
           </div>
-
-          {/* Program Selector */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t('recommendation.enrollDialog.selectProgram')}
-            </label>
-            <Select
-              value={selectedProgram}
-              onValueChange={setSelectedProgram}
-              disabled={!hasLinkedEmployee}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('recommendation.enrollDialog.programPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Recommended Programs */}
-                {recommendation.recommendedPrograms.length > 0 && (
-                  <SelectGroup>
-                    <SelectLabel>{t('recommendation.enrollDialog.recommendedPrograms')}</SelectLabel>
-                    {recommendation.recommendedPrograms.map((rp) => (
-                      <SelectItem key={rp.program_code} value={rp.program_code}>
-                        {rp.program_name} ({rp.match_reason})
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                )}
-
-                {/* All Other Programs */}
-                {otherPrograms.length > 0 && (
-                  <SelectGroup>
-                    <SelectLabel>{t('recommendation.enrollDialog.allPrograms')}</SelectLabel>
-                    {otherPrograms.map((p) => (
-                      <SelectItem key={p.program_code} value={p.program_code}>
-                        {p.program_name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Year-Month */}
-          <div className="text-sm text-muted-foreground">
-            {t('recommendation.enrollDialog.yearMonth')}: <span className="font-medium">{yearMonth}</span>
-          </div>
+        </>
+      }
+      extraContent={
+        <div className="text-sm text-muted-foreground">
+          {t('recommendation.enrollDialog.yearMonth')}: <span className="font-medium">{yearMonth}</span>
         </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={!selectedProgram || !hasLinkedEmployee || isLoading}
-          >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('recommendation.enrollDialog.confirm')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      }
+    />
   );
 }

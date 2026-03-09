@@ -3,6 +3,7 @@
  * 모바일 전용 하단 내비게이션 바
  */
 
+import { memo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -45,7 +46,7 @@ const bottomNavItems: NavItem[] = [
   },
 ];
 
-export function BottomNav() {
+export const BottomNav = memo(function BottomNav() {
   const { t } = useTranslation();
   const location = useLocation();
   const { setSidebarOpen } = useUIStore();
@@ -108,4 +109,4 @@ export function BottomNav() {
       </div>
     </nav>
   );
-}
+});

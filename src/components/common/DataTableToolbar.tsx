@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Table } from '@tanstack/react-table';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,7 @@ interface DataTableToolbarProps<TData> {
   children?: React.ReactNode;
 }
 
-export function DataTableToolbar<TData>({
+function DataTableToolbarInner<TData>({
   table,
   searchPlaceholder,
   searchColumn,
@@ -97,3 +98,5 @@ export function DataTableToolbar<TData>({
     </div>
   );
 }
+
+export const DataTableToolbar = memo(DataTableToolbarInner) as typeof DataTableToolbarInner;

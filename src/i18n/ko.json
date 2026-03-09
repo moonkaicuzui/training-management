@@ -787,7 +787,11 @@
     "markAllRead": "모두 읽음",
     "empty": "알림이 없습니다",
     "noUnread": "읽지 않은 알림이 없습니다",
-    "viewAll": "전체 알림 보기"
+    "viewAll": "전체 알림 보기",
+    "certificationExpiry": "자격 만료 예정",
+    "certificationExpiryTitle": "자격 만료 예정: {{programName}}",
+    "certificationExpiryMessage": "{{employeeName}}님의 {{programCode}} 자격이 {{days}}일 후 만료됩니다. (만료일: {{expirationDate}})",
+    "certificationExpiryCreated": "{{count}}건의 자격 만료 알림이 생성되었습니다"
   },
   "export": {
     "title": "내보내기",
@@ -944,7 +948,35 @@
     "exportTrainingDate": "교육일",
     "exportType": "평가 유형",
     "exportAvgScore": "평균 점수",
-    "exportFeedback": "피드백"
+    "exportFeedback": "피드백",
+    "effectivenessTab": "교육 효과 측정",
+    "effectiveness": {
+      "noData": "측정 가능한 교육 효과 데이터가 없습니다",
+      "noDataDesc": "AQL/5PRS에서 교육 등록된 직원의 교육 전후 데이터가 필요합니다",
+      "measuredEmployees": "측정 대상 직원",
+      "measuredDesc": "교육 전후 품질 데이터 비교 대상",
+      "avgImprovement": "평균 개선율",
+      "significantImprovement": "현저한 개선",
+      "significantDesc": "50% 이상 품질 개선 달성",
+      "noImprovement": "미개선",
+      "noImprovementDesc": "개선 효과 없음 또는 악화",
+      "programSummaryTitle": "프로그램별 교육 효과 요약",
+      "programSummaryDesc": "교육 프로그램별 평균 불합격률 변화를 비교합니다",
+      "individualTitle": "직원별 교육 효과 상세",
+      "individualDesc": "개별 직원의 교육 전후 불합격률 비교",
+      "programCol": "프로그램",
+      "employeeCountCol": "측정 인원",
+      "beforeCol": "교육 전 불합격률",
+      "afterCol": "교육 후 불합격률",
+      "improvementCol": "개선율",
+      "ratingCol": "등급",
+      "employeeCol": "직원",
+      "enrolledDateCol": "교육 등록일",
+      "rating_significant": "현저",
+      "rating_moderate": "보통",
+      "rating_minimal": "미미",
+      "rating_none": "없음"
+    }
   },
   "validation": {
     "required": "필수 입력 항목입니다"

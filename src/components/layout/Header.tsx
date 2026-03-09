@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Menu, Globe, User, LogOut, Shield, BookOpen, Eye, Command } from 'lucide-react';
@@ -36,7 +36,7 @@ const roleConfig: Record<UserRole, { icon: typeof Shield; label: string; variant
   VIEWER: { icon: Eye, label: 'auth.viewer', variant: 'outline' },
 };
 
-export function Header() {
+export const Header = memo(function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { language, setLanguage, toggleSidebar } = useUIStore(useShallow((state) => ({ language: state.language, setLanguage: state.setLanguage, toggleSidebar: state.toggleSidebar })));
@@ -196,4 +196,4 @@ export function Header() {
       <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
     </>
   );
-}
+});

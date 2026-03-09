@@ -5,6 +5,11 @@
  * `dashboard_metrics` collection (populated by Cloud Functions)
  * with client-side fallback when pre-aggregated data is unavailable.
  *
+ * Optimizations applied:
+ * - Date-filtered Firestore queries (no full collection reads)
+ * - 5-minute in-memory cache for repeated calls
+ * - Shared doc parsers to reduce duplication
+ *
  * Collections used:
  * - dashboard_metrics (pre-aggregated, read-only)
  * - competencies, employee_competencies (competency gap analysis)
@@ -135,6 +140,140 @@ const getMonthPeriods = (months: number): string[] => {
 };
 
 // ============================================================
+// Cache System (5-minute TTL)
+// ============================================================
+
+interface CacheEntry<T> {
+  data: T;
+  fetchedAt: number;
+}
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const analyticsCache = new Map<string, CacheEntry<unknown>>();
+
+const getCached = <T>(key: string): T | null => {
+  const entry = analyticsCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) {
+    analyticsCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+};
+
+const setCache = <T>(key: string, data: T): void => {
+  analyticsCache.set(key, { data, fetchedAt: Date.now() });
+};
+
+/**
+ * Clear all analytics cache entries.
+ * Useful when data has been modified and fresh reads are needed.
+ */
+export const clearAnalyticsCache = (): void => {
+  analyticsCache.clear();
+  logger.log('[analyticsService] Cache cleared');
+};
+
+// ============================================================
+// Query Helpers & Doc Parsers
+// ============================================================
+
+/**
+ * Get a date string N months ago in YYYY-MM-DD format.
+ */
+const getDateMonthsAgo = (months: number): string => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().substring(0, 10);
+};
+
+/**
+ * Build a Firestore query for training_results filtered by training_date.
+ * Uses string comparison on the YYYY-MM-DD format field.
+ */
+const buildResultsQuery = (startDate?: string) => {
+  const col = collection(db, TRAINING_RESULTS);
+  if (startDate) {
+    return query(
+      col,
+      where('training_date', '>=', startDate),
+      orderBy('training_date', 'desc')
+    );
+  }
+  return query(col, orderBy('training_date', 'desc'));
+};
+
+/**
+ * Parse a Firestore doc snapshot into a TrainingResultRecord.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const parseResultDoc = (d: any): TrainingResultRecord => {
+  const data = d.data();
+  return {
+    result_id: (data.result_id as string) || d.id,
+    session_id: (data.session_id as string | null) ?? null,
+    employee_id: (data.employee_id as string) || '',
+    program_code: (data.program_code as string) || '',
+    training_date: (data.training_date as string) || '',
+    score: (data.score as number | null) ?? null,
+    grade: data.grade ?? null,
+    result: (data.result as string) || 'ABSENT',
+    needs_retraining: (data.needs_retraining as boolean) || false,
+    evaluated_by: (data.evaluated_by as string) || '',
+    remarks: (data.remarks as string) || '',
+    created_at: convertTimestampToString(data.created_at),
+    updated_at: convertTimestampToString(data.updated_at) || null,
+    updated_by: (data.updated_by as string | null) ?? null,
+  } as TrainingResultRecord;
+};
+
+/**
+ * Parse a Firestore doc snapshot into an Employee.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const parseEmployeeDoc = (d: any): Employee => {
+  const data = d.data();
+  return {
+    employee_id: (data.employee_id as string) || d.id,
+    employee_name: (data.employee_name as string) || '',
+    department: data.department,
+    position: data.position,
+    building: data.building,
+    line: (data.line as string) || '',
+    hire_date: (data.hire_date as string) || '',
+    status: (data.status as string) || 'ACTIVE',
+    updated_at: convertTimestampToString(data.updated_at),
+  } as Employee;
+};
+
+/**
+ * Parse a Firestore doc snapshot into a TrainingProgram.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const parseProgramDoc = (d: any): TrainingProgram => {
+  const data = d.data();
+  return {
+    program_code: (data.program_code as string) || d.id,
+    program_name: (data.program_name as string) || '',
+    program_name_vn: (data.program_name_vn as string) || '',
+    program_name_kr: (data.program_name_kr as string) || '',
+    category: data.category,
+    tags: (data.tags as string[]) || [],
+    target_positions: (data.target_positions as TrainingProgram['target_positions']) || [],
+    evaluation_type: data.evaluation_type || 'SCORE',
+    passing_score: (data.passing_score as number) || 0,
+    grade_aa: (data.grade_aa as number) || 0,
+    grade_a: (data.grade_a as number) || 0,
+    grade_b: (data.grade_b as number) || 0,
+    duration_hours: (data.duration_hours as number) || 0,
+    validity_months: (data.validity_months as number | null) ?? null,
+    is_active: data.is_active !== false,
+    created_at: convertTimestampToString(data.created_at),
+    updated_at: convertTimestampToString(data.updated_at),
+  } as TrainingProgram;
+};
+
+// ============================================================
 // 1. getLatestMetrics()
 // ============================================================
 
@@ -144,6 +283,13 @@ const getMonthPeriods = (months: number): string[] => {
  * Falls back to client-side calculation if the pre-aggregated document is unavailable.
  */
 export const getLatestMetrics = async (): Promise<AnalyticsMetrics> => {
+  const cacheKey = 'latest_metrics';
+  const cached = getCached<AnalyticsMetrics>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached latest metrics');
+    return cached;
+  }
+
   try {
     // Try pre-aggregated data first
     const latestRef = doc(db, DASHBOARD_METRICS, 'latest');
@@ -152,7 +298,7 @@ export const getLatestMetrics = async (): Promise<AnalyticsMetrics> => {
     if (latestSnap.exists()) {
       const data = latestSnap.data();
       logger.log('[analyticsService] Using pre-aggregated metrics');
-      return {
+      const metrics: AnalyticsMetrics = {
         totalEmployees: (data.totalEmployees as number) || 0,
         activePrograms: (data.activePrograms as number) || 0,
         completionRate: (data.completionRate as number) || 0,
@@ -165,6 +311,8 @@ export const getLatestMetrics = async (): Promise<AnalyticsMetrics> => {
           data.calculatedAt as Timestamp | string | undefined
         ) || new Date().toISOString(),
       };
+      setCache(cacheKey, metrics);
+      return metrics;
     }
 
     // Fallback: client-side calculation
@@ -185,84 +333,44 @@ export const getLatestMetrics = async (): Promise<AnalyticsMetrics> => {
 /**
  * Client-side calculation of analytics metrics.
  * Used as fallback when pre-aggregated data is unavailable.
+ *
+ * Optimized: Only fetches training results from the last 12 months
+ * and upcoming PLANNED sessions instead of reading entire collections.
  */
 const calculateMetricsClientSide = async (): Promise<AnalyticsMetrics> => {
-  // Fetch all required data in parallel
+  const cacheKey = 'metrics_client_side';
+  const cached = getCached<AnalyticsMetrics>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached client-side metrics');
+    return cached;
+  }
+
+  const now = new Date();
+  const todayStr = now.toISOString().substring(0, 10);
+  const startDate12m = getDateMonthsAgo(12);
+
+  // Fetch data with filters: results limited to 12 months, sessions only PLANNED future
   const [employeesSnap, programsSnap, resultsSnap, sessionsSnap] = await Promise.all([
     getDocs(query(collection(db, EMPLOYEES), where('status', '==', 'ACTIVE'))),
     getDocs(query(collection(db, TRAINING_PROGRAMS), where('is_active', '==', true))),
-    getDocs(collection(db, TRAINING_RESULTS)),
-    getDocs(collection(db, TRAINING_SESSIONS)),
+    getDocs(buildResultsQuery(startDate12m)),
+    getDocs(query(
+      collection(db, TRAINING_SESSIONS),
+      where('status', '==', 'PLANNED'),
+      where('session_date', '>=', todayStr),
+      orderBy('session_date', 'asc')
+    )),
   ]);
 
-  const employees: Employee[] = employeesSnap.docs.map((d) => {
-    const data = d.data();
-    return {
-      employee_id: (data.employee_id as string) || d.id,
-      employee_name: (data.employee_name as string) || '',
-      department: data.department,
-      position: data.position,
-      building: data.building,
-      line: (data.line as string) || '',
-      hire_date: (data.hire_date as string) || '',
-      status: (data.status as string) || 'ACTIVE',
-      updated_at: convertTimestampToString(data.updated_at),
-    } as Employee;
-  });
-
-  const programs: TrainingProgram[] = programsSnap.docs.map((d) => {
-    const data = d.data();
-    return {
-      program_code: (data.program_code as string) || d.id,
-      program_name: (data.program_name as string) || '',
-      program_name_vn: (data.program_name_vn as string) || '',
-      program_name_kr: (data.program_name_kr as string) || '',
-      category: data.category,
-      tags: (data.tags as string[]) || [],
-      target_positions: (data.target_positions as TrainingProgram['target_positions']) || [],
-      evaluation_type: data.evaluation_type || 'SCORE',
-      passing_score: (data.passing_score as number) || 0,
-      grade_aa: (data.grade_aa as number) || 0,
-      grade_a: (data.grade_a as number) || 0,
-      grade_b: (data.grade_b as number) || 0,
-      duration_hours: (data.duration_hours as number) || 0,
-      validity_months: (data.validity_months as number | null) ?? null,
-      is_active: data.is_active !== false,
-      created_at: convertTimestampToString(data.created_at),
-      updated_at: convertTimestampToString(data.updated_at),
-    } as TrainingProgram;
-  });
-
-  const results: TrainingResultRecord[] = resultsSnap.docs.map((d) => {
-    const data = d.data();
-    return {
-      result_id: (data.result_id as string) || d.id,
-      session_id: (data.session_id as string | null) ?? null,
-      employee_id: (data.employee_id as string) || '',
-      program_code: (data.program_code as string) || '',
-      training_date: (data.training_date as string) || '',
-      score: (data.score as number | null) ?? null,
-      grade: data.grade ?? null,
-      result: (data.result as string) || 'ABSENT',
-      needs_retraining: (data.needs_retraining as boolean) || false,
-      evaluated_by: (data.evaluated_by as string) || '',
-      remarks: (data.remarks as string) || '',
-      created_at: convertTimestampToString(data.created_at),
-      updated_at: convertTimestampToString(data.updated_at) || null,
-      updated_by: (data.updated_by as string | null) ?? null,
-    } as TrainingResultRecord;
-  });
+  const employees: Employee[] = employeesSnap.docs.map(parseEmployeeDoc);
+  const programs: TrainingProgram[] = programsSnap.docs.map(parseProgramDoc);
+  const results: TrainingResultRecord[] = resultsSnap.docs.map(parseResultDoc);
 
   // Calculate KPIs using existing calculator
-  const now = new Date();
   const kpis = calculateDashboardKPIs(employees, programs, results, now);
 
-  // Calculate upcoming sessions (PLANNED sessions with date >= today)
-  const todayStr = now.toISOString().substring(0, 10);
-  const upcomingSessions = sessionsSnap.docs.filter((d) => {
-    const data = d.data();
-    return data.status === 'PLANNED' && (data.session_date as string) >= todayStr;
-  }).length;
+  // Upcoming sessions count (already filtered server-side)
+  const upcomingSessions = sessionsSnap.size;
 
   // Calculate total training hours from passed results
   const passedResults = results.filter((r) => r.result === 'PASS');
@@ -274,7 +382,7 @@ const calculateMetricsClientSide = async (): Promise<AnalyticsMetrics> => {
     return sum + (programDurationMap.get(r.program_code) || 0);
   }, 0);
 
-  return {
+  const metrics: AnalyticsMetrics = {
     totalEmployees: kpis.totalEmployees,
     activePrograms: programs.length,
     completionRate: kpis.overallCompletionRate,
@@ -285,6 +393,9 @@ const calculateMetricsClientSide = async (): Promise<AnalyticsMetrics> => {
     trainingHours,
     calculatedAt: now.toISOString(),
   };
+
+  setCache(cacheKey, metrics);
+  return metrics;
 };
 
 // ============================================================
@@ -302,6 +413,13 @@ export const getHistoricalMetrics = async (
   startDate: string,
   endDate: string
 ): Promise<AnalyticsMetrics[]> => {
+  const cacheKey = `historical_${startDate}_${endDate}`;
+  const cached = getCached<AnalyticsMetrics[]>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached historical metrics');
+    return cached;
+  }
+
   try {
     const q = query(
       collection(db, DASHBOARD_METRICS),
@@ -317,7 +435,7 @@ export const getHistoricalMetrics = async (
       return [];
     }
 
-    return snapshot.docs.map((docSnap) => {
+    const result = snapshot.docs.map((docSnap) => {
       const data = docSnap.data();
       return {
         totalEmployees: (data.totalEmployees as number) || 0,
@@ -333,6 +451,9 @@ export const getHistoricalMetrics = async (
         ) || (data.date as string) || '',
       };
     });
+
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
     logger.error('[analyticsService] getHistoricalMetrics error:', error);
     return [];
@@ -354,6 +475,13 @@ export const getHistoricalMetrics = async (
 export const calculateCompetencyGaps = async (
   department?: string
 ): Promise<CompetencyGapAnalysis[]> => {
+  const cacheKey = `competency_gaps_${department || 'all'}`;
+  const cached = getCached<CompetencyGapAnalysis[]>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached competency gaps');
+    return cached;
+  }
+
   try {
     // Fetch competencies, employee competencies, and employees in parallel
     const [competenciesSnap, empCompSnap, employeesSnap] = await Promise.all([
@@ -461,6 +589,7 @@ export const calculateCompetencyGaps = async (
     // Sort by gap size (largest first)
     gaps.sort((a, b) => b.gap - a.gap);
 
+    setCache(cacheKey, gaps);
     return gaps;
   } catch (error) {
     logger.error('[analyticsService] calculateCompetencyGaps error:', error);
@@ -477,6 +606,9 @@ export const calculateCompetencyGaps = async (
  * Reads from `training_costs` collection and correlates with training results
  * to estimate benefits.
  *
+ * Optimized: Filters costs by year (period field) and results by training_date
+ * instead of reading entire collections.
+ *
  * @param year - The year to calculate ROI for (e.g., 2026)
  */
 export const calculateROI = async (year: number): Promise<ROIAnalysis> => {
@@ -491,48 +623,43 @@ export const calculateROI = async (year: number): Promise<ROIAnalysis> => {
     qualityImprovementRate: 0,
   };
 
+  const cacheKey = `roi_${yearStr}`;
+  const cached = getCached<ROIAnalysis>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached ROI for year:', yearStr);
+    return cached;
+  }
+
   try {
-    // Fetch costs and results in parallel
+    const yearStart = `${yearStr}-01-01`;
+    const yearEnd = `${yearStr}-12-31`;
+
+    // Fetch costs filtered by year, results filtered by year, and active programs
     const [costsSnap, resultsSnap, programsSnap] = await Promise.all([
-      getDocs(query(collection(db, TRAINING_COSTS), orderBy('period', 'asc'))),
-      getDocs(collection(db, TRAINING_RESULTS)),
+      getDocs(query(
+        collection(db, TRAINING_COSTS),
+        where('period', '>=', `${yearStr}-01`),
+        where('period', '<=', `${yearStr}-12`),
+        orderBy('period', 'asc')
+      )),
+      getDocs(query(
+        collection(db, TRAINING_RESULTS),
+        where('training_date', '>=', yearStart),
+        where('training_date', '<=', yearEnd),
+        orderBy('training_date', 'asc')
+      )),
       getDocs(query(collection(db, TRAINING_PROGRAMS), where('is_active', '==', true))),
     ]);
 
-    // Filter costs for the target year
+    // Sum all costs (already filtered to target year)
     let totalCost = 0;
     for (const docSnap of costsSnap.docs) {
       const data = docSnap.data();
-      const period = (data.period as string) || '';
-      if (period.startsWith(yearStr)) {
-        totalCost += (data.total as number) || 0;
-      }
+      totalCost += (data.total as number) || 0;
     }
 
-    // Filter results for the target year
-    const yearResults: TrainingResultRecord[] = [];
-    for (const docSnap of resultsSnap.docs) {
-      const data = docSnap.data();
-      const trainingDate = (data.training_date as string) || '';
-      if (trainingDate.startsWith(yearStr)) {
-        yearResults.push({
-          result_id: (data.result_id as string) || docSnap.id,
-          session_id: (data.session_id as string | null) ?? null,
-          employee_id: (data.employee_id as string) || '',
-          program_code: (data.program_code as string) || '',
-          training_date: trainingDate,
-          score: (data.score as number | null) ?? null,
-          grade: data.grade ?? null,
-          result: (data.result as string) || 'ABSENT',
-          needs_retraining: (data.needs_retraining as boolean) || false,
-          evaluated_by: (data.evaluated_by as string) || '',
-          remarks: (data.remarks as string) || '',
-          created_at: convertTimestampToString(data.created_at),
-          updated_at: convertTimestampToString(data.updated_at) || null,
-          updated_by: (data.updated_by as string | null) ?? null,
-        } as TrainingResultRecord);
-      }
-    }
+    // Parse results (already filtered to target year)
+    const yearResults: TrainingResultRecord[] = resultsSnap.docs.map(parseResultDoc);
 
     if (yearResults.length === 0 && totalCost === 0) {
       return defaultResult;
@@ -598,7 +725,7 @@ export const calculateROI = async (year: number): Promise<ROIAnalysis> => {
       ? Math.round(totalCost / totalTrainingHours)
       : 0;
 
-    return {
+    const roiResult: ROIAnalysis = {
       period: yearStr,
       totalCost,
       totalBenefit,
@@ -607,6 +734,9 @@ export const calculateROI = async (year: number): Promise<ROIAnalysis> => {
       costPerTrainingHour,
       qualityImprovementRate,
     };
+
+    setCache(cacheKey, roiResult);
+    return roiResult;
   } catch (error) {
     logger.error('[analyticsService] calculateROI error:', error);
     return defaultResult;
@@ -621,16 +751,26 @@ export const calculateROI = async (year: number): Promise<ROIAnalysis> => {
  * Aggregate training completion data by month.
  * Returns trend data suitable for line/bar charts.
  *
+ * Optimized: Only fetches results from the lookback period start date.
+ *
  * @param months - Number of months to look back (default: 12)
  */
 export const getTrainingTrends = async (
   months: number = 12
 ): Promise<TrendData[]> => {
+  const cacheKey = `trends_${months}`;
+  const cached = getCached<TrendData[]>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached trends for', months, 'months');
+    return cached;
+  }
+
   try {
     const periods = getMonthPeriods(months);
-    const startDate = periods[0]; // e.g., "2025-03"
+    const startDate = `${periods[0]}-01`; // e.g., "2025-03-01"
 
-    const resultsSnap = await getDocs(collection(db, TRAINING_RESULTS));
+    // Only fetch results from the lookback period (not entire collection)
+    const resultsSnap = await getDocs(buildResultsQuery(startDate));
 
     if (resultsSnap.empty) {
       logger.log('[analyticsService] No training results found for trends');
@@ -649,16 +789,19 @@ export const getTrainingTrends = async (
       const result = (data.result as string) || '';
       const month = trainingDate.substring(0, 7); // YYYY-MM
 
-      if (result === 'PASS' && month >= startDate && monthlyCounts.has(month)) {
+      if (result === 'PASS' && monthlyCounts.has(month)) {
         monthlyCounts.set(month, (monthlyCounts.get(month) || 0) + 1);
       }
     }
 
-    return periods.map((period) => ({
+    const trends = periods.map((period) => ({
       period,
       value: monthlyCounts.get(period) || 0,
       label: 'Completions',
     }));
+
+    setCache(cacheKey, trends);
+    return trends;
   } catch (error) {
     logger.error('[analyticsService] getTrainingTrends error:', error);
     return [];
@@ -672,14 +815,29 @@ export const getTrainingTrends = async (
 /**
  * Compare training metrics across departments.
  * Returns completion rate, pass rate, and average score per department.
+ *
+ * Optimized: Only fetches results from the last N months (default: 6).
+ *
+ * @param monthsBack - Number of months to look back for results (default: 6)
  */
-export const getDepartmentComparison = async (): Promise<DepartmentComparison[]> => {
+export const getDepartmentComparison = async (
+  monthsBack: number = 6
+): Promise<DepartmentComparison[]> => {
+  const cacheKey = `dept_comparison_${monthsBack}`;
+  const cached = getCached<DepartmentComparison[]>(cacheKey);
+  if (cached) {
+    logger.log('[analyticsService] Using cached department comparison');
+    return cached;
+  }
+
   try {
-    // Fetch employees, programs, and results in parallel
+    const startDate = getDateMonthsAgo(monthsBack);
+
+    // Fetch employees, programs, and results (date-filtered) in parallel
     const [employeesSnap, programsSnap, resultsSnap] = await Promise.all([
       getDocs(query(collection(db, EMPLOYEES), where('status', '==', 'ACTIVE'))),
       getDocs(query(collection(db, TRAINING_PROGRAMS), where('is_active', '==', true))),
-      getDocs(collection(db, TRAINING_RESULTS)),
+      getDocs(buildResultsQuery(startDate)),
     ]);
 
     if (employeesSnap.empty || programsSnap.empty) {
@@ -687,66 +845,10 @@ export const getDepartmentComparison = async (): Promise<DepartmentComparison[]>
       return [];
     }
 
-    // Parse employees
-    const employees: Employee[] = employeesSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        employee_id: (data.employee_id as string) || d.id,
-        employee_name: (data.employee_name as string) || '',
-        department: data.department,
-        position: data.position,
-        building: data.building,
-        line: (data.line as string) || '',
-        hire_date: (data.hire_date as string) || '',
-        status: (data.status as string) || 'ACTIVE',
-        updated_at: convertTimestampToString(data.updated_at),
-      } as Employee;
-    });
-
-    // Parse programs
-    const programs: TrainingProgram[] = programsSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        program_code: (data.program_code as string) || d.id,
-        program_name: (data.program_name as string) || '',
-        program_name_vn: (data.program_name_vn as string) || '',
-        program_name_kr: (data.program_name_kr as string) || '',
-        category: data.category,
-        tags: (data.tags as string[]) || [],
-        target_positions: (data.target_positions as TrainingProgram['target_positions']) || [],
-        evaluation_type: data.evaluation_type || 'SCORE',
-        passing_score: (data.passing_score as number) || 0,
-        grade_aa: (data.grade_aa as number) || 0,
-        grade_a: (data.grade_a as number) || 0,
-        grade_b: (data.grade_b as number) || 0,
-        duration_hours: (data.duration_hours as number) || 0,
-        validity_months: (data.validity_months as number | null) ?? null,
-        is_active: data.is_active !== false,
-        created_at: convertTimestampToString(data.created_at),
-        updated_at: convertTimestampToString(data.updated_at),
-      } as TrainingProgram;
-    });
-
-    // Parse results
-    const results: TrainingResultRecord[] = resultsSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        result_id: (data.result_id as string) || d.id,
-        session_id: (data.session_id as string | null) ?? null,
-        employee_id: (data.employee_id as string) || '',
-        program_code: (data.program_code as string) || '',
-        training_date: (data.training_date as string) || '',
-        score: (data.score as number | null) ?? null,
-        grade: data.grade ?? null,
-        result: (data.result as string) || 'ABSENT',
-        needs_retraining: (data.needs_retraining as boolean) || false,
-        evaluated_by: (data.evaluated_by as string) || '',
-        remarks: (data.remarks as string) || '',
-        created_at: convertTimestampToString(data.created_at),
-        updated_at: convertTimestampToString(data.updated_at) || null,
-        updated_by: (data.updated_by as string | null) ?? null,
-      } as TrainingResultRecord;
-    });
+    // Parse using shared helpers
+    const employees: Employee[] = employeesSnap.docs.map(parseEmployeeDoc);
+    const programs: TrainingProgram[] = programsSnap.docs.map(parseProgramDoc);
+    const results: TrainingResultRecord[] = resultsSnap.docs.map(parseResultDoc);
 
     // Group employees by department
     const deptEmployees = new Map<string, Employee[]>();
@@ -834,6 +936,7 @@ export const getDepartmentComparison = async (): Promise<DepartmentComparison[]>
     // Sort by completion rate descending
     comparisons.sort((a, b) => b.completionRate - a.completionRate);
 
+    setCache(cacheKey, comparisons);
     return comparisons;
   } catch (error) {
     logger.error('[analyticsService] getDepartmentComparison error:', error);

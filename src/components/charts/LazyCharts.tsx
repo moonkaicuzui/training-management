@@ -5,7 +5,7 @@
  * Props 기반 API로 정적 recharts import 제거 - 번들 최적화
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, memo } from 'react';
 import { Loader2 } from 'lucide-react';
 
 // Chart loading skeleton
@@ -48,7 +48,7 @@ interface LazyBarChartProps {
   xAxisFormatter?: (value: string) => string;
 }
 
-export function LazyBarChart({
+export const LazyBarChart = memo(function LazyBarChart({
   data,
   height = 300,
   bars,
@@ -66,7 +66,7 @@ export function LazyBarChart({
       />
     </Suspense>
   );
-}
+});
 
 const BarChartRenderer = lazy(async () => {
   const {
@@ -132,7 +132,7 @@ interface LazyPieChartProps {
   colors?: Record<string, string>;
 }
 
-export function LazyPieChart({
+export const LazyPieChart = memo(function LazyPieChart({
   data,
   height = 300,
   colors = {},
@@ -142,7 +142,7 @@ export function LazyPieChart({
       <PieChartRenderer data={data} height={height} colors={colors} />
     </Suspense>
   );
-}
+});
 
 const PieChartRenderer = lazy(async () => {
   const { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } = await import('recharts');
@@ -212,7 +212,7 @@ interface LazyAreaChartProps {
   showLegend?: boolean;
 }
 
-export function LazyAreaChart({
+export const LazyAreaChart = memo(function LazyAreaChart({
   data,
   height = 300,
   areas,
@@ -234,7 +234,7 @@ export function LazyAreaChart({
       />
     </Suspense>
   );
-}
+});
 
 const AreaChartRenderer = lazy(async () => {
   const {
@@ -307,7 +307,7 @@ interface LazyLineChartProps {
   xAxisFormatter?: (value: string) => string;
 }
 
-export function LazyLineChart({
+export const LazyLineChart = memo(function LazyLineChart({
   data,
   height = 300,
   lines,
@@ -325,7 +325,7 @@ export function LazyLineChart({
       />
     </Suspense>
   );
-}
+});
 
 const LineChartRenderer = lazy(async () => {
   const {

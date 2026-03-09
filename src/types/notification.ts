@@ -6,6 +6,7 @@
 export type NotificationType =
   | 'TRAINING_REMINDER'      // 교육 예정 알림
   | 'EXPIRY_WARNING'         // 교육 만료 임박
+  | 'CERTIFICATION_EXPIRY'   // 자격 만료 자동 알림
   | 'RETRAINING_REQUIRED'    // 재교육 필요
   | 'SESSION_CANCELLED'      // 세션 취소
   | 'RESULT_AVAILABLE'       // 결과 확인 가능
@@ -24,7 +25,7 @@ export interface Notification {
   recipient_id?: string; // employee_id or 'ALL'
   recipient_type: 'EMPLOYEE' | 'DEPARTMENT' | 'ALL';
   related_entity?: {
-    type: 'SESSION' | 'PROGRAM' | 'EMPLOYEE' | 'RESULT' | 'ENROLLMENT';
+    type: 'SESSION' | 'PROGRAM' | 'EMPLOYEE' | 'RESULT' | 'ENROLLMENT' | 'CERTIFICATION';
     id: string;
   };
   is_read: boolean;
@@ -63,6 +64,11 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, {
     icon: 'Clock',
     color: 'text-orange-500',
     label: { ko: '만료 임박', en: 'Expiry Warning', vi: 'Sắp hết hạn' },
+  },
+  CERTIFICATION_EXPIRY: {
+    icon: 'ShieldAlert',
+    color: 'text-orange-600',
+    label: { ko: '자격 만료', en: 'Certification Expiry', vi: 'Hết hạn chứng chỉ' },
   },
   RETRAINING_REQUIRED: {
     icon: 'AlertTriangle',

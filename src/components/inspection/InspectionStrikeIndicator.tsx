@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, ShieldAlert, UserX } from 'lucide-react';
@@ -10,7 +11,7 @@ interface InspectionStrikeIndicatorProps {
   className?: string;
 }
 
-export function InspectionStrikeIndicator({
+export const InspectionStrikeIndicator = memo(function InspectionStrikeIndicator({
   consecutiveFailures,
   showLabel = true,
   compact = false,
@@ -64,4 +65,4 @@ export function InspectionStrikeIndicator({
       )}
     </div>
   );
-}
+});

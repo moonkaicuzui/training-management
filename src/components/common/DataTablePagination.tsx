@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Table } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,7 +20,7 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTablePagination<TData>({
+function DataTablePaginationInner<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
   const { t } = useTranslation();
@@ -103,3 +104,5 @@ export function DataTablePagination<TData>({
     </nav>
   );
 }
+
+export const DataTablePagination = memo(DataTablePaginationInner) as typeof DataTablePaginationInner;

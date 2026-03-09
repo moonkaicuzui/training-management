@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, memo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -253,7 +253,7 @@ function findSectionForPath(pathname: string): string | null {
 
 // ─── Component ───────────────────────────────────────
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const { t } = useTranslation();
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen } = useUIStore(useShallow((state) => ({ sidebarOpen: state.sidebarOpen, setSidebarOpen: state.setSidebarOpen })));
@@ -454,4 +454,4 @@ export function Sidebar() {
       </aside>
     </>
   );
-}
+});

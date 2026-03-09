@@ -787,7 +787,11 @@
     "markAllRead": "Mark all read",
     "empty": "No notifications",
     "noUnread": "No unread notifications",
-    "viewAll": "View all notifications"
+    "viewAll": "View all notifications",
+    "certificationExpiry": "Certification Expiring",
+    "certificationExpiryTitle": "Certification Expiring: {{programName}}",
+    "certificationExpiryMessage": "{{employeeName}}'s {{programCode}} certification expires in {{days}} days. (Expiry: {{expirationDate}})",
+    "certificationExpiryCreated": "{{count}} certification expiry notifications created"
   },
   "export": {
     "title": "Export",
@@ -944,7 +948,35 @@
     "exportTrainingDate": "Training Date",
     "exportType": "Type",
     "exportAvgScore": "Average Score",
-    "exportFeedback": "Feedback"
+    "exportFeedback": "Feedback",
+    "effectivenessTab": "Training Effectiveness",
+    "effectiveness": {
+      "noData": "No training effectiveness data available",
+      "noDataDesc": "Pre- and post-training quality data from AQL/5PRS enrolled employees is required",
+      "measuredEmployees": "Measured Employees",
+      "measuredDesc": "Employees with pre/post quality comparison",
+      "avgImprovement": "Avg. Improvement",
+      "significantImprovement": "Significant Improvement",
+      "significantDesc": "Achieved over 50% quality improvement",
+      "noImprovement": "No Improvement",
+      "noImprovementDesc": "No improvement or degradation",
+      "programSummaryTitle": "Program Effectiveness Summary",
+      "programSummaryDesc": "Compare average fail rate changes by training program",
+      "individualTitle": "Individual Employee Effectiveness",
+      "individualDesc": "Pre/post fail rate comparison per employee",
+      "programCol": "Program",
+      "employeeCountCol": "Measured",
+      "beforeCol": "Before Fail Rate",
+      "afterCol": "After Fail Rate",
+      "improvementCol": "Improvement",
+      "ratingCol": "Rating",
+      "employeeCol": "Employee",
+      "enrolledDateCol": "Enrolled Date",
+      "rating_significant": "Significant",
+      "rating_moderate": "Moderate",
+      "rating_minimal": "Minimal",
+      "rating_none": "None"
+    }
   },
   "validation": {
     "required": "This field is required"

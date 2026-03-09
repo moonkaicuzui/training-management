@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Column } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,7 +10,7 @@ interface DataTableColumnHeaderProps<TData, TValue>
   title: string;
 }
 
-export function DataTableColumnHeader<TData, TValue>({
+function DataTableColumnHeaderInner<TData, TValue>({
   column,
   title,
   className,
@@ -36,3 +37,5 @@ export function DataTableColumnHeader<TData, TValue>({
     </Button>
   );
 }
+
+export const DataTableColumnHeader = memo(DataTableColumnHeaderInner) as typeof DataTableColumnHeaderInner;
