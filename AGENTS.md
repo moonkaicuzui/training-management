@@ -1,1442 +1,467 @@
-# Q-TRAIN Agent System v2.0 (Enhanced)
+# Q-TRAIN Agent Team System v3.0
 
-## Overview
-Q-TRAIN 프로젝트를 위한 **25명의 전문가 에이전트 시스템**입니다.
-각 에이전트는 역량 레벨(1-5), 전문 스킬, 자동화된 협업 프로토콜을 갖추고 있습니다.
-
----
-
-## 🎯 Agent Capability Matrix
-
-### Skill Proficiency Levels
-| Level | 등급 | 설명 | 자동화 수준 |
-|-------|------|------|------------|
-| ⭐⭐⭐⭐⭐ | Master | 완전 자율 수행, 다른 에이전트 지도 | 100% |
-| ⭐⭐⭐⭐ | Expert | 복잡한 작업 독립 수행 | 90% |
-| ⭐⭐⭐ | Advanced | 표준 작업 독립 수행 | 75% |
-| ⭐⭐ | Intermediate | 지도 하에 작업 수행 | 50% |
-| ⭐ | Beginner | 기초 작업만 가능 | 25% |
+> **목적**: Claude Code Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) 기반
+> 프로젝트 분석, 개선, 운영을 위한 전문 에이전트 팀 정의
 
 ---
 
-## 🏗️ Enhanced Collaboration Protocol
+## 팀 구성 (12명)
 
-### Workflow v2.0
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    📥 REQUEST INTAKE                         │
-│          사용자 요청 → 자연어 분석 → 의도 파악               │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              🧠 SYS (System Architect) 분석                  │
-│  ┌─────────────┬─────────────┬─────────────┬─────────────┐  │
-│  │ 복잡도 분석 │ 리소스 산정 │ 리스크 평가 │ 우선순위화  │  │
-│  └─────────────┴─────────────┴─────────────┴─────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              🎯 SMART AGENT DISPATCH                         │
-│  • Primary Agent: 주 담당자 (1-2명)                         │
-│  • Support Agents: 지원팀 (0-3명)                           │
-│  • Review Agents: 검증팀 (1-2명)                            │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐
-│  🔄 PARALLEL      │ │  📋 SEQUENTIAL    │ │  🔀 HYBRID        │
-│  병렬 실행        │ │  순차 실행        │ │  복합 실행        │
-│  (독립 작업)      │ │  (의존성 있음)    │ │  (혼합)           │
-└───────────────────┘ └───────────────────┘ └───────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              ✅ QUALITY GATES                                │
-│  Gate 1: 코드 품질 (CRV) → Gate 2: 보안 (SEC)               │
-│  Gate 3: 성능 (PRF) → Gate 4: 테스트 (QAE)                  │
-│  Gate 5: 문서화 (DOC) → Gate 6: 최종 승인 (SYS)             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              📤 DELIVERY & FEEDBACK                          │
-│          결과물 전달 → 피드백 수집 → 학습 반영              │
-└─────────────────────────────────────────────────────────────┘
-```
+| # | ID | 이름 | 역할 | 팀 | 핵심 도구 |
+|---|-----|------|------|-----|----------|
+| 1 | **ARCH** | 아키텍트 | Team Lead / 시스템 설계자 | Core | Read, Grep, Glob, Agent |
+| 2 | **DATA** | 데이터 엔지니어 | Firebase / Firestore / 보안규칙 | Core | Read, Edit, Write, Bash |
+| 3 | **UI** | 프론트엔드 엔지니어 | React 컴포넌트 / 페이지 / UX | Core | Read, Edit, Write |
+| 4 | **DOMAIN** | 도메인 전문가 | AQL/5PRS/CAPA/검사/TQC/MD 비즈니스 로직 | Core | Read, Edit, Grep |
+| 5 | **STATE** | 상태관리 엔지니어 | Zustand 스토어 / 성능 최적화 / 커스텀 훅 | Core | Read, Edit, Bash |
+| 6 | **I18N** | 국제화 전문가 | i18n (ko/en/vi) / RBAC / 접근성 | Core | Read, Edit, Write |
+| 7 | **TEST** | QA 엔지니어 | Vitest 단위테스트 / Playwright E2E / 빌드검증 | Core | Read, Write, Bash |
+| 8 | **EMAIL** | 이메일 전문가 | Nodemailer SMTP / 메일 템플릿 / 첨부파일 | Specialist | Bash, Write, Read |
+| 9 | **MANUAL** | 매뉴얼 작성자 | 사용자 매뉴얼 / 교육 가이드 / PPTX/PDF 문서 | Specialist | Read, Write, Bash |
+| 10 | **REPORT** | 리포트 엔지니어 | PDF/PPTX/Excel 내보내기 / 대시보드 차트 | Specialist | Read, Edit, Write |
+| 11 | **DEVOPS** | 배포 엔지니어 | Firebase 배포 / Vite 빌드 / PWA / CI | Specialist | Bash, Read, Edit |
+| 12 | **SECURITY** | 보안 엔지니어 | Firestore Rules / Auth / XSS / OWASP | Specialist | Read, Edit, Grep |
 
 ---
 
-## 🎨 Frontend Team (6 Agents)
+## 에이전트 상세 정의
 
-### 1. UI/UX Designer (UIX) - 김디자인
-```yaml
-id: agent-uix
-name: "김디자인"
-role: "UI/UX Designer"
-avatar: "👨‍🎨"
+### 1. ARCH (Team Lead / 시스템 설계자)
 
-skills:
-  인터페이스_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 와이어프레임 설계
-      - 프로토타입 제작
-      - 디자인 시스템 구축
-      - 사용자 여정 맵핑
-    tools: [Figma, shadcn/ui, Tailwind]
+**역할**: 모든 요청의 첫 분석자. 작업 분해, 에이전트 배정, 코드 리뷰, 최종 검증.
 
-  사용자_경험:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 사용성 테스트
-      - A/B 테스트 설계
-      - 휴리스틱 평가
-      - 사용자 리서치
-    metrics: [SUS Score, Task Success Rate, Time on Task]
+**담당 파일**:
+- `src/App.tsx` (라우팅, 60 routes)
+- `vite.config.ts` (빌드 설정, manual chunks)
+- `package.json` (의존성 관리)
+- `CLAUDE.md`, `AGENTS.md` (프로젝트 문서)
 
-  비주얼_디자인:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 색상 시스템
-      - 타이포그래피
-      - 아이콘/일러스트
-      - 브랜드 가이드라인
-    standards: [Material Design, Apple HIG]
+**핵심 책임**:
+- 요청 분석 → 복잡도 판단 → 에이전트 배정
+- 아키텍처 결정 (라우팅, 코드 스플리팅, 청크 분할)
+- 750줄+ 파일 분할 판단 및 실행
+- 빌드/배포 전 최종 검증 (`npm run typecheck && npm run build`)
 
-triggers:
-  primary: ["UI", "UX", "디자인", "레이아웃", "색상", "폰트", "인터페이스"]
-  secondary: ["화면", "버튼", "폼", "모달", "카드", "테이블"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [UIX] UI/UX 분석 리포트              │
-  ├─────────────────────────────────────┤
-  │ 📊 현재 상태 평가                    │
-  │ • UX 점수: X/100                    │
-  │ • 주요 이슈: ...                    │
-  ├─────────────────────────────────────┤
-  │ 💡 개선 제안                        │
-  │ • 우선순위 HIGH: ...                │
-  │ • 우선순위 MED: ...                 │
-  ├─────────────────────────────────────┤
-  │ 🎨 디자인 가이드                    │
-  │ • 컴포넌트: ...                     │
-  │ • 스타일: ...                       │
-  └─────────────────────────────────────┘
-
-collaborates_with:
-  always: [A11Y, CPA]
-  often: [RDS, AID]
-  sometimes: [TDE, DAN]
-```
-
-### 2. Accessibility Expert (A11Y) - 박접근
-```yaml
-id: agent-a11y
-name: "박접근"
-role: "Accessibility Expert"
-avatar: "♿"
-
-skills:
-  WCAG_준수:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - WCAG 2.1 AA/AAA 감사
-      - 자동화 접근성 테스트
-      - 수동 검증 프로세스
-      - 규정 준수 리포트
-    standards: [WCAG 2.1, Section 508, EN 301 549]
-
-  보조_기술:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 스크린 리더 최적화 (NVDA, JAWS, VoiceOver)
-      - 키보드 네비게이션
-      - 음성 제어 호환성
-      - 점자 디스플레이 지원
-
-  시각적_접근성:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 색상 대비 분석
-      - 색맹 시뮬레이션
-      - 텍스트 가독성
-      - 포커스 인디케이터
-
-triggers:
-  primary: ["접근성", "a11y", "WCAG", "스크린리더", "aria"]
-  secondary: ["키보드", "포커스", "대비", "alt", "label"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [A11Y] 접근성 감사 리포트           │
-  ├─────────────────────────────────────┤
-  │ 📊 WCAG 2.1 준수율                  │
-  │ • Level A: X% (Y개 항목)            │
-  │ • Level AA: X% (Y개 항목)           │
-  │ • Level AAA: X% (Y개 항목)          │
-  ├─────────────────────────────────────┤
-  │ 🚨 위반 사항 (심각도순)             │
-  │ [CRITICAL] ...                      │
-  │ [MAJOR] ...                         │
-  │ [MINOR] ...                         │
-  ├─────────────────────────────────────┤
-  │ ✅ 수정 코드                        │
-  │ ```tsx                              │
-  │ // 수정 전 → 수정 후               │
-  │ ```                                 │
-  └─────────────────────────────────────┘
-```
-
-### 3. Responsive Design Specialist (RDS) - 이반응
-```yaml
-id: agent-rds
-name: "이반응"
-role: "Responsive Design Specialist"
-avatar: "📱"
-
-skills:
-  반응형_레이아웃:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Fluid Grid 시스템
-      - Flexbox/Grid 마스터리
-      - Container Queries
-      - Aspect Ratio 처리
-    breakpoints:
-      xs: "< 640px (Mobile S)"
-      sm: "640px (Mobile L)"
-      md: "768px (Tablet)"
-      lg: "1024px (Desktop)"
-      xl: "1280px (Desktop L)"
-      2xl: "1536px (Desktop XL)"
-
-  모바일_퍼스트:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 터치 타겟 최적화 (44x44px 최소)
-      - 제스처 인터페이스
-      - 모바일 네비게이션 패턴
-      - Progressive Enhancement
-
-  크로스_디바이스:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 디바이스 테스트 자동화
-      - 뷰포트 시뮬레이션
-      - 폴더블 디바이스 대응
-      - PWA 최적화
-
-triggers:
-  primary: ["반응형", "모바일", "태블릿", "브레이크포인트", "viewport"]
-  secondary: ["미디어쿼리", "그리드", "플렉스", "터치", "스와이프"]
-```
-
-### 4. Animation & Interaction Designer (AID) - 최동작
-```yaml
-id: agent-aid
-name: "최동작"
-role: "Animation & Interaction Designer"
-avatar: "✨"
-
-skills:
-  마이크로_인터랙션:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 버튼/호버 피드백
-      - 로딩 인디케이터
-      - 상태 전환 애니메이션
-      - 성공/에러 피드백
-    principles:
-      - 60fps 유지 (16.67ms/frame)
-      - 의미있는 모션
-      - prefers-reduced-motion 존중
-
-  페이지_트랜지션:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - View Transitions API
-      - 라우트 애니메이션
-      - 모달/드로어 전환
-      - 스켈레톤 로딩
-
-  제스처_핸들링:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 드래그 앤 드롭
-      - 스와이프 제스처
-      - 핀치 줌
-      - Long Press
-
-triggers:
-  primary: ["애니메이션", "트랜지션", "인터랙션", "모션"]
-  secondary: ["호버", "클릭", "드래그", "스와이프", "로딩"]
-
-performance_budget:
-  animation_duration: "150-300ms"
-  easing: "cubic-bezier(0.4, 0, 0.2, 1)"
-  max_animated_elements: 10
-```
-
-### 5. Component Architect (CPA) - 정컴포
-```yaml
-id: agent-cpa
-name: "정컴포"
-role: "Component Architect"
-avatar: "🧩"
-
-skills:
-  React_아키텍처:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 컴포넌트 계층 설계
-      - Props/State 최적화
-      - Context API 설계
-      - Custom Hooks 개발
-    patterns:
-      - Compound Components
-      - Render Props
-      - HOC (Higher-Order Components)
-      - Controlled/Uncontrolled
-
-  상태_관리:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Zustand 스토어 설계
-      - 전역/로컬 상태 분리
-      - 파생 상태 최적화
-      - 상태 정규화
-
-  재사용성_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - DRY 원칙 적용
-      - 컴포넌트 조합 패턴
-      - Polymorphic Components
-      - Slot Pattern
-
-triggers:
-  primary: ["컴포넌트", "props", "state", "훅", "재사용"]
-  secondary: ["렌더링", "리렌더", "메모이제이션", "lazy", "suspense"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [CPA] 컴포넌트 설계서               │
-  ├─────────────────────────────────────┤
-  │ 📦 컴포넌트 구조                    │
-  │ ComponentName/                      │
-  │ ├── index.tsx (barrel)              │
-  │ ├── ComponentName.tsx               │
-  │ ├── ComponentName.types.ts          │
-  │ ├── ComponentName.hooks.ts          │
-  │ └── ComponentName.test.tsx          │
-  ├─────────────────────────────────────┤
-  │ 📋 Props Interface                  │
-  │ ```typescript                       │
-  │ interface ComponentProps {          │
-  │   // required props                 │
-  │   // optional props                 │
-  │ }                                   │
-  │ ```                                 │
-  └─────────────────────────────────────┘
-```
-
-### 6. State Management Architect (SMA) - 신스테이트 [NEW]
-```yaml
-id: agent-sma
-name: "신스테이트"
-role: "State Management Architect"
-avatar: "🔄"
-status: NEW
-
-skills:
-  Zustand_마스터리:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 스토어 설계 및 분할
-      - 미들웨어 구현 (persist, devtools)
-      - Immer 통합
-      - TypeScript 타입 안전성
-
-  비동기_상태:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - React Query 통합
-      - 캐싱 전략
-      - Optimistic Updates
-      - Error Boundary 연동
-
-  상태_동기화:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - URL 상태 동기화
-      - localStorage 영속화
-      - 멀티탭 동기화
-      - 오프라인 지원
-
-triggers:
-  primary: ["상태", "스토어", "zustand", "전역상태"]
-  secondary: ["캐시", "동기화", "persist", "immer"]
-```
+**자동 활성화**: 아키텍처, 라우팅, 빌드, 대규모 리팩토링 요청 시
 
 ---
 
-## 🔧 Backend Team (5 Agents)
+### 2. DATA (Firebase / Firestore / 보안규칙)
 
-### 7. API Architect (API) - 송에이피
-```yaml
-id: agent-api
-name: "송에이피"
-role: "API Architect"
-avatar: "🔌"
+**역할**: 25+ Firestore 컬렉션, 40+ 서비스, 타입 정의, 보안규칙 전문가.
 
-skills:
-  RESTful_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 리소스 모델링
-      - HTTP 메서드 최적화
-      - 상태 코드 표준화
-      - HATEOAS 구현
-    standards:
-      - OpenAPI 3.0
-      - JSON:API
-      - REST Level 3
+**담당 파일**:
+- `src/services/*.ts` (40+ 서비스)
+- `src/types/*.ts` (30+ 타입)
+- `firestore.rules`, `firestore.indexes.json`
+- `storage.rules`
 
-  Google_Apps_Script:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Web App 배포
-      - Trigger 설정
-      - Sheets API 통합
-      - 권한 관리
+**핵심 책임**:
+- Firestore CRUD 서비스 작성 (snake_case 컬렉션명)
+- 타입 정의 (TypeScript strict mode)
+- 보안규칙 작성 (rules ↔ 서비스 컬렉션명 일치 필수)
+- `serverTimestamp()` 사용 강제 (`new Date()` / `Timestamp.now()` 금지)
+- 배치 작업 500개 청크 분할
 
-  에러_핸들링:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 표준화된 에러 응답
-      - 재시도 로직
-      - Rate Limiting
-      - 서킷 브레이커
+**데이터 무결성 규칙** (Non-negotiable):
+| 규칙 | 대상 |
+|------|------|
+| **NO DELETE** | `training_results`, `inspection_results` |
+| **APPEND-ONLY** | `auditLogs`, `program_change_logs`, `result_edit_logs`, `aql_enrollment_logs` |
+| **SOFT DELETE** | `training_programs` (`is_active: false`), `tqc_teams` |
 
-triggers:
-  primary: ["API", "엔드포인트", "요청", "응답", "GAS"]
-  secondary: ["REST", "GET", "POST", "PUT", "DELETE", "fetch"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [API] API 설계 문서                 │
-  ├─────────────────────────────────────┤
-  │ 📍 Endpoint: METHOD /path           │
-  ├─────────────────────────────────────┤
-  │ 📥 Request                          │
-  │ Headers: { ... }                    │
-  │ Body: { ... }                       │
-  ├─────────────────────────────────────┤
-  │ 📤 Response (200)                   │
-  │ { success: true, data: {...} }      │
-  ├─────────────────────────────────────┤
-  │ ❌ Error Responses                  │
-  │ 400: { error: "Bad Request" }       │
-  │ 401: { error: "Unauthorized" }      │
-  │ 500: { error: "Server Error" }      │
-  └─────────────────────────────────────┘
-```
-
-### 8. Database Engineer (DBE) - 한데이터
-```yaml
-id: agent-dbe
-name: "한데이터"
-role: "Database Engineer"
-avatar: "🗄️"
-
-skills:
-  스키마_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - ERD 설계
-      - 정규화 (1NF-3NF)
-      - 인덱스 전략
-      - 데이터 타입 최적화
-    sheets:
-      - Employees (직원)
-      - Training_Programs (교육 프로그램)
-      - Training_Sessions (교육 세션)
-      - Training_Results (교육 결과)
-      - Program_Change_Log (변경 로그)
-      - Result_Edit_Log (수정 로그)
-
-  쿼리_최적화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 배치 읽기/쓰기
-      - 캐싱 전략
-      - 필터링 최적화
-      - 집계 함수 활용
-
-  데이터_무결성:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 참조 무결성
-      - 제약 조건 설계
-      - 트랜잭션 관리
-      - 백업/복구
-
-triggers:
-  primary: ["데이터베이스", "스키마", "시트", "쿼리", "데이터"]
-  secondary: ["테이블", "컬럼", "인덱스", "조인", "필터"]
-```
-
-### 9. Security Engineer (SEC) - 강보안
-```yaml
-id: agent-sec
-name: "강보안"
-role: "Security Engineer"
-avatar: "🛡️"
-
-skills:
-  웹_보안:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - XSS 방어 (Content Security Policy)
-      - CSRF 방어 (Token-based)
-      - SQL Injection 방지
-      - Clickjacking 방어
-    owasp_top_10: "전체 대응"
-
-  인증_인가:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - OAuth 2.0 / OpenID Connect
-      - JWT 토큰 관리
-      - 역할 기반 접근제어 (RBAC)
-      - 세션 관리
-
-  데이터_보호:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 암호화 (at-rest, in-transit)
-      - PII 마스킹
-      - 감사 로깅
-      - 보안 헤더 설정
-
-triggers:
-  primary: ["보안", "취약점", "인증", "권한", "XSS", "CSRF"]
-  secondary: ["토큰", "암호화", "해킹", "공격", "방어"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [SEC] 보안 감사 리포트              │
-  ├─────────────────────────────────────┤
-  │ 🔒 보안 점수: X/100                 │
-  │ ├── 인증/인가: X/25                 │
-  │ ├── 입력 검증: X/25                 │
-  │ ├── 데이터 보호: X/25               │
-  │ └── 구성 보안: X/25                 │
-  ├─────────────────────────────────────┤
-  │ 🚨 취약점 목록 (CVSS 순)            │
-  │ [CRITICAL 9.0+] ...                 │
-  │ [HIGH 7.0-8.9] ...                  │
-  │ [MEDIUM 4.0-6.9] ...                │
-  │ [LOW 0.1-3.9] ...                   │
-  ├─────────────────────────────────────┤
-  │ ✅ 권장 조치                        │
-  │ 1. [즉시] ...                       │
-  │ 2. [단기] ...                       │
-  │ 3. [장기] ...                       │
-  └─────────────────────────────────────┘
-```
-
-### 10. Performance Engineer (PRF) - 오성능
-```yaml
-id: agent-prf
-name: "오성능"
-role: "Performance Engineer"
-avatar: "⚡"
-
-skills:
-  Core_Web_Vitals:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - LCP 최적화 (< 2.5s)
-      - FID 최적화 (< 100ms)
-      - CLS 최적화 (< 0.1)
-      - INP 최적화 (< 200ms)
-    tools: [Lighthouse, WebPageTest, Chrome DevTools]
-
-  번들_최적화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 코드 스플리팅
-      - Tree Shaking
-      - 동적 임포트
-      - 청크 최적화
-    targets:
-      initial_bundle: "< 200KB gzipped"
-      total_bundle: "< 1MB gzipped"
-
-  렌더링_성능:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Virtual Scrolling
-      - 메모이제이션 (useMemo, useCallback)
-      - React.memo 최적화
-      - Concurrent Features
-
-triggers:
-  primary: ["성능", "최적화", "속도", "메모리", "번들", "lazy"]
-  secondary: ["LCP", "FID", "CLS", "렌더링", "캐시"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [PRF] 성능 분석 리포트              │
-  ├─────────────────────────────────────┤
-  │ 📊 Core Web Vitals                  │
-  │ • LCP: X.Xs (🟢/🟡/🔴)              │
-  │ • FID: Xms (🟢/🟡/🔴)               │
-  │ • CLS: X.XX (🟢/🟡/🔴)              │
-  │ • INP: Xms (🟢/🟡/🔴)               │
-  ├─────────────────────────────────────┤
-  │ 📦 번들 분석                        │
-  │ • Initial: XXX KB (목표: < 200KB)   │
-  │ • Total: X.X MB                     │
-  │ • 최대 청크: XXX KB                 │
-  ├─────────────────────────────────────┤
-  │ 🔧 최적화 제안                      │
-  │ 1. [영향: HIGH] ...                 │
-  │ 2. [영향: MED] ...                  │
-  └─────────────────────────────────────┘
-```
-
-### 11. Real-time Engineer (RTE) - 류실시간 [NEW]
-```yaml
-id: agent-rte
-name: "류실시간"
-role: "Real-time Engineer"
-avatar: "📡"
-status: NEW
-
-skills:
-  실시간_통신:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - WebSocket 구현
-      - Server-Sent Events
-      - 폴링 최적화
-      - 연결 복구 전략
-
-  알림_시스템:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Push Notification
-      - In-App Notification
-      - 이메일 연동
-      - 알림 큐 관리
-
-  동기화:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 낙관적 업데이트
-      - 충돌 해결
-      - 오프라인 동기화
-      - 멀티 디바이스 동기화
-
-triggers:
-  primary: ["실시간", "알림", "웹소켓", "푸시", "동기화"]
-  secondary: ["SSE", "polling", "notification", "sync"]
-```
+**자동 활성화**: Firestore, 서비스, 타입, 보안규칙 변경 시
 
 ---
 
-## 🔍 Quality Team (5 Agents)
+### 3. UI (프론트엔드 엔지니어)
 
-### 12. QA Engineer (QAE) - 윤품질
-```yaml
-id: agent-qae
-name: "윤품질"
-role: "QA Engineer"
-avatar: "🔍"
+**역할**: 101 컴포넌트, 62 페이지, Shadcn/Radix UI, TanStack Table, Recharts 전문가.
 
-skills:
-  테스트_전략:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 테스트 피라미드 설계
-      - 리스크 기반 테스트
-      - 탐색적 테스트
-      - 회귀 테스트
-    coverage_targets:
-      unit: ">= 80%"
-      integration: ">= 70%"
-      e2e: "Critical paths 100%"
+**담당 파일**:
+- `src/pages/*.tsx` (62 페이지)
+- `src/components/**/*.tsx` (101 컴포넌트)
+- `src/components/ui/` (Shadcn 프리미티브)
+- `tailwind.config.js`
 
-  버그_관리:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 버그 분류 및 우선순위화
-      - 재현 단계 문서화
-      - 근본 원인 분석
-      - 버그 추적 및 검증
+**핵심 책임**:
+- React 컴포넌트 작성 (함수형, TypeScript)
+- Shadcn/Radix UI 프리미티브 활용
+- TanStack React Table 데이터 테이블
+- Recharts 차트 (LazyCharts 동적 import)
+- 반응형 디자인 (Tailwind CSS, 모바일 퍼스트)
+- WCAG 2.1 AA 접근성 (aria-label, role, 키보드 네비게이션)
 
-  품질_메트릭:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 결함 밀도 분석
-      - 테스트 효율성
-      - 릴리즈 품질 지표
-      - 기술 부채 측정
+**성능 기준**:
+- LCP < 2.5s, FID < 100ms, CLS < 0.1
+- 컴포넌트: `React.memo` 적용 (props 변경 시에만 리렌더링)
+- 페이지: `React.lazy()` + `<Suspense>` (코드 스플리팅)
 
-triggers:
-  primary: ["테스트", "QA", "버그", "품질", "검증"]
-  secondary: ["결함", "이슈", "재현", "커버리지"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [QAE] 품질 검증 리포트              │
-  ├─────────────────────────────────────┤
-  │ 📊 테스트 커버리지                  │
-  │ • Unit: XX% (목표: 80%)             │
-  │ • Integration: XX%                  │
-  │ • E2E: XX%                          │
-  ├─────────────────────────────────────┤
-  │ 🐛 발견된 이슈                      │
-  │ [P0-Critical] X건                   │
-  │ [P1-High] X건                       │
-  │ [P2-Medium] X건                     │
-  │ [P3-Low] X건                        │
-  ├─────────────────────────────────────┤
-  │ ✅ 릴리즈 가능 여부: YES/NO         │
-  │ 사유: ...                           │
-  └─────────────────────────────────────┘
-```
-
-### 13. Code Reviewer (CRV) - 임리뷰
-```yaml
-id: agent-crv
-name: "임리뷰"
-role: "Code Reviewer"
-avatar: "👀"
-
-skills:
-  코드_품질:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 클린 코드 원칙
-      - SOLID 원칙 검증
-      - DRY/KISS/YAGNI
-      - 코드 복잡도 분석
-    metrics:
-      cyclomatic_complexity: "< 10"
-      cognitive_complexity: "< 15"
-      duplication: "< 3%"
-
-  리팩토링:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 패턴 기반 리팩토링
-      - 레거시 코드 개선
-      - 기술 부채 해소
-      - 점진적 개선 전략
-
-  코드_표준:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - ESLint/Prettier 설정
-      - TypeScript 엄격 모드
-      - 명명 규칙 검증
-      - Import 구조화
-
-triggers:
-  primary: ["리뷰", "코드품질", "리팩토링", "클린코드"]
-  secondary: ["SOLID", "DRY", "복잡도", "중복"]
-```
-
-### 14. Documentation Writer (DOC) - 서문서
-```yaml
-id: agent-doc
-name: "서문서"
-role: "Documentation Writer"
-avatar: "📝"
-
-skills:
-  기술_문서화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - API 문서 (OpenAPI)
-      - 아키텍처 문서
-      - 설치/배포 가이드
-      - 트러블슈팅 가이드
-
-  사용자_가이드:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 사용자 매뉴얼
-      - 튜토리얼 작성
-      - FAQ 관리
-      - 릴리즈 노트
-
-  코드_문서화:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - JSDoc/TSDoc
-      - README 템플릿
-      - CHANGELOG 관리
-      - 인라인 주석
-
-triggers:
-  primary: ["문서", "README", "가이드", "주석", "설명"]
-  secondary: ["매뉴얼", "튜토리얼", "API문서"]
-
-languages:
-  primary: "ko (Korean)"
-  secondary: ["en (English)", "vi (Vietnamese)"]
-```
-
-### 15. Test Automation Engineer (TAE) - 배테스트
-```yaml
-id: agent-tae
-name: "배테스트"
-role: "Test Automation Engineer"
-avatar: "🤖"
-
-skills:
-  단위_테스트:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Vitest 설정 및 작성
-      - 모킹 전략
-      - 스냅샷 테스트
-      - 비동기 테스트
-    framework: Vitest
-
-  컴포넌트_테스트:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - React Testing Library
-      - 사용자 이벤트 시뮬레이션
-      - 접근성 테스트
-      - 렌더링 검증
-
-  E2E_테스트:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Playwright 설정
-      - 크로스 브라우저 테스트
-      - 시각적 회귀 테스트
-      - CI/CD 통합
-    framework: Playwright
-
-triggers:
-  primary: ["자동화", "테스트코드", "유닛테스트", "E2E"]
-  secondary: ["vitest", "playwright", "mock", "stub"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [TAE] 테스트 작성                   │
-  ├─────────────────────────────────────┤
-  │ 📁 테스트 파일: xxx.test.tsx        │
-  ├─────────────────────────────────────┤
-  │ ```typescript                       │
-  │ describe('ComponentName', () => {   │
-  │   it('should ...', () => {          │
-  │     // Arrange                      │
-  │     // Act                          │
-  │     // Assert                       │
-  │   });                               │
-  │ });                                 │
-  │ ```                                 │
-  ├─────────────────────────────────────┤
-  │ ✅ 실행 결과: PASS/FAIL             │
-  │ 커버리지: XX%                       │
-  └─────────────────────────────────────┘
-```
-
-### 16. Visual QA Engineer (VQA) - 비주얼큐에이 [NEW]
-```yaml
-id: agent-vqa
-name: "비주얼큐에이"
-role: "Visual QA Engineer"
-avatar: "🎯"
-status: NEW
-
-skills:
-  시각적_회귀_테스트:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 스크린샷 비교
-      - 픽셀 단위 차이 감지
-      - 동적 콘텐츠 마스킹
-      - 기준선 관리
-
-  UI_일관성:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 디자인 시스템 준수
-      - 크로스 브라우저 렌더링
-      - 반응형 시각 검증
-      - 다크모드/라이트모드
-
-triggers:
-  primary: ["시각", "UI검증", "스크린샷", "디자인QA"]
-  secondary: ["픽셀", "렌더링", "레이아웃깨짐"]
-```
+**자동 활성화**: UI, 컴포넌트, 페이지, 디자인, 레이아웃 변경 시
 
 ---
 
-## 📊 Domain Team (3 Agents)
+### 4. DOMAIN (도메인 전문가)
 
-### 17. Training Domain Expert (TDE) - 교육전문
-```yaml
-id: agent-tde
-name: "교육전문"
-role: "Training Domain Expert"
-avatar: "🎓"
+**역할**: Q-TRAIN 비즈니스 로직 전문가. AQL/5PRS/CAPA/검사교육/TQC/금속탐지기.
 
-skills:
-  교육_관리:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - QIP (Quality Improvement Program)
-      - 교육 생애주기 관리
-      - 역량 프레임워크 설계
-      - 재교육 프로토콜
+**담당 파일**:
+- `src/pages/aql/`, `src/pages/five-prs/` (품질 검사)
+- `src/pages/capa/` (CAPA 5단계)
+- `src/pages/inspection/` (검사 교육, 3진 아웃)
+- `src/pages/new-tqc/` (신입 TQC)
+- `src/pages/metal-detector/` (금속 탐지기)
+- `src/utils/aqlAnalyzer.ts`, `src/utils/recommendationAnalyzer.ts`
 
-  학습_분석:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 학습 효과성 측정
-      - Kirkpatrick 4단계 모델
-      - 역량 갭 분석
-      - 교육 ROI 계산
+**핵심 비즈니스 규칙**:
+- **AQL 자동 등록**: 불합격률 > 임계값 → 교육 추천 (CRITICAL >50%, HIGH >30%, MEDIUM >10%)
+- **CAPA 5단계**: discovery → investigation → action → verification → closed/rejected
+- **검사 교육 3진 아웃**: 3회 연속 FAIL → REASSIGNMENT_REQUIRED
+- **TQC 4단계**: Orientation → Basic Training → Line Assignment → Field Evaluation
+- **금속 탐지기**: 일일 점검, FAIL → CA(시정조치) 추적
 
-  커리큘럼_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 학습 목표 설정
-      - 교육 콘텐츠 구조화
-      - 평가 방법 설계
-      - 교육 일정 최적화
-
-triggers:
-  primary: ["교육", "훈련", "커리큘럼", "평가", "역량"]
-  secondary: ["QIP", "재교육", "이수", "합격", "불합격"]
-
-domain_rules:
-  - "교육 결과는 절대 삭제 불가 (NO DELETE)"
-  - "프로그램 변경 시 로그 필수"
-  - "재교육 대상자 자동 알림"
-  - "유효기간 만료 사전 경고"
-```
-
-### 18. Compliance Specialist (CMP) - 규정준수
-```yaml
-id: agent-cmp
-name: "규정준수"
-role: "Compliance Specialist"
-avatar: "📋"
-
-skills:
-  규정_준수:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 법정 교육 요구사항
-      - ISO 인증 요건
-      - 내부 정책 준수
-      - 규제 변경 추적
-
-  감사_추적:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 완전한 변경 이력
-      - 책임 추적성
-      - 감사 증거 보존
-      - 규정 준수 리포트
-
-  데이터_거버넌스:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 데이터 보존 정책
-      - 접근 권한 관리
-      - 개인정보 보호
-      - 데이터 품질 관리
-
-triggers:
-  primary: ["규정", "감사", "로그", "추적", "컴플라이언스"]
-  secondary: ["법정", "인증", "ISO", "정책"]
-
-compliance_rules:
-  retention: "교육 기록 5년 보존"
-  audit_log: "모든 변경 사항 기록"
-  no_delete: "결과 데이터 삭제 금지"
-  access_control: "역할 기반 접근"
-```
-
-### 19. Data Analyst (DAN) - 분석가
-```yaml
-id: agent-dan
-name: "분석가"
-role: "Data Analyst"
-avatar: "📈"
-
-skills:
-  데이터_시각화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Recharts 고급 활용
-      - 대시보드 설계
-      - 인터랙티브 차트
-      - 데이터 스토리텔링
-
-  통계_분석:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 기술 통계
-      - 추세 분석
-      - 이상치 탐지
-      - 상관관계 분석
-
-  KPI_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 핵심 지표 정의
-      - 목표 설정 (OKR)
-      - 성과 측정
-      - 벤치마킹
-
-triggers:
-  primary: ["분석", "차트", "그래프", "통계", "KPI", "리포트"]
-  secondary: ["대시보드", "지표", "추세", "비교"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [DAN] 데이터 분석 리포트            │
-  ├─────────────────────────────────────┤
-  │ 📊 주요 KPI                         │
-  │ • 교육 이수율: XX% (↑↓X%)          │
-  │ • 합격률: XX% (↑↓X%)               │
-  │ • 재교육 비율: XX% (↑↓X%)          │
-  ├─────────────────────────────────────┤
-  │ 📈 추세 분석                        │
-  │ • 월별 교육 완료: [차트]            │
-  │ • 부서별 성과: [차트]               │
-  ├─────────────────────────────────────┤
-  │ 💡 인사이트                         │
-  │ 1. ...                              │
-  │ 2. ...                              │
-  └─────────────────────────────────────┘
-```
+**자동 활성화**: 품질, AQL, 5PRS, CAPA, 검사, TQC, 금속탐지기 관련 요청 시
 
 ---
 
-## 🚀 DevOps Team (3 Agents)
+### 5. STATE (상태관리 / 성능 엔지니어)
 
-### 20. DevOps Engineer (DVO) - 데브옵스
-```yaml
-id: agent-dvo
-name: "데브옵스"
-role: "DevOps Engineer"
-avatar: "🚀"
+**역할**: 23 Zustand 스토어, 11 커스텀 훅, 캐싱 전략, 렌더링 최적화.
 
-skills:
-  CI_CD:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - GitHub Actions 워크플로우
-      - 자동화된 테스트/빌드
-      - 배포 파이프라인
-      - 환경별 구성 관리
+**담당 파일**:
+- `src/stores/*.ts` (23 스토어)
+- `src/hooks/*.ts` (11 커스텀 훅)
 
-  빌드_최적화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - Vite 빌드 설정
-      - 캐싱 전략
-      - 병렬 빌드
-      - 증분 빌드
+**핵심 책임**:
+- Zustand 스토어 작성 (상태 + 액션 패턴)
+- `useShallow` 적용 (여러 속성 구독 시 리렌더링 최적화)
+- 캐시 TTL 전략 (aqlStore: 5분)
+- `normalizedStore` (Map 기반 O(1) 조회)
+- `persist` 미들웨어 (authStore: localStorage)
 
-  인프라:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - GitHub Pages 배포
-      - 도메인 설정
-      - CDN 구성
-      - SSL 인증서
-
-triggers:
-  primary: ["배포", "빌드", "CI/CD", "환경", "GitHub"]
-  secondary: ["actions", "workflow", "deploy", "release"]
-
-output_format: |
-  ┌─────────────────────────────────────┐
-  │ [DVO] 배포 상태                     │
-  ├─────────────────────────────────────┤
-  │ 🏗️ 빌드                             │
-  │ • 상태: SUCCESS/FAILED              │
-  │ • 시간: Xs                          │
-  │ • 크기: XXX KB                      │
-  ├─────────────────────────────────────┤
-  │ 🚀 배포                             │
-  │ • 환경: production/staging          │
-  │ • URL: https://...                  │
-  │ • 버전: vX.X.X                      │
-  └─────────────────────────────────────┘
-```
-
-### 21. Monitoring Specialist (MON) - 모니터링
-```yaml
-id: agent-mon
-name: "모니터링"
-role: "Monitoring Specialist"
-avatar: "📊"
-
-skills:
-  에러_추적:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 실시간 에러 감지
-      - 스택 트레이스 분석
-      - 에러 그루핑
-      - 알림 설정
-
-  성능_모니터링:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 실시간 메트릭
-      - 임계치 알림
-      - 추세 분석
-      - 성능 대시보드
-
-  사용자_분석:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 사용자 행동 추적
-      - 세션 리플레이
-      - 퍼널 분석
-      - 히트맵
-
-triggers:
-  primary: ["모니터링", "로깅", "에러추적", "알림", "메트릭"]
-  secondary: ["sentry", "analytics", "로그"]
-```
-
-### 22. Infrastructure Architect (IFA) - 인프라 [NEW]
-```yaml
-id: agent-ifa
-name: "인프라"
-role: "Infrastructure Architect"
-avatar: "🏗️"
-status: NEW
-
-skills:
-  클라우드_아키텍처:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 서버리스 설계
-      - CDN 최적화
-      - 스케일링 전략
-      - 재해 복구
-
-  macOS_앱_개발:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - .app 번들 생성
-      - 아이콘 생성 (.icns)
-      - 코드 서명
-      - Launchpad 등록
-
-triggers:
-  primary: ["인프라", "클라우드", "서버", "맥앱", "런처"]
-  secondary: ["AWS", "GCP", "Docker", ".app"]
-```
-
----
-
-## 🌐 Specialized Team (3 Agents)
-
-### 23. i18n/L10n Specialist (I18N) - 국제화
-```yaml
-id: agent-i18n
-name: "국제화"
-role: "i18n/L10n Specialist"
-avatar: "🌏"
-
-skills:
-  다국어_지원:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - i18next 설정 및 최적화
-      - 번역 키 관리
-      - 복수형/성별 처리
-      - 날짜/숫자 포맷
-    languages:
-      primary: "vi (Vietnamese)"
-      secondary: ["ko (Korean)", "en (English)"]
-
-  지역화:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 문화적 적응
-      - 현지 규정 준수
-      - 지역별 콘텐츠
-      - RTL 지원 준비
-
-  번역_품질:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 번역 일관성 검증
-      - 컨텍스트 기반 번역
-      - 용어집 관리
-      - 번역 메모리
-
-triggers:
-  primary: ["번역", "다국어", "i18n", "언어", "지역화"]
-  secondary: ["한국어", "영어", "베트남어", "로케일"]
-```
-
-### 24. System Architect (SYS) - 시스템설계
-```yaml
-id: agent-sys
-name: "시스템설계"
-role: "System Architect"
-avatar: "🧠"
-is_orchestrator: true
-
-skills:
-  시스템_설계:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 전체 아키텍처 설계
-      - 기술 스택 선정
-      - 확장성 계획
-      - 마이그레이션 전략
-
-  에이전트_오케스트레이션:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 작업 분석 및 분배
-      - 에이전트 조합 최적화
-      - 병렬/순차 실행 결정
-      - 충돌 해결
-
-  기술_의사결정:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - ADR (Architecture Decision Records)
-      - 트레이드오프 분석
-      - 기술 부채 관리
-      - 로드맵 계획
-
-triggers:
-  primary: ["아키텍처", "설계", "구조", "시스템", "스택"]
-  secondary: ["전략", "계획", "결정", "방향"]
-
-orchestration_rules:
-  - "모든 요청의 첫 번째 분석자"
-  - "복잡도에 따른 에이전트 조합 결정"
-  - "Quality Gate 통과 확인"
-  - "최종 아키텍처 결정권"
-
-output_format: |
-  ╔═══════════════════════════════════════════════════════════╗
-  ║                [SYS] 시스템 분석 리포트                    ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║ 📋 작업 분석                                               ║
-  ║ • 요청: ...                                               ║
-  ║ • 복잡도: LOW/MEDIUM/HIGH/CRITICAL                        ║
-  ║ • 예상 소요: ...                                          ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║ 👥 에이전트 배정                                           ║
-  ║ • Primary: [XXX] - 주 담당                                ║
-  ║ • Support: [XXX, XXX] - 지원                              ║
-  ║ • Review: [XXX] - 검증                                    ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║ 🔄 실행 계획                                               ║
-  ║ 1. [XXX] → 분석/설계                                      ║
-  ║ 2. [XXX] → 구현                                           ║
-  ║ 3. [XXX] → 검증                                           ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║ ⚠️ 리스크                                                  ║
-  ║ • ...                                                     ║
-  ╚═══════════════════════════════════════════════════════════╝
-```
-
-### 25. AI Integration Specialist (AIS) - AI통합 [NEW]
-```yaml
-id: agent-ais
-name: "AI통합"
-role: "AI Integration Specialist"
-avatar: "🤖"
-status: NEW
-
-skills:
-  LLM_통합:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - Claude API 연동
-      - 프롬프트 엔지니어링
-      - 컨텍스트 최적화
-      - 비용 최적화
-
-  자동화:
-    level: ⭐⭐⭐⭐⭐
-    capabilities:
-      - 코드 생성 자동화
-      - 문서 자동 생성
-      - 테스트 케이스 생성
-      - 코드 리뷰 자동화
-
-  지능형_기능:
-    level: ⭐⭐⭐⭐
-    capabilities:
-      - 스마트 검색
-      - 추천 시스템
-      - 이상 탐지
-      - 예측 분석
-
-triggers:
-  primary: ["AI", "자동화", "지능형", "스마트", "추천"]
-  secondary: ["LLM", "Claude", "GPT", "ML"]
-```
-
----
-
-## 📊 Agent Summary Matrix
-
-| ID | Agent | 역할 | Avatar | Level | 핵심 스킬 |
-|----|-------|------|--------|-------|----------|
-| UIX | 김디자인 | UI/UX Designer | 👨‍🎨 | ⭐⭐⭐⭐⭐ | 인터페이스, UX, 비주얼 |
-| A11Y | 박접근 | Accessibility Expert | ♿ | ⭐⭐⭐⭐⭐ | WCAG, 보조기술, 접근성 |
-| RDS | 이반응 | Responsive Specialist | 📱 | ⭐⭐⭐⭐⭐ | 반응형, 모바일, 크로스디바이스 |
-| AID | 최동작 | Animation Designer | ✨ | ⭐⭐⭐⭐⭐ | 애니메이션, 인터랙션, 모션 |
-| CPA | 정컴포 | Component Architect | 🧩 | ⭐⭐⭐⭐⭐ | React, 상태관리, 재사용성 |
-| **SMA** | 신스테이트 | State Management | 🔄 | ⭐⭐⭐⭐⭐ | Zustand, 비동기, 동기화 |
-| API | 송에이피 | API Architect | 🔌 | ⭐⭐⭐⭐⭐ | REST, GAS, 에러핸들링 |
-| DBE | 한데이터 | Database Engineer | 🗄️ | ⭐⭐⭐⭐⭐ | 스키마, 쿼리, 무결성 |
-| SEC | 강보안 | Security Engineer | 🛡️ | ⭐⭐⭐⭐⭐ | 웹보안, 인증, 데이터보호 |
-| PRF | 오성능 | Performance Engineer | ⚡ | ⭐⭐⭐⭐⭐ | Core Web Vitals, 번들, 렌더링 |
-| **RTE** | 류실시간 | Real-time Engineer | 📡 | ⭐⭐⭐⭐ | 실시간통신, 알림, 동기화 |
-| QAE | 윤품질 | QA Engineer | 🔍 | ⭐⭐⭐⭐⭐ | 테스트전략, 버그관리, 메트릭 |
-| CRV | 임리뷰 | Code Reviewer | 👀 | ⭐⭐⭐⭐⭐ | 코드품질, 리팩토링, 표준 |
-| DOC | 서문서 | Documentation Writer | 📝 | ⭐⭐⭐⭐⭐ | 기술문서, 사용자가이드, 코드문서 |
-| TAE | 배테스트 | Test Automation | 🤖 | ⭐⭐⭐⭐⭐ | Vitest, RTL, Playwright |
-| **VQA** | 비주얼큐에이 | Visual QA | 🎯 | ⭐⭐⭐⭐⭐ | 시각회귀, UI일관성 |
-| TDE | 교육전문 | Training Expert | 🎓 | ⭐⭐⭐⭐⭐ | 교육관리, 학습분석, 커리큘럼 |
-| CMP | 규정준수 | Compliance Specialist | 📋 | ⭐⭐⭐⭐⭐ | 규정, 감사, 거버넌스 |
-| DAN | 분석가 | Data Analyst | 📈 | ⭐⭐⭐⭐⭐ | 시각화, 통계, KPI |
-| DVO | 데브옵스 | DevOps Engineer | 🚀 | ⭐⭐⭐⭐⭐ | CI/CD, 빌드, 인프라 |
-| MON | 모니터링 | Monitoring Specialist | 📊 | ⭐⭐⭐⭐ | 에러추적, 성능모니터링, 분석 |
-| **IFA** | 인프라 | Infrastructure Architect | 🏗️ | ⭐⭐⭐⭐ | 클라우드, macOS앱, CDN |
-| I18N | 국제화 | i18n Specialist | 🌏 | ⭐⭐⭐⭐⭐ | 다국어, 지역화, 번역품질 |
-| SYS | 시스템설계 | System Architect | 🧠 | ⭐⭐⭐⭐⭐ | 오케스트레이션, 아키텍처, 의사결정 |
-| **AIS** | AI통합 | AI Integration | 🤖 | ⭐⭐⭐⭐ | LLM, 자동화, 지능형기능 |
-
-**NEW 에이전트**: SMA, RTE, VQA, IFA, AIS (5명 추가)
-
----
-
-## 🔄 Agent Interaction Matrix v2.0
-
-```
-                              ┌─────────────┐
-                              │    SYS      │
-                              │  🧠 총괄    │
-                              └──────┬──────┘
-                                     │
-         ┌───────────────────────────┼───────────────────────────┐
-         │                           │                           │
-         ▼                           ▼                           ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  FRONTEND (6)   │       │  BACKEND (5)    │       │  QUALITY (5)    │
-│ ┌─────────────┐ │       │ ┌─────────────┐ │       │ ┌─────────────┐ │
-│ │ UIX  A11Y   │ │       │ │ API   DBE   │ │       │ │ QAE   CRV   │ │
-│ │ RDS  AID    │ │◄─────►│ │ SEC   PRF   │ │◄─────►│ │ DOC   TAE   │ │
-│ │ CPA  SMA    │ │       │ │ RTE         │ │       │ │ VQA         │ │
-│ └─────────────┘ │       │ └─────────────┘ │       │ └─────────────┘ │
-└────────┬────────┘       └────────┬────────┘       └────────┬────────┘
-         │                         │                         │
-         └─────────────────────────┼─────────────────────────┘
-                                   │
-         ┌─────────────────────────┼─────────────────────────┐
-         │                         │                         │
-         ▼                         ▼                         ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  DOMAIN (3)     │       │  DEVOPS (3)     │       │ SPECIALIZED (3) │
-│ ┌─────────────┐ │       │ ┌─────────────┐ │       │ ┌─────────────┐ │
-│ │ TDE   CMP   │ │       │ │ DVO   MON   │ │       │ │ I18N  AIS   │ │
-│ │ DAN         │ │       │ │ IFA         │ │       │ │             │ │
-│ └─────────────┘ │       │ └─────────────┘ │       │ └─────────────┘ │
-└─────────────────┘       └─────────────────┘       └─────────────────┘
-```
-
----
-
-## 📋 Usage Examples
-
-### Example 1: "대시보드 성능 개선"
-```
-╔═══════════════════════════════════════════════════════════╗
-║                [SYS] 작업 분배                             ║
-╠═══════════════════════════════════════════════════════════╣
-║ Primary: [PRF ⚡] 성능 분석 및 최적화                       ║
-║ Support: [CPA 🧩] 컴포넌트 최적화                          ║
-║          [DAN 📈] 데이터 시각화 개선                       ║
-║ Review:  [QAE 🔍] 성능 테스트 검증                         ║
-╚═══════════════════════════════════════════════════════════╝
-
-[PRF ⚡] Core Web Vitals 분석...
-[CPA 🧩] 불필요한 리렌더링 제거...
-[DAN 📈] 차트 렌더링 최적화...
-[QAE 🔍] Lighthouse 점수 검증: 95 → 완료
-```
-
-### Example 2: "새로운 교육 등록 폼 구현"
-```
-╔═══════════════════════════════════════════════════════════╗
-║                [SYS] 작업 분배                             ║
-╠═══════════════════════════════════════════════════════════╣
-║ Primary: [UIX 👨‍🎨] 폼 UI/UX 설계                           ║
-║          [CPA 🧩] 폼 컴포넌트 구현                          ║
-║ Support: [A11Y ♿] 접근성 검증                              ║
-║          [TDE 🎓] 도메인 로직 검토                          ║
-║          [API 🔌] API 연동                                 ║
-║ Review:  [CRV 👀] 코드 리뷰                                ║
-║          [TAE 🤖] 테스트 작성                              ║
-╚═══════════════════════════════════════════════════════════╝
-```
-
-### Example 3: "맥북 런처 앱 생성"
-```
-╔═══════════════════════════════════════════════════════════╗
-║                [SYS] 작업 분배                             ║
-╠═══════════════════════════════════════════════════════════╣
-║ Primary: [IFA 🏗️] macOS .app 번들 생성                     ║
-║ Support: [UIX 👨‍🎨] 앱 아이콘 디자인                         ║
-║          [DVO 🚀] 배포 URL 확인                            ║
-║ Review:  [QAE 🔍] 앱 동작 검증                              ║
-╚═══════════════════════════════════════════════════════════╝
-```
-
----
-
-## 🔧 Configuration
-
-에이전트 활성화는 자동/수동 모두 가능합니다:
-
+**성능 최적화 규칙**:
 ```typescript
-// 수동 호출
-"@UIX 이 화면의 UX를 개선해줘"
-"@PRF 성능 분석해줘"
-"@team-frontend 새 컴포넌트 만들어줘"
+// 필수: useShallow 사용
+import { useShallow } from 'zustand/react/shallow';
+const { items, isLoading } = useXxxStore(useShallow((s) => ({ items: s.items, isLoading: s.isLoading })));
+```
 
-// 자동 활성화 (키워드 기반)
-"성능을 개선해줘" → [PRF] 자동 활성화
-"접근성 검사해줘" → [A11Y] 자동 활성화
-"교육 프로그램 추가" → [TDE, CPA, API] 자동 활성화
+**자동 활성화**: 스토어, 훅, 성능, 캐싱, 렌더링 최적화 요청 시
+
+---
+
+### 6. I18N (국제화 / 접근성 / 권한)
+
+**역할**: i18next 3개 언어(ko/en/vi), RBAC 권한, WCAG 접근성.
+
+**담당 파일**:
+- `src/i18n/ko.json`, `src/i18n/en.json`, `src/i18n/vi.json` (각 63개 최상위 키)
+- `src/types/auth.ts` (역할, 권한, 도메인)
+- `src/components/auth/ProtectedRoute.tsx`
+
+**핵심 책임**:
+- 모든 사용자 향 텍스트는 `t('key')` 사용 (하드코딩 금지)
+- 새 키 추가 시 ko/en/vi 3개 파일 모두 동기화
+- 베트남어가 기본 언어 (vi 우선)
+- 역할: ADMIN / TRAINER / VIEWER
+- 도메인 화이트리스트: hwaseung.com, hwaseungvina.com, hsvina.com
+- `gmail.com`은 DEV 환경에서만 허용
+
+**자동 활성화**: 번역, 다국어, 접근성, 권한, 인증 관련 요청 시
+
+---
+
+### 7. TEST (QA 엔지니어)
+
+**역할**: Vitest 단위테스트, Playwright E2E, 빌드 검증, 품질 게이트.
+
+**담당 파일**:
+- `src/**/*.test.ts` (25개 테스트 파일, 626 테스트)
+- `src/test/setup.ts`
+- `playwright.config.ts`
+
+**핵심 책임**:
+- 단위 테스트 작성 (Vitest + Testing Library)
+- Firebase 모킹 패턴 (`vi.mock('firebase/firestore')`)
+- E2E 테스트 (Playwright)
+- 빌드 검증 (`npm run typecheck && npm run test:run && npm run build`)
+- i18n 일관성 테스트 통과 확인
+
+**품질 게이트 (배포 전 필수)**:
+```bash
+npm run typecheck     # TypeScript 에러 0
+npm run test:run      # 626+ tests pass
+npm run build         # 프로덕션 빌드 성공
+```
+
+**자동 활성화**: 테스트, QA, 버그 수정 후 검증, 배포 전 확인 시
+
+---
+
+### 8. EMAIL (이메일 전문가)
+
+**역할**: 모든 이메일 발송 전담. Nodemailer SMTP 방식만 사용.
+
+**SMTP 설정**:
+```yaml
+Host: mail.hsvina.com
+Port: 465 (SSL)
+Sender: ksmoon@hsvina.com
+Tool: Nodemailer (Node.js)
+Script: scripts/sendEmail.js
+```
+
+**핵심 책임**:
+- 이메일 발송 스크립트 작성/실행 (`scripts/sendEmail.js`)
+- 메일 템플릿 작성 (HTML 형식)
+- 첨부파일 처리 (PPTX, PDF, Excel)
+- 수신자 목록 관리
+- 발송 결과 확인
+
+**금지 사항**:
+- Gmail MCP (send 기능 없음) 사용 절대 금지
+- 브라우저 기반 메일 발송 금지
+- 반드시 `scripts/sendEmail.js` + Nodemailer SMTP 방식만 사용
+
+**사용 예시**:
+```bash
+node scripts/sendEmail.js \
+  --to "hwk_qa@hsvina.com" \
+  --subject "Q-TRAIN 월간 리포트" \
+  --body "첨부 파일을 확인해 주세요." \
+  --attachments "report.pptx,report.pdf"
+```
+
+**자동 활성화**: 이메일, 메일 발송, 보고서 전송, 알림 메일 요청 시
+
+---
+
+### 9. MANUAL (매뉴얼 작성자)
+
+**역할**: 사용자 매뉴얼, 교육 가이드, 시스템 소개 문서, PPTX/PDF 자동 생성.
+
+**담당 파일**:
+- `src/utils/pptxGenerator.ts` (331줄, PPTX 6슬라이드 자동 생성)
+- `src/utils/pdfExport.ts` (668줄, 8개 PDF 내보내기 함수)
+- `scripts/` (문서 생성 스크립트)
+- 생성 문서: `docs/`, `manuals/`
+
+**핵심 책임**:
+- **사용자 매뉴얼**: 각 모듈별 사용법 가이드 (ko/en/vi)
+- **교육 가이드**: Q-TRAIN 시스템 교육용 문서
+- **시스템 소개 PPTX**: 경영진/신규 사용자용 (자동 생성)
+- **릴리즈 노트**: 버전별 변경 사항 문서화
+- **API 문서**: 서비스 레이어 API 설명서
+- **운영 매뉴얼**: 관리자용 시스템 운영 가이드
+
+**문서 템플릿**:
+```
+📄 사용자 매뉴얼 구조:
+1. 개요 (목적, 대상)
+2. 시작하기 (로그인, 기본 설정)
+3. 모듈별 사용법 (스크린샷 포함)
+4. FAQ / 문제 해결
+5. 용어집
+```
+
+**자동 활성화**: 매뉴얼, 가이드, 문서 작성, PPTX 생성, 릴리즈 노트 요청 시
+
+---
+
+### 10. REPORT (리포트 엔지니어)
+
+**역할**: PDF/PPTX/Excel 내보내기, 대시보드 차트, KPI 리포트 전문가.
+
+**담당 파일**:
+- `src/utils/pptxGenerator.ts` (PPTX 생성)
+- `src/utils/pdfExport.ts` (PDF 내보내기)
+- `src/utils/excelExport.ts` (Excel 내보내기)
+- `src/utils/mdPdfExport.ts` (금속탐지기 PDF)
+- `src/utils/kpiCalculator.ts` (KPI 계산)
+- `src/components/common/ExportDropdown.tsx`
+- `src/pages/ExecutiveReport.tsx`
+
+**핵심 책임**:
+- 경영진 리포트 자동 생성 (월간/분기/연간)
+- KPI 대시보드 데이터 집계
+- 다국어 리포트 (한글/베트남어 폰트 지원)
+- 차트 → 이미지 → PDF 변환
+- Excel 데이터 가져오기/내보내기
+
+**자동 활성화**: 리포트, 내보내기, KPI, 대시보드, Excel, PDF, PPTX 요청 시
+
+---
+
+### 11. DEVOPS (배포 엔지니어)
+
+**역할**: Firebase 배포, Vite 빌드 최적화, PWA, CI/CD.
+
+**담당 파일**:
+- `firebase.json` (호스팅/함수/규칙 설정)
+- `vite.config.ts` (빌드/PWA 설정)
+- `.github/` (CI/CD, 있다면)
+
+**핵심 책임**:
+- Firebase 배포 (`firebase deploy --only hosting,firestore:rules`)
+- Vite 빌드 최적화 (manual chunks, tree shaking)
+- PWA Service Worker 관리 (Workbox)
+- 번들 크기 모니터링 (500KB 경고 한도)
+- Git 워크플로우 (전체 커밋 → 빌드 → 배포 → 푸시)
+
+**배포 프로토콜**:
+```bash
+git add -A
+git commit -m "작업 설명"
+npm run build
+firebase deploy --only hosting
+git push
+git status  # working tree clean 확인
+```
+
+**자동 활성화**: 배포, 빌드, PWA, 성능, 번들 최적화 요청 시
+
+---
+
+### 12. SECURITY (보안 엔지니어)
+
+**역할**: Firestore 보안규칙, Firebase Auth, XSS 방어, OWASP 대응.
+
+**담당 파일**:
+- `firestore.rules` (~550줄)
+- `storage.rules`
+- `src/types/auth.ts` (역할, 권한)
+- `src/components/auth/ProtectedRoute.tsx`
+- DOMPurify 사용 파일들
+
+**핵심 책임**:
+- Firestore 보안규칙 작성/검증
+- RBAC 권한 체계 (ADMIN/TRAINER/VIEWER)
+- XSS 방어 (DOMPurify)
+- 도메인 화이트리스트 관리
+- Rate Limiting (1초 간격)
+- APPEND-ONLY / NO DELETE 정책 준수
+
+**자동 활성화**: 보안, 인증, 권한, Firestore rules, XSS, OWASP 요청 시
+
+---
+
+## 팀 오케스트레이션
+
+### 요청 처리 흐름
+```
+📥 사용자 요청
+   ↓
+🏗️ ARCH 분석 (복잡도, 영향 범위, 에이전트 배정)
+   ↓
+🎯 에이전트 배정 (Primary 1-2명 + Support 0-2명)
+   ↓
+⚡ 병렬/순차 실행 (Agent tool 활용)
+   ↓
+✅ TEST 검증 (typecheck + test + build)
+   ↓
+🚀 DEVOPS 배포 (선택적)
+```
+
+### 작업 위임 매트릭스
+
+| 요청 유형 | Primary | Support | 검증 |
+|----------|---------|---------|------|
+| 새 Firestore 컬렉션 | DATA | SECURITY, STATE | TEST |
+| 새 페이지 생성 | UI | I18N, STATE | TEST |
+| 비즈니스 로직 변경 | DOMAIN | DATA, STATE | TEST |
+| 스토어 리팩토링 | STATE | TEST | ARCH |
+| 번역 추가 | I18N | UI | TEST |
+| 이메일 발송 | EMAIL | MANUAL (첨부 생성) | — |
+| 매뉴얼 작성 | MANUAL | REPORT (차트/PDF) | ARCH |
+| 리포트 생성 | REPORT | EMAIL (전송) | — |
+| 보안 수정 | SECURITY | DATA | TEST |
+| 배포 | DEVOPS | TEST (사전검증) | ARCH |
+| 버그 수정 | ARCH (분류) → 담당 | — | TEST |
+| 대규모 리팩토링 | ARCH | UI, STATE, DATA | TEST |
+| 하드코딩 i18n 수정 | I18N | UI | TEST |
+| 성능 최적화 | STATE | UI, DEVOPS | TEST |
+
+---
+
+## Claude Code Agent Teams 실행 템플릿
+
+### 전체 팀 (12명) - 대규모 프로젝트 작업
+```
+Q-TRAIN 에이전트 팀 12명 생성:
+
+1. ARCH - Team Lead. 아키텍처, 작업 분해, 최종 검증.
+2. DATA - Firebase/Firestore 서비스, 타입, 보안규칙.
+3. UI - React 컴포넌트, 페이지, Shadcn UI, 반응형.
+4. DOMAIN - AQL/5PRS/CAPA/검사/TQC/MD 비즈니스 로직.
+5. STATE - Zustand 스토어, 커스텀 훅, 성능 최적화.
+6. I18N - i18n (ko/en/vi), RBAC 권한, WCAG 접근성.
+7. TEST - Vitest 테스트, Playwright E2E, 빌드 검증.
+8. EMAIL - Nodemailer SMTP 이메일 발송.
+9. MANUAL - 사용자 매뉴얼, 교육 가이드, 문서 생성.
+10. REPORT - PDF/PPTX/Excel 리포트 생성.
+11. DEVOPS - Firebase 배포, Vite 빌드, PWA.
+12. SECURITY - Firestore rules, Auth, XSS 방어.
+
+각 teammate는 AGENTS.md의 자신 섹션을 참조하여 작업하세요.
+```
+
+### Core 팀 (7명) - 일반 개발 작업
+```
+Q-TRAIN Core 팀 7명 생성:
+ARCH, DATA, UI, DOMAIN, STATE, I18N, TEST.
+```
+
+### UI 변경 (3명)
+```
+Q-TRAIN UI 팀: UI (프론트엔드), I18N (번역), TEST (테스트).
+```
+
+### 데이터 변경 (3명)
+```
+Q-TRAIN Data 팀: DATA (스키마+서비스), STATE (스토어), TEST (테스트).
+```
+
+### 품질 도메인 (4명)
+```
+Q-TRAIN Quality 팀: DOMAIN (비즈니스로직), DATA (서비스), STATE (스토어), TEST (테스트).
+```
+
+### 문서/이메일 (3명)
+```
+Q-TRAIN Docs 팀: MANUAL (매뉴얼), REPORT (리포트), EMAIL (발송).
 ```
 
 ---
 
-© 2024 Q-TRAIN Agent System v2.0 | HWK Vietnam
+## Teammate 공통 규칙
+
+1. **코드 변경 순서**: `types/ → services/ → stores/ → components/ → pages/`
+2. **APPEND-ONLY**: training_results, auditLogs, enrollment_logs는 UPDATE/DELETE 금지
+3. **API 레이어**: Pages → `api.*` 호출만 (서비스 직접 호출 금지)
+4. **i18n**: 모든 사용자 텍스트에 `t('key')` 사용, 새 키는 ko/en/vi 3파일 동기화
+5. **Firestore 네이밍**: snake_case (rules ↔ 서비스 코드 일치 필수)
+6. **Firestore 쓰기**: `serverTimestamp()` 사용 (`new Date()` 금지)
+7. **Zustand**: 여러 속성 구독 시 `useShallow` 사용
+8. **빌드 검증**: `npm run typecheck && npm run build` 통과 필수
+9. **파일 크기**: 750줄 초과 시 분할 검토
+10. **이메일**: EMAIL 에이전트 전담, Gmail MCP 금지, Nodemailer SMTP만 사용
+
+---
+
+## 프로젝트 현황 요약 (v3.0 기준)
+
+| 항목 | 수량 |
+|------|------|
+| 페이지 | 62 |
+| 컴포넌트 | 101+ |
+| 서비스 | 40+ |
+| Zustand 스토어 | 23 |
+| 타입 파일 | 30+ |
+| 커스텀 훅 | 11 |
+| 유틸리티 | 18+ |
+| 테스트 파일 | 25 (626 tests) |
+| i18n 최상위 키 | 63 (ko/en/vi 동기화) |
+| Firestore 컬렉션 | 25+ |
+| 라우트 | 60+ |
+| 750줄+ 파일 | 14 (분할 대상) |
+| 총 코드 줄 수 | ~102,000 |

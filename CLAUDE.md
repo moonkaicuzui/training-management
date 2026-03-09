@@ -1183,216 +1183,77 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 
 ---
 
-## 20. Agent Team System (Claude Code Agent Teams)
+## 20. Agent Team System v3.0 (Claude Code Agent Teams)
 
-> **활성화**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (글로벌 + 프로젝트 설정 완료)
-> 모든 teammate는 이 CLAUDE.md를 자동으로 읽습니다.
+> **활성화**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (글로벌 설정 완료)
+> 모든 teammate는 이 CLAUDE.md + AGENTS.md를 자동으로 읽습니다.
+> 상세 정의: `/AGENTS.md` 참조
 
-### 7-Agent Team Spawn Template
+### 12명 에이전트 팀
 
-복잡한 작업 시 아래 프롬프트를 사용하여 전체 팀을 소환합니다:
+| # | ID | 역할 | 팀 | 핵심 담당 |
+|---|-----|------|-----|----------|
+| 1 | ARCH | Team Lead | Core | 아키텍처, 작업 분해, 코드 리뷰, 빌드 검증 |
+| 2 | DATA | 데이터 엔지니어 | Core | Firebase, Firestore, 서비스, 타입, 보안규칙 |
+| 3 | UI | 프론트엔드 | Core | React 컴포넌트, 페이지, Shadcn, 반응형 |
+| 4 | DOMAIN | 도메인 전문가 | Core | AQL/5PRS/CAPA/검사/TQC/MD 비즈니스 로직 |
+| 5 | STATE | 상태관리 | Core | Zustand 스토어, 커스텀 훅, 성능 최적화 |
+| 6 | I18N | 국제화 | Core | i18n (ko/en/vi), RBAC 권한, WCAG 접근성 |
+| 7 | TEST | QA | Core | Vitest 테스트, Playwright E2E, 빌드 검증 |
+| 8 | EMAIL | 이메일 | Specialist | Nodemailer SMTP, 메일 템플릿, 첨부파일 |
+| 9 | MANUAL | 매뉴얼 작성 | Specialist | 사용자 매뉴얼, 교육 가이드, PPTX/PDF 문서 |
+| 10 | REPORT | 리포트 | Specialist | PDF/PPTX/Excel 내보내기, KPI 대시보드 |
+| 11 | DEVOPS | 배포 | Specialist | Firebase 배포, Vite 빌드, PWA |
+| 12 | SECURITY | 보안 | Specialist | Firestore rules, Auth, XSS 방어 |
 
-```
-Q-TRAIN 프로젝트 에이전트 팀을 생성해줘. 7명의 전문 teammate:
+### 작업 위임 매트릭스
 
-1. ARCH (Team Lead) - 아키텍처 오케스트레이터.
-   전체 시스템 구조 이해, 태스크 분해/위임, 코드 리뷰, 빌드 검증.
-   담당: App.tsx 라우팅, vite.config.ts, 전체 아키텍처 결정.
-   컨텍스트: .claude/agents/arch-context.md 참조.
+| 요청 유형 | Primary | Support | 검증 |
+|----------|---------|---------|------|
+| 새 Firestore 컬렉션 | DATA | SECURITY, STATE | TEST |
+| 새 페이지 생성 | UI | I18N, STATE | TEST |
+| 비즈니스 로직 변경 | DOMAIN | DATA, STATE | TEST |
+| 스토어 리팩토링 | STATE | TEST | ARCH |
+| 번역 추가 | I18N | UI | TEST |
+| 이메일 발송 | EMAIL | MANUAL (첨부 생성) | — |
+| 매뉴얼 작성 | MANUAL | REPORT (차트/PDF) | ARCH |
+| 리포트 생성 | REPORT | EMAIL (전송) | — |
+| 보안 수정 | SECURITY | DATA | TEST |
+| 배포 | DEVOPS | TEST (사전검증) | ARCH |
+| 버그 수정 | ARCH (분류) → 담당 | — | TEST |
+| 대규모 리팩토링 | ARCH | UI, STATE, DATA | TEST |
 
-2. DATA - Firebase & 데이터 전문가.
-   Firestore 25+ 컬렉션 스키마, 40+ 서비스 CRUD, 타입 정의, 보안 규칙.
-   담당: src/services/*, src/types/*, firestore.rules.
-   컨텍스트: .claude/agents/data-context.md 참조.
+### 팀 실행 템플릿
 
-3. UI - 프론트엔드 & 컴포넌트 전문가.
-   101개 컴포넌트, Shadcn/Radix UI, TanStack Table, Recharts, 내보내기.
-   담당: src/components/*, src/pages/*, 내보내기 유틸.
-   컨텍스트: .claude/agents/ui-context.md 참조.
+**전체 팀 (12명)**: `Q-TRAIN 에이전트 팀 12명 생성: ARCH, DATA, UI, DOMAIN, STATE, I18N, TEST, EMAIL, MANUAL, REPORT, DEVOPS, SECURITY`
 
-4. QUALITY - 품질 도메인 전문가.
-   AQL/5PRS 자동 등록, CAPA 5단계, 검사 교육 3진 아웃, 금속 탐지기, TQC.
-   담당: 품질 관련 서비스/페이지/컴포넌트 전체.
-   컨텍스트: .claude/agents/quality-context.md 참조.
+**Core 팀 (7명)**: `Q-TRAIN Core 팀: ARCH, DATA, UI, DOMAIN, STATE, I18N, TEST`
 
-5. STATE - 상태관리 & 성능 전문가.
-   23개 Zustand 스토어, 11개 커스텀 훅, 캐싱 전략, 렌더링 최적화.
-   담당: src/stores/*, src/hooks/*.
-   컨텍스트: .claude/agents/state-context.md 참조.
+**UI 팀 (3명)**: `UI, I18N, TEST`
 
-6. I18N - 다국어 & 접근성 & 권한 전문가.
-   i18next 3개 언어(ko/en/vi), RBAC, WCAG 2.1 AA.
-   담당: src/i18n/*, 인증 컴포넌트, 접근성.
-   컨텍스트: .claude/agents/i18n-context.md 참조.
+**Data 팀 (3명)**: `DATA, STATE, TEST`
 
-7. TEST - 테스트 & QA 전문가.
-   Vitest 단위테스트, Playwright E2E, 품질 게이트.
-   담당: **/*.test.ts, src/test/, 배포 전 검증.
-   컨텍스트: .claude/agents/test-context.md 참조.
+**Docs 팀 (3명)**: `MANUAL, REPORT, EMAIL`
 
-각 teammate는 자신의 컨텍스트 파일(.claude/agents/*-context.md)을 먼저 읽은 후 작업을 시작하세요.
-코드 변경 시 plan 모드로 승인을 받은 후 구현하세요.
-```
+### Teammate 공통 규칙
 
-### Teammate Context Files
-각 에이전트의 전문 컨텍스트가 `.claude/agents/` 디렉토리에 저장되어 있습니다:
+1. 코드 변경 순서: `types/ → services/ → stores/ → components/ → pages/`
+2. APPEND-ONLY: training_results, auditLogs, enrollment_logs → UPDATE/DELETE 금지
+3. API 레이어: Pages → `api.*` 호출만 (서비스 직접 호출 금지)
+4. i18n: `t('key')` 사용, 새 키는 ko/en/vi 3파일 동기화
+5. Firestore: snake_case, `serverTimestamp()`, rules ↔ 서비스 일치
+6. Zustand: `useShallow` 사용 (여러 속성 구독 시)
+7. 빌드 검증: `npm run typecheck && npm run build` 필수
+8. 이메일: EMAIL 에이전트 전담, Nodemailer SMTP만 사용
+9. 750줄+ 파일 분할 검토
 
-| File | Agent | 내용 |
-|------|-------|------|
-| `.claude/agents/arch-context.md` | ARCH | 전체 아키텍처, 위임 규칙, 코드 리뷰 체크리스트, 배포 프로토콜 |
-| `.claude/agents/data-context.md` | DATA | Firestore 컬렉션 스키마, 서비스 패턴, 타입 정의, 데이터 무결성 규칙 |
-| `.claude/agents/ui-context.md` | UI | 컴포넌트 시스템, 디자인 원칙, 폼/테이블/차트 패턴, 내보내기 |
-| `.claude/agents/quality-context.md` | QUALITY | AQL/5PRS/CAPA/검사/TQC/MD 비즈니스 로직 상세 |
-| `.claude/agents/state-context.md` | STATE | Zustand 스토어 패턴, 캐시 전략, 성능 최적화, 훅 |
-| `.claude/agents/i18n-context.md` | I18N | 번역 키 규칙, RBAC 권한, WCAG 접근성, 용어집 |
-| `.claude/agents/test-context.md` | TEST | 테스트 패턴, 필수 시나리오, 품질 게이트 체크리스트 |
-
-### Task Delegation Matrix (Teammate 간 작업 분배)
-| Request Type | Primary | Support |
-|-------------|---------|---------|
-| New Firestore collection | DATA | ARCH, STATE |
-| New page creation | UI | I18N |
-| Business logic (AQL/5PRS/CAPA) | QUALITY | DATA, STATE |
-| Store refactoring | STATE | TEST |
-| Translation addition | I18N | UI |
-| Bug fix | ARCH (분류 후 위임) | — |
-| Performance optimization | STATE | UI |
-| Deployment verification | ARCH | TEST |
-| New component | UI | I18N, STATE |
-| Security/auth change | DATA | I18N |
-| Test writing | TEST | (도메인 담당) |
-| **Email sending (모든 메일)** | **EMAIL** | — |
-
-### 소규모 작업용 부분 팀 템플릿
-
-**UI 변경만 필요할 때** (3명):
-```
-Teammate 3명 생성: UI(프론트엔드), I18N(번역), TEST(테스트).
-각자 .claude/agents/ 컨텍스트 파일 참조.
+### 배포 프로토콜
+```bash
+git add -A && git commit -m "작업 설명"
+npm run build && firebase deploy --only hosting
+git push && git status  # working tree clean 확인
 ```
 
-**데이터 스키마 변경** (3명):
-```
-Teammate 3명 생성: DATA(스키마+서비스), STATE(스토어), TEST(테스트).
-각자 .claude/agents/ 컨텍스트 파일 참조.
-```
-
-**품질 도메인 변경** (4명):
-```
-Teammate 4명 생성: QUALITY(비즈니스로직), DATA(서비스), STATE(스토어), TEST(테스트).
-각자 .claude/agents/ 컨텍스트 파일 참조.
-```
-
-### Teammate 공통 규칙 (모든 teammate가 준수)
-
-1. **Code Change Sequence**: `types/ → services/ → stores/ → components/ → pages/`
-2. **APPEND-ONLY 컬렉션**: training_results, auditLogs, enrollment_logs는 절대 UPDATE/DELETE 금지
-3. **API 레이어**: Pages → `api.*` 호출만 (서비스 직접 호출 금지)
-4. **i18n**: 모든 사용자 텍스트에 `t('key')` 사용 (하드코딩 금지), 새 키 추가 시 ko/en/vi 3개 파일 모두 동기화
-5. **Firestore 네이밍**: snake_case (firestore.rules와 서비스 코드 일치 필수)
-6. **Firestore 쓰기**: `serverTimestamp()` 사용 (`new Date()` / `Timestamp.now()` → Firestore 쓰기 금지)
-7. **Zustand 구독**: 여러 속성 구독 시 `import { useShallow } from 'zustand/react/shallow'` 사용
-8. **빌드 검증**: 작업 완료 전 `npm run typecheck && npm run build` 확인
-9. **파일 충돌 최소화**: 각 teammate는 자신의 담당 파일 범위 내에서만 수정
-10. **메일 발송 전담**: 모든 이메일 발송은 EMAIL 에이전트가 전담. Gmail MCP 사용 금지. `scripts/sendEmail.js` (Nodemailer SMTP) 방식만 사용
-
-### 실전 병렬 에이전트 실행 패턴
-
-Phase 2-3 개선 작업에서 검증된 병렬 실행 전략:
-
-#### 대규모 일괄 수정 (35+ 파일)
-```
-전략: 파일을 3-4개 배치로 분할 → 각 배치를 백그라운드 에이전트에 위임 → 결과 통합
-
-실행 예시 (Phase 2 useShallow 적용):
-  Agent 1: 핵심 페이지 8개 (EmployeeDetail, Employees, Programs, Results, ...)
-  Agent 2: AQL/5PRS/CAPA/Inspection 페이지 12개
-  Agent 3: Projects/MD/기타 페이지 + 공통 컴포넌트 18개
-
-  → 3개 에이전트 동시 실행 → 전체 완료 후 검증
-```
-
-#### i18n 키 일괄 변환 (179키)
-```
-전략: 하드코딩 한국어가 많은 파일 식별 → 에이전트에 변환 위임 → ko/en/vi 동기화
-
-주의사항:
-  - ko.json에 키 추가 후 반드시 en.json, vi.json에도 동일 키 추가
-  - i18n 일관성 테스트 통과 확인 (i18n.test.ts)
-  - 번역 미완료 시 한국어 값을 fallback으로 사용 가능
-```
-
-#### 검증 프로토콜
-```
-각 Phase 완료 후:
-  1. npm run typecheck     # TypeScript 타입 검사
-  2. npm run test:run      # 전체 테스트 (400+ tests)
-  3. npm run build         # 프로덕션 빌드
-  4. git add -A && git commit
-  5. firebase deploy --only hosting
-  6. git push
-  7. git status            # working tree clean 확인
-```
-
-#### Pre-commit Hook 주의사항
-```
-scripts/register-qa-members.js에 API 키가 포함되어 있어 pre-commit hook에서 차단됨.
-해결: git reset HEAD scripts/register-qa-members.js → 해당 파일 제외 후 커밋
-```
-
-### 26명 에이전트 전체 목록 (AGENTS.md 참조)
-
-| ID | 이름 | 역할 | Avatar | 팀 | 핵심 스킬 |
-|----|------|------|--------|-----|----------|
-| UIX | 김디자인 | UI/UX Designer | 👨‍🎨 | Frontend | 인터페이스, UX, 비주얼, Figma |
-| A11Y | 박접근 | Accessibility Expert | ♿ | Frontend | WCAG 2.1, 스크린리더, 색상 대비 |
-| RDS | 이반응 | Responsive Specialist | 📱 | Frontend | 반응형, 모바일퍼스트, 크로스디바이스 |
-| AID | 최동작 | Animation Designer | ✨ | Frontend | 마이크로인터랙션, 트랜지션, 60fps |
-| CPA | 정컴포 | Component Architect | 🧩 | Frontend | React 패턴, Compound Components, Zustand |
-| SMA | 신스테이트 | State Management | 🔄 | Frontend | Zustand, 비동기상태, Immer, persist |
-| API | 송에이피 | API Architect | 🔌 | Backend | REST, GAS, 에러핸들링, 서킷브레이커 |
-| DBE | 한데이터 | Database Engineer | 🗄️ | Backend | Firestore 스키마, 인덱스, 트랜잭션 |
-| SEC | 강보안 | Security Engineer | 🛡️ | Backend | OWASP, RBAC, XSS/CSRF, DOMPurify |
-| PRF | 오성능 | Performance Engineer | ⚡ | Backend | Core Web Vitals, 번들최적화, Virtual Scroll |
-| RTE | 류실시간 | Real-time Engineer | 📡 | Backend | WebSocket, Push, 낙관적업데이트, 오프라인 |
-| QAE | 윤품질 | QA Engineer | 🔍 | Quality | 테스트전략, 리스크기반, 버그관리 |
-| CRV | 임리뷰 | Code Reviewer | 👀 | Quality | SOLID, DRY, 복잡도분석, 리팩토링 |
-| DOC | 서문서 | Documentation Writer | 📝 | Quality | 기술문서, API문서, JSDoc, 3개국어 |
-| TAE | 배테스트 | Test Automation | 🤖 | Quality | Vitest, RTL, Playwright, CI/CD |
-| VQA | 비주얼큐에이 | Visual QA | 🎯 | Quality | 시각회귀, 픽셀비교, UI일관성 |
-| TDE | 교육전문 | Training Expert | 🎓 | Domain | QIP, 역량프레임워크, Kirkpatrick, 커리큘럼 |
-| CMP | 규정준수 | Compliance Specialist | 📋 | Domain | ISO, 감사추적, 데이터보존, APPEND-ONLY |
-| DAN | 분석가 | Data Analyst | 📈 | Domain | Recharts, KPI, 이상치탐지, 통계 |
-| DVO | 데브옵스 | DevOps Engineer | 🚀 | DevOps | Vite빌드, Firebase배포, GitHub Actions |
-| MON | 모니터링 | Monitoring Specialist | 📊 | DevOps | 에러추적, 성능메트릭, 세션리플레이 |
-| IFA | 인프라 | Infrastructure Architect | 🏗️ | DevOps | 서버리스, CDN, macOS앱, 재해복구 |
-| I18N | 국제화 | i18n Specialist | 🌏 | Specialized | i18next, ko/en/vi, 지역화, 번역품질 |
-| SYS | 시스템설계 | System Architect (Orchestrator) | 🧠 | Specialized | 아키텍처, 에이전트오케스트레이션, ADR |
-| AIS | AI통합 | AI Integration | 🤖 | Specialized | Claude API, 프롬프트엔지니어링, 추천시스템 |
-| EMAIL | 메일전문가 | Email Specialist | 📧 | Specialized | Nodemailer, SMTP(mail.hsvina.com), 메일 템플릿, 한비로 그룹웨어 |
-
-### 팀 간 협업 매트릭스
-```
-                              ┌─────────────┐
-                              │    SYS 🧠   │
-                              │   총괄 조율  │
-                              └──────┬──────┘
-                                     │
-         ┌───────────────────────────┼───────────────────────────┐
-         │                           │                           │
-         ▼                           ▼                           ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  FRONTEND (6)   │       │  BACKEND (5)    │       │  QUALITY (5)    │
-│ UIX A11Y RDS    │       │ API  DBE  SEC   │       │ QAE  CRV  DOC  │
-│ AID CPA  SMA    │◄─────►│ PRF  RTE        │◄─────►│ TAE  VQA       │
-└────────┬────────┘       └────────┬────────┘       └────────┬────────┘
-         │                         │                         │
-         └─────────────────────────┼─────────────────────────┘
-                                   │
-         ┌─────────────────────────┼─────────────────────────┐
-         ▼                         ▼                         ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  DOMAIN (3)     │       │  DEVOPS (3)     │       │ SPECIALIZED (3) │
-│ TDE  CMP  DAN   │       │ DVO  MON  IFA   │       │ I18N  SYS  AIS  │
-└─────────────────┘       └─────────────────┘       └─────────────────┘
-```
+### Pre-commit Hook 주의
+`scripts/register-qa-members.js`에 API 키 포함 → pre-commit hook 차단됨.
+해결: `git reset HEAD scripts/register-qa-members.js` → 제외 후 커밋
