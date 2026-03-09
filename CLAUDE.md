@@ -1010,7 +1010,7 @@ Initial Bundle: < 500KB
 | Quality (5) | QAE, CRV, DOC, TAE, VQA | QA, 코드리뷰, 문서, 테스트자동화, 시각QA |
 | Domain (3) | TDE, CMP, DAN | 교육전문가, 규정준수, 데이터분석 |
 | DevOps (3) | DVO, MON, IFA | 배포, 모니터링, 인프라 |
-| Specialized (3) | I18N, SYS, AIS | 국제화, 시스템설계, AI통합 |
+| Specialized (4) | I18N, SYS, AIS, EMAIL | 국제화, 시스템설계, AI통합, 메일발송 |
 
 ### 오케스트레이션
 ```
@@ -1045,6 +1045,7 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 12. **serverTimestamp()**: Firestore 쓰기에 `serverTimestamp()` 사용 (`new Date()` / `Timestamp.now()` 금지)
 13. **라우트 권한 보호**: 관리자 전용 페이지는 `DevProtectedRoute` + `requiredPermission` 적용
 14. **DEV 전용 도메인**: `gmail.com`은 `import.meta.env.DEV`에서만 허용
+15. **메일 발송 전담 에이전트 (EMAIL)**: 이 프로젝트의 모든 이메일 발송 업무는 반드시 EMAIL 에이전트가 전담 처리. Gmail MCP(send 기능 없음) 사용 금지. `scripts/sendEmail.js` + Nodemailer SMTP(`mail.hsvina.com:465`) 방식만 사용. 발신자: `ksmoon@hsvina.com`. 상세: `.claude/agents/email-agent.md` 참조.
 
 ---
 
@@ -1184,6 +1185,7 @@ Q-TRAIN 프로젝트 에이전트 팀을 생성해줘. 7명의 전문 teammate:
 | New component | UI | I18N, STATE |
 | Security/auth change | DATA | I18N |
 | Test writing | TEST | (도메인 담당) |
+| **Email sending (모든 메일)** | **EMAIL** | — |
 
 ### 소규모 작업용 부분 팀 템플릿
 
@@ -1216,6 +1218,7 @@ Teammate 4명 생성: QUALITY(비즈니스로직), DATA(서비스), STATE(스토
 7. **Zustand 구독**: 여러 속성 구독 시 `import { useShallow } from 'zustand/react/shallow'` 사용
 8. **빌드 검증**: 작업 완료 전 `npm run typecheck && npm run build` 확인
 9. **파일 충돌 최소화**: 각 teammate는 자신의 담당 파일 범위 내에서만 수정
+10. **메일 발송 전담**: 모든 이메일 발송은 EMAIL 에이전트가 전담. Gmail MCP 사용 금지. `scripts/sendEmail.js` (Nodemailer SMTP) 방식만 사용
 
 ### 실전 병렬 에이전트 실행 패턴
 
@@ -1261,7 +1264,7 @@ scripts/register-qa-members.js에 API 키가 포함되어 있어 pre-commit hook
 해결: git reset HEAD scripts/register-qa-members.js → 해당 파일 제외 후 커밋
 ```
 
-### 25명 에이전트 전체 목록 (AGENTS.md 참조)
+### 26명 에이전트 전체 목록 (AGENTS.md 참조)
 
 | ID | 이름 | 역할 | Avatar | 팀 | 핵심 스킬 |
 |----|------|------|--------|-----|----------|
@@ -1290,6 +1293,7 @@ scripts/register-qa-members.js에 API 키가 포함되어 있어 pre-commit hook
 | I18N | 국제화 | i18n Specialist | 🌏 | Specialized | i18next, ko/en/vi, 지역화, 번역품질 |
 | SYS | 시스템설계 | System Architect (Orchestrator) | 🧠 | Specialized | 아키텍처, 에이전트오케스트레이션, ADR |
 | AIS | AI통합 | AI Integration | 🤖 | Specialized | Claude API, 프롬프트엔지니어링, 추천시스템 |
+| EMAIL | 메일전문가 | Email Specialist | 📧 | Specialized | Nodemailer, SMTP(mail.hsvina.com), 메일 템플릿, 한비로 그룹웨어 |
 
 ### 팀 간 협업 매트릭스
 ```

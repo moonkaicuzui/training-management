@@ -118,7 +118,7 @@ export default function Schedule() {
         status: statusFilter !== 'all' ? statusFilter as SessionStatus : undefined,
       }),
       fetchPrograms({}),
-    ]);
+    ]).catch(() => {});
   }, [statusFilter]);
 
   // Navigation handlers based on view mode

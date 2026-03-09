@@ -539,7 +539,7 @@ export default function TrainingPlanPage() {
       fetchExpiringTrainings(30),
       fetchDashboardStats(),
       fetchPrograms(),
-    ]);
+    ]).catch(() => {});
   }, [loadData, fetchRetrainingTargets, fetchExpiringTrainings, fetchDashboardStats, fetchPrograms]);
 
   // 품질 지표 계산

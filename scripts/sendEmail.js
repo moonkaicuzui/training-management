@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+/**
+ * Q-TRAIN 범용 이메일 발송 스크립트
+ * OSC 프로젝트와 동일한 SMTP 설정 (mail.hsvina.com)
+ *
+ * 사용법:
+ *   node sendEmail.js --to "hwk_qa@hsvina.com" --subject "제목" --body "본문"
+ *   node sendEmail.js --to "a@hsvina.com,b@hsvina.com" --subject "제목" --html "<h1>HTML</h1>"
+ *
+ * 환경변수 (.env):
+ *   SMTP_USER=ksmoon@hsvina.com
+ *   SMTP_PASSWORD=비밀번호
+ */
+
+const nodemailer = require('nodemailer');
+const path = require('path');
+
+// .env 로드
+try {
+  require('dotenv').config({ path: path.join(__dirname, '.env') });
+} catch {
+  // dotenv 없으면 환경변수 직접 사용
+}
+
+// ─── SMTP 설정 ───────────────────────────────
+const SMTP_USER = process.env.SMTP_USER || 'ksmoon@hsvina.com';
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
+
+if (!SMTP_PASSWORD) {
+  console.error('❌ SMTP_PASSWORD 환경변수가 필요합니다. .env 파일을 확인하세요.');
+  process.exit(1);
+}
+
+// ─── 인자 파싱 ───────────────────────────────
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {};
+  for (let i = 0; i < args.length; i += 2) {
+    const key = args[i].replace(/^--/, '');
+    parsed[key] = args[i + 1];
+  }
+  return parsed;
+}
+
+// ─── 트랜스포터 생성 (OSC emailService.js와 동일) ───
+function createTransporter(port = 465, secure = true) {
+  return nodemailer.createTransport({
+    host: 'mail.hsvina.com',
+    port,
+    secure,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASSWORD,
+    },
+    authMethod: 'LOGIN',
+    tls: {
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2',
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  });
+}
+
+// ─── 메일 발송 (465 SSL → 587 STARTTLS 폴백) ───
+async function sendEmail(options) {
+  const mailOptions = {
+    from: `"Q-TRAIN System" <${SMTP_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    ...(options.html ? { html: options.html } : { text: options.body || options.text || '' }),
+  };
+
+  if (options.cc) mailOptions.cc = options.cc;
+  if (options.bcc) mailOptions.bcc = options.bcc;
+
+  console.log(`📧 발송 중...`);
+  console.log(`   발신: ${SMTP_USER}`);
+  console.log(`   수신: ${mailOptions.to}`);
+  console.log(`   제목: ${mailOptions.subject}`);
+
+  // 1차: 포트 465 SSL
+  try {
+    const transporter = createTransporter(465, true);
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ 발송 성공 (port 465 SSL). Message ID: ${result.messageId}`);
+    return result;
+  } catch (err1) {
+    console.warn(`⚠️ Port 465 실패: ${err1.message}`);
+
+    // 2차: 포트 587 STARTTLS
+    try {
+      const transporter = createTransporter(587, false);
+      const result = await transporter.sendMail(mailOptions);
+      console.log(`✅ 발송 성공 (port 587 STARTTLS). Message ID: ${result.messageId}`);
+      return result;
+    } catch (err2) {
+      console.error(`❌ 발송 실패. Port 465: ${err1.message} | Port 587: ${err2.message}`);
+      throw new Error(`Email delivery failed`);
+    }
+  }
+}
+
+// ─── CLI 실행 ─────────────────────────────────
+async function main() {
+  const args = parseArgs();
+
+  if (!args.to || !args.subject) {
+    console.log('사용법: node sendEmail.js --to "수신자" --subject "제목" --body "본문"');
+    console.log('옵션: --html "<h1>HTML</h1>" --cc "참조" --bcc "숨은참조"');
+    process.exit(1);
+  }
+
+  try {
+    await sendEmail(args);
+    process.exit(0);
+  } catch {
+    process.exit(1);
+  }
+}
+
+// CLI로 실행될 때만 main 호출, require로 가져올 때는 함수만 export
+if (require.main === module) {
+  main();
+} else {
+  module.exports = { sendEmail, createTransporter };
+}

@@ -54,7 +54,7 @@ export default function Retraining() {
     Promise.all([
       fetchRetrainingTargets(),
       fetchExpiringTrainings(30),
-    ]);
+    ]).catch(() => {});
   }, []);
 
   // Filter retraining targets

@@ -81,7 +81,7 @@ export default function CAPADashboard() {
 
   // Fetch data on mount
   useEffect(() => {
-    Promise.all([fetchCAPAs(), fetchDashboardStats()]);
+    Promise.all([fetchCAPAs(), fetchDashboardStats()]).catch(() => {});
   }, [fetchCAPAs, fetchDashboardStats]);
 
   // Filter CAPAs based on local state

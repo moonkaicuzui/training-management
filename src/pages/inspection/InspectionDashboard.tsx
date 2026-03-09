@@ -42,7 +42,7 @@ export default function InspectionDashboard() {
   })));
 
   useEffect(() => {
-    Promise.all([fetchResults(), fetchEnrollments()]);
+    Promise.all([fetchResults(), fetchEnrollments()]).catch(() => {});
   }, [fetchResults, fetchEnrollments]);
 
   const totalInspections = results.length;

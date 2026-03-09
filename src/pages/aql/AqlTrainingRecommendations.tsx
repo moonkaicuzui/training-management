@@ -106,7 +106,7 @@ export default function AqlTrainingRecommendations() {
 
   // Load months and config on mount (cache guards prevent redundant calls)
   useEffect(() => {
-    Promise.all([fetchMonths(), fetchConfig()]);
+    Promise.all([fetchMonths(), fetchConfig()]).catch(() => {});
   }, [fetchMonths, fetchConfig]);
 
   // Auto-fetch data when month selected
