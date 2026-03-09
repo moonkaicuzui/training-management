@@ -5,6 +5,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 import type { RolePermissions } from '@/types/auth';
@@ -22,6 +23,7 @@ export function ProtectedRoute({
   requiredEmail,
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const { isAuthenticated, hasPermission, isLoading, user } = useAuthStore(useShallow((state) => ({ isAuthenticated: state.isAuthenticated, hasPermission: state.hasPermission, isLoading: state.isLoading, user: state.user })));
 
@@ -44,9 +46,9 @@ export function ProtectedRoute({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <div className="text-4xl">🔒</div>
-        <h2 className="text-xl font-semibold">접근 권한이 없습니다</h2>
+        <h2 className="text-xl font-semibold">{t('auth.accessDenied')}</h2>
         <p className="text-muted-foreground">
-          이 페이지에 접근하려면 권한이 필요합니다.
+          {t('auth.accessDeniedMessage')}
         </p>
       </div>
     );
@@ -57,9 +59,9 @@ export function ProtectedRoute({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <div className="text-4xl">🔒</div>
-        <h2 className="text-xl font-semibold">접근 권한이 없습니다</h2>
+        <h2 className="text-xl font-semibold">{t('auth.accessDenied')}</h2>
         <p className="text-muted-foreground">
-          이 페이지에 접근하려면 권한이 필요합니다.
+          {t('auth.accessDeniedMessage')}
         </p>
       </div>
     );

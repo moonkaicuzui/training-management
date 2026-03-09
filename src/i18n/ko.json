@@ -41,6 +41,9 @@
     "create": "등록",
     "change": "변경",
     "dismiss": "닫기",
+    "imageCompressing": "이미지 압축 중...",
+    "imageUploadHint": "클릭하거나 이미지를 드래그하여 추가",
+    "imageUploadLimit": "최대 {{max}}장 (남은 슬롯: {{remaining}})",
     "aria": {
       "dataTable": "데이터 테이블",
       "loading": "콘텐츠 로딩 중",
@@ -615,7 +618,19 @@
     "totalCompletions": "총 이수 횟수",
     "completionCount": "{{count}}회",
     "noHistory": "교육 이력이 없습니다",
-    "employeeDetail": "직원 상세"
+    "employeeDetail": "직원 상세",
+    "export": {
+      "employeeId": "사번",
+      "name": "이름",
+      "department": "부서",
+      "program": "프로그램",
+      "status": "상태",
+      "score": "점수",
+      "grade": "등급",
+      "trainingDate": "교육일",
+      "sheetName": "이수현황",
+      "loading": "내보내는 중..."
+    }
   },
   "retraining": {
     "title": "재교육 대상자",
@@ -780,7 +795,9 @@
     "role": "역할",
     "admin": "관리자",
     "trainer": "교육담당자",
-    "viewer": "조회자"
+    "viewer": "조회자",
+    "accessDenied": "접근 권한이 없습니다",
+    "accessDeniedMessage": "이 페이지에 접근하려면 권한이 필요합니다."
   },
   "commandPalette": {
     "searchPlaceholder": "검색... (페이지, 직원, 프로그램)",
@@ -875,6 +892,7 @@
     "reasonPlaceholder": "결석 사유를 입력하세요..."
   },
   "evaluation": {
+    "requiredFieldsError": "프로그램과 평가 유형을 선택해주세요.",
     "title": "교육 효과성 평가",
     "description": "Kirkpatrick 4단계 모델 기반 교육 효과 측정",
     "exportExcel": "엑셀 다운로드",
@@ -990,6 +1008,7 @@
     "required": "필수 입력 항목입니다"
   },
   "trainers": {
+    "confirmDelete": "{{name}} 강사를 삭제하시겠습니까?",
     "title": "강사 관리",
     "description": "교육 강사 등록 및 관리",
     "addTrainer": "신규 강사 등록",
@@ -2335,7 +2354,8 @@
       "update": "수정",
       "cancel": "취소",
       "effectivenessScoreLabel": "효과성 점수 (0-100)",
-      "effectivenessScorePlaceholder": "0~100 사이 점수를 입력하세요"
+      "effectivenessScorePlaceholder": "0~100 사이 점수를 입력하세요",
+      "immediateActionsPlaceholder": "문제 발견 후 즉시 취한 조치"
     },
     "validation": {
       "titleRequired": "제목은 필수 항목입니다.",
@@ -2620,7 +2640,8 @@
       "hiddenCount": "{{count}} 숨김",
       "training": "교육",
       "taskLabel": "과제",
-      "showAll": "전체 표시"
+      "showAll": "전체 표시",
+      "activity": "활동"
     },
     "members": {
       "title": "팀원 관리",

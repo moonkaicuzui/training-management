@@ -41,6 +41,9 @@
     "create": "Tạo mới",
     "change": "Thay đổi",
     "dismiss": "Đóng",
+    "imageCompressing": "Đang nén hình ảnh...",
+    "imageUploadHint": "Nhấp hoặc kéo hình ảnh để thêm",
+    "imageUploadLimit": "Tối đa {{max}} ảnh (còn {{remaining}} vị trí)",
     "aria": {
       "dataTable": "Bảng dữ liệu",
       "loading": "Đang tải nội dung",
@@ -615,7 +618,19 @@
     "totalCompletions": "Tổng số lần hoàn thành",
     "completionCount": "{{count}} lần",
     "noHistory": "Không có lịch sử đào tạo",
-    "employeeDetail": "Chi tiết nhân viên"
+    "employeeDetail": "Chi tiết nhân viên",
+    "export": {
+      "employeeId": "Mã nhân viên",
+      "name": "Tên",
+      "department": "Phòng ban",
+      "program": "Chương trình",
+      "status": "Trạng thái",
+      "score": "Điểm",
+      "grade": "Xếp loại",
+      "trainingDate": "Ngày đào tạo",
+      "sheetName": "Tình trạng hoàn thành",
+      "loading": "Đang xuất..."
+    }
   },
   "retraining": {
     "title": "Đào tạo lại",
@@ -780,7 +795,9 @@
     "role": "Vai trò",
     "admin": "Quản trị viên",
     "trainer": "Giảng viên",
-    "viewer": "Người xem"
+    "viewer": "Người xem",
+    "accessDenied": "Quyền truy cập bị từ chối",
+    "accessDeniedMessage": "Bạn cần quyền để truy cập trang này."
   },
   "commandPalette": {
     "searchPlaceholder": "Tìm kiếm... (trang, nhân viên, chương trình)",
@@ -875,6 +892,7 @@
     "reasonPlaceholder": "Nhập lý do vắng..."
   },
   "evaluation": {
+    "requiredFieldsError": "Vui lòng chọn chương trình và loại đánh giá.",
     "title": "Đánh giá hiệu quả đào tạo",
     "description": "Đo lường hiệu quả đào tạo dựa trên mô hình 4 cấp độ Kirkpatrick",
     "exportExcel": "Xuất Excel",
@@ -990,6 +1008,7 @@
     "required": "Trường này là bắt buộc"
   },
   "trainers": {
+    "confirmDelete": "Bạn có chắc chắn muốn xóa giảng viên {{name}}?",
     "title": "Quản lý giảng viên",
     "description": "Đăng ký và quản lý giảng viên đào tạo",
     "addTrainer": "Thêm giảng viên",
@@ -2335,7 +2354,8 @@
       "update": "Cập nhật",
       "cancel": "Hủy",
       "effectivenessScoreLabel": "Điểm hiệu quả (0-100)",
-      "effectivenessScorePlaceholder": "Nhập điểm từ 0 đến 100"
+      "effectivenessScorePlaceholder": "Nhập điểm từ 0 đến 100",
+      "immediateActionsPlaceholder": "Hành động được thực hiện ngay sau khi phát hiện vấn đề"
     },
     "validation": {
       "titleRequired": "Tiêu đề là bắt buộc.",
@@ -2620,7 +2640,8 @@
       "hiddenCount": "{{count}} ẩn",
       "training": "Đào tạo",
       "taskLabel": "Nhiệm vụ",
-      "showAll": "Hiện tất cả"
+      "showAll": "Hiện tất cả",
+      "activity": "Hoạt động"
     },
     "members": {
       "title": "Quản lý thành viên",

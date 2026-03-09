@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -205,7 +206,7 @@ export default function Programs() {
       setEditingProgram(null);
       setFormData(emptyFormData);
     } catch (error) {
-      console.error('[Programs] Save error:', error);
+      logger.error('[Programs] Save error:', error);
       addToast({ type: 'error', title: t('messages.saveError') + ': ' + (error instanceof Error ? error.message : String(error)) });
     }
   };

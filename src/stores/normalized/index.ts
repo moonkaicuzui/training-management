@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { logger } from '@/utils/logger';
 import { useShallow } from 'zustand/react/shallow';
 import type {
   NormalizedProgressCell,
@@ -150,7 +151,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             },
           }));
         } catch (error) {
-          console.error('Failed to fetch dashboard stats:', error);
+          logger.error('Failed to fetch dashboard stats:', error);
           set({ error: 'Failed to fetch dashboard stats' });
           throw error;
         } finally {
@@ -175,7 +176,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             },
           }));
         } catch (error) {
-          console.error('Failed to fetch monthly data:', error);
+          logger.error('Failed to fetch monthly data:', error);
           set({ error: 'Failed to fetch monthly data' });
           throw error;
         }
@@ -193,7 +194,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             },
           }));
         } catch (error) {
-          console.error('Failed to fetch grade distribution:', error);
+          logger.error('Failed to fetch grade distribution:', error);
           set({ error: 'Failed to fetch grade distribution' });
           throw error;
         }
@@ -269,7 +270,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             filters: { ...state.filters, progressMatrix: filters || {} },
           }));
         } catch (error) {
-          console.error('Failed to fetch progress matrix:', error);
+          logger.error('Failed to fetch progress matrix:', error);
           set({ error: 'Failed to fetch progress matrix' });
           throw error;
         } finally {
@@ -314,7 +315,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             },
           }));
         } catch (error) {
-          console.error('Failed to fetch retraining targets:', error);
+          logger.error('Failed to fetch retraining targets:', error);
           set({ error: 'Failed to fetch retraining targets' });
           throw error;
         } finally {
@@ -348,7 +349,7 @@ export const useNormalizedTrainingStore = create<NormalizedTrainingState>()(
             },
           }));
         } catch (error) {
-          console.error('Failed to fetch expiring trainings:', error);
+          logger.error('Failed to fetch expiring trainings:', error);
           set({ error: 'Failed to fetch expiring trainings' });
           throw error;
         }

@@ -142,7 +142,7 @@ export default function AttendancePage() {
         }));
       setSessionData(mappedSessions);
     } catch (err) {
-      console.error('Failed to load attendance data:', err);
+      logger.error('Failed to load attendance data:', err);
     } finally {
       setIsLoading(false);
     }

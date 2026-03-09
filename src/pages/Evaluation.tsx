@@ -102,7 +102,7 @@ export default function Evaluation() {
 
   const handleCreateEvaluation = async () => {
     if (!newEvalForm.programCode || !newEvalForm.type) {
-      setError('프로그램과 평가 유형을 선택해주세요.');
+      setError(t('evaluation.requiredFieldsError'));
       return;
     }
     setIsCreating(true);

@@ -101,9 +101,9 @@ export default function ProjectsCalendar() {
     seededRef.current = true;
     const seedDefaults = async () => {
       const defaults = [
-        { name: '활동', color: '#3B82F6', type: 'event' as const },
+        { name: t('projects.calendar.activity'), color: '#3B82F6', type: 'event' as const },
         { name: 'TECH', color: '#8B5CF6', type: 'event' as const },
-        { name: '활동', color: '#3B82F6', type: 'task' as const },
+        { name: t('projects.calendar.activity'), color: '#3B82F6', type: 'task' as const },
         { name: 'TECH', color: '#8B5CF6', type: 'task' as const },
       ];
       for (const d of defaults) {

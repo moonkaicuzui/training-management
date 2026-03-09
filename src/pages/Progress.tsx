@@ -156,18 +156,18 @@ export default function Progress() {
       programs.map((prog) => {
         const cell = matrix[emp.employee_id as EmployeeId]?.[prog.program_code as ProgramCode];
         return {
-          사번: emp.employee_id,
-          이름: emp.employee_name,
-          부서: emp.department,
-          프로그램: prog.program_name,
-          상태: cell?.status || 'NOT_TAKEN',
-          점수: cell?.last_score ?? '',
-          등급: cell?.last_grade ?? '',
-          교육일: cell?.last_training_date ?? '',
+          [t('progress.export.employeeId')]: emp.employee_id,
+          [t('progress.export.name')]: emp.employee_name,
+          [t('progress.export.department')]: emp.department,
+          [t('progress.export.program')]: prog.program_name,
+          [t('progress.export.status')]: cell?.status || 'NOT_TAKEN',
+          [t('progress.export.score')]: cell?.last_score ?? '',
+          [t('progress.export.grade')]: cell?.last_grade ?? '',
+          [t('progress.export.trainingDate')]: cell?.last_training_date ?? '',
         };
       })
     );
-    exportExcel(exportData, { filename: 'progress-matrix', sheetName: '이수현황' });
+    exportExcel(exportData, { filename: 'progress-matrix', sheetName: t('progress.export.sheetName') });
   };
 
   if (loading) {
@@ -186,7 +186,7 @@ export default function Progress() {
         </div>
         <Button variant="outline" onClick={handleExport} disabled={exporting}>
           <Download className="h-4 w-4 mr-2" />
-          {exporting ? '내보내는 중...' : t('common.export')}
+          {exporting ? t('progress.export.loading') : t('common.export')}
         </Button>
       </div>
 

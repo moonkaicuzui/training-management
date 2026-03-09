@@ -2,6 +2,7 @@
 // Session Slice - Normalized Store
 // ============================================================
 
+import { logger } from '@/utils/logger';
 import type { StateCreator } from 'zustand';
 import type {
   NormalizedTrainingSession,
@@ -77,7 +78,7 @@ export const createSessionSlice: StateCreator<
         filters: { ...state.filters, sessions: filters || {} },
       }));
     } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+      logger.error('Failed to fetch sessions:', error);
       set({ error: 'Failed to fetch sessions' });
       throw error;
     } finally {

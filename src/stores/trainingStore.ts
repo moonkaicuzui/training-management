@@ -19,6 +19,7 @@ import type {
 } from '@/types';
 
 import * as api from '@/services/api';
+import { logger } from '@/utils/logger';
 
 interface TrainingState {
   // Employees
@@ -209,7 +210,7 @@ export const useTrainingStore = create<TrainingState>()(
       const employee = await api.getEmployee(id);
       set({ selectedEmployee: employee });
     } catch (error) {
-      console.error('Failed to fetch employee:', error);
+      logger.error('Failed to fetch employee:', error);
       set({ error: '직원 정보를 불러오는데 실패했습니다.' });
       throw error;
     }
@@ -221,7 +222,7 @@ export const useTrainingStore = create<TrainingState>()(
       const history = await api.getEmployeeHistory(id);
       set({ employeeHistory: history });
     } catch (error) {
-      console.error('Failed to fetch employee history:', error);
+      logger.error('Failed to fetch employee history:', error);
       set({ error: '직원 교육 이력을 불러오는데 실패했습니다.' });
       throw error;
     }
@@ -239,7 +240,7 @@ export const useTrainingStore = create<TrainingState>()(
       set((state) => ({ employees: [...state.employees, newEmployee] }));
       return newEmployee;
     } catch (error) {
-      console.error('Failed to create employee:', error);
+      logger.error('Failed to create employee:', error);
       set({ error: '직원 등록에 실패했습니다.' });
       throw error;
     }
@@ -261,7 +262,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to update employee:', error);
+      logger.error('Failed to update employee:', error);
       set({ error: '직원 정보 수정에 실패했습니다.' });
       throw error;
     }
@@ -288,7 +289,7 @@ export const useTrainingStore = create<TrainingState>()(
       const program = await api.getProgram(code);
       set({ selectedProgram: program });
     } catch (error) {
-      console.error('Failed to fetch program:', error);
+      logger.error('Failed to fetch program:', error);
       set({ error: '교육 프로그램을 불러오는데 실패했습니다.' });
       throw error;
     }
@@ -306,7 +307,7 @@ export const useTrainingStore = create<TrainingState>()(
       set((state) => ({ programs: [...state.programs, newProgram] }));
       return newProgram;
     } catch (error) {
-      console.error('Failed to create program:', error);
+      logger.error('Failed to create program:', error);
       set({ error: '교육 프로그램 생성에 실패했습니다.' });
       throw error;
     }
@@ -328,7 +329,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to update program:', error);
+      logger.error('Failed to update program:', error);
       set({ error: '교육 프로그램 수정에 실패했습니다.' });
       throw error;
     }
@@ -346,7 +347,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to delete program:', error);
+      logger.error('Failed to delete program:', error);
       set({ error: '교육 프로그램 삭제에 실패했습니다.' });
       throw error;
     }
@@ -379,7 +380,7 @@ export const useTrainingStore = create<TrainingState>()(
       set((state) => ({ sessions: [...state.sessions, newSession] }));
       return newSession;
     } catch (error) {
-      console.error('Failed to create session:', error);
+      logger.error('Failed to create session:', error);
       set({ error: '교육 세션 생성에 실패했습니다.' });
       throw error;
     }
@@ -401,7 +402,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to update session:', error);
+      logger.error('Failed to update session:', error);
       set({ error: '교육 세션 수정에 실패했습니다.' });
       throw error;
     }
@@ -419,7 +420,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to cancel session:', error);
+      logger.error('Failed to cancel session:', error);
       set({ error: '교육 세션 취소에 실패했습니다.' });
       throw error;
     }
@@ -452,7 +453,7 @@ export const useTrainingStore = create<TrainingState>()(
       set((state) => ({ results: [...newResults, ...state.results] }));
       return newResults;
     } catch (error) {
-      console.error('Failed to record results:', error);
+      logger.error('Failed to record results:', error);
       set({ error: '교육 결과 기록에 실패했습니다.' });
       throw error;
     }
@@ -473,7 +474,7 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       }
     } catch (error) {
-      console.error('Failed to update result:', error);
+      logger.error('Failed to update result:', error);
       set({ error: '교육 결과 수정에 실패했습니다.' });
       throw error;
     }
@@ -499,7 +500,7 @@ export const useTrainingStore = create<TrainingState>()(
       const data = await api.getMonthlyTrainingData();
       set({ monthlyData: data });
     } catch (error) {
-      console.error('Failed to fetch monthly data:', error);
+      logger.error('Failed to fetch monthly data:', error);
       set({ error: '월별 교육 데이터를 불러오는데 실패했습니다.' });
       throw error;
     }
@@ -511,7 +512,7 @@ export const useTrainingStore = create<TrainingState>()(
       const data = await api.getGradeDistribution();
       set({ gradeDistribution: data });
     } catch (error) {
-      console.error('Failed to fetch grade distribution:', error);
+      logger.error('Failed to fetch grade distribution:', error);
       set({ error: '등급 분포를 불러오는데 실패했습니다.' });
       throw error;
     }

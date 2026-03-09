@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { logger } from '@/utils/logger';
 import type {
   User,
   UserRole,
@@ -178,7 +179,7 @@ export const useAuthStore = create<AuthStore>()(
             error: null,
           });
         } catch (error) {
-          console.error('Logout error:', error);
+          logger.error('Logout error:', error);
           // Still clear local state even if Firebase logout fails
           set({
             user: null,

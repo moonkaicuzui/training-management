@@ -2,6 +2,7 @@
 // Result Slice - Normalized Store
 // ============================================================
 
+import { logger } from '@/utils/logger';
 import type { StateCreator } from 'zustand';
 import type {
   NormalizedTrainingResultRecord,
@@ -96,7 +97,7 @@ export const createResultSlice: StateCreator<
         filters: { ...state.filters, results: filters || {} },
       }));
     } catch (error) {
-      console.error('Failed to fetch results:', error);
+      logger.error('Failed to fetch results:', error);
       set({ error: 'Failed to fetch results' });
       throw error;
     } finally {

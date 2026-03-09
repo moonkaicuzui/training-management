@@ -9,6 +9,7 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ImagePlus, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { compressImages, formatFileSize } from '@/utils/imageCompression';
@@ -31,6 +32,7 @@ export function MultiImageUpload({
   maxFiles = 10,
   disabled = false,
 }: MultiImageUploadProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<CompressionResult[] | null>(null);
@@ -106,16 +108,16 @@ export function MultiImageUpload({
           {isCompressing ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">이미지 압축 중...</p>
+              <p className="text-sm text-muted-foreground">{t('common.imageCompressing')}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <ImagePlus className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                클릭하거나 이미지를 드래그하여 추가
+                {t('common.imageUploadHint')}
               </p>
               <p className="text-xs text-muted-foreground/60">
-                최대 {maxFiles}장 (남은 슬롯: {remainingSlots})
+                {t('common.imageUploadLimit', { max: maxFiles, remaining: remainingSlots })}
               </p>
             </div>
           )}

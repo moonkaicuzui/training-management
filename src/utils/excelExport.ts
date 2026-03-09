@@ -3,6 +3,8 @@
  * xlsx 라이브러리를 동적 import하여 번들 크기 최적화
  */
 
+import { logger } from '@/utils/logger';
+
 export interface ExportOptions {
   sheetName?: string;
   filename?: string;
@@ -29,7 +31,7 @@ export async function exportToExcel<T extends Record<string, unknown>>(
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, filename);
   } catch (error) {
-    console.error('[excelExport] Failed to export Excel:', error);
+    logger.error('[excelExport] Failed to export Excel:', error);
     throw new Error('Excel 파일 내보내기에 실패했습니다.');
   }
 }
@@ -55,7 +57,7 @@ export async function exportMultiSheetExcel<T extends Record<string, unknown>>(
 
     XLSX.writeFile(wb, filename);
   } catch (error) {
-    console.error('[excelExport] Failed to export multi-sheet Excel:', error);
+    logger.error('[excelExport] Failed to export multi-sheet Excel:', error);
     throw new Error('Excel 파일 내보내기에 실패했습니다.');
   }
 }

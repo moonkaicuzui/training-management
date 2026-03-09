@@ -325,7 +325,7 @@ export default function TrainersPage() {
   };
 
   const handleDelete = async (trainer: TrainerWithStats) => {
-    if (!window.confirm(`${trainer.trainer_name} 강사를 삭제하시겠습니까?`)) return;
+    if (!window.confirm(t('trainers.confirmDelete', { name: trainer.trainer_name }))) return;
     try {
       await api.deleteTrainer(trainer.trainer_id);
       await loadData();

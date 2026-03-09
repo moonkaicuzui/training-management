@@ -2,6 +2,7 @@
 // Program Slice - Normalized Store
 // ============================================================
 
+import { logger } from '@/utils/logger';
 import type { StateCreator } from 'zustand';
 import type {
   NormalizedTrainingProgram,
@@ -66,7 +67,7 @@ export const createProgramSlice: StateCreator<
         filters: { ...state.filters, programs: filters || {} },
       }));
     } catch (error) {
-      console.error('Failed to fetch programs:', error);
+      logger.error('Failed to fetch programs:', error);
       set({ error: 'Failed to fetch programs' });
       throw error;
     } finally {

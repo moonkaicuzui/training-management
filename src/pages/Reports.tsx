@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import { format } from 'date-fns';
 import * as api from '@/services/api';
 import type { Employee, TrainingProgram, TrainingResultRecord } from '@/types';
@@ -96,7 +97,7 @@ export default function ReportsPage() {
       setPrograms(programsData);
       setResults(resultsData);
     } catch (err) {
-      console.error('Failed to load report data:', err);
+      logger.error('Failed to load report data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setIsLoading(false);

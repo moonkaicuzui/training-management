@@ -41,6 +41,9 @@
     "create": "Create",
     "change": "Change",
     "dismiss": "Dismiss",
+    "imageCompressing": "Compressing images...",
+    "imageUploadHint": "Click or drag images to add",
+    "imageUploadLimit": "Max {{max}} images ({{remaining}} slots remaining)",
     "aria": {
       "dataTable": "Data table",
       "loading": "Content is loading",
@@ -615,7 +618,19 @@
     "totalCompletions": "Total Completions",
     "completionCount": "{{count}} times",
     "noHistory": "No training history",
-    "employeeDetail": "Employee Detail"
+    "employeeDetail": "Employee Detail",
+    "export": {
+      "employeeId": "Employee ID",
+      "name": "Name",
+      "department": "Department",
+      "program": "Program",
+      "status": "Status",
+      "score": "Score",
+      "grade": "Grade",
+      "trainingDate": "Training Date",
+      "sheetName": "Completion Status",
+      "loading": "Exporting..."
+    }
   },
   "retraining": {
     "title": "Retraining",
@@ -780,7 +795,9 @@
     "role": "Role",
     "admin": "Admin",
     "trainer": "Trainer",
-    "viewer": "Viewer"
+    "viewer": "Viewer",
+    "accessDenied": "Access Denied",
+    "accessDeniedMessage": "You need permission to access this page."
   },
   "commandPalette": {
     "searchPlaceholder": "Search... (pages, employees, programs)",
@@ -875,6 +892,7 @@
     "reasonPlaceholder": "Enter absence reason..."
   },
   "evaluation": {
+    "requiredFieldsError": "Please select a program and evaluation type.",
     "title": "Training Effectiveness Evaluation",
     "description": "Training effectiveness measurement based on Kirkpatrick 4-level model",
     "exportExcel": "Export Excel",
@@ -990,6 +1008,7 @@
     "required": "This field is required"
   },
   "trainers": {
+    "confirmDelete": "Are you sure you want to delete trainer {{name}}?",
     "title": "Trainer Management",
     "description": "Register and manage training instructors",
     "addTrainer": "Add Trainer",
@@ -2335,7 +2354,8 @@
       "update": "Update",
       "cancel": "Cancel",
       "effectivenessScoreLabel": "Effectiveness Score (0-100)",
-      "effectivenessScorePlaceholder": "Enter a score between 0 and 100"
+      "effectivenessScorePlaceholder": "Enter a score between 0 and 100",
+      "immediateActionsPlaceholder": "Actions taken immediately after problem discovery"
     },
     "validation": {
       "titleRequired": "Title is required.",
@@ -2620,7 +2640,8 @@
       "hiddenCount": "{{count}} hidden",
       "training": "Training",
       "taskLabel": "Task",
-      "showAll": "Show All"
+      "showAll": "Show All",
+      "activity": "Activity"
     },
     "members": {
       "title": "Team Members",

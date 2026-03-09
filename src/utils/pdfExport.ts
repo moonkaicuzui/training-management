@@ -4,6 +4,7 @@
  * 한글/베트남어 지원을 위해 html2canvas 방식도 제공
  */
 
+import { logger } from '@/utils/logger';
 import type { jsPDF } from 'jspdf';
 
 /**
@@ -62,7 +63,7 @@ export async function exportElementToPDF(
     pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
     pdf.save(filename);
   } catch (error) {
-    console.error('[pdfExport] Failed to export element to PDF:', error);
+    logger.error('[pdfExport] Failed to export element to PDF:', error);
     throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
 }
@@ -375,7 +376,7 @@ export async function exportToPDF<T extends Record<string, unknown>>(
 
     doc.save(filename);
   } catch (error) {
-    console.error('[pdfExport] Failed to export table PDF:', error);
+    logger.error('[pdfExport] Failed to export table PDF:', error);
     throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
 }
@@ -465,7 +466,7 @@ export async function exportMultiTablePDF<T extends Record<string, unknown>>(
 
     doc.save(filename);
   } catch (error) {
-    console.error('[pdfExport] Failed to export multi-table PDF:', error);
+    logger.error('[pdfExport] Failed to export multi-table PDF:', error);
     throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
 }
@@ -568,7 +569,7 @@ export async function exportTrainingResultsPDF(
 
     doc.save(filename);
   } catch (error) {
-    console.error('[pdfExport] Failed to export training results PDF:', error);
+    logger.error('[pdfExport] Failed to export training results PDF:', error);
     throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
 }
@@ -661,7 +662,7 @@ export async function exportCertificatePDF(
 
     doc.save(filename);
   } catch (error) {
-    console.error('[pdfExport] Failed to export certificate PDF:', error);
+    logger.error('[pdfExport] Failed to export certificate PDF:', error);
     throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
 }

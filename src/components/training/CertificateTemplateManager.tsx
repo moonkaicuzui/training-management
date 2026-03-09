@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import * as api from '@/services/api';
 import type { CertificateTemplate } from '@/services/certificateService';
 import {
@@ -82,7 +83,7 @@ export default function CertificateTemplateManager() {
       const data = await api.getCertificateTemplates(false);
       setTemplates(data);
     } catch (err) {
-      console.error('Failed to load templates:', err);
+      logger.error('Failed to load templates:', err);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +136,7 @@ export default function CertificateTemplateManager() {
       setEditingTemplate(null);
       await loadTemplates();
     } catch (err) {
-      console.error('Failed to save template:', err);
+      logger.error('Failed to save template:', err);
     } finally {
       setIsSaving(false);
     }
@@ -146,7 +147,7 @@ export default function CertificateTemplateManager() {
       await api.updateCertificateTemplate(templateId, { is_default: true });
       await loadTemplates();
     } catch (err) {
-      console.error('Failed to set default template:', err);
+      logger.error('Failed to set default template:', err);
     }
   };
 
@@ -156,7 +157,7 @@ export default function CertificateTemplateManager() {
       setShowDeleteConfirm(null);
       await loadTemplates();
     } catch (err) {
-      console.error('Failed to delete template:', err);
+      logger.error('Failed to delete template:', err);
     }
   };
 

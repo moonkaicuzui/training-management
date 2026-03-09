@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import {
   Users,
   GraduationCap,
@@ -149,7 +150,7 @@ export default function Dashboard() {
         ]);
         setIsDataLoaded(true);
       } catch (err) {
-        console.error('Dashboard data fetch error:', err);
+        logger.error('Dashboard data fetch error:', err);
         setError('messages.loadError');
       }
     };
@@ -177,7 +178,7 @@ export default function Dashboard() {
         }
       })
       .catch((err) => {
-        console.error('[Dashboard] Expiry notification check failed:', err);
+        logger.error('[Dashboard] Expiry notification check failed:', err);
       });
   }, [isDataLoaded]);
 

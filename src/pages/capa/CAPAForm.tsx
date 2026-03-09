@@ -439,7 +439,7 @@ export default function CAPAForm() {
                 onChange={(e) =>
                   setFormData({ ...formData, immediateActions: e.target.value })
                 }
-                placeholder="문제 발견 후 즉시 취한 조치"
+                placeholder={t('capa.form.immediateActionsPlaceholder')}
                 rows={3}
               />
             </div>

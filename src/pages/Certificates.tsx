@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import * as api from '@/services/api';
@@ -276,7 +277,7 @@ export default function CertificatesPage() {
         program_name: p.program_name ?? p.program_code,
       })));
     } catch (err) {
-      console.error('Failed to load data:', err);
+      logger.error('Failed to load data:', err);
     } finally {
       setIsLoading(false);
     }
@@ -288,7 +289,7 @@ export default function CertificatesPage() {
       const data = await api.getCertificates();
       setIssuedCertificates(data);
     } catch (err) {
-      console.error('Failed to load issued certificates:', err);
+      logger.error('Failed to load issued certificates:', err);
     } finally {
       setIsLoadingIssued(false);
     }
@@ -361,7 +362,7 @@ export default function CertificatesPage() {
       setRevokeReason('');
       await loadIssuedCertificates();
     } catch (err) {
-      console.error('Failed to revoke certificate:', err);
+      logger.error('Failed to revoke certificate:', err);
     }
   };
 

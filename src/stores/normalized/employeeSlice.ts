@@ -2,6 +2,7 @@
 // Employee Slice - Normalized Store
 // ============================================================
 
+import { logger } from '@/utils/logger';
 import type { StateCreator } from 'zustand';
 import type {
   NormalizedEmployee,
@@ -73,7 +74,7 @@ export const createEmployeeSlice: StateCreator<
         filters: { ...state.filters, employees: filters || {} },
       }));
     } catch (error) {
-      console.error('Failed to fetch employees:', error);
+      logger.error('Failed to fetch employees:', error);
       set({ error: 'Failed to fetch employees' });
       throw error;
     } finally {
