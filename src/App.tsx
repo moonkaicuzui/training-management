@@ -97,6 +97,9 @@ const TechReviewGuidelines = lazy(() => import('./pages/tech/TechReviewGuideline
 // 검사원 스티커 관리
 const InspectorStickers = lazy(() => import('./pages/InspectorStickers'));
 
+// 시스템 피드백 (이슈 등록 / 개선 요청)
+const SystemFeedback = lazy(() => import('./pages/SystemFeedback'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -567,6 +570,15 @@ function App() {
                       </Suspense>
                     </PageErrorBoundary>
                   </DevProtectedRoute>
+                } />
+
+                {/* 시스템 피드백 (이슈 등록 / 개선 요청) */}
+                <Route path="system-feedback" element={
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <SystemFeedback />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
 
                 {/* 테스트 페이지 (DEV only) */}

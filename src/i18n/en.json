@@ -157,7 +157,8 @@
     "tech": {
       "models": "New Models",
       "reviewGuidelines": "Review Guidelines"
-    }
+    },
+    "systemFeedback": "System Feedback"
   },
   "sidebar": {
     "cat": {
@@ -3476,6 +3477,60 @@
       "deleted": "Sticker deleted successfully.",
       "activated": "Sticker activated.",
       "deactivated": "Sticker deactivated."
+    }
+  },
+  "systemFeedback": {
+    "title": "System Feedback",
+    "description": "Manage system issues and improvement requests.",
+    "newFeedback": "New Feedback",
+    "searchPlaceholder": "Search by title, description, or author...",
+    "statusFilter": "Status Filter",
+    "empty": "No feedback registered.",
+    "openDetail": "View {{title}} details",
+    "toggleComments": "Show/Hide comments",
+    "commentsCount": "{{count}} comments",
+    "comments": "Comments",
+    "noComments": "No comments yet.",
+    "commentPlaceholder": "Enter your comment...",
+    "addComment": "Add Comment",
+    "changeStatus": "Change Status",
+    "screenshots": "Screenshots",
+    "category": {
+      "BUG": "Bug Fix",
+      "IMPROVEMENT": "Improvement",
+      "NEW_FEATURE": "New Feature Request",
+      "UI_UX": "UI/UX Improvement",
+      "DATA": "Data Related",
+      "OTHER": "Other"
+    },
+    "priority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "status": {
+      "ALL": "All",
+      "SUBMITTED": "Submitted",
+      "REVIEWING": "Reviewing",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "REJECTED": "Rejected"
+    },
+    "form": {
+      "title": "Submit Feedback",
+      "description": "Please submit your system issue or improvement request.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter the issue or improvement request title",
+      "categoryLabel": "Category",
+      "priorityLabel": "Priority",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe the issue, steps to reproduce, or improvement details.",
+      "screenshotsLabel": "Screenshots",
+      "screenshotsHint": "Attach relevant screenshots (optional)",
+      "uploadingScreenshots": "Uploading screenshots... ({{completed}}/{{total}})",
+      "submitting": "Submitting...",
+      "submit": "Submit"
     }
   }
 }

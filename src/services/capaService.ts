@@ -255,7 +255,6 @@ export async function getCAPA(id: string): Promise<CAPA | null> {
 export async function createCAPA(input: CAPAInput): Promise<string> {
   try {
     validateCAPAInput(input);
-    const now = Timestamp.now();
     const capaData = {
       capaNumber: generateCAPANumber(),
       title: input.title,
@@ -267,7 +266,7 @@ export async function createCAPA(input: CAPAInput): Promise<string> {
       source: input.source,
       discovery: {
         ...input.discovery,
-        discoveredAt: now,
+        discoveredAt: serverTimestamp(),
       },
       owner: input.owner,
       team: input.team || [],
@@ -324,7 +323,6 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
       validateStageTransitionData(currentStatus, stageUpdate, existingData);
     }
 
-    const now = Timestamp.now();
     const updateData: Record<string, unknown> = {
       status: stageUpdate.status,
       updatedAt: serverTimestamp(),
@@ -333,28 +331,28 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
     if (stageUpdate.investigation) {
       updateData.investigation = {
         ...stageUpdate.investigation,
-        investigatedAt: now,
+        investigatedAt: serverTimestamp(),
       };
     }
 
     if (stageUpdate.action) {
       updateData.action = {
         ...stageUpdate.action,
-        plannedAt: now,
+        plannedAt: serverTimestamp(),
       };
     }
 
     if (stageUpdate.verification) {
       updateData.verification = {
         ...stageUpdate.verification,
-        verifiedAt: now,
+        verifiedAt: serverTimestamp(),
       };
     }
 
     if (stageUpdate.closure) {
       updateData.closure = {
         ...stageUpdate.closure,
-        closedAt: now,
+        closedAt: serverTimestamp(),
       };
     }
 

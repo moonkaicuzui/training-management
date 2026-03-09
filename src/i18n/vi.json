@@ -157,7 +157,8 @@
     "tech": {
       "models": "Mẫu mới",
       "reviewGuidelines": "Hướng dẫn đánh giá"
-    }
+    },
+    "systemFeedback": "Phản hồi hệ thống"
   },
   "sidebar": {
     "cat": {
@@ -3476,6 +3477,60 @@
       "deleted": "Xóa tem thành công.",
       "activated": "Tem đã được kích hoạt.",
       "deactivated": "Tem đã bị vô hiệu hóa."
+    }
+  },
+  "systemFeedback": {
+    "title": "Phản hồi hệ thống",
+    "description": "Quản lý lỗi hệ thống và yêu cầu cải tiến.",
+    "newFeedback": "Tạo phản hồi mới",
+    "searchPlaceholder": "Tìm theo tiêu đề, mô tả hoặc người gửi...",
+    "statusFilter": "Lọc trạng thái",
+    "empty": "Chưa có phản hồi nào.",
+    "openDetail": "Xem chi tiết {{title}}",
+    "toggleComments": "Hiện/Ẩn bình luận",
+    "commentsCount": "{{count}} bình luận",
+    "comments": "Bình luận",
+    "noComments": "Chưa có bình luận.",
+    "commentPlaceholder": "Nhập bình luận...",
+    "addComment": "Thêm bình luận",
+    "changeStatus": "Đổi trạng thái",
+    "screenshots": "Ảnh chụp màn hình",
+    "category": {
+      "BUG": "Sửa lỗi",
+      "IMPROVEMENT": "Cải tiến",
+      "NEW_FEATURE": "Yêu cầu tính năng mới",
+      "UI_UX": "Cải tiến UI/UX",
+      "DATA": "Liên quan dữ liệu",
+      "OTHER": "Khác"
+    },
+    "priority": {
+      "LOW": "Thấp",
+      "MEDIUM": "Trung bình",
+      "HIGH": "Cao",
+      "CRITICAL": "Khẩn cấp"
+    },
+    "status": {
+      "ALL": "Tất cả",
+      "SUBMITTED": "Đã gửi",
+      "REVIEWING": "Đang xem xét",
+      "IN_PROGRESS": "Đang xử lý",
+      "COMPLETED": "Hoàn thành",
+      "REJECTED": "Từ chối"
+    },
+    "form": {
+      "title": "Gửi phản hồi",
+      "description": "Vui lòng gửi lỗi hệ thống hoặc yêu cầu cải tiến.",
+      "titleLabel": "Tiêu đề",
+      "titlePlaceholder": "Nhập tiêu đề lỗi hoặc yêu cầu cải tiến",
+      "categoryLabel": "Danh mục",
+      "priorityLabel": "Mức ưu tiên",
+      "descriptionLabel": "Mô tả",
+      "descriptionPlaceholder": "Mô tả chi tiết lỗi, cách tái hiện hoặc nội dung cải tiến.",
+      "screenshotsLabel": "Ảnh chụp màn hình",
+      "screenshotsHint": "Đính kèm ảnh chụp liên quan (tùy chọn)",
+      "uploadingScreenshots": "Đang tải ảnh... ({{completed}}/{{total}})",
+      "submitting": "Đang gửi...",
+      "submit": "Gửi"
     }
   }
 }

@@ -1331,6 +1331,8 @@ export const onEmployeeWritten = onDocumentWritten(
 //      POST /api/employee-sync/from-sheet — Sheet → Firestore sync (GAS calls)
 //      POST /api/employee-sync/full-sync  — Full bidirectional sync
 //      GET  /api/employee-sync/status     — Sync status
+//      POST /api/sync/collection          — GAS sync proxy (collection/syncAll)
+//      GET  /api/sync/status              — GAS sync status proxy
 // =============================================================================
 
 export const api = onRequest(
@@ -1344,6 +1346,8 @@ export const api = onRequest(
       "OPENROUTER_API_KEY",
       "EMPLOYEE_SHEET_ID",
       "EMPLOYEE_SYNC_API_KEY",
+      "GAS_SYNC_URL",
+      "GAS_SYNC_API_KEY",
     ],
     timeoutSeconds: 120,
     memory: "256MiB",
@@ -1772,6 +1776,88 @@ export const api = onRequest(
           ...data,
           last_sync_at: data?.last_sync_at?.toDate?.()?.toISOString() || null,
         });
+        return;
+      }
+
+      // ---------------------------------------------------------------
+      // GAS Sync Proxy Routes (Google Sheets ↔ Firestore sync)
+      // ---------------------------------------------------------------
+
+      if (req.method === "POST" && path === "/api/sync/collection") {
+        logger.info("API: POST /api/sync/collection");
+
+        const gasSyncUrl = process.env.GAS_SYNC_URL;
+        const gasSyncApiKey = process.env.GAS_SYNC_API_KEY;
+
+        if (!gasSyncUrl || !gasSyncApiKey) {
+          res.status(500).json({
+            error: "GAS Sync credentials not configured. Set GAS_SYNC_URL and GAS_SYNC_API_KEY secrets.",
+          });
+          return;
+        }
+
+        const { action, collection: col, direction, ...rest } = req.body || {};
+
+        if (!action) {
+          res.status(400).json({ error: "action is required" });
+          return;
+        }
+
+        const gasResponse = await fetch(gasSyncUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action,
+            apiKey: gasSyncApiKey,
+            collection: col,
+            direction,
+            ...rest,
+          }),
+        });
+
+        if (!gasResponse.ok) {
+          res.status(gasResponse.status).json({
+            error: `GAS request failed: ${gasResponse.status} ${gasResponse.statusText}`,
+          });
+          return;
+        }
+
+        const gasData = await gasResponse.json();
+        res.json(gasData);
+        return;
+      }
+
+      if (req.method === "GET" && path === "/api/sync/status") {
+        logger.info("API: GET /api/sync/status");
+
+        const gasSyncUrl = process.env.GAS_SYNC_URL;
+        const gasSyncApiKey = process.env.GAS_SYNC_API_KEY;
+
+        if (!gasSyncUrl || !gasSyncApiKey) {
+          res.status(500).json({
+            error: "GAS Sync credentials not configured. Set GAS_SYNC_URL and GAS_SYNC_API_KEY secrets.",
+          });
+          return;
+        }
+
+        const gasResponse = await fetch(gasSyncUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "getSyncStatus",
+            apiKey: gasSyncApiKey,
+          }),
+        });
+
+        if (!gasResponse.ok) {
+          res.status(gasResponse.status).json({
+            error: `GAS request failed: ${gasResponse.status} ${gasResponse.statusText}`,
+          });
+          return;
+        }
+
+        const gasData = await gasResponse.json();
+        res.json(gasData);
         return;
       }
 

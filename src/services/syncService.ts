@@ -32,10 +32,7 @@ import { logger } from '@/utils/logger';
 // Configuration
 // ============================================================
 
-const GAS_URL = import.meta.env.VITE_GAS_SYNC_URL;
-const API_KEY = import.meta.env.VITE_SYNC_API_KEY;
-
-/** Maximum number of retry attempts for failed GAS requests */
+/** Maximum number of retry attempts for failed sync requests */
 const MAX_RETRIES = 3;
 
 /** Base delay in milliseconds for exponential backoff */
@@ -143,7 +140,7 @@ export interface SyncMetadata {
   /** Collection name */
   collection: string;
   /** Timestamp of the last successful sync */
-  last_sync_at: Timestamp;
+  last_sync_at: Timestamp | ReturnType<typeof serverTimestamp>;
   /** Direction of the last sync */
   last_sync_direction: SyncDirection;
   /** Status of the last sync */
@@ -190,22 +187,14 @@ const SYNC_METADATA_COLLECTION = 'sync_metadata';
 
 /**
  * Validate that the sync service is properly configured.
- * Throws an error if required environment variables are missing.
+ * With Cloud Functions proxy, no client-side environment variables are needed.
  */
 export function validateSyncConfig(): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  if (!GAS_URL) {
-    errors.push('GAS Sync URL is not configured. Set VITE_GAS_SYNC_URL in .env');
-  }
-
-  if (!API_KEY) {
-    errors.push('Sync API Key is not configured. Set VITE_SYNC_API_KEY in .env');
-  }
-
+  // GAS API keys are now stored in Cloud Functions secrets.
+  // No client-side configuration required.
   return {
-    valid: errors.length === 0,
-    errors,
+    valid: true,
+    errors: [],
   };
 }
 
@@ -292,29 +281,24 @@ async function withRetry<T>(
 // ============================================================
 
 /**
- * Call the GAS Web App endpoint with retry logic.
- * Sends a POST request and handles response validation.
+ * Call the GAS Web App endpoint via Cloud Functions proxy.
+ * GAS API keys are stored server-side in Cloud Functions secrets,
+ * not exposed in the client bundle.
  */
 async function callGAS(action: string, payload: Record<string, unknown> = {}): Promise<unknown> {
-  const config = validateSyncConfig();
-  if (!config.valid) {
-    throw new Error(config.errors.join('; '));
-  }
-
   return withRetry(
     async () => {
-      const response = await fetch(GAS_URL, {
+      const response = await fetch('/api/sync/collection', {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action,
-          apiKey: API_KEY,
           ...payload,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`GAS request failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Sync request failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -325,7 +309,7 @@ async function callGAS(action: string, payload: Record<string, unknown> = {}): P
 
       return data.data;
     },
-    `GAS action "${action}"`
+    `Sync action "${action}"`
   );
 }
 
@@ -451,7 +435,7 @@ async function updateLastSyncTimestamp(
       docRef,
       {
         collection: collectionKey,
-        last_sync_at: Timestamp.now(),
+        last_sync_at: serverTimestamp(),
         last_sync_direction: direction,
         last_sync_status: status,
         last_sync_conflicts: conflictCount,
@@ -544,7 +528,7 @@ export async function triggerSync(
 
   const results: SyncResult[] = [];
   const startTime = Date.now();
-  const startTimestamp = Timestamp.now();
+  const startTimestamp = serverTimestamp();
 
   logger.info('[SyncService] Starting sync', {
     collections,
@@ -712,7 +696,7 @@ export async function triggerSyncAll(
 
   const allCollectionKeys = SYNC_COLLECTIONS.map((c) => c.key);
   const startTime = Date.now();
-  const startTimestamp = Timestamp.now();
+  const startTimestamp = serverTimestamp();
 
   logger.info('[SyncService] Starting full sync', { direction, initiatedBy });
 
@@ -830,12 +814,26 @@ export async function triggerSyncAll(
 }
 
 /**
- * Get sync status from the GAS endpoint.
+ * Get sync status from the GAS endpoint via Cloud Functions proxy.
  * Returns information about each sheet's current state.
  */
 export async function getSyncStatus(): Promise<
   Record<string, { sheetName: string; syncMode: string; sheetRows: number }>
 > {
-  const result = await callGAS('getSyncStatus');
-  return result as Record<string, { sheetName: string; syncMode: string; sheetRows: number }>;
+  const response = await fetch('/api/sync/status', {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Sync status request failed: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to get sync status');
+  }
+
+  return data.data as Record<string, { sheetName: string; syncMode: string; sheetRows: number }>;
 }
