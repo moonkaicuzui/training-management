@@ -5,33 +5,15 @@ import { format } from 'date-fns';
 import * as api from '@/services/api';
 import type { Employee, TrainingProgram, TrainingResultRecord } from '@/types';
 import {
-  Users,
   Building2,
   GraduationCap,
-  TrendingUp,
-  BarChart3,
+  Users,
   Calendar,
-  Filter,
   FileSpreadsheet,
   FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -40,32 +22,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// 리포트 유형
-type ReportType = 'department' | 'program' | 'employee';
-
-interface DepartmentReport {
-  department: string;
-  totalEmployees: number;
-  completedTrainings: number;
-  pendingTrainings: number;
-  completionRate: number;
-  averageScore: number;
-  passRate: number;
-}
-
-interface ProgramReport {
-  program_code: string;
-  program_name: string;
-  totalSessions: number;
-  totalTrainees: number;
-  passCount: number;
-  failCount: number;
-  passRate: number;
-  averageScore: number;
-  retrainingCount: number;
-}
-
+import {
+  ReportSummaryCards,
+  DepartmentReportTable,
+  ProgramReportTable,
+  EmployeeReportTable,
+} from '@/components/reports';
+import type {
+  ReportType,
+  DepartmentReport,
+  ProgramReport,
+  EmployeeExportItem,
+} from '@/components/reports';
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -114,7 +82,6 @@ export default function ReportsPage() {
     return Array.from(deptSet).sort().map(d => ({ value: d, label: d }));
   }, [employees]);
 
-  // 부서별 리포트 (computed from real data)
   const departmentReports = useMemo((): DepartmentReport[] => {
     const deptMap = new Map<string, { employees: number; completed: number; pending: number; scores: number[]; passCount: number; totalCount: number }>();
 
@@ -154,7 +121,6 @@ export default function ReportsPage() {
     );
   }, [employees, results, selectedDepartment]);
 
-  // 프로그램별 리포트 (computed from real data)
   const programReports = useMemo((): ProgramReport[] => {
     return programs.filter(p => p.is_active).map(p => {
       const programResults = results.filter(r => r.program_code === p.program_code);
@@ -176,8 +142,7 @@ export default function ReportsPage() {
     });
   }, [programs, results]);
 
-  // 직원별 내보내기 데이터 (computed from real data)
-  const employeeExportData = useMemo(() => {
+  const employeeExportData = useMemo((): EmployeeExportItem[] => {
     return employees.filter(e => e.status === 'ACTIVE').map(emp => {
       const empResults = results.filter(r => r.employee_id === emp.employee_id);
       const passCount = empResults.filter(r => r.result === 'PASS').length;
@@ -211,7 +176,6 @@ export default function ReportsPage() {
     });
   }, [employeeExportData, selectedEmployeeDepartment, selectedEmployeePosition]);
 
-  // Excel 내보내기 (동적 import로 번들 최적화)
   const handleExportToExcel = useCallback(async (reportType: ReportType) => {
     let data: Record<string, unknown>[] = [];
     let filename = '';
@@ -262,27 +226,21 @@ export default function ReportsPage() {
         break;
     }
 
-    // 동적 import로 xlsx 라이브러리 로드 (초기 번들 크기 감소)
     const XLSX = await import('xlsx');
 
-    // 워크북 생성
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Report');
 
-    // 열 너비 자동 조정
     const colWidths = Object.keys(data[0] || {}).map((key) => ({
       wch: Math.max(key.length, 15),
     }));
     ws['!cols'] = colWidths;
 
-    // 파일 다운로드
     XLSX.writeFile(wb, filename);
   }, [departmentReports, programReports, employeeExportData, t]);
 
-  // PDF 내보내기 (html2canvas 방식으로 한글/베트남어 지원)
   const handleExportToPDF = useCallback(async (reportType: ReportType) => {
-    // 동적 import로 한글 지원 PDF 함수 로드
     const { exportTableToPDFWithUnicode } = await import('@/utils/pdfExport');
 
     let title = '';
@@ -343,7 +301,6 @@ export default function ReportsPage() {
     await exportTableToPDFWithUnicode(data, columns, { title, filename, orientation: 'landscape' });
   }, [departmentReports, programReports, employeeExportData, t]);
 
-  // 전체 통계
   const totalStats = useMemo(() => {
     const totalEmployees = employees.filter(e => e.status === 'ACTIVE').length;
     const totalTrainings = results.length;
@@ -404,61 +361,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* 요약 통계 */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalStats.totalEmployees}</p>
-                <p className="text-xs text-muted-foreground">{t('reports.totalEmployees')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <GraduationCap className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalStats.totalTrainings}</p>
-                <p className="text-xs text-muted-foreground">{t('reports.totalTrainings')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalStats.passRate}%</p>
-                <p className="text-xs text-muted-foreground">{t('reports.avgPassRate')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalStats.activePrograms}</p>
-                <p className="text-xs text-muted-foreground">{t('reports.activePrograms')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ReportSummaryCards totalStats={totalStats} />
 
       {/* 리포트 탭 */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportType)}>
@@ -489,196 +392,29 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* 부서별 리포트 */}
         <TabsContent value="department">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t('reports.deptTitle')}</CardTitle>
-                <CardDescription>{t('reports.deptDescription')}</CardDescription>
-              </div>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger className="w-40">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder={t('reports.allDepartments')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('reports.allDepartments')}</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.value} value={dept.value}>
-                      {dept.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('reports.colDepartment')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colEmployeeCount')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colCompleted')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colIncomplete')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colCompletionRate')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colAvgScore')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colPassRate')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departmentReports.map((report) => (
-                    <TableRow key={report.department}>
-                      <TableCell className="font-medium">{report.department}</TableCell>
-                      <TableCell className="text-right">{report.totalEmployees}</TableCell>
-                      <TableCell className="text-right">{report.completedTrainings}</TableCell>
-                      <TableCell className="text-right">{report.pendingTrainings}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={report.completionRate >= 80 ? 'success' : report.completionRate >= 50 ? 'warning' : 'destructive'}>
-                          {report.completionRate}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{report.averageScore}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={report.passRate >= 80 ? 'success' : report.passRate >= 50 ? 'warning' : 'destructive'}>
-                          {report.passRate}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <DepartmentReportTable
+            reports={departmentReports}
+            departments={departments}
+            selectedDepartment={selectedDepartment}
+            onDepartmentChange={setSelectedDepartment}
+          />
         </TabsContent>
 
-        {/* 프로그램별 리포트 */}
         <TabsContent value="program">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('reports.progTitle')}</CardTitle>
-              <CardDescription>{t('reports.progDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('reports.colProgramCode')}</TableHead>
-                    <TableHead>{t('reports.colProgramName')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colSessionCount')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colTraineeCount')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colPass')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colFail')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colPassRate')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colAvgScore')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {programReports.map((report) => (
-                    <TableRow key={report.program_code}>
-                      <TableCell>
-                        <Badge variant="outline">{report.program_code}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{report.program_name}</TableCell>
-                      <TableCell className="text-right">{report.totalSessions}</TableCell>
-                      <TableCell className="text-right">{report.totalTrainees}</TableCell>
-                      <TableCell className="text-right text-green-600">{report.passCount}</TableCell>
-                      <TableCell className="text-right text-red-600">{report.failCount}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={report.passRate >= 80 ? 'success' : report.passRate >= 50 ? 'warning' : 'destructive'}>
-                          {report.passRate}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{report.averageScore}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <ProgramReportTable reports={programReports} />
         </TabsContent>
 
-        {/* 직원별 리포트 */}
         <TabsContent value="employee">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-              <div>
-                <CardTitle>{t('reports.empTitle')}</CardTitle>
-                <CardDescription>{t('reports.empDescription')}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Select value={selectedEmployeeDepartment} onValueChange={setSelectedEmployeeDepartment}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder={t('reports.empAllDepartments')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('reports.empAllDepartments')}</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.value} value={dept.value}>
-                        {dept.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedEmployeePosition} onValueChange={setSelectedEmployeePosition}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder={t('reports.empAllPositions')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('reports.empAllPositions')}</SelectItem>
-                    {positions.map((pos) => (
-                      <SelectItem key={pos.value} value={pos.value}>
-                        {pos.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('reports.colEmployeeId')}</TableHead>
-                    <TableHead>{t('reports.colEmployeeName')}</TableHead>
-                    <TableHead>{t('reports.colDepartment')}</TableHead>
-                    <TableHead>{t('reports.empFilterPosition')}</TableHead>
-                    <TableHead>{t('reports.colBuilding')}</TableHead>
-                    <TableHead>{t('reports.colLine')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colPassCount')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colTotalTrainings')}</TableHead>
-                    <TableHead className="text-right">{t('reports.colCompletionRateEmp')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEmployeeData.map((emp) => {
-                    const completionRate = emp.totalCount > 0
-                      ? Math.round((emp.passCount / emp.totalCount) * 100)
-                      : 0;
-                    return (
-                      <TableRow key={emp.employee_id}>
-                        <TableCell>
-                          <Badge variant="outline">{emp.employee_id}</Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{emp.employee_name}</TableCell>
-                        <TableCell>{emp.department}</TableCell>
-                        <TableCell>{emp.position}</TableCell>
-                        <TableCell>{emp.building}</TableCell>
-                        <TableCell>{emp.line}</TableCell>
-                        <TableCell className="text-right text-green-600">{emp.passCount}</TableCell>
-                        <TableCell className="text-right">{emp.totalCount}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={completionRate >= 80 ? 'success' : completionRate >= 50 ? 'warning' : 'destructive'}>
-                            {completionRate}%
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <EmployeeReportTable
+            data={filteredEmployeeData}
+            departments={departments}
+            positions={positions}
+            selectedDepartment={selectedEmployeeDepartment}
+            onDepartmentChange={setSelectedEmployeeDepartment}
+            selectedPosition={selectedEmployeePosition}
+            onPositionChange={setSelectedEmployeePosition}
+          />
         </TabsContent>
       </Tabs>
     </div>
