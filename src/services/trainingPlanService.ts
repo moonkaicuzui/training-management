@@ -69,15 +69,25 @@ function docToPlan(data: Record<string, unknown>, id: string): AnnualPlan {
 }
 
 export async function getTrainingPlans(): Promise<AnnualPlan[]> {
-  const q = query(collection(db, COLLECTION), orderBy('year', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => docToPlan(d.data(), d.id));
+  try {
+    const q = query(collection(db, COLLECTION), orderBy('year', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => docToPlan(d.data(), d.id));
+  } catch (error) {
+    logger.error('[trainingPlanService] getTrainingPlans failed:', error);
+    throw error;
+  }
 }
 
 export async function getTrainingPlan(id: string): Promise<AnnualPlan | null> {
-  const snapshot = await getDoc(doc(db, COLLECTION, id));
-  if (!snapshot.exists()) return null;
-  return docToPlan(snapshot.data(), snapshot.id);
+  try {
+    const snapshot = await getDoc(doc(db, COLLECTION, id));
+    if (!snapshot.exists()) return null;
+    return docToPlan(snapshot.data(), snapshot.id);
+  } catch (error) {
+    logger.error('[trainingPlanService] getTrainingPlan failed:', error);
+    throw error;
+  }
 }
 
 export async function createTrainingPlan(

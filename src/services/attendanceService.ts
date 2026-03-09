@@ -69,15 +69,20 @@ const docToAttendance = (
 export const getAttendanceBySession = async (
   sessionId: string
 ): Promise<Attendance[]> => {
-  const q = query(
-    collection(db, COLLECTION),
-    where('session_id', '==', sessionId)
-  );
-  const snapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, COLLECTION),
+      where('session_id', '==', sessionId)
+    );
+    const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((d) =>
-    docToAttendance(d.id, d.data() as Record<string, unknown>)
-  );
+    return snapshot.docs.map((d) =>
+      docToAttendance(d.id, d.data() as Record<string, unknown>)
+    );
+  } catch (error) {
+    logger.error('[attendanceService] getAttendanceBySession failed:', error);
+    throw error;
+  }
 };
 
 // ============================================================

@@ -26,6 +26,7 @@ import type {
 } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import { useAuthStore } from '@/stores/authStore';
+import { logger } from '@/utils/logger';
 
 // ============================================================
 // Cache Configuration
@@ -567,7 +568,7 @@ export const useProjectStore = create<ProjectStore>()(
               ),
             }));
           } catch (error) {
-            console.error('Failed to mark message as read:', error);
+            logger.error('[projectStore] markMessageAsRead failed:', error);
           }
         },
 
@@ -860,7 +861,7 @@ export const useProjectStore = create<ProjectStore>()(
             const unreadCount = notifications.filter((n) => !n.isRead).length;
             set({ notifications, unreadNotificationCount: unreadCount });
           } catch (error) {
-            console.error('Failed to fetch notifications:', error);
+            logger.error('[projectStore] fetchNotifications failed:', error);
           }
         },
 
@@ -891,7 +892,7 @@ export const useProjectStore = create<ProjectStore>()(
               };
             });
           } catch (error) {
-            console.error('Failed to mark notification as read:', error);
+            logger.error('[projectStore] markNotificationRead failed:', error);
           }
         },
 
@@ -904,7 +905,7 @@ export const useProjectStore = create<ProjectStore>()(
               unreadNotificationCount: 0,
             }));
           } catch (error) {
-            console.error('Failed to mark all notifications as read:', error);
+            logger.error('[projectStore] markAllNotificationsRead failed:', error);
           }
         },
 
@@ -912,7 +913,7 @@ export const useProjectStore = create<ProjectStore>()(
           try {
             await projectService.createNotification(data);
           } catch (error) {
-            console.error('Failed to create notification:', error);
+            logger.error('[projectStore] createNotification failed:', error);
           }
         },
 
@@ -944,7 +945,7 @@ export const useProjectStore = create<ProjectStore>()(
               });
             }
           } catch (error) {
-            console.error('Failed to link current user:', error);
+            logger.error('[projectStore] linkCurrentUser failed:', error);
           }
         },
 

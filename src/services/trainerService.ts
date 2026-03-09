@@ -47,20 +47,30 @@ function docToTrainer(data: Record<string, unknown>, id: string): Trainer {
 }
 
 export async function getTrainers(status?: string): Promise<Trainer[]> {
-  let q;
-  if (status && status !== 'all') {
-    q = query(collection(db, COLLECTION), where('status', '==', status), orderBy('trainer_name'));
-  } else {
-    q = query(collection(db, COLLECTION), orderBy('trainer_name'));
+  try {
+    let q;
+    if (status && status !== 'all') {
+      q = query(collection(db, COLLECTION), where('status', '==', status), orderBy('trainer_name'));
+    } else {
+      q = query(collection(db, COLLECTION), orderBy('trainer_name'));
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => docToTrainer(d.data(), d.id));
+  } catch (error) {
+    logger.error('[trainerService] getTrainers failed:', error);
+    throw error;
   }
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => docToTrainer(d.data(), d.id));
 }
 
 export async function getTrainer(id: string): Promise<Trainer | null> {
-  const snapshot = await getDoc(doc(db, COLLECTION, id));
-  if (!snapshot.exists()) return null;
-  return docToTrainer(snapshot.data(), snapshot.id);
+  try {
+    const snapshot = await getDoc(doc(db, COLLECTION, id));
+    if (!snapshot.exists()) return null;
+    return docToTrainer(snapshot.data(), snapshot.id);
+  } catch (error) {
+    logger.error('[trainerService] getTrainer failed:', error);
+    throw error;
+  }
 }
 
 export async function createTrainer(

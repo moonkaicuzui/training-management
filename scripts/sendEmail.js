@@ -74,6 +74,7 @@ async function sendEmail(options) {
 
   if (options.cc) mailOptions.cc = options.cc;
   if (options.bcc) mailOptions.bcc = options.bcc;
+  if (options.attachments) mailOptions.attachments = options.attachments;
 
   console.log(`📧 발송 중...`);
   console.log(`   발신: ${SMTP_USER}`);

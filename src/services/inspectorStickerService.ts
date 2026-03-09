@@ -52,28 +52,43 @@ function docToSticker(data: Record<string, unknown>, id: string): InspectorStick
 }
 
 export async function getStickers(status?: string): Promise<InspectorSticker[]> {
-  let q;
-  if (status && status !== 'all') {
-    q = query(collection(db, COLLECTION), where('status', '==', status), orderBy('sticker_id'));
-  } else {
-    q = query(collection(db, COLLECTION), orderBy('sticker_id'));
+  try {
+    let q;
+    if (status && status !== 'all') {
+      q = query(collection(db, COLLECTION), where('status', '==', status), orderBy('sticker_id'));
+    } else {
+      q = query(collection(db, COLLECTION), orderBy('sticker_id'));
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => docToSticker(d.data(), d.id));
+  } catch (error) {
+    logger.error('[inspectorStickerService] getStickers failed:', error);
+    throw error;
   }
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => docToSticker(d.data(), d.id));
 }
 
 export async function getSticker(id: string): Promise<InspectorSticker | null> {
-  const snapshot = await getDoc(doc(db, COLLECTION, id));
-  if (!snapshot.exists()) return null;
-  return docToSticker(snapshot.data(), snapshot.id);
+  try {
+    const snapshot = await getDoc(doc(db, COLLECTION, id));
+    if (!snapshot.exists()) return null;
+    return docToSticker(snapshot.data(), snapshot.id);
+  } catch (error) {
+    logger.error('[inspectorStickerService] getSticker failed:', error);
+    throw error;
+  }
 }
 
 export async function getStickerByStickerID(stickerId: string): Promise<InspectorSticker | null> {
-  const q = query(collection(db, COLLECTION), where('sticker_id', '==', stickerId));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-  const first = snapshot.docs[0];
-  return docToSticker(first.data(), first.id);
+  try {
+    const q = query(collection(db, COLLECTION), where('sticker_id', '==', stickerId));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    const first = snapshot.docs[0];
+    return docToSticker(first.data(), first.id);
+  } catch (error) {
+    logger.error('[inspectorStickerService] getStickerByStickerID failed:', error);
+    throw error;
+  }
 }
 
 export async function createSticker(data: InspectorStickerInput): Promise<InspectorSticker> {

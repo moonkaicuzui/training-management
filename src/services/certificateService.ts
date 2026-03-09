@@ -449,17 +449,22 @@ export const deleteCertificateTemplate = async (
  * Helper: Unset all default templates before setting a new one
  */
 const unsetDefaultTemplates = async (): Promise<void> => {
-  const q = query(
-    collection(db, TEMPLATES_COLLECTION),
-    where('is_default', '==', true)
-  );
-  const snapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, TEMPLATES_COLLECTION),
+      where('is_default', '==', true)
+    );
+    const snapshot = await getDocs(q);
 
-  if (snapshot.empty) return;
+    if (snapshot.empty) return;
 
-  const batch = writeBatch(db);
-  snapshot.docs.forEach((d) => {
-    batch.update(d.ref, { is_default: false, updated_at: serverTimestamp() });
-  });
-  await batch.commit();
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((d) => {
+      batch.update(d.ref, { is_default: false, updated_at: serverTimestamp() });
+    });
+    await batch.commit();
+  } catch (error) {
+    logger.error('[certificateService] unsetDefaultTemplates failed:', error);
+    throw error;
+  }
 };
