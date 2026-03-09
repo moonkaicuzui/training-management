@@ -1138,17 +1138,48 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 | 4 | 배포 | Firestore rules 프로덕션 배포 |
 | 5 | 테스트 | 추가 테스트 71개 (certificationUtils, trainingEffectiveness, inspectionStore) |
 
+### Phase 8: CAPADetail 분할 + projectService 분할 + SystemFeedback 페이지 (2026-03-09, commit `8feb183`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 리팩터링 | CAPADetail.tsx (1347→231줄) → CAPAStageDialogs + CAPAStatusTimeline + CAPAInfoCards |
+| 2 | 리팩터링 | projectService.ts (1147→8줄) → 5개 하위 서비스 (member, task, message, automation, common) |
+| 3 | 기능 | SystemFeedback 페이지 (시스템 이슈 등록/피드백 페이지) + systemFeedbackService |
+| 4 | 안정성 | serverTimestamp() 일관성 적용 (capaService, syncService) |
+| 5 | 안정성 | 에러 핸들링 강화 (11개 서비스, projectStore console.error→logger.error) |
+
+### Phase 9: 에이전트 팀 확장 + 크로스 프로젝트 (2026-03-09, commit `f714a1b`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 에이전트 | FEEDBACK, MIGRATE, REPORT 에이전트 추가 (25→29명) |
+| 2 | 크로스 | Return Dashboard: EMAIL 에이전트 추가 |
+| 3 | 크로스 | Incentive v10: 이메일 스크립트 + 피드백 페이지 추가 |
+| 4 | 리포트 | PPTX 시스템 소개 생성 (17슬라이드, ko/en/vi 3개 파일) |
+| 5 | 이메일 | hwk_qa@hsvina.com으로 시스템 소개 이메일 발송 (3개 PPTX 첨부) |
+
+### Phase 10: 대규모 파일 분할 (2026-03-09, commit `66688c7`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 리팩터링 | Evaluation.tsx (1282→511줄) → 4 컴포넌트 (Filters, Table, DetailDialog, Charts) |
+| 2 | 리팩터링 | TrainingPlan.tsx (1234→323줄) → 3 컴포넌트 (Calendar, Table, Dialogs) |
+| 3 | 리팩터링 | Competency.tsx (1083→164줄, 24→8 useState) → 6 컴포넌트 |
+| 4 | 리팩터링 | ExecutiveDashboard.tsx (1101→427줄) → 3 컴포넌트 (KPICards, Charts, Details) |
+| 5 | 리팩터링 | ProjectsCalendar.tsx (1126→321줄) → 4 컴포넌트 (CalendarView, TaskDialog, EventDetails) |
+| 6 | 리팩터링 | normalizedStore.ts (1243→20줄) → 4 엔티티 슬라이스 (employee, program, session, result) |
+| 7 | 리팩터링 | programCatalog.ts (1461→35줄) → 2 데이터 파일 (qip, other) |
+| 8 | 리팩터링 | analyticsService.ts (945→26줄) → 4 모듈 (dashboard, quality, training, shared) |
+
 ### 미완료 개선 항목 (향후 로드맵)
 - [x] ~~핵심 서비스 테스트 (resultService, inspectionService, capaService, aqlService)~~ → Phase 5
 - [x] ~~WCAG 접근성 수정~~ → Phase 5 (aria 강화)
 - [x] ~~Grade 계산 통합~~ → Phase 7
-- [x] ~~1000+ 라인 페이지 분할 (6 페이지)~~ → Phase 6 (api.ts, ProjectsTasks)
+- [x] ~~1000+ 라인 페이지 분할 (6 페이지)~~ → Phase 6, 8, 10
 - [ ] DataTable 마이그레이션 (29 페이지)
 - [ ] React Hook Form + Zod 마이그레이션 (17 폼)
 - [ ] trainingStore → normalizedStore 전환
 - [x] ~~AQL/5PRS 중복 컴포넌트 추출~~ → Phase 6
 - [ ] E2E 테스트 (핵심 워크플로우)
 - [x] ~~en.json/vi.json 179키 적절한 번역~~ → Phase 4
+- [ ] 750-1000줄 파일 추가 분할 (14개 파일: Schedule, Materials, Results 등)
 
 ---
 
