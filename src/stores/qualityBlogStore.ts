@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import * as blogService from '@/services/qualityBlogService';
+import i18n from '@/i18n';
 import type {
   QualityBlogPost,
   CreateBlogPostInput,
@@ -65,7 +66,7 @@ export const useQualityBlogStore = create<QualityBlogState & QualityBlogActions>
             await blogService.incrementViewCount(id);
             set({ selectedPost: { ...post, viewCount: post.viewCount + 1 }, isLoading: false });
           } else {
-            set({ error: '게시글을 찾을 수 없습니다.', isLoading: false });
+            set({ error: i18n.t('errors.blog.postNotFound'), isLoading: false });
           }
         } catch (err) {
           set({ error: (err as Error).message, isLoading: false });

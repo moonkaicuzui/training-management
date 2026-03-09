@@ -44,6 +44,10 @@
     "imageCompressing": "이미지 압축 중...",
     "imageUploadHint": "클릭하거나 이미지를 드래그하여 추가",
     "imageUploadLimit": "최대 {{max}}장 (남은 슬롯: {{remaining}})",
+    "completed": "완료",
+    "inProgress": "진행중",
+    "pending": "대기",
+    "creating": "생성 중...",
     "aria": {
       "dataTable": "데이터 테이블",
       "loading": "콘텐츠 로딩 중",
@@ -538,7 +542,8 @@
     "testAttempt": "시험 횟수",
     "stopWorkingDate": "퇴직일",
     "nthAttempt": "{{n}}회",
-    "yearsMonths": "{{years}}년 {{months}}개월"
+    "yearsMonths": "{{years}}년 {{months}}개월",
+    "defaultEditReason": "결과 수정"
   },
   "session": {
     "title": "교육 일정",
@@ -983,6 +988,9 @@
     "message": "안내 메시지",
     "messagePlaceholder": "평가 참여 안내 메시지를 입력하세요...",
     "create": "평가 생성",
+    "sampleProgram1": "품질관리 기초",
+    "sampleProgram2": "안전교육 정기",
+    "sampleProgram3": "리더십 향상",
     "sheetName": "교육 평가",
     "exportId": "평가 ID",
     "exportTrainingDate": "교육일",
@@ -2314,6 +2322,9 @@
     "verificationStage": "검증 단계",
     "verificationMethod": "검증 방법",
     "verificationResult": "검증 결과",
+    "effective": "효과적",
+    "ineffective": "미흡",
+    "effectivenessScore": "효과성 점수",
     "effectiveness": "효과성",
     "closureStage": "종료 단계",
     "closureDate": "종료일",
@@ -2526,7 +2537,12 @@
       "calendar": "캘린더",
       "list": "목록",
       "timeline": "타임라인"
-    }
+    },
+    "deptProduction1": "생산1팀",
+    "deptProduction2": "생산2팀",
+    "deptQuality": "품질관리팀",
+    "deptRnD": "R&D",
+    "deptAdmin": "관리팀"
   },
   "projects": {
     "title": "프로젝트 관리",
@@ -2840,7 +2856,8 @@
       "taskAssigned": "{{memberName}}님이 과제 \"{{taskTitle}}\"에 배정되었습니다",
       "commentMention": "{{memberName}}님이 댓글에서 회원님을 멘션했습니다",
       "statusChanged": "과제 \"{{taskTitle}}\"의 상태가 변경되었습니다"
-    }
+    },
+    "circularDependencyError": "순환 의존성이 감지되었습니다."
   },
   "sync": {
     "title": "데이터 동기화",
@@ -3413,7 +3430,8 @@
       "permission": "접근 권한이 없습니다. 관리자에게 문의하세요.",
       "notFound": "요청한 데이터를 찾을 수 없습니다.",
       "network": "네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.",
-      "generic": "오류가 발생했습니다. 잠시 후 다시 시도하세요."
+      "generic": "오류가 발생했습니다. 잠시 후 다시 시도하세요.",
+      "timeout": "요청 시간이 초과되었습니다."
     }
   },
   "metalDetector": {
@@ -3552,7 +3570,8 @@
       "deleted": "스티커가 삭제되었습니다.",
       "activated": "스티커가 활성화되었습니다.",
       "deactivated": "스티커가 비활성화되었습니다."
-    }
+    },
+    "duplicateId": "스티커 ID '{{id}}'는 이미 등록되어 있습니다."
   },
   "systemFeedback": {
     "title": "시스템 피드백",
@@ -3607,5 +3626,104 @@
       "submitting": "등록 중...",
       "submit": "등록"
     }
+  },
+  "errors": {
+    "training": {
+      "fetchEmployeesFailed": "직원 목록을 불러오는데 실패했습니다.",
+      "fetchEmployeeFailed": "직원 정보를 불러오는데 실패했습니다.",
+      "fetchEmployeeHistoryFailed": "직원 교육 이력을 불러오는데 실패했습니다.",
+      "createEmployeeFailed": "직원 등록에 실패했습니다.",
+      "updateEmployeeFailed": "직원 정보 수정에 실패했습니다.",
+      "fetchProgramsFailed": "교육 프로그램을 불러오는데 실패했습니다.",
+      "createProgramFailed": "교육 프로그램 생성에 실패했습니다.",
+      "updateProgramFailed": "교육 프로그램 수정에 실패했습니다.",
+      "deleteProgramFailed": "교육 프로그램 삭제에 실패했습니다.",
+      "fetchSessionsFailed": "교육 세션을 불러오는데 실패했습니다.",
+      "createSessionFailed": "교육 세션 생성에 실패했습니다.",
+      "updateSessionFailed": "교육 세션 수정에 실패했습니다.",
+      "cancelSessionFailed": "교육 세션 취소에 실패했습니다.",
+      "fetchResultsFailed": "교육 결과를 불러오는데 실패했습니다.",
+      "recordResultsFailed": "교육 결과 기록에 실패했습니다.",
+      "updateResultFailed": "교육 결과 수정에 실패했습니다.",
+      "fetchDashboardFailed": "대시보드 데이터를 불러오는데 실패했습니다.",
+      "fetchMonthlyDataFailed": "월별 교육 데이터를 불러오는데 실패했습니다.",
+      "fetchGradeDistributionFailed": "등급 분포를 불러오는데 실패했습니다.",
+      "fetchProgressMatrixFailed": "진도 매트릭스를 불러오는데 실패했습니다.",
+      "fetchRetrainingTargetsFailed": "재교육 대상자를 불러오는데 실패했습니다.",
+      "fetchExpiringTrainingsFailed": "만료 예정 교육을 불러오는데 실패했습니다.",
+      "fetchExpiredTrainingsFailed": "만료된 교육을 불러오는데 실패했습니다."
+    },
+    "project": {
+      "fetchCategoriesFailed": "카테고리 목록을 불러오는데 실패했습니다.",
+      "createCategoryFailed": "카테고리 생성에 실패했습니다.",
+      "updateCategoryFailed": "카테고리 수정에 실패했습니다.",
+      "deleteCategoryFailed": "카테고리 삭제에 실패했습니다.",
+      "fetchEventsFailed": "일정 목록을 불러오는데 실패했습니다.",
+      "createEventFailed": "일정 생성에 실패했습니다.",
+      "updateEventFailed": "일정 수정에 실패했습니다.",
+      "deleteEventFailed": "일정 삭제에 실패했습니다.",
+      "fetchTasksFailed": "과제 목록을 불러오는데 실패했습니다.",
+      "createTaskFailed": "과제 생성에 실패했습니다.",
+      "updateTaskFailed": "과제 수정에 실패했습니다.",
+      "deleteTaskFailed": "과제 삭제에 실패했습니다.",
+      "batchUpdateTasksFailed": "과제 일괄 수정에 실패했습니다.",
+      "fetchMembersFailed": "팀원 목록을 불러오는데 실패했습니다.",
+      "createMemberFailed": "팀원 생성에 실패했습니다.",
+      "updateMemberFailed": "팀원 수정에 실패했습니다.",
+      "deleteMemberFailed": "팀원 삭제에 실패했습니다.",
+      "fetchAutomationsFailed": "자동화 규칙을 불러오는데 실패했습니다.",
+      "createAutomationFailed": "자동화 규칙 생성에 실패했습니다.",
+      "updateAutomationFailed": "자동화 규칙 수정에 실패했습니다.",
+      "deleteAutomationFailed": "자동화 규칙 삭제에 실패했습니다.",
+      "fetchProjectsFailed": "프로젝트 목록을 불러오는데 실패했습니다.",
+      "createProjectFailed": "프로젝트 생성에 실패했습니다.",
+      "updateProjectFailed": "프로젝트 수정에 실패했습니다.",
+      "fetchMessagesFailed": "메시지 목록을 불러오는데 실패했습니다.",
+      "createMessageFailed": "메시지 생성에 실패했습니다.",
+      "resolveMessageFailed": "메시지 해결에 실패했습니다."
+    },
+    "metalDetector": {
+      "fetchInspectionsFailed": "점검 데이터를 불러오는데 실패했습니다.",
+      "createInspectionFailed": "점검 등록에 실패했습니다.",
+      "updateInspectionFailed": "점검 수정에 실패했습니다.",
+      "fetchFailuresFailed": "실패 기록을 불러오는데 실패했습니다.",
+      "createFailureFailed": "실패 기록 등록에 실패했습니다.",
+      "updateCorrectiveActionFailed": "시정조치 수정에 실패했습니다.",
+      "fetchKPIsFailed": "KPI 데이터를 불러오는데 실패했습니다.",
+      "fetchWeeklyTrendFailed": "주간 트렌드를 불러오는데 실패했습니다."
+    },
+    "techModel": {
+      "fetchModelsFailed": "모델 데이터를 불러오는데 실패했습니다.",
+      "createModelFailed": "모델 등록에 실패했습니다.",
+      "updateModelFailed": "모델 수정에 실패했습니다.",
+      "deleteModelFailed": "모델 삭제에 실패했습니다.",
+      "fetchGuidelinesFailed": "리뷰지침 데이터를 불러오는데 실패했습니다.",
+      "createGuidelineFailed": "리뷰지침 등록에 실패했습니다.",
+      "updateGuidelineFailed": "리뷰지침 수정에 실패했습니다.",
+      "deleteGuidelineFailed": "리뷰지침 삭제에 실패했습니다."
+    },
+    "auth": {
+      "invalidDomain": "허용되지 않은 이메일 도메인입니다.",
+      "loginFailed": "로그인 중 오류가 발생했습니다.",
+      "userNotFound": "등록되지 않은 이메일입니다.",
+      "wrongPassword": "비밀번호가 올바르지 않습니다.",
+      "invalidEmail": "이메일 형식이 올바르지 않습니다."
+    },
+    "blog": {
+      "postNotFound": "게시글을 찾을 수 없습니다."
+    }
+  },
+  "error": {
+    "title": "오류가 발생했습니다",
+    "description": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+    "retryCount": "재시도 {{count}}회 / {{max}}회",
+    "details": "오류 세부 정보",
+    "retry": "다시 시도",
+    "goHome": "홈으로",
+    "reload": "새로고침",
+    "sectionError": "{{section}} 로딩 중 오류가 발생했습니다",
+    "sectionLoadError": "이 섹션을 로드할 수 없습니다",
+    "unknownError": "알 수 없는 오류가 발생했습니다",
+    "unhandledError": "오류가 발생했습니다"
   }
 }

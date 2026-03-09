@@ -44,6 +44,10 @@
     "imageCompressing": "Đang nén hình ảnh...",
     "imageUploadHint": "Nhấp hoặc kéo hình ảnh để thêm",
     "imageUploadLimit": "Tối đa {{max}} ảnh (còn {{remaining}} vị trí)",
+    "completed": "Hoàn thành",
+    "inProgress": "Đang thực hiện",
+    "pending": "Chờ xử lý",
+    "creating": "Đang tạo...",
     "aria": {
       "dataTable": "Bảng dữ liệu",
       "loading": "Đang tải nội dung",
@@ -2314,6 +2318,9 @@
     "verificationStage": "Giai đoạn xác minh",
     "verificationMethod": "Phương pháp xác minh",
     "verificationResult": "Kết quả xác minh",
+    "effective": "Hiệu quả",
+    "ineffective": "Không hiệu quả",
+    "effectivenessScore": "Điểm hiệu quả",
     "effectiveness": "Hiệu quả",
     "closureStage": "Giai đoạn kết thúc",
     "closureDate": "Ngày kết thúc",
@@ -3413,7 +3420,8 @@
       "permission": "Không có quyền truy cập. Vui lòng liên hệ quản trị viên.",
       "notFound": "Không tìm thấy dữ liệu yêu cầu.",
       "network": "Lỗi mạng. Vui lòng kiểm tra kết nối internet.",
-      "generic": "Đã xảy ra lỗi. Vui lòng thử lại sau."
+      "generic": "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+      "timeout": "Yêu cầu đã hết thời gian."
     }
   },
   "metalDetector": {
@@ -3607,5 +3615,104 @@
       "submitting": "Đang gửi...",
       "submit": "Gửi"
     }
+  },
+  "errors": {
+    "training": {
+      "fetchEmployeesFailed": "Không thể tải danh sách nhân viên.",
+      "fetchEmployeeFailed": "Không thể tải thông tin nhân viên.",
+      "fetchEmployeeHistoryFailed": "Không thể tải lịch sử đào tạo nhân viên.",
+      "createEmployeeFailed": "Không thể đăng ký nhân viên.",
+      "updateEmployeeFailed": "Không thể cập nhật thông tin nhân viên.",
+      "fetchProgramsFailed": "Không thể tải chương trình đào tạo.",
+      "createProgramFailed": "Không thể tạo chương trình đào tạo.",
+      "updateProgramFailed": "Không thể cập nhật chương trình đào tạo.",
+      "deleteProgramFailed": "Không thể xóa chương trình đào tạo.",
+      "fetchSessionsFailed": "Không thể tải phiên đào tạo.",
+      "createSessionFailed": "Không thể tạo phiên đào tạo.",
+      "updateSessionFailed": "Không thể cập nhật phiên đào tạo.",
+      "cancelSessionFailed": "Không thể hủy phiên đào tạo.",
+      "fetchResultsFailed": "Không thể tải kết quả đào tạo.",
+      "recordResultsFailed": "Không thể ghi nhận kết quả đào tạo.",
+      "updateResultFailed": "Không thể cập nhật kết quả đào tạo.",
+      "fetchDashboardFailed": "Không thể tải dữ liệu bảng điều khiển.",
+      "fetchMonthlyDataFailed": "Không thể tải dữ liệu đào tạo hàng tháng.",
+      "fetchGradeDistributionFailed": "Không thể tải phân bố xếp hạng.",
+      "fetchProgressMatrixFailed": "Không thể tải ma trận tiến độ.",
+      "fetchRetrainingTargetsFailed": "Không thể tải danh sách đào tạo lại.",
+      "fetchExpiringTrainingsFailed": "Không thể tải đào tạo sắp hết hạn.",
+      "fetchExpiredTrainingsFailed": "Không thể tải đào tạo đã hết hạn."
+    },
+    "project": {
+      "fetchCategoriesFailed": "Không thể tải danh sách danh mục.",
+      "createCategoryFailed": "Không thể tạo danh mục.",
+      "updateCategoryFailed": "Không thể cập nhật danh mục.",
+      "deleteCategoryFailed": "Không thể xóa danh mục.",
+      "fetchEventsFailed": "Không thể tải danh sách sự kiện.",
+      "createEventFailed": "Không thể tạo sự kiện.",
+      "updateEventFailed": "Không thể cập nhật sự kiện.",
+      "deleteEventFailed": "Không thể xóa sự kiện.",
+      "fetchTasksFailed": "Không thể tải danh sách nhiệm vụ.",
+      "createTaskFailed": "Không thể tạo nhiệm vụ.",
+      "updateTaskFailed": "Không thể cập nhật nhiệm vụ.",
+      "deleteTaskFailed": "Không thể xóa nhiệm vụ.",
+      "batchUpdateTasksFailed": "Không thể cập nhật hàng loạt nhiệm vụ.",
+      "fetchMembersFailed": "Không thể tải danh sách thành viên.",
+      "createMemberFailed": "Không thể tạo thành viên.",
+      "updateMemberFailed": "Không thể cập nhật thành viên.",
+      "deleteMemberFailed": "Không thể xóa thành viên.",
+      "fetchAutomationsFailed": "Không thể tải quy tắc tự động hóa.",
+      "createAutomationFailed": "Không thể tạo quy tắc tự động hóa.",
+      "updateAutomationFailed": "Không thể cập nhật quy tắc tự động hóa.",
+      "deleteAutomationFailed": "Không thể xóa quy tắc tự động hóa.",
+      "fetchProjectsFailed": "Không thể tải danh sách dự án.",
+      "createProjectFailed": "Không thể tạo dự án.",
+      "updateProjectFailed": "Không thể cập nhật dự án.",
+      "fetchMessagesFailed": "Không thể tải danh sách tin nhắn.",
+      "createMessageFailed": "Không thể tạo tin nhắn.",
+      "resolveMessageFailed": "Không thể giải quyết tin nhắn."
+    },
+    "metalDetector": {
+      "fetchInspectionsFailed": "Không thể tải dữ liệu kiểm tra.",
+      "createInspectionFailed": "Không thể đăng ký kiểm tra.",
+      "updateInspectionFailed": "Không thể cập nhật kiểm tra.",
+      "fetchFailuresFailed": "Không thể tải hồ sơ lỗi.",
+      "createFailureFailed": "Không thể đăng ký hồ sơ lỗi.",
+      "updateCorrectiveActionFailed": "Không thể cập nhật hành động khắc phục.",
+      "fetchKPIsFailed": "Không thể tải dữ liệu KPI.",
+      "fetchWeeklyTrendFailed": "Không thể tải xu hướng hàng tuần."
+    },
+    "techModel": {
+      "fetchModelsFailed": "Không thể tải dữ liệu mô hình.",
+      "createModelFailed": "Không thể đăng ký mô hình.",
+      "updateModelFailed": "Không thể cập nhật mô hình.",
+      "deleteModelFailed": "Không thể xóa mô hình.",
+      "fetchGuidelinesFailed": "Không thể tải hướng dẫn đánh giá.",
+      "createGuidelineFailed": "Không thể đăng ký hướng dẫn đánh giá.",
+      "updateGuidelineFailed": "Không thể cập nhật hướng dẫn đánh giá.",
+      "deleteGuidelineFailed": "Không thể xóa hướng dẫn đánh giá."
+    },
+    "auth": {
+      "invalidDomain": "Tên miền email không được phép.",
+      "loginFailed": "Đã xảy ra lỗi khi đăng nhập.",
+      "userNotFound": "Email chưa được đăng ký.",
+      "wrongPassword": "Mật khẩu không chính xác.",
+      "invalidEmail": "Định dạng email không hợp lệ."
+    },
+    "blog": {
+      "postNotFound": "Không tìm thấy bài viết."
+    }
+  },
+  "error": {
+    "title": "Đã xảy ra lỗi",
+    "description": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+    "retryCount": "Thử lại {{count}} / {{max}}",
+    "details": "Chi tiết lỗi",
+    "retry": "Thử lại",
+    "goHome": "Trang chủ",
+    "reload": "Tải lại",
+    "sectionError": "Đã xảy ra lỗi khi tải {{section}}",
+    "sectionLoadError": "Không thể tải phần này",
+    "unknownError": "Đã xảy ra lỗi không xác định",
+    "unhandledError": "Đã xảy ra lỗi"
   }
 }

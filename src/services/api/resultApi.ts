@@ -7,6 +7,7 @@ import * as programService from '../programService';
 import * as resultService from '../resultService';
 import * as logService from '../logService';
 import { updateResultWithLog } from '@/services/firebase';
+import i18n from '@/i18n';
 
 import type {
   TrainingResultRecord,
@@ -99,7 +100,7 @@ export async function updateResult(update: ResultUpdate): Promise<TrainingResult
   // Atomic transaction: update result + create edit log together
   await updateResultWithLog(update.result_id, updates, {
     edited_by: 'current_user',
-    edit_reason: update.edit_reason || '결과 수정',
+    edit_reason: update.edit_reason || i18n.t('results.defaultEditReason'),
     after_data: JSON.stringify(updates),
   });
 

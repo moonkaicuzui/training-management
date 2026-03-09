@@ -6,6 +6,7 @@ import type { CreateMemberInput, UpdateMemberInput } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import type { StoreSet, StoreGet } from './types';
 import { isCacheValid, cache } from './cacheConfig';
+import i18n from '@/i18n';
 
 export const createMemberActions = (set: StoreSet, get: StoreGet) => ({
   fetchMembers: async () => {
@@ -17,7 +18,7 @@ export const createMemberActions = (set: StoreSet, get: StoreGet) => ({
       set({ members, isMembersLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '팀원 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchMembersFailed'),
         isMembersLoading: false,
       });
     }
@@ -34,7 +35,7 @@ export const createMemberActions = (set: StoreSet, get: StoreGet) => ({
       return member;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '팀원 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createMemberFailed'),
         isLoading: false,
       });
       throw error;
@@ -53,7 +54,7 @@ export const createMemberActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '팀원 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateMemberFailed'),
         isLoading: false,
       });
       throw error;
@@ -72,7 +73,7 @@ export const createMemberActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '팀원 삭제에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.deleteMemberFailed'),
         isLoading: false,
       });
       throw error;

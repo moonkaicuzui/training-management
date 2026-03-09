@@ -42,7 +42,7 @@ export function useGlobalErrorHandler() {
     const extractMessage = (reason: unknown): string => {
       if (reason instanceof Error) return reason.message;
       if (typeof reason === 'string') return reason;
-      return t('error.unknownError', '알 수 없는 오류가 발생했습니다');
+      return t('error.unknownError');
     };
 
     // 처리되지 않은 Promise rejection 핸들링
@@ -69,7 +69,7 @@ export function useGlobalErrorHandler() {
 
       // 사용자에게 toast 알림 표시
       showErrorToast(
-        t('error.unhandledError', '오류가 발생했습니다'),
+        t('error.unhandledError'),
         extractMessage(reason),
       );
     };
@@ -99,7 +99,7 @@ export function useGlobalErrorHandler() {
 
       // 사용자에게 toast 알림 표시
       showErrorToast(
-        t('error.unhandledError', '오류가 발생했습니다'),
+        t('error.unhandledError'),
         event.message,
       );
     };

@@ -9,6 +9,7 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 import type {
   MDInspection,
   MDFailure,
@@ -83,7 +84,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] fetchInspections failed', error);
           set((state) => {
-            state.error = '점검 데이터를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.fetchInspectionsFailed');
             state.isLoading = false;
           });
         }
@@ -104,7 +105,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] createInspection failed', error);
           set((state) => {
-            state.error = '점검 등록에 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.createInspectionFailed');
             state.isLoading = false;
           });
           throw error;
@@ -128,7 +129,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] updateInspection failed', error);
           set((state) => {
-            state.error = '점검 수정에 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.updateInspectionFailed');
             state.isLoading = false;
           });
           throw error;
@@ -149,7 +150,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] fetchFailures failed', error);
           set((state) => {
-            state.error = '실패 기록을 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.fetchFailuresFailed');
             state.isLoading = false;
           });
         }
@@ -170,7 +171,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] createFailure failed', error);
           set((state) => {
-            state.error = '실패 기록 등록에 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.createFailureFailed');
             state.isLoading = false;
           });
           throw error;
@@ -194,7 +195,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] updateFailureCA failed', error);
           set((state) => {
-            state.error = '시정조치 수정에 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.updateCorrectiveActionFailed');
             state.isLoading = false;
           });
           throw error;
@@ -215,7 +216,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] fetchDashboardKPIs failed', error);
           set((state) => {
-            state.error = 'KPI 데이터를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.fetchKPIsFailed');
             state.isLoading = false;
           });
         }
@@ -233,7 +234,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] fetchWeeklyTrend failed', error);
           set((state) => {
-            state.error = '주간 트렌드를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.metalDetector.fetchWeeklyTrendFailed');
           });
         }
       },

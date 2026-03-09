@@ -5,6 +5,7 @@
 import type { Automation } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import type { StoreSet, StoreGet } from './types';
+import i18n from '@/i18n';
 
 export const createAutomationActions = (set: StoreSet, get: StoreGet) => ({
   fetchAutomationsByProject: async (projectId: string) => {
@@ -14,7 +15,7 @@ export const createAutomationActions = (set: StoreSet, get: StoreGet) => ({
       set({ automations, isAutomationsLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '자동화 규칙을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchAutomationsFailed'),
         isAutomationsLoading: false,
       });
     }
@@ -31,7 +32,7 @@ export const createAutomationActions = (set: StoreSet, get: StoreGet) => ({
       return automation;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '자동화 규칙 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createAutomationFailed'),
         isLoading: false,
       });
       throw error;
@@ -50,7 +51,7 @@ export const createAutomationActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '자동화 규칙 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateAutomationFailed'),
         isLoading: false,
       });
       throw error;
@@ -67,7 +68,7 @@ export const createAutomationActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '자동화 규칙 삭제에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.deleteAutomationFailed'),
         isLoading: false,
       });
       throw error;

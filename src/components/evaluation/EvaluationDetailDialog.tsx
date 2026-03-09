@@ -249,9 +249,9 @@ export function NewEvaluationDialog({
                   <SelectValue placeholder={t('evaluation.selectProgram')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prg1">품질관리 기초</SelectItem>
-                  <SelectItem value="prg2">안전교육 정기</SelectItem>
-                  <SelectItem value="prg3">리더십 향상</SelectItem>
+                  <SelectItem value="prg1">{t('evaluation.sampleProgram1')}</SelectItem>
+                  <SelectItem value="prg2">{t('evaluation.sampleProgram2')}</SelectItem>
+                  <SelectItem value="prg3">{t('evaluation.sampleProgram3')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -299,7 +299,7 @@ export function NewEvaluationDialog({
             {t('common.cancel')}
           </Button>
           <Button onClick={onSubmit} disabled={isCreating}>
-            {isCreating ? t('common.creating', '생성 중...') : t('evaluation.create')}
+            {isCreating ? t('common.creating') : t('evaluation.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

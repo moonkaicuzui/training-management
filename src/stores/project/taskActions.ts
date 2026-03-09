@@ -7,6 +7,7 @@ import * as projectService from '@/services/projectService';
 import type { StoreSet, StoreGet } from './types';
 import { isCacheValid, cache } from './cacheConfig';
 import { getCurrentUserId } from './helpers';
+import i18n from '@/i18n';
 
 export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
   fetchAllTasks: async () => {
@@ -18,7 +19,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       set({ tasks, isTasksLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchTasksFailed'),
         isTasksLoading: false,
       });
     }
@@ -32,7 +33,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       set({ tasks, isTasksLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchTasksFailed'),
         isTasksLoading: false,
       });
     }
@@ -50,7 +51,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       return task;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createTaskFailed'),
         isTasksLoading: false,
       });
       throw error;
@@ -69,7 +70,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateTaskFailed'),
         isTasksLoading: false,
       });
       throw error;
@@ -87,7 +88,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 삭제에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.deleteTaskFailed'),
         isTasksLoading: false,
       });
       throw error;
@@ -121,7 +122,7 @@ export const createTaskActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '과제 일괄 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.batchUpdateTasksFailed'),
         isLoading: false,
       });
       throw error;

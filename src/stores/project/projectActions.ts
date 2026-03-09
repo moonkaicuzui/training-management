@@ -7,6 +7,7 @@ import * as projectService from '@/services/projectService';
 import type { StoreSet, StoreGet } from './types';
 import { isCacheValid, cache } from './cacheConfig';
 import { getCurrentUserId } from './helpers';
+import i18n from '@/i18n';
 
 export const createProjectActions = (set: StoreSet, get: StoreGet) => ({
   fetchProjects: async () => {
@@ -18,7 +19,7 @@ export const createProjectActions = (set: StoreSet, get: StoreGet) => ({
       set({ projects, isProjectsLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '프로젝트 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchProjectsFailed'),
         isProjectsLoading: false,
       });
     }
@@ -36,7 +37,7 @@ export const createProjectActions = (set: StoreSet, get: StoreGet) => ({
       return project;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '프로젝트 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createProjectFailed'),
         isLoading: false,
       });
       throw error;
@@ -55,7 +56,7 @@ export const createProjectActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '프로젝트 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateProjectFailed'),
         isLoading: false,
       });
       throw error;

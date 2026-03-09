@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { Grade } from '@/types';
+import i18n from '@/i18n';
 import {
   calculateGrade as _calculateGrade,
   calculateResult as _calculateResult,
@@ -32,14 +33,14 @@ export class ApiError extends Error {
 }
 
 export class NetworkError extends ApiError {
-  constructor(message: string = '네트워크 연결을 확인해주세요') {
+  constructor(message: string = i18n.t('errors.network')) {
     super(message, 'NETWORK_ERROR');
     this.name = 'NetworkError';
   }
 }
 
 export class TimeoutError extends ApiError {
-  constructor(message: string = '요청 시간이 초과되었습니다') {
+  constructor(message: string = i18n.t('errors.timeout')) {
     super(message, 'TIMEOUT_ERROR');
     this.name = 'TimeoutError';
   }
@@ -53,7 +54,7 @@ export class ValidationError extends ApiError {
 }
 
 export class NotFoundError extends ApiError {
-  constructor(message: string = '요청한 리소스를 찾을 수 없습니다') {
+  constructor(message: string = i18n.t('errors.notFound')) {
     super(message, 'NOT_FOUND', 404);
     this.name = 'NotFoundError';
   }

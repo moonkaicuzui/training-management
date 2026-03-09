@@ -191,7 +191,7 @@ export function AqlRecommendationTable({
             </TableHead>
             <SortableHeader
               columnKey="aql_employee_no"
-              label={t('aql.recommendations.employeeNo', '사번')}
+              label={t('aql.recommendations.employeeNo')}
             />
             <SortableHeader
               columnKey="name"
@@ -203,7 +203,7 @@ export function AqlRecommendationTable({
             />
             <SortableHeader
               columnKey="supervisor"
-              label={t('aql.recommendations.supervisor', '직속 상사')}
+              label={t('aql.recommendations.supervisor')}
             />
             <SortableHeader
               columnKey="building"
@@ -286,7 +286,7 @@ export function AqlRecommendationTable({
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   {isSupervisorEscalation ? (
-                    <span className="text-muted-foreground font-normal text-sm" title={t('aql.recommendations.supervisorFailRateNote', '부하직원 기준 fail rate')}>
+                    <span className="text-muted-foreground font-normal text-sm" title={t('aql.recommendations.supervisorFailRateNote')}>
                       ({rec.fail_rate.toFixed(1)}%)
                     </span>
                   ) : (

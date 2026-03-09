@@ -8,6 +8,7 @@ import {
   collection,
   Timestamp,
 } from '@/services/firebase';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
 import { COMPETENCY_LEVEL_VALUES } from '@/types/curriculum';
 import type { CompetencyLevel } from '@/types/curriculum';
@@ -182,8 +183,7 @@ export const buildResultsQuery = (startDate?: string) => {
 /**
  * Parse a Firestore doc snapshot into a TrainingResultRecord.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseResultDoc = (d: any): TrainingResultRecord => {
+export const parseResultDoc = (d: QueryDocumentSnapshot<DocumentData>): TrainingResultRecord => {
   const data = d.data();
   return {
     result_id: (data.result_id as string) || d.id,
@@ -206,8 +206,7 @@ export const parseResultDoc = (d: any): TrainingResultRecord => {
 /**
  * Parse a Firestore doc snapshot into an Employee.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseEmployeeDoc = (d: any): Employee => {
+export const parseEmployeeDoc = (d: QueryDocumentSnapshot<DocumentData>): Employee => {
   const data = d.data();
   return {
     employee_id: (data.employee_id as string) || d.id,
@@ -225,8 +224,7 @@ export const parseEmployeeDoc = (d: any): Employee => {
 /**
  * Parse a Firestore doc snapshot into a TrainingProgram.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseProgramDoc = (d: any): TrainingProgram => {
+export const parseProgramDoc = (d: QueryDocumentSnapshot<DocumentData>): TrainingProgram => {
   const data = d.data();
   return {
     program_code: (data.program_code as string) || d.id,

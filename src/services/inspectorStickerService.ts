@@ -26,6 +26,7 @@ import type {
   InspectorStickerUpdate,
 } from '@/types/inspectorSticker';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const COLLECTION = 'inspector_stickers';
 
@@ -96,7 +97,7 @@ export async function createSticker(data: InspectorStickerInput): Promise<Inspec
     // 중복 스티커 ID 검사
     const existing = await getStickerByStickerID(data.sticker_id);
     if (existing) {
-      throw new Error(`스티커 ID '${data.sticker_id}'는 이미 등록되어 있습니다.`);
+      throw new Error(i18n.t('inspectorStickers.duplicateId', { id: data.sticker_id }));
     }
 
     const docRef = doc(collection(db, COLLECTION));
@@ -126,7 +127,7 @@ export async function updateSticker(id: string, updates: InspectorStickerUpdate)
     if (updates.sticker_id) {
       const existing = await getStickerByStickerID(updates.sticker_id);
       if (existing && existing.id !== id) {
-        throw new Error(`스티커 ID '${updates.sticker_id}'는 이미 등록되어 있습니다.`);
+        throw new Error(i18n.t('inspectorStickers.duplicateId', { id: updates.sticker_id }));
       }
     }
 

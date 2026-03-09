@@ -9,6 +9,7 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 import type {
   TechModel,
   TechReviewGuideline,
@@ -71,7 +72,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] fetchModels failed', error);
           set((state) => {
-            state.error = '모델 데이터를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.techModel.fetchModelsFailed');
             state.isLoading = false;
           });
         }
@@ -92,7 +93,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] createModel failed', error);
           set((state) => {
-            state.error = '모델 등록에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.createModelFailed');
             state.isLoading = false;
           });
           throw error;
@@ -116,7 +117,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] updateModel failed', error);
           set((state) => {
-            state.error = '모델 수정에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.updateModelFailed');
             state.isLoading = false;
           });
           throw error;
@@ -139,7 +140,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] deleteModel failed', error);
           set((state) => {
-            state.error = '모델 삭제에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.deleteModelFailed');
             state.isLoading = false;
           });
           throw error;
@@ -161,7 +162,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] fetchGuidelines failed', error);
           set((state) => {
-            state.error = '리뷰지침 데이터를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.techModel.fetchGuidelinesFailed');
             state.isLoading = false;
           });
         }
@@ -182,7 +183,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] createGuideline failed', error);
           set((state) => {
-            state.error = '리뷰지침 등록에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.createGuidelineFailed');
             state.isLoading = false;
           });
           throw error;
@@ -206,7 +207,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] updateGuideline failed', error);
           set((state) => {
-            state.error = '리뷰지침 수정에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.updateGuidelineFailed');
             state.isLoading = false;
           });
           throw error;
@@ -227,7 +228,7 @@ export const useTechModelStore = create<TechModelState>()(
         } catch (error) {
           logger.error('[TechModelStore] deleteGuideline failed', error);
           set((state) => {
-            state.error = '리뷰지침 삭제에 실패했습니다.';
+            state.error = i18n.t('errors.techModel.deleteGuidelineFailed');
             state.isLoading = false;
           });
           throw error;

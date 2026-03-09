@@ -20,6 +20,7 @@ import type {
 
 import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 interface TrainingState {
   // Employees
@@ -197,7 +198,7 @@ export const useTrainingStore = create<TrainingState>()(
       const employees = await api.getEmployees(mergedFilters);
       set({ employees, employeeFilters: mergedFilters });
     } catch (error) {
-      set({ error: '직원 목록을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchEmployeesFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, employees: false } }));
@@ -211,7 +212,7 @@ export const useTrainingStore = create<TrainingState>()(
       set({ selectedEmployee: employee });
     } catch (error) {
       logger.error('Failed to fetch employee:', error);
-      set({ error: '직원 정보를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchEmployeeFailed') });
       throw error;
     }
   },
@@ -223,7 +224,7 @@ export const useTrainingStore = create<TrainingState>()(
       set({ employeeHistory: history });
     } catch (error) {
       logger.error('Failed to fetch employee history:', error);
-      set({ error: '직원 교육 이력을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchEmployeeHistoryFailed') });
       throw error;
     }
   },
@@ -241,7 +242,7 @@ export const useTrainingStore = create<TrainingState>()(
       return newEmployee;
     } catch (error) {
       logger.error('Failed to create employee:', error);
-      set({ error: '직원 등록에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.createEmployeeFailed') });
       throw error;
     }
   },
@@ -263,7 +264,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to update employee:', error);
-      set({ error: '직원 정보 수정에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.updateEmployeeFailed') });
       throw error;
     }
   },
@@ -276,7 +277,7 @@ export const useTrainingStore = create<TrainingState>()(
       const programs = await api.getPrograms(mergedFilters);
       set({ programs, programFilters: mergedFilters });
     } catch (error) {
-      set({ error: '교육 프로그램을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchProgramsFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, programs: false } }));
@@ -290,7 +291,7 @@ export const useTrainingStore = create<TrainingState>()(
       set({ selectedProgram: program });
     } catch (error) {
       logger.error('Failed to fetch program:', error);
-      set({ error: '교육 프로그램을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchProgramsFailed') });
       throw error;
     }
   },
@@ -308,7 +309,7 @@ export const useTrainingStore = create<TrainingState>()(
       return newProgram;
     } catch (error) {
       logger.error('Failed to create program:', error);
-      set({ error: '교육 프로그램 생성에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.createProgramFailed') });
       throw error;
     }
   },
@@ -330,7 +331,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to update program:', error);
-      set({ error: '교육 프로그램 수정에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.updateProgramFailed') });
       throw error;
     }
   },
@@ -348,7 +349,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to delete program:', error);
-      set({ error: '교육 프로그램 삭제에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.deleteProgramFailed') });
       throw error;
     }
   },
@@ -361,7 +362,7 @@ export const useTrainingStore = create<TrainingState>()(
       const sessions = await api.getSessions(mergedFilters);
       set({ sessions, sessionFilters: mergedFilters });
     } catch (error) {
-      set({ error: '교육 세션을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchSessionsFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, sessions: false } }));
@@ -381,7 +382,7 @@ export const useTrainingStore = create<TrainingState>()(
       return newSession;
     } catch (error) {
       logger.error('Failed to create session:', error);
-      set({ error: '교육 세션 생성에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.createSessionFailed') });
       throw error;
     }
   },
@@ -403,7 +404,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to update session:', error);
-      set({ error: '교육 세션 수정에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.updateSessionFailed') });
       throw error;
     }
   },
@@ -421,7 +422,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to cancel session:', error);
-      set({ error: '교육 세션 취소에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.cancelSessionFailed') });
       throw error;
     }
   },
@@ -434,7 +435,7 @@ export const useTrainingStore = create<TrainingState>()(
       const results = await api.getResults(mergedFilters);
       set({ results, resultFilters: mergedFilters });
     } catch (error) {
-      set({ error: '교육 결과를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchResultsFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, results: false } }));
@@ -454,7 +455,7 @@ export const useTrainingStore = create<TrainingState>()(
       return newResults;
     } catch (error) {
       logger.error('Failed to record results:', error);
-      set({ error: '교육 결과 기록에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.recordResultsFailed') });
       throw error;
     }
   },
@@ -475,7 +476,7 @@ export const useTrainingStore = create<TrainingState>()(
       }
     } catch (error) {
       logger.error('Failed to update result:', error);
-      set({ error: '교육 결과 수정에 실패했습니다.' });
+      set({ error: i18n.t('errors.training.updateResultFailed') });
       throw error;
     }
   },
@@ -487,7 +488,7 @@ export const useTrainingStore = create<TrainingState>()(
       const stats = await api.getDashboardStats();
       set({ dashboardStats: stats });
     } catch (error) {
-      set({ error: '대시보드 데이터를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchDashboardFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, dashboard: false } }));
@@ -501,7 +502,7 @@ export const useTrainingStore = create<TrainingState>()(
       set({ monthlyData: data });
     } catch (error) {
       logger.error('Failed to fetch monthly data:', error);
-      set({ error: '월별 교육 데이터를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchMonthlyDataFailed') });
       throw error;
     }
   },
@@ -513,7 +514,7 @@ export const useTrainingStore = create<TrainingState>()(
       set({ gradeDistribution: data });
     } catch (error) {
       logger.error('Failed to fetch grade distribution:', error);
-      set({ error: '등급 분포를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchGradeDistributionFailed') });
       throw error;
     }
   },
@@ -526,7 +527,7 @@ export const useTrainingStore = create<TrainingState>()(
       const data = await api.getProgressMatrix(mergedFilters);
       set({ progressMatrix: data, progressFilters: mergedFilters });
     } catch (error) {
-      set({ error: '진도 매트릭스를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchProgressMatrixFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, progressMatrix: false } }));
@@ -545,7 +546,7 @@ export const useTrainingStore = create<TrainingState>()(
       const targets = await api.getRetrainingTargets();
       set({ retrainingTargets: targets });
     } catch (error) {
-      set({ error: '재교육 대상자를 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchRetrainingTargetsFailed') });
       throw error;
     } finally {
       set((state) => ({ loading: { ...state.loading, retraining: false } }));
@@ -557,7 +558,7 @@ export const useTrainingStore = create<TrainingState>()(
       const expiring = await api.getExpiringTrainings(days);
       set({ expiringTrainings: expiring });
     } catch (error) {
-      set({ error: '만료 예정 교육을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchExpiringTrainingsFailed') });
       throw error;
     }
   },
@@ -567,7 +568,7 @@ export const useTrainingStore = create<TrainingState>()(
       const expired = await api.getExpiredTrainings();
       set({ expiredTrainings: expired });
     } catch (error) {
-      set({ error: '만료된 교육을 불러오는데 실패했습니다.' });
+      set({ error: i18n.t('errors.training.fetchExpiredTrainingsFailed') });
       throw error;
     }
   },

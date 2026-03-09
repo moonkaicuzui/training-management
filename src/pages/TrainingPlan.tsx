@@ -123,7 +123,13 @@ export default function TrainingPlanPage() {
       existing.needsRetraining += 1;
       deptMap.set(dept, existing);
     });
-    const defaultDepts = ['생산1팀', '생산2팀', '품질관리팀', 'R&D', '관리팀'];
+    const defaultDepts = [
+      t('trainingPlan.deptProduction1'),
+      t('trainingPlan.deptProduction2'),
+      t('trainingPlan.deptQuality'),
+      t('trainingPlan.deptRnD'),
+      t('trainingPlan.deptAdmin'),
+    ];
     return defaultDepts.map((name) => {
       const data = deptMap.get(name) || { total: 50, needsRetraining: 0 };
       const completed = data.total - data.needsRetraining;

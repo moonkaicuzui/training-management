@@ -44,6 +44,10 @@
     "imageCompressing": "Compressing images...",
     "imageUploadHint": "Click or drag images to add",
     "imageUploadLimit": "Max {{max}} images ({{remaining}} slots remaining)",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "pending": "Pending",
+    "creating": "Creating...",
     "aria": {
       "dataTable": "Data table",
       "loading": "Content is loading",
@@ -538,7 +542,8 @@
     "testAttempt": "Attempt",
     "stopWorkingDate": "Stop Date",
     "nthAttempt": "{{n}}st",
-    "yearsMonths": "{{years}}y {{months}}m"
+    "yearsMonths": "{{years}}y {{months}}m",
+    "defaultEditReason": "Result edit"
   },
   "session": {
     "title": "Training Schedule",
@@ -983,6 +988,9 @@
     "message": "Message",
     "messagePlaceholder": "Enter participation guide message...",
     "create": "Create Evaluation",
+    "sampleProgram1": "Quality Control Basics",
+    "sampleProgram2": "Regular Safety Training",
+    "sampleProgram3": "Leadership Enhancement",
     "sheetName": "Training Evaluations",
     "exportId": "Evaluation ID",
     "exportTrainingDate": "Training Date",
@@ -2314,6 +2322,9 @@
     "verificationStage": "Verification Stage",
     "verificationMethod": "Verification Method",
     "verificationResult": "Verification Result",
+    "effective": "Effective",
+    "ineffective": "Ineffective",
+    "effectivenessScore": "Effectiveness Score",
     "effectiveness": "Effectiveness",
     "closureStage": "Closure Stage",
     "closureDate": "Closure Date",
@@ -2526,7 +2537,12 @@
       "includeRetraining": "Schedule retraining for {{count}} employees in the annual plan.",
       "expiringTraining": "{{count}} training records expiring within 30 days. Plan renewal training.",
       "allTargetsMet": "All departments have met the target completion rate. Maintain the current training plan."
-    }
+    },
+    "deptProduction1": "Production Team 1",
+    "deptProduction2": "Production Team 2",
+    "deptQuality": "Quality Control",
+    "deptRnD": "R&D",
+    "deptAdmin": "Administration"
   },
   "projects": {
     "title": "Project Management",
@@ -2757,6 +2773,7 @@
       "commentMention": "{{memberName}} mentioned you in a comment",
       "statusChanged": "Task \"{{taskTitle}}\" status has been changed"
     },
+    "circularDependencyError": "Circular dependency detected.",
     "automation": {
       "editAutomation": "Edit Automation",
       "addAutomation": "Add Automation",
@@ -3413,7 +3430,8 @@
       "permission": "Access denied. Please contact your administrator.",
       "notFound": "The requested data was not found.",
       "network": "Network error. Please check your internet connection.",
-      "generic": "An error occurred. Please try again later."
+      "generic": "An error occurred. Please try again later.",
+      "timeout": "Request timed out."
     }
   },
   "metalDetector": {
@@ -3552,7 +3570,8 @@
       "deleted": "Sticker deleted successfully.",
       "activated": "Sticker activated.",
       "deactivated": "Sticker deactivated."
-    }
+    },
+    "duplicateId": "Sticker ID '{{id}}' is already registered."
   },
   "systemFeedback": {
     "title": "System Feedback",
@@ -3607,5 +3626,104 @@
       "submitting": "Submitting...",
       "submit": "Submit"
     }
+  },
+  "errors": {
+    "training": {
+      "fetchEmployeesFailed": "Failed to load employee list.",
+      "fetchEmployeeFailed": "Failed to load employee information.",
+      "fetchEmployeeHistoryFailed": "Failed to load employee training history.",
+      "createEmployeeFailed": "Failed to register employee.",
+      "updateEmployeeFailed": "Failed to update employee information.",
+      "fetchProgramsFailed": "Failed to load training programs.",
+      "createProgramFailed": "Failed to create training program.",
+      "updateProgramFailed": "Failed to update training program.",
+      "deleteProgramFailed": "Failed to delete training program.",
+      "fetchSessionsFailed": "Failed to load training sessions.",
+      "createSessionFailed": "Failed to create training session.",
+      "updateSessionFailed": "Failed to update training session.",
+      "cancelSessionFailed": "Failed to cancel training session.",
+      "fetchResultsFailed": "Failed to load training results.",
+      "recordResultsFailed": "Failed to record training results.",
+      "updateResultFailed": "Failed to update training result.",
+      "fetchDashboardFailed": "Failed to load dashboard data.",
+      "fetchMonthlyDataFailed": "Failed to load monthly training data.",
+      "fetchGradeDistributionFailed": "Failed to load grade distribution.",
+      "fetchProgressMatrixFailed": "Failed to load progress matrix.",
+      "fetchRetrainingTargetsFailed": "Failed to load retraining targets.",
+      "fetchExpiringTrainingsFailed": "Failed to load expiring trainings.",
+      "fetchExpiredTrainingsFailed": "Failed to load expired trainings."
+    },
+    "project": {
+      "fetchCategoriesFailed": "Failed to load categories.",
+      "createCategoryFailed": "Failed to create category.",
+      "updateCategoryFailed": "Failed to update category.",
+      "deleteCategoryFailed": "Failed to delete category.",
+      "fetchEventsFailed": "Failed to load events.",
+      "createEventFailed": "Failed to create event.",
+      "updateEventFailed": "Failed to update event.",
+      "deleteEventFailed": "Failed to delete event.",
+      "fetchTasksFailed": "Failed to load tasks.",
+      "createTaskFailed": "Failed to create task.",
+      "updateTaskFailed": "Failed to update task.",
+      "deleteTaskFailed": "Failed to delete task.",
+      "batchUpdateTasksFailed": "Failed to batch update tasks.",
+      "fetchMembersFailed": "Failed to load members.",
+      "createMemberFailed": "Failed to create member.",
+      "updateMemberFailed": "Failed to update member.",
+      "deleteMemberFailed": "Failed to delete member.",
+      "fetchAutomationsFailed": "Failed to load automation rules.",
+      "createAutomationFailed": "Failed to create automation rule.",
+      "updateAutomationFailed": "Failed to update automation rule.",
+      "deleteAutomationFailed": "Failed to delete automation rule.",
+      "fetchProjectsFailed": "Failed to load projects.",
+      "createProjectFailed": "Failed to create project.",
+      "updateProjectFailed": "Failed to update project.",
+      "fetchMessagesFailed": "Failed to load messages.",
+      "createMessageFailed": "Failed to create message.",
+      "resolveMessageFailed": "Failed to resolve message."
+    },
+    "metalDetector": {
+      "fetchInspectionsFailed": "Failed to load inspection data.",
+      "createInspectionFailed": "Failed to register inspection.",
+      "updateInspectionFailed": "Failed to update inspection.",
+      "fetchFailuresFailed": "Failed to load failure records.",
+      "createFailureFailed": "Failed to register failure record.",
+      "updateCorrectiveActionFailed": "Failed to update corrective action.",
+      "fetchKPIsFailed": "Failed to load KPI data.",
+      "fetchWeeklyTrendFailed": "Failed to load weekly trend."
+    },
+    "techModel": {
+      "fetchModelsFailed": "Failed to load model data.",
+      "createModelFailed": "Failed to register model.",
+      "updateModelFailed": "Failed to update model.",
+      "deleteModelFailed": "Failed to delete model.",
+      "fetchGuidelinesFailed": "Failed to load review guidelines.",
+      "createGuidelineFailed": "Failed to register review guideline.",
+      "updateGuidelineFailed": "Failed to update review guideline.",
+      "deleteGuidelineFailed": "Failed to delete review guideline."
+    },
+    "auth": {
+      "invalidDomain": "Email domain is not allowed.",
+      "loginFailed": "An error occurred during login.",
+      "userNotFound": "Email is not registered.",
+      "wrongPassword": "Password is incorrect.",
+      "invalidEmail": "Email format is invalid."
+    },
+    "blog": {
+      "postNotFound": "Post not found."
+    }
+  },
+  "error": {
+    "title": "An error occurred",
+    "description": "An unexpected error occurred. Please try again.",
+    "retryCount": "Retry {{count}} / {{max}}",
+    "details": "Error details",
+    "retry": "Retry",
+    "goHome": "Home",
+    "reload": "Reload",
+    "sectionError": "An error occurred while loading {{section}}",
+    "sectionLoadError": "Unable to load this section",
+    "unknownError": "An unknown error occurred",
+    "unhandledError": "An error occurred"
   }
 }

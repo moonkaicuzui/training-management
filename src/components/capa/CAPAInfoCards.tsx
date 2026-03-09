@@ -242,10 +242,10 @@ function ActionStatusBadge({ status }: { status: string }) {
 
   const label =
     status === 'completed'
-      ? t('common.completed', { defaultValue: '완료' })
+      ? t('common.completed')
       : status === 'in_progress'
-      ? t('common.inProgress', { defaultValue: '진행중' })
-      : t('common.pending', { defaultValue: '대기' });
+      ? t('common.inProgress')
+      : t('common.pending');
 
   return (
     <Badge variant={status === 'completed' ? 'default' : 'outline'}>
@@ -283,12 +283,12 @@ export function VerificationCard({ currentCAPA }: VerificationCardProps) {
             }
           >
             {currentCAPA.verification.isEffective
-              ? t('capa.effective', { defaultValue: '효과적' })
-              : t('capa.ineffective', { defaultValue: '미흡' })}
+              ? t('capa.effective')
+              : t('capa.ineffective')}
           </Badge>
           {currentCAPA.verification.effectivenessScore !== undefined && (
             <span className="text-sm">
-              {t('capa.effectivenessScore', { defaultValue: '효과성 점수' })}: {currentCAPA.verification.effectivenessScore}%
+              {t('capa.effectivenessScore')}: {currentCAPA.verification.effectivenessScore}%
             </span>
           )}
         </div>

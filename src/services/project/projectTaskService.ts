@@ -37,6 +37,7 @@ import type {
 } from '@/types/project';
 import { COLLECTIONS, generateId, convertTimestamp, convertDocumentDates } from './common';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 // ============================================================
 // Project Service
@@ -382,7 +383,7 @@ export const validateTaskDependencies = async (
       const currentId = stack.pop()!;
 
       if (currentId === taskId) {
-        return { valid: false, error: '순환 의존성이 감지되었습니다.' };
+        return { valid: false, error: i18n.t('projects.circularDependencyError') };
       }
 
       if (!visited.has(currentId)) {

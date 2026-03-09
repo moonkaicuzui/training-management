@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 import type {
   User,
   UserRole,
@@ -85,7 +86,7 @@ export const useAuthStore = create<AuthStore>()(
               user: null,
               isAuthenticated: false,
               isLoading: false,
-              error: '허용되지 않은 이메일 도메인입니다.',
+              error: i18n.t('errors.auth.invalidDomain'),
             });
             return;
           }
@@ -137,14 +138,14 @@ export const useAuthStore = create<AuthStore>()(
             error: null,
           });
         } catch (error) {
-          let errorMessage = '로그인 중 오류가 발생했습니다.';
+          let errorMessage = i18n.t('errors.auth.loginFailed');
           if (error instanceof Error) {
             if (error.message.includes('user-not-found')) {
-              errorMessage = '등록되지 않은 이메일입니다.';
+              errorMessage = i18n.t('errors.auth.userNotFound');
             } else if (error.message.includes('wrong-password') || error.message.includes('invalid-credential')) {
-              errorMessage = '비밀번호가 올바르지 않습니다.';
+              errorMessage = i18n.t('errors.auth.wrongPassword');
             } else if (error.message.includes('invalid-email')) {
-              errorMessage = '이메일 형식이 올바르지 않습니다.';
+              errorMessage = i18n.t('errors.auth.invalidEmail');
             } else {
               errorMessage = error.message;
             }

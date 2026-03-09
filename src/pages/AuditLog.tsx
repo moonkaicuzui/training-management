@@ -305,7 +305,7 @@ export default function AuditLogPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800">{error}</p>
           <Button variant="outline" size="sm" className="mt-2" onClick={loadData}>
-            {t('common.retry', '재시도')}
+            {t('common.retry')}
           </Button>
         </div>
       )}

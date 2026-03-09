@@ -7,6 +7,7 @@ import * as projectService from '@/services/projectService';
 import { logger } from '@/utils/logger';
 import type { StoreSet, StoreGet } from './types';
 import { getCurrentUserId } from './helpers';
+import i18n from '@/i18n';
 
 export const createMessageActions = (set: StoreSet, get: StoreGet) => ({
   fetchMessagesByTask: async (taskId: string) => {
@@ -16,7 +17,7 @@ export const createMessageActions = (set: StoreSet, get: StoreGet) => ({
       set({ messages, isMessagesLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '메시지 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchMessagesFailed'),
         isMessagesLoading: false,
       });
     }
@@ -34,7 +35,7 @@ export const createMessageActions = (set: StoreSet, get: StoreGet) => ({
       return message;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '메시지 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createMessageFailed'),
         isLoading: false,
       });
       throw error;
@@ -72,7 +73,7 @@ export const createMessageActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '메시지 해결에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.resolveMessageFailed'),
         isLoading: false,
       });
       throw error;

@@ -152,16 +152,16 @@ function ErrorFallbackUI({
           <div className="mx-auto mb-4 p-4 rounded-full bg-destructive/10 w-fit">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-xl">{t('error.title', '오류가 발생했습니다')}</CardTitle>
+          <CardTitle className="text-xl">{t('error.title')}</CardTitle>
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-muted-foreground mb-4">
-            {t('error.description', '예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.')}
+            {t('error.description')}
           </p>
 
           {retryCount > 0 && (
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
-              {t('error.retryCount', '재시도 {{count}}회 / {{max}}회', {
+              {t('error.retryCount', {
                 count: retryCount,
                 max: maxRetries,
               })}
@@ -171,7 +171,7 @@ function ErrorFallbackUI({
           {import.meta.env.DEV && error && (
             <details className="text-left mt-4">
               <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                {t('error.details', '오류 세부 정보')}
+                {t('error.details')}
               </summary>
               <div className="mt-2 space-y-2">
                 <pre className="p-3 bg-muted rounded-md text-xs overflow-auto max-h-24">
@@ -198,16 +198,16 @@ function ErrorFallbackUI({
         <CardFooter className="flex gap-2 justify-center flex-wrap">
           {canRetry && (
             <Button variant="outline" onClick={onReset}>
-              {t('error.retry', '다시 시도')}
+              {t('error.retry')}
             </Button>
           )}
           <Button variant="outline" onClick={onGoHome}>
             <Home className="h-4 w-4 mr-2" />
-            {t('error.goHome', '홈으로')}
+            {t('error.goHome')}
           </Button>
           <Button onClick={onReload}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            {t('error.reload', '새로고침')}
+            {t('error.reload')}
           </Button>
         </CardFooter>
       </Card>
@@ -277,10 +277,10 @@ function SectionErrorFallback({ sectionName }: { sectionName?: string }) {
         <AlertTriangle className="h-6 w-6 text-destructive/60 mb-2" />
         <p className="text-sm text-muted-foreground">
           {sectionName
-            ? t('error.sectionError', '{{section}} 로딩 중 오류가 발생했습니다', {
+            ? t('error.sectionError', {
                 section: sectionName,
               })
-            : t('error.sectionLoadError', '이 섹션을 로드할 수 없습니다')}
+            : t('error.sectionLoadError')}
         </p>
       </CardContent>
     </Card>

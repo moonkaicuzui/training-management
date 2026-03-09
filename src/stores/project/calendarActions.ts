@@ -6,6 +6,7 @@ import type { Category, CalendarEvent } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import type { StoreSet, StoreGet } from './types';
 import { isCacheValid, cache } from './cacheConfig';
+import i18n from '@/i18n';
 
 export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
   // ============================================================
@@ -21,7 +22,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       set({ categories, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '카테고리 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchCategoriesFailed'),
         isLoading: false,
       });
     }
@@ -38,7 +39,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       return category;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '카테고리 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createCategoryFailed'),
         isLoading: false,
       });
       throw error;
@@ -57,7 +58,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateCategoryFailed'),
         isLoading: false,
       });
       throw error;
@@ -74,7 +75,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.deleteCategoryFailed'),
         isLoading: false,
       });
       throw error;
@@ -102,7 +103,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       set({ events, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '일정 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchEventsFailed'),
         isLoading: false,
       });
     }
@@ -115,7 +116,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       set({ events, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '일정 목록을 불러오는데 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.fetchEventsFailed'),
         isLoading: false,
       });
     }
@@ -132,7 +133,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       return event;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '일정 생성에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.createEventFailed'),
         isLoading: false,
       });
       throw error;
@@ -151,7 +152,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '일정 수정에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.updateEventFailed'),
         isLoading: false,
       });
       throw error;
@@ -168,7 +169,7 @@ export const createCalendarActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : '일정 삭제에 실패했습니다.',
+        error: error instanceof Error ? error.message : i18n.t('errors.project.deleteEventFailed'),
         isLoading: false,
       });
       throw error;

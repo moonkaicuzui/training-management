@@ -174,7 +174,7 @@ export default function Dashboard() {
       .then((count) => {
         localStorage.setItem(STORAGE_KEY, today);
         if (count > 0) {
-          console.info(`[Dashboard] Created ${count} certification expiry notifications`);
+          logger.info(`[Dashboard] Created ${count} certification expiry notifications`);
         }
       })
       .catch((err) => {
