@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -31,7 +32,7 @@ export function NotificationBell() {
     subscribeNotificationsRealtime,
     markNotificationRead,
     markAllNotificationsRead,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({ notifications: state.notifications, unreadNotificationCount: state.unreadNotificationCount, subscribeNotificationsRealtime: state.subscribeNotificationsRealtime, markNotificationRead: state.markNotificationRead, markAllNotificationsRead: state.markAllNotificationsRead })));
 
   useEffect(() => {
     subscribeNotificationsRealtime();

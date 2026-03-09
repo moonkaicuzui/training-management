@@ -42,6 +42,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -72,9 +73,9 @@ export default function ProjectsSettings() {
     isAutomationsLoading,
     currentProjectId,
     updateProject,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({ categories: state.categories, error: state.error, fetchCategories: state.fetchCategories, createCategory: state.createCategory, updateCategory: state.updateCategory, deleteCategory: state.deleteCategory, isLoading: state.isLoading, automations: state.automations, fetchAutomationsByProject: state.fetchAutomationsByProject, createAutomation: state.createAutomation, updateAutomation: state.updateAutomation, deleteAutomation: state.deleteAutomation, toggleAutomation: state.toggleAutomation, isAutomationsLoading: state.isAutomationsLoading, currentProjectId: state.currentProjectId, updateProject: state.updateProject })));
 
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const { toast } = useToast();
 
   const initializedRef = useRef(false);

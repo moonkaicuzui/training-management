@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CommandPalette } from '@/components/common/CommandPalette';
@@ -38,8 +39,8 @@ const roleConfig: Record<UserRole, { icon: typeof Shield; label: string; variant
 export function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { language, setLanguage, toggleSidebar } = useUIStore();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { language, setLanguage, toggleSidebar } = useUIStore(useShallow((state) => ({ language: state.language, setLanguage: state.setLanguage, toggleSidebar: state.toggleSidebar })));
+  const { user, isAuthenticated, logout } = useAuthStore(useShallow((state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, logout: state.logout })));
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 

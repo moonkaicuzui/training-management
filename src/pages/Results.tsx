@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
@@ -66,8 +67,20 @@ interface DuplicateInfo {
 
 export default function Results() {
   const { t } = useTranslation();
-  const { sessions, programs, employees, results, loading, fetchSessions, fetchPrograms, fetchEmployees, fetchResults, recordResults, updateResult } = useTrainingStore();
-  const { addToast } = useUIStore();
+  const { sessions, programs, employees, results, loading, fetchSessions, fetchPrograms, fetchEmployees, fetchResults, recordResults, updateResult } = useTrainingStore(useShallow((state) => ({
+    sessions: state.sessions,
+    programs: state.programs,
+    employees: state.employees,
+    results: state.results,
+    loading: state.loading,
+    fetchSessions: state.fetchSessions,
+    fetchPrograms: state.fetchPrograms,
+    fetchEmployees: state.fetchEmployees,
+    fetchResults: state.fetchResults,
+    recordResults: state.recordResults,
+    updateResult: state.updateResult,
+  })));
+  const addToast = useUIStore((s) => s.addToast);
   const { exporting, exportExcel, exportPDF } = useExport();
 
   const [selectedSession, setSelectedSession] = useState<string>('');

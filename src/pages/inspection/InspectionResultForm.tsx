@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { InspectionPairGrid } from '@/components/inspection/InspectionPairGrid';
 import { InspectionStrikeIndicator } from '@/components/inspection/InspectionStrikeIndicator';
+import { useShallow } from 'zustand/react/shallow';
 import { useInspectionStore } from '@/stores/inspectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { getEmployees } from '@/services/api';
@@ -39,7 +40,13 @@ function createEmptyPairs(): InspectionPairResult[] {
 export default function InspectionResultForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { submitResult, checkStrikes, isSubmitting, error, clearError } = useInspectionStore();
+  const { submitResult, checkStrikes, isSubmitting, error, clearError } = useInspectionStore(useShallow((state) => ({
+    submitResult: state.submitResult,
+    checkStrikes: state.checkStrikes,
+    isSubmitting: state.isSubmitting,
+    error: state.error,
+    clearError: state.clearError,
+  })));
   const user = useAuthStore((s) => s.user);
 
   const [step, setStep] = useState(1);

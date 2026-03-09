@@ -48,6 +48,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 
 // ─── Types ───────────────────────────────────────────
@@ -253,7 +254,7 @@ function findSectionForPath(pathname: string): string | null {
 export function Sidebar() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { sidebarOpen, setSidebarOpen } = useUIStore();
+  const { sidebarOpen, setSidebarOpen } = useUIStore(useShallow((state) => ({ sidebarOpen: state.sidebarOpen, setSidebarOpen: state.setSidebarOpen })));
 
   const activeSectionKey = useMemo(
     () => findSectionForPath(location.pathname),

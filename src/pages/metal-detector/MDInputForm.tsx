@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
@@ -40,8 +41,8 @@ interface FormData {
 export default function MDInputForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { createInspection, createFailure, isLoading, error } = useMDInspectionStore();
-  const { user } = useAuthStore();
+  const { createInspection, createFailure, isLoading, error } = useMDInspectionStore(useShallow((state) => ({ createInspection: state.createInspection, createFailure: state.createFailure, isLoading: state.isLoading, error: state.error })));
+  const user = useAuthStore((s) => s.user);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);

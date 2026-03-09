@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useFivePrsStore } from '@/stores/fivePrsStore';
@@ -18,7 +19,13 @@ export default function FivePrsDashboard() {
     isLoadingMonths,
     isLoadingData,
     error,
-  } = useFivePrsStore();
+  } = useFivePrsStore(useShallow((state) => ({
+    processedData: state.processedData,
+    selectedMonth: state.selectedMonth,
+    isLoadingMonths: state.isLoadingMonths,
+    isLoadingData: state.isLoadingData,
+    error: state.error,
+  })));
   const fetchMonths = useFivePrsStore((s) => s.fetchMonths);
   const fetchData = useFivePrsStore((s) => s.fetchData);
   const clearError = useFivePrsStore((s) => s.clearError);

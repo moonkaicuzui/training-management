@@ -193,9 +193,11 @@ function App() {
                   </Suspense>
                 } />
                 <Route path="trainers" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Trainers />
-                  </Suspense>
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <Trainers />
+                    </Suspense>
+                  </DevProtectedRoute>
                 } />
                 <Route path="training-plan" element={
                   <Suspense fallback={<PageLoader />}>
@@ -305,9 +307,11 @@ function App() {
                     </Suspense>
                   } />
                   <Route path="settings" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <NewTQCSettings />
-                    </Suspense>
+                    <DevProtectedRoute requiredPermission="canManageUsers">
+                      <Suspense fallback={<PageLoader />}>
+                        <NewTQCSettings />
+                      </Suspense>
+                    </DevProtectedRoute>
                   } />
                 </Route>
 
@@ -335,9 +339,11 @@ function App() {
                     </Suspense>
                   } />
                   <Route path="settings" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <ProjectsSettings />
-                    </Suspense>
+                    <DevProtectedRoute requiredPermission="canManageUsers">
+                      <Suspense fallback={<PageLoader />}>
+                        <ProjectsSettings />
+                      </Suspense>
+                    </DevProtectedRoute>
                   } />
                 </Route>
 
@@ -373,9 +379,11 @@ function App() {
                     </Suspense>
                   } />
                   <Route path="training-recommendations" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <TrainingRecommendations />
-                    </Suspense>
+                    <DevProtectedRoute requiredPermission="canEditResults">
+                      <Suspense fallback={<PageLoader />}>
+                        <TrainingRecommendations />
+                      </Suspense>
+                    </DevProtectedRoute>
                   } />
                 </Route>
 
@@ -387,9 +395,11 @@ function App() {
                     </Suspense>
                   } />
                   <Route path="training-recommendations" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <AqlTrainingRecommendations />
-                    </Suspense>
+                    <DevProtectedRoute requiredPermission="canEditResults">
+                      <Suspense fallback={<PageLoader />}>
+                        <AqlTrainingRecommendations />
+                      </Suspense>
+                    </DevProtectedRoute>
                   } />
                 </Route>
 
@@ -409,9 +419,11 @@ function App() {
                     </Suspense>
                   } />
                   <Route path="result" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <InspectionResultForm />
-                    </Suspense>
+                    <DevProtectedRoute requiredPermission="canEditResults">
+                      <Suspense fallback={<PageLoader />}>
+                        <InspectionResultForm />
+                      </Suspense>
+                    </DevProtectedRoute>
                   } />
                   <Route path="enrollments" element={
                     <Suspense fallback={<PageLoader />}>
@@ -434,9 +446,11 @@ function App() {
 
                 {/* AI 경영진 보고서 */}
                 <Route path="executive-report" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <ExecutiveReport />
-                  </Suspense>
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <ExecutiveReport />
+                    </Suspense>
+                  </DevProtectedRoute>
                 } />
 
                 {/* Metal Detector Inspection (금속 탐지기 점검) */}

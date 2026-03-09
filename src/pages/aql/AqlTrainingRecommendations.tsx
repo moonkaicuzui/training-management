@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Loader2, AlertCircle, Play, Settings } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,39 @@ export default function AqlTrainingRecommendations() {
     setFilters,
     setSelectedIds,
     clearError,
-  } = useAqlStore();
+  } = useAqlStore(useShallow((state) => ({
+    months: state.months,
+    selectedMonth: state.selectedMonth,
+    processedData: state.processedData,
+    isLoadingMonths: state.isLoadingMonths,
+    isLoadingData: state.isLoadingData,
+    isLoadingConfig: state.isLoadingConfig,
+    isAnalyzing: state.isAnalyzing,
+    isEnrolling: state.isEnrolling,
+    isImporting: state.isImporting,
+    error: state.error,
+    recommendations: state.recommendations,
+    filters: state.filters,
+    selectedIds: state.selectedIds,
+    aqlLinks: state.aqlLinks,
+    supervisorLinks: state.supervisorLinks,
+    employees: state.employees,
+    programs: state.programs,
+    fetchMonths: state.fetchMonths,
+    fetchData: state.fetchData,
+    fetchConfig: state.fetchConfig,
+    setSelectedMonth: state.setSelectedMonth,
+    analyzeRecommendations: state.analyzeRecommendations,
+    enrollRecommendation: state.enrollRecommendation,
+    batchEnroll: state.batchEnroll,
+    createAqlLink: state.createAqlLink,
+    deleteAqlLink: state.deleteAqlLink,
+    importSupervisorLinks: state.importSupervisorLinks,
+    autoImportSupervisorLinks: state.autoImportSupervisorLinks,
+    setFilters: state.setFilters,
+    setSelectedIds: state.setSelectedIds,
+    clearError: state.clearError,
+  })));
 
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [enrollTarget, setEnrollTarget] = useState<AqlTrainingRecommendation | null>(null);

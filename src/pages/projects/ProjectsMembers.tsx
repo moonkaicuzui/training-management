@@ -56,6 +56,7 @@ import {
   Building2,
   Briefcase,
 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import type { ProjectMember, CreateMemberInput, MemberRole, MemberStatus } from '@/types/project';
 
@@ -93,7 +94,7 @@ export default function ProjectsMembers() {
     isLoading,
     error,
     subscribeMembersRealtime,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({ members: state.members, fetchMembers: state.fetchMembers, createMember: state.createMember, updateMember: state.updateMember, deleteMember: state.deleteMember, isMembersLoading: state.isMembersLoading, isLoading: state.isLoading, error: state.error, subscribeMembersRealtime: state.subscribeMembersRealtime })));
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<MemberStatus | 'all'>('all');
@@ -110,7 +111,7 @@ export default function ProjectsMembers() {
     phone: '',
   });
   const initializedRef = useRef(false);
-  const { cleanup } = useProjectStore();
+  const cleanup = useProjectStore((s) => s.cleanup);
 
   useEffect(() => {
     if (!initializedRef.current) {

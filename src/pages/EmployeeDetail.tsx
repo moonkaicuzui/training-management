@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -35,7 +36,13 @@ export default function EmployeeDetail() {
     loading,
     fetchEmployee,
     fetchEmployeeHistory,
-  } = useTrainingStore();
+  } = useTrainingStore(useShallow((state) => ({
+    selectedEmployee: state.selectedEmployee,
+    employeeHistory: state.employeeHistory,
+    loading: state.loading,
+    fetchEmployee: state.fetchEmployee,
+    fetchEmployeeHistory: state.fetchEmployeeHistory,
+  })));
 
   // 데이터 로드 함수 메모이제이션
   const loadEmployeeData = useCallback((employeeId: string) => {

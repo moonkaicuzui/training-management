@@ -70,6 +70,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS, CATEGORY_COLORS } from '@/types/project';
 import type { ViewType, TaskStatus, Task, TaskPriority, MessageType, CreateTaskInput, UpdateTaskInput } from '@/types/project';
@@ -171,7 +172,7 @@ export default function ProjectsTasks() {
     createCategory,
     currentProjectId,
     createNotification,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({ tasks: state.tasks, messages: state.messages, currentView: state.currentView, setCurrentView: state.setCurrentView, getMemberById: state.getMemberById, getProjectById: state.getProjectById, isTasksLoading: state.isTasksLoading, isMessagesLoading: state.isMessagesLoading, error: state.error, updateTask: state.updateTask, createTask: state.createTask, deleteTask: state.deleteTask, fetchAllTasks: state.fetchAllTasks, fetchTasksByProject: state.fetchTasksByProject, fetchMessagesByTask: state.fetchMessagesByTask, createMessage: state.createMessage, markMessageAsRead: state.markMessageAsRead, resolveMessage: state.resolveMessage, members: state.members, projects: state.projects, categories: state.categories, fetchProjects: state.fetchProjects, fetchCategories: state.fetchCategories, createCategory: state.createCategory, currentProjectId: state.currentProjectId, createNotification: state.createNotification })));
 
   const initializedRef = useRef(false);
   const [timelineDate, setTimelineDate] = useState(new Date());

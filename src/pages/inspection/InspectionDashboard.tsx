@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useShallow } from 'zustand/react/shallow';
 import { useInspectionStore } from '@/stores/inspectionStore';
 import { LazyBarChart } from '@/components/charts/LazyCharts';
 import { InspectionStrikeIndicator } from '@/components/inspection/InspectionStrikeIndicator';
@@ -29,7 +30,16 @@ export default function InspectionDashboard() {
     fetchResults,
     fetchEnrollments,
     clearError,
-  } = useInspectionStore();
+  } = useInspectionStore(useShallow((state) => ({
+    results: state.results,
+    enrollments: state.enrollments,
+    isLoadingResults: state.isLoadingResults,
+    isLoadingEnrollments: state.isLoadingEnrollments,
+    error: state.error,
+    fetchResults: state.fetchResults,
+    fetchEnrollments: state.fetchEnrollments,
+    clearError: state.clearError,
+  })));
 
   useEffect(() => {
     Promise.all([fetchResults(), fetchEnrollments()]);

@@ -34,6 +34,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useShallow } from 'zustand/react/shallow';
 import { useTechModelStore } from '@/stores/techModelStore';
 import { useAuthStore } from '@/stores/authStore';
 import type {
@@ -62,7 +63,7 @@ export default function TechReviewGuidelines() {
     createGuideline,
     updateGuideline,
     deleteGuideline,
-  } = useTechModelStore();
+  } = useTechModelStore(useShallow((state) => ({ models: state.models, guidelines: state.guidelines, isLoading: state.isLoading, fetchModels: state.fetchModels, fetchGuidelines: state.fetchGuidelines, createGuideline: state.createGuideline, updateGuideline: state.updateGuideline, deleteGuideline: state.deleteGuideline })));
   const { uploadMultiple, isUploading } = useFileUpload({
     folder: 'tech-review-photos',
     maxSizeBytes: 10 * 1024 * 1024,

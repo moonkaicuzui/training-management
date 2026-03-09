@@ -61,6 +61,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -474,7 +475,7 @@ function ProgramQualityStatus({ programs }: { programs: Array<{ code: string; na
 export default function TrainingPlanPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
 
   // Store 연동
   const {
@@ -486,7 +487,16 @@ export default function TrainingPlanPage() {
     fetchExpiringTrainings,
     fetchDashboardStats,
     fetchPrograms,
-  } = useTrainingStore();
+  } = useTrainingStore(useShallow((state) => ({
+    retrainingTargets: state.retrainingTargets,
+    expiringTrainings: state.expiringTrainings,
+    dashboardStats: state.dashboardStats,
+    programs: state.programs,
+    fetchRetrainingTargets: state.fetchRetrainingTargets,
+    fetchExpiringTrainings: state.fetchExpiringTrainings,
+    fetchDashboardStats: state.fetchDashboardStats,
+    fetchPrograms: state.fetchPrograms,
+  })));
 
   const [plans, setPlans] = useState<AnnualPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -51,6 +51,7 @@ import {
   Languages,
 } from 'lucide-react';
 
+import { useShallow } from 'zustand/react/shallow';
 import { useQualityBlogStore } from '@/stores/qualityBlogStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -110,8 +111,8 @@ const defaultForm: BlogFormData = {
 
 export default function QualityBlog() {
   const { t } = useTranslation();
-  const { language } = useUIStore();
-  const { user } = useAuthStore();
+  const language = useUIStore((s) => s.language);
+  const user = useAuthStore((s) => s.user);
   const {
     posts,
     isLoading,
@@ -120,7 +121,7 @@ export default function QualityBlog() {
     createPost,
     updatePost,
     deletePost,
-  } = useQualityBlogStore();
+  } = useQualityBlogStore(useShallow((state) => ({ posts: state.posts, isLoading: state.isLoading, error: state.error, fetchPosts: state.fetchPosts, createPost: state.createPost, updatePost: state.updatePost, deletePost: state.deletePost })));
 
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') as BlogCategory | null;

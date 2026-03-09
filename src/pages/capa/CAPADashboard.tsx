@@ -25,6 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useCAPAStore } from '@/stores/capaStore';
 import {
@@ -65,7 +66,14 @@ export default function CAPADashboard() {
     error,
     fetchCAPAs,
     fetchDashboardStats,
-  } = useCAPAStore();
+  } = useCAPAStore(useShallow((state) => ({
+    capas: state.capas,
+    dashboardStats: state.dashboardStats,
+    isLoading: state.isLoading,
+    error: state.error,
+    fetchCAPAs: state.fetchCAPAs,
+    fetchDashboardStats: state.fetchDashboardStats,
+  })));
 
   // Local state for filters - always initialized with default values
   const [searchText, setSearchText] = useState('');

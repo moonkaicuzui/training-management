@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { useShallow } from 'zustand/react/shallow';
 import { useCAPAStore } from '@/stores/capaStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -72,8 +73,15 @@ export default function CAPAForm() {
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
 
-  const { user } = useAuthStore();
-  const { createCAPA, updateCAPA, fetchCAPAById, currentCAPA, isLoading, error } = useCAPAStore();
+  const user = useAuthStore((s) => s.user);
+  const { createCAPA, updateCAPA, fetchCAPAById, currentCAPA, isLoading, error } = useCAPAStore(useShallow((state) => ({
+    createCAPA: state.createCAPA,
+    updateCAPA: state.updateCAPA,
+    fetchCAPAById: state.fetchCAPAById,
+    currentCAPA: state.currentCAPA,
+    isLoading: state.isLoading,
+    error: state.error,
+  })));
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof FormData, string>>>({});

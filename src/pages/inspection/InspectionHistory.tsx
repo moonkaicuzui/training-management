@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InspectionPairGrid } from '@/components/inspection/InspectionPairGrid';
 import { InspectionStrikeIndicator } from '@/components/inspection/InspectionStrikeIndicator';
+import { useShallow } from 'zustand/react/shallow';
 import { useInspectionStore } from '@/stores/inspectionStore';
 import type { InspectionResultDetail } from '@/types/inspection';
 
@@ -24,7 +25,16 @@ export default function InspectionHistory() {
     fetchResultsByEmployee,
     checkStrikes,
     clearError,
-  } = useInspectionStore();
+  } = useInspectionStore(useShallow((state) => ({
+    results: state.results,
+    strikeMap: state.strikeMap,
+    isLoadingResults: state.isLoadingResults,
+    error: state.error,
+    fetchResults: state.fetchResults,
+    fetchResultsByEmployee: state.fetchResultsByEmployee,
+    checkStrikes: state.checkStrikes,
+    clearError: state.clearError,
+  })));
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('employee') || '');
   const [expandedId, setExpandedId] = useState<string | null>(null);

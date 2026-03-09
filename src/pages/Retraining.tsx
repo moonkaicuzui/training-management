@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { buildings, departments, categories } from '@/data/constants';
@@ -36,7 +37,13 @@ import { format } from 'date-fns';
 export default function Retraining() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { retrainingTargets, expiringTrainings, loading, fetchRetrainingTargets, fetchExpiringTrainings } = useTrainingStore();
+  const { retrainingTargets, expiringTrainings, loading, fetchRetrainingTargets, fetchExpiringTrainings } = useTrainingStore(useShallow((state) => ({
+    retrainingTargets: state.retrainingTargets,
+    expiringTrainings: state.expiringTrainings,
+    loading: state.loading,
+    fetchRetrainingTargets: state.fetchRetrainingTargets,
+    fetchExpiringTrainings: state.fetchExpiringTrainings,
+  })));
 
   const [searchQuery, setSearchQuery] = useState('');
   const [buildingFilter, setBuildingFilter] = useState<string>('all');

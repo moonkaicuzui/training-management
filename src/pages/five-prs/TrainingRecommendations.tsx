@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Loader2, AlertCircle, Settings, Play } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -243,7 +244,12 @@ export default function TrainingRecommendations() {
     selectedMonth,
     isLoadingMonths,
     isLoadingData,
-  } = useFivePrsStore();
+  } = useFivePrsStore(useShallow((state) => ({
+    months: state.months,
+    selectedMonth: state.selectedMonth,
+    isLoadingMonths: state.isLoadingMonths,
+    isLoadingData: state.isLoadingData,
+  })));
   const fetchMonths = useFivePrsStore((s) => s.fetchMonths);
   const fetchData = useFivePrsStore((s) => s.fetchData);
   const setSelectedMonth = useFivePrsStore((s) => s.setSelectedMonth);
@@ -261,7 +267,19 @@ export default function TrainingRecommendations() {
     isEnrolling,
     isLoadingLogs,
     error: recError,
-  } = useRecommendationStore();
+  } = useRecommendationStore(useShallow((state) => ({
+    thresholds: state.thresholds,
+    recommendations: state.recommendations,
+    enrollmentLogs: state.enrollmentLogs,
+    programs: state.programs,
+    filters: state.filters,
+    selectedIds: state.selectedIds,
+    isLoadingConfig: state.isLoadingConfig,
+    isAnalyzing: state.isAnalyzing,
+    isEnrolling: state.isEnrolling,
+    isLoadingLogs: state.isLoadingLogs,
+    error: state.error,
+  })));
   const fetchConfig = useRecommendationStore((s) => s.fetchConfig);
   const analyzeRecs = useRecommendationStore((s) => s.analyzeRecommendations);
   const setFilters = useRecommendationStore((s) => s.setFilters);

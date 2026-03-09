@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Loader2, AlertCircle, BrainCircuit, Clipboard, Printer, Users, Package, UserPlus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +47,15 @@ export default function FivePrsAiInstructions() {
     isLoadingBriefing,
     error,
     selectedMonth,
-  } = useFivePrsStore();
+  } = useFivePrsStore(useShallow((state) => ({
+    processedData: state.processedData,
+    aiBriefing: state.aiBriefing,
+    isLoadingMonths: state.isLoadingMonths,
+    isLoadingData: state.isLoadingData,
+    isLoadingBriefing: state.isLoadingBriefing,
+    error: state.error,
+    selectedMonth: state.selectedMonth,
+  })));
   const fetchMonths = useFivePrsStore((s) => s.fetchMonths);
   const fetchData = useFivePrsStore((s) => s.fetchData);
   const generateBriefing = useFivePrsStore((s) => s.generateBriefing);

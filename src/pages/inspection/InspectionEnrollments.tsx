@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useShallow } from 'zustand/react/shallow';
 import { useInspectionStore } from '@/stores/inspectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { getEmployees } from '@/services/api';
@@ -50,7 +51,17 @@ export default function InspectionEnrollments() {
     updateEnrollmentStatus,
     autoEnrollFromSource,
     clearError,
-  } = useInspectionStore();
+  } = useInspectionStore(useShallow((state) => ({
+    enrollments: state.enrollments,
+    isLoadingEnrollments: state.isLoadingEnrollments,
+    isSubmitting: state.isSubmitting,
+    error: state.error,
+    fetchEnrollments: state.fetchEnrollments,
+    enrollEmployee: state.enrollEmployee,
+    updateEnrollmentStatus: state.updateEnrollmentStatus,
+    autoEnrollFromSource: state.autoEnrollFromSource,
+    clearError: state.clearError,
+  })));
   const user = useAuthStore((s) => s.user);
   const [autoEnrollResult, setAutoEnrollResult] = useState<{ enrolled: number; skipped: number; errors: number } | null>(null);
 

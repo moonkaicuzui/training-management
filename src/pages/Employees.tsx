@@ -68,8 +68,8 @@ export default function Employees() {
   const navigate = useNavigate();
   const { employees, loading } = useEmployeesData();
   const fetchEmployees = useNormalizedTrainingStore((state) => state.fetchEmployees);
-  const { createEmployee } = useTrainingStore();
-  const { addToast } = useUIStore();
+  const createEmployee = useTrainingStore((s) => s.createEmployee);
+  const addToast = useUIStore((s) => s.addToast);
   const { exporting, exportExcel, exportPDF } = useExport();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState(emptyEmployeeForm);

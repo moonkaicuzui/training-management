@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useShallow } from 'zustand/react/shallow';
 import { useNotificationStore, type Notification } from '@/stores/notificationStore';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -49,7 +50,7 @@ function NotificationItem({
 export function NotificationCenter() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
+  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationStore(useShallow((state) => ({ notifications: state.notifications, markAsRead: state.markAsRead, markAllAsRead: state.markAllAsRead, unreadCount: state.unreadCount })));
   const [open, setOpen] = useState(false);
   const count = unreadCount();
 

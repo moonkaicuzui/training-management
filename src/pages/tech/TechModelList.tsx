@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useShallow } from 'zustand/react/shallow';
 import { useTechModelStore } from '@/stores/techModelStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -66,7 +67,7 @@ export default function TechModelList() {
     createModel,
     updateModel,
     deleteModel,
-  } = useTechModelStore();
+  } = useTechModelStore(useShallow((state) => ({ models: state.models, guidelines: state.guidelines, isLoading: state.isLoading, fetchModels: state.fetchModels, fetchGuidelines: state.fetchGuidelines, createModel: state.createModel, updateModel: state.updateModel, deleteModel: state.deleteModel })));
 
   const [seasonFilter, setSeasonFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);

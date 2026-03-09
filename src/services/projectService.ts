@@ -164,8 +164,8 @@ export const createMember = async (input: CreateMemberInput): Promise<ProjectMem
   return {
     id: memberId,
     ...memberData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as ProjectMember;
 };
 
@@ -295,8 +295,8 @@ export const createProject = async (
   return {
     id: projectId,
     ...projectData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as Project;
 };
 
@@ -394,8 +394,8 @@ export const createTask = async (
   return {
     id: taskId,
     ...taskData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as Task;
 };
 
@@ -510,8 +510,8 @@ export const createMessage = async (
   return {
     id: messageId,
     ...messageData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as Message;
 };
 
@@ -613,8 +613,8 @@ export const createCategory = async (
   return {
     id: categoryId,
     ...categoryData,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as Category;
 };
 
@@ -688,8 +688,8 @@ export const createEvent = async (
   return {
     id: eventId,
     ...data,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as CalendarEvent;
 };
 
@@ -772,8 +772,8 @@ export const createAutomation = async (
     id: automationId,
     ...data,
     runCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   } as Automation;
 };
 

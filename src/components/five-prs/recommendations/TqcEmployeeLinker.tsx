@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link2, Trash2, Search, UserPlus } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useRecommendationStore } from '@/stores/recommendationStore';
 import type { Employee } from '@/types';
 
@@ -24,7 +25,7 @@ export function TqcEmployeeLinker() {
     employees,
     createLink,
     deleteLink,
-  } = useRecommendationStore();
+  } = useRecommendationStore(useShallow((state) => ({ recommendations: state.recommendations, tqcLinks: state.tqcLinks, employees: state.employees, createLink: state.createLink, deleteLink: state.deleteLink })));
 
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [selectedTqcId, setSelectedTqcId] = useState<string | null>(null);

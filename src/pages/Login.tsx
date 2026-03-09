@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -18,7 +19,7 @@ export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, error, isLoading, initializeAuthListener } = useAuthStore();
+  const { login, isAuthenticated, error, isLoading, initializeAuthListener } = useAuthStore(useShallow((state) => ({ login: state.login, isAuthenticated: state.isAuthenticated, error: state.error, isLoading: state.isLoading, initializeAuthListener: state.initializeAuthListener })));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

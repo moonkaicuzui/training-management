@@ -5,6 +5,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 import type { RolePermissions } from '@/types/auth';
 
@@ -22,7 +23,7 @@ export function ProtectedRoute({
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, hasPermission, isLoading, user } = useAuthStore();
+  const { isAuthenticated, hasPermission, isLoading, user } = useAuthStore(useShallow((state) => ({ isAuthenticated: state.isAuthenticated, hasPermission: state.hasPermission, isLoading: state.isLoading, user: state.user })));
 
   // 로딩 중
   if (isLoading) {

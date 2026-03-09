@@ -16,6 +16,7 @@ import {
   query,
   where,
   orderBy,
+  serverTimestamp,
   Timestamp,
 } from '@/services/firebase';
 import { logger } from '@/utils/logger';
@@ -156,8 +157,8 @@ export async function createCAPA(input: CAPAInput): Promise<string> {
       team: input.team || [],
       relatedTrainingPrograms: input.relatedTrainingPrograms || [],
       createdBy: input.owner,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
     };
 
@@ -175,7 +176,7 @@ export async function updateCAPA(id: string, update: CAPAUpdate): Promise<void> 
     const docRef = doc(db, COLLECTION, id);
     await updateDoc(docRef, {
       ...update,
-      updatedAt: Timestamp.now(),
+      updatedAt: serverTimestamp(),
       dueDate: update.dueDate ? Timestamp.fromDate(update.dueDate) : undefined,
     });
     logger.log('[capaService] Updated CAPA:', id);
@@ -204,7 +205,7 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
     const now = Timestamp.now();
     const updateData: Record<string, unknown> = {
       status: stageUpdate.status,
-      updatedAt: now,
+      updatedAt: serverTimestamp(),
     };
 
     if (stageUpdate.investigation) {

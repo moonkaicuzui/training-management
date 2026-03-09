@@ -36,6 +36,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
@@ -67,8 +68,19 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 ~ 19:00
 
 export default function Schedule() {
   const { t } = useTranslation();
-  const { sessions, programs, loading, fetchSessions, fetchPrograms, createSession, cancelSession } = useTrainingStore();
-  const { addToast, language } = useUIStore();
+  const { sessions, programs, loading, fetchSessions, fetchPrograms, createSession, cancelSession } = useTrainingStore(useShallow((state) => ({
+    sessions: state.sessions,
+    programs: state.programs,
+    loading: state.loading,
+    fetchSessions: state.fetchSessions,
+    fetchPrograms: state.fetchPrograms,
+    createSession: state.createSession,
+    cancelSession: state.cancelSession,
+  })));
+  const { addToast, language } = useUIStore(useShallow((state) => ({
+    addToast: state.addToast,
+    language: state.language,
+  })));
 
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());

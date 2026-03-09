@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useRecommendationStore } from '@/stores/recommendationStore';
 import type { DefectTrainingMapping } from '@/types/recommendation';
 
@@ -42,7 +43,7 @@ const EMPTY_FORM: MappingFormData = {
 export function MappingManager() {
   const { t } = useTranslation();
   const { mappings, programs, createMapping, updateMapping, deleteMapping } =
-    useRecommendationStore();
+    useRecommendationStore(useShallow((state) => ({ mappings: state.mappings, programs: state.programs, createMapping: state.createMapping, updateMapping: state.updateMapping, deleteMapping: state.deleteMapping })));
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMapping, setEditingMapping] =

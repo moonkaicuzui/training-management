@@ -37,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
+import { useShallow } from 'zustand/react/shallow';
 import { CAPAAISuggestions } from '@/components/capa/CAPAAISuggestions';
 import { useCAPAStore } from '@/stores/capaStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -125,8 +126,14 @@ export default function CAPADetail() {
   const initializedRef = useRef(false);
   const { toast } = useToast();
 
-  const { currentCAPA, fetchCAPAById, updateCAPAStage, isLoading, error } = useCAPAStore();
-  const { user } = useAuthStore();
+  const { currentCAPA, fetchCAPAById, updateCAPAStage, isLoading, error } = useCAPAStore(useShallow((state) => ({
+    currentCAPA: state.currentCAPA,
+    fetchCAPAById: state.fetchCAPAById,
+    updateCAPAStage: state.updateCAPAStage,
+    isLoading: state.isLoading,
+    error: state.error,
+  })));
+  const user = useAuthStore((s) => s.user);
 
   // Dialog states
   const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);

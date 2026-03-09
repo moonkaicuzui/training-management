@@ -35,6 +35,7 @@ import {
   FolderOpen,
   Settings,
 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
 import type { TaskStatus, Task, Project } from '@/types/project';
@@ -70,7 +71,7 @@ export default function ProjectsDashboard() {
     currentUserMember,
     fetchMyTasks,
     selectProject,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({ members: state.members, projects: state.projects, tasks: state.tasks, error: state.error, fetchMembers: state.fetchMembers, fetchProjects: state.fetchProjects, fetchAllTasks: state.fetchAllTasks, createProject: state.createProject, isMembersLoading: state.isMembersLoading, isProjectsLoading: state.isProjectsLoading, isLoading: state.isLoading, subscribeMembersRealtime: state.subscribeMembersRealtime, subscribeProjectsRealtime: state.subscribeProjectsRealtime, linkCurrentUser: state.linkCurrentUser, currentUserMember: state.currentUserMember, fetchMyTasks: state.fetchMyTasks, selectProject: state.selectProject })));
 
   // Use ref to prevent double initialization (anti-pattern fix)
   const initializedRef = useRef(false);
@@ -98,7 +99,7 @@ export default function ProjectsDashboard() {
     }
   };
 
-  const { cleanup } = useProjectStore();
+  const cleanup = useProjectStore((s) => s.cleanup);
 
   useEffect(() => {
     if (!initializedRef.current) {

@@ -6,11 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useShallow } from 'zustand/react/shallow';
 import { useFivePrsStore } from '@/stores/fivePrsStore';
 
 export function MonthSelector() {
   const { t } = useTranslation();
-  const { months, selectedMonth, isLoadingMonths } = useFivePrsStore();
+  const { months, selectedMonth, isLoadingMonths } = useFivePrsStore(useShallow((state) => ({ months: state.months, selectedMonth: state.selectedMonth, isLoadingMonths: state.isLoadingMonths })));
   const fetchData = useFivePrsStore((s) => s.fetchData);
 
   const handleChange = (value: string) => {

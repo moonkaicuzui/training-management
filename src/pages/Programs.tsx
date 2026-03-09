@@ -46,6 +46,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
@@ -74,8 +75,18 @@ const emptyFormData = {
 
 export default function Programs() {
   const { t } = useTranslation();
-  const { programs, loading, fetchPrograms, createProgram, updateProgram, deleteProgram } = useTrainingStore();
-  const { addToast, language } = useUIStore();
+  const { programs, loading, fetchPrograms, createProgram, updateProgram, deleteProgram } = useTrainingStore(useShallow((state) => ({
+    programs: state.programs,
+    loading: state.loading,
+    fetchPrograms: state.fetchPrograms,
+    createProgram: state.createProgram,
+    updateProgram: state.updateProgram,
+    deleteProgram: state.deleteProgram,
+  })));
+  const { addToast, language } = useUIStore(useShallow((state) => ({
+    addToast: state.addToast,
+    language: state.language,
+  })));
   const { exporting, exportExcel, exportPDF } = useExport();
 
   const [searchQuery, setSearchQuery] = useState('');

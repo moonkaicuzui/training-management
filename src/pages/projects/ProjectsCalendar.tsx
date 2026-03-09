@@ -58,6 +58,7 @@ import {
   Trash2,
   Filter,
 } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -246,9 +247,9 @@ export default function ProjectsCalendar() {
     updateEvent,
     deleteEvent,
     isLoading,
-  } = useProjectStore();
-  const { sessions, fetchSessions } = useTrainingStore();
-  const { user } = useAuthStore();
+  } = useProjectStore(useShallow((state) => ({ events: state.events, tasks: state.tasks, categories: state.categories, error: state.error, fetchEvents: state.fetchEvents, fetchAllTasks: state.fetchAllTasks, fetchCategories: state.fetchCategories, createCategory: state.createCategory, createEvent: state.createEvent, updateEvent: state.updateEvent, deleteEvent: state.deleteEvent, isLoading: state.isLoading })));
+  const { sessions, fetchSessions } = useTrainingStore(useShallow((state) => ({ sessions: state.sessions, fetchSessions: state.fetchSessions })));
+  const user = useAuthStore((s) => s.user);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<View>('month');

@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAqlStore } from '@/stores/aqlStore';
@@ -28,7 +29,18 @@ export default function AqlDashboard() {
     fetchData,
     setSelectedMonth,
     clearError,
-  } = useAqlStore();
+  } = useAqlStore(useShallow((state) => ({
+    months: state.months,
+    selectedMonth: state.selectedMonth,
+    processedData: state.processedData,
+    isLoadingMonths: state.isLoadingMonths,
+    isLoadingData: state.isLoadingData,
+    error: state.error,
+    fetchMonths: state.fetchMonths,
+    fetchData: state.fetchData,
+    setSelectedMonth: state.setSelectedMonth,
+    clearError: state.clearError,
+  })));
 
   // Load months on mount (cache guard inside store prevents redundant calls)
   useEffect(() => {
