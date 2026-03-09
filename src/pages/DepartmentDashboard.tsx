@@ -1,20 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Users,
-  CheckCircle2,
-  TrendingUp,
-  AlertTriangle,
-  RefreshCcw,
-  Building2,
-} from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { AlertTriangle, Building2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -22,46 +8,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LazyBarChart } from '@/components/charts/LazyCharts';
 import { PageLoading } from '@/components/common/LoadingSpinner';
+import {
+  DepartmentKPICards,
+  DepartmentCharts,
+  EmployeeListTable,
+  RankedEmployeeTable,
+} from '@/components/department';
+import type { EmployeeStats } from '@/components/department';
 import * as api from '@/services/api';
 import type {
   Employee,
   TrainingProgram,
   TrainingResultRecord,
 } from '@/types';
-
-// ---------- Helpers ----------
-
-function getPassRateColor(rate: number): string {
-  if (rate >= 80) return 'text-emerald-600';
-  if (rate >= 60) return 'text-yellow-600';
-  return 'text-red-600';
-}
-
-function getPassRateBadge(rate: number): 'default' | 'secondary' | 'destructive' {
-  if (rate >= 80) return 'default';
-  if (rate >= 60) return 'secondary';
-  return 'destructive';
-}
-
-interface EmployeeStats {
-  employee: Employee;
-  completedCount: number;
-  passRate: number;
-  totalResults: number;
-  passResults: number;
-}
 
 // ---------- Component ----------
 
@@ -132,18 +93,15 @@ export default function DepartmentDashboard() {
       };
     }
 
-    // Completion rate: employees with at least one PASS result
     const empsWithPass = new Set(
       filteredResults.filter((r) => r.result === 'PASS').map((r) => r.employee_id)
     );
     const completionRate = (empsWithPass.size / totalEmps) * 100;
 
-    // Pass rate: pass results / total results
     const totalResults = filteredResults.length;
     const passResults = filteredResults.filter((r) => r.result === 'PASS').length;
     const passRate = totalResults > 0 ? (passResults / totalResults) * 100 : 0;
 
-    // Expiring certifications: employees with PASS results that expire within 30 days
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const programMap = new Map(programs.map((p) => [p.program_code, p]));
@@ -167,7 +125,6 @@ export default function DepartmentDashboard() {
         }
       });
 
-    // Retraining needed: employees with needs_retraining=true in their latest result
     const latestResultMap = new Map<string, TrainingResultRecord>();
     filteredResults.forEach((r) => {
       const key = `${r.employee_id}_${r.program_code}`;
@@ -198,7 +155,6 @@ export default function DepartmentDashboard() {
     const totalEmps = filteredEmployees.length;
     if (totalEmps === 0) return [];
 
-    // Group results by program
     const programResults = new Map<string, Set<string>>();
     filteredResults
       .filter((r) => r.result === 'PASS')
@@ -251,7 +207,7 @@ export default function DepartmentDashboard() {
     });
   }, [filteredResults]);
 
-  // ---------- Employee Stats Table ----------
+  // ---------- Employee Stats ----------
 
   const employeeStats: EmployeeStats[] = useMemo(() => {
     const resultsByEmployee = new Map<string, TrainingResultRecord[]>();
@@ -267,7 +223,6 @@ export default function DepartmentDashboard() {
       const totalResults = empResults.length;
       const passResults = empResults.filter((r) => r.result === 'PASS').length;
       const passRate = totalResults > 0 ? (passResults / totalResults) * 100 : 0;
-      // Count unique programs with PASS
       const completedPrograms = new Set(
         empResults.filter((r) => r.result === 'PASS').map((r) => r.program_code)
       );
@@ -281,7 +236,6 @@ export default function DepartmentDashboard() {
     });
   }, [filteredEmployees, filteredResults]);
 
-  // Top performers and at-risk
   const topPerformers = useMemo(
     () =>
       [...employeeStats]
@@ -348,126 +302,13 @@ export default function DepartmentDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('departmentDashboard.totalEmployees')}
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.totalEmployees}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('departmentDashboard.completionRate')}
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.completionRate}%</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('departmentDashboard.passRate')}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.passRate}%</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('departmentDashboard.expiringCerts')}
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.expiringCerts}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('departmentDashboard.retrainingNeeded')}
-            </CardTitle>
-            <RefreshCcw className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.retrainingNeeded}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <DepartmentKPICards kpis={kpis} />
 
       {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Completion by Program */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('departmentDashboard.completionByProgram')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {completionByProgram.length > 0 ? (
-              <LazyBarChart
-                data={completionByProgram}
-                height={300}
-                bars={[
-                  {
-                    dataKey: 'completionRate',
-                    name: t('departmentDashboard.completionRate'),
-                    fill: '#3b82f6',
-                    radius: [4, 4, 0, 0],
-                  },
-                ]}
-                xAxisKey="name"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                {t('departmentDashboard.noData')}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Pass Rate Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('departmentDashboard.passRateTrend')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {passRateTrend.some((m) => m.total > 0) ? (
-              <LazyBarChart
-                data={passRateTrend}
-                height={300}
-                bars={[
-                  {
-                    dataKey: 'passRate',
-                    name: t('departmentDashboard.passRate'),
-                    fill: '#10b981',
-                    radius: [4, 4, 0, 0],
-                  },
-                ]}
-                xAxisKey="name"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                {t('departmentDashboard.noData')}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <DepartmentCharts
+        completionByProgram={completionByProgram}
+        passRateTrend={passRateTrend}
+      />
 
       {/* Tabs: Employee List / Top Performers / At-Risk */}
       <Tabs defaultValue="employees" className="space-y-4">
@@ -483,182 +324,27 @@ export default function DepartmentDashboard() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Employee List */}
         <TabsContent value="employees">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('departmentDashboard.employeeList')}</CardTitle>
-              <CardDescription>
-                {filteredEmployees.length} {t('departmentDashboard.totalEmployees').toLowerCase()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('employee.name')}</TableHead>
-                      <TableHead>{t('employee.position')}</TableHead>
-                      <TableHead>{t('employee.building')}</TableHead>
-                      <TableHead>{t('employee.line')}</TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.completedTrainings')}
-                      </TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.passRate')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employeeStats.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                          {t('departmentDashboard.noData')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      employeeStats.map((stat) => (
-                        <TableRow key={stat.employee.employee_id}>
-                          <TableCell className="font-medium">
-                            {stat.employee.employee_name}
-                          </TableCell>
-                          <TableCell>
-                            {t(`position.${stat.employee.position}`, stat.employee.position)}
-                          </TableCell>
-                          <TableCell>
-                            {t(`building.${stat.employee.building}`, stat.employee.building)}
-                          </TableCell>
-                          <TableCell>{stat.employee.line}</TableCell>
-                          <TableCell className="text-center">{stat.completedCount}</TableCell>
-                          <TableCell className="text-center">
-                            {stat.totalResults > 0 ? (
-                              <Badge variant={getPassRateBadge(stat.passRate)}>
-                                <span className={getPassRateColor(stat.passRate)}>
-                                  {stat.passRate}%
-                                </span>
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <EmployeeListTable
+            employeeStats={employeeStats}
+            totalEmployees={filteredEmployees.length}
+          />
         </TabsContent>
 
-        {/* Top Performers */}
         <TabsContent value="top">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('departmentDashboard.topPerformers')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>#</TableHead>
-                      <TableHead>{t('employee.name')}</TableHead>
-                      <TableHead>{t('employee.position')}</TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.completedTrainings')}
-                      </TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.passRate')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topPerformers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          {t('departmentDashboard.noData')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      topPerformers.map((stat, idx) => (
-                        <TableRow key={stat.employee.employee_id}>
-                          <TableCell>{idx + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            {stat.employee.employee_name}
-                          </TableCell>
-                          <TableCell>
-                            {t(`position.${stat.employee.position}`, stat.employee.position)}
-                          </TableCell>
-                          <TableCell className="text-center">{stat.completedCount}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="default">
-                              <span className="text-emerald-600">{stat.passRate}%</span>
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <RankedEmployeeTable
+            title={t('departmentDashboard.topPerformers')}
+            employees={topPerformers}
+            variant="top"
+          />
         </TabsContent>
 
-        {/* At-Risk Employees */}
         <TabsContent value="risk">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('departmentDashboard.atRiskEmployees')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>#</TableHead>
-                      <TableHead>{t('employee.name')}</TableHead>
-                      <TableHead>{t('employee.position')}</TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.completedTrainings')}
-                      </TableHead>
-                      <TableHead className="text-center">
-                        {t('departmentDashboard.passRate')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {atRiskEmployees.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          {t('departmentDashboard.noData')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      atRiskEmployees.map((stat, idx) => (
-                        <TableRow key={stat.employee.employee_id}>
-                          <TableCell>{idx + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            {stat.employee.employee_name}
-                          </TableCell>
-                          <TableCell>
-                            {t(`position.${stat.employee.position}`, stat.employee.position)}
-                          </TableCell>
-                          <TableCell className="text-center">{stat.completedCount}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="destructive">
-                              <span className="text-red-600">{stat.passRate}%</span>
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <RankedEmployeeTable
+            title={t('departmentDashboard.atRiskEmployees')}
+            employees={atRiskEmployees}
+            variant="risk"
+          />
         </TabsContent>
       </Tabs>
     </div>
