@@ -62,6 +62,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Trainer, TrainerType, TrainingSession, TrainingResultRecord } from '@/types';
 import TrainerAnalytics from '@/components/training/TrainerAnalytics';
+import { EmptyState } from '@/components/common/EmptyState';
 
 // 확장된 타입 (통계 포함)
 interface TrainerWithStats extends Trainer {
@@ -502,9 +503,14 @@ export default function TrainersPage() {
                 <TableBody>
                   {filteredTrainers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                        <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        {t('trainers.emptyState')}
+                      <TableCell colSpan={9}>
+                        <EmptyState
+                          icon={GraduationCap}
+                          title={t('trainers.emptyTitle')}
+                          description={t('trainers.emptyDescription')}
+                          actionLabel={t('trainers.addTrainer')}
+                          onAction={handleAdd}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (

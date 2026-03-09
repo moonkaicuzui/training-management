@@ -11,6 +11,7 @@ import {
   Download,
   CheckCircle2,
   Circle,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +53,7 @@ import {
 import { NEW_TQC_TRAINERS } from '@/types/newTqc';
 import type { NewTQCTrainee, NewTQCTraineeFilters as FiltersType, NewTQCTraineeInput } from '@/types/newTqc';
 import { BUILDINGS, WORKING_AREAS } from '@/data/constants';
+import { EmptyState } from '@/components/common/EmptyState';
 import { format } from 'date-fns';
 
 export default function NewTQCTrainees() {
@@ -236,7 +238,7 @@ export default function NewTQCTrainees() {
 
           {/* Trainees Table */}
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -266,8 +268,14 @@ export default function NewTQCTrainees() {
                     </TableRow>
                   ) : filteredTrainees.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                        {t('common.noData')}
+                      <TableCell colSpan={12}>
+                        <EmptyState
+                          icon={Users}
+                          title={t('newTQCModule.trainees.emptyTitle')}
+                          description={t('newTQCModule.trainees.emptyDescription')}
+                          actionLabel={t('newTQCModule.trainees.register')}
+                          onAction={() => { setPrefillData(undefined); setFormDialogOpen(true); }}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -375,7 +383,7 @@ export default function NewTQCTrainees() {
         {/* HR New Employees Tab */}
         <TabsContent value="hr" className="space-y-6">
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

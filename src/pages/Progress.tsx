@@ -230,7 +230,7 @@ export default function Progress() {
       </Card>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-status-pass">{passCount}</div>
@@ -266,9 +266,9 @@ export default function Progress() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Select value={buildingFilter} onValueChange={setBuildingFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder={t('employee.building')} />
               </SelectTrigger>
               <SelectContent>
@@ -282,7 +282,7 @@ export default function Progress() {
             </Select>
 
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder={t('employee.department')} />
               </SelectTrigger>
               <SelectContent>
@@ -296,7 +296,7 @@ export default function Progress() {
             </Select>
 
             <Select value={positionFilter} onValueChange={setPositionFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder={t('employee.position')} />
               </SelectTrigger>
               <SelectContent>
@@ -310,7 +310,7 @@ export default function Progress() {
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder={t('program.category')} />
               </SelectTrigger>
               <SelectContent>

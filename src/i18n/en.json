@@ -439,7 +439,9 @@
     "syncHoursAgo": "{{count}}h ago",
     "syncDaysAgo": "{{count}}d ago",
     "syncTooltipTitle": "Google Sheets Sync",
-    "syncLastSync": "Last sync"
+    "syncLastSync": "Last sync",
+    "emptyTitle": "No employees registered",
+    "emptyDescription": "Add employees or import from a CSV file"
   },
   "program": {
     "title": "Training Programs",
@@ -465,7 +467,9 @@
     "editDescription": "Edit training program details",
     "tags": "Tags",
     "tagsPlaceholder": "Enter tags separated by commas",
-    "confirmDelete": "Are you sure you want to delete this program? Training history will be preserved."
+    "confirmDelete": "Are you sure you want to delete this program? Training history will be preserved.",
+    "emptyTitle": "No programs registered",
+    "emptyDescription": "Add a training program to get started"
   },
   "training": {
     "date": "Training Date",
@@ -582,7 +586,9 @@
     "memoLabel": "Notes",
     "requiredFieldsError": "Please fill in the required fields",
     "cancelSuccess": "Session has been cancelled",
-    "cancelError": "Failed to cancel session"
+    "cancelError": "Failed to cancel session",
+    "emptyTitle": "No scheduled sessions",
+    "emptyDescription": "Add a new training session to manage your schedule"
   },
   "progress": {
     "title": "Training Progress",
@@ -1012,6 +1018,8 @@
     "sessionUnit": "sessions",
     "rating": "Rating",
     "emptyState": "No trainers registered",
+    "emptyTitle": "No trainers registered",
+    "emptyDescription": "Register a new trainer to manage training staff",
     "trainingHistory": "Training History",
     "register": "Register",
     "trainerList": "Trainer List",
@@ -1223,6 +1231,10 @@
     "colGrade": "Grade",
     "colActions": "Actions",
     "emptyState": "No certificates available to issue",
+    "emptyTitle": "No certificates available to issue",
+    "emptyDescription": "Certificates will appear here when employees complete training",
+    "historyEmptyTitle": "No certificates issued yet",
+    "historyEmptyDescription": "Issued certificates will appear here",
     "issueCertificate": "Issue Certificate",
     "previewTitle": "Certificate Preview",
     "print": "Print",
@@ -1797,7 +1809,9 @@
       "progress": "Progress",
       "weekUnit": "W",
       "processResignation": "Process Resignation",
-      "loadErrorDesc": "Failed to load trainee list."
+      "loadErrorDesc": "Failed to load trainee list.",
+      "emptyTitle": "No trainees registered",
+      "emptyDescription": "Register new trainees to start TQC training"
     },
     "meetings": {
       "title": "Meeting Management",
@@ -1811,6 +1825,8 @@
       "overdueDesc": "Meetings past their scheduled date that are not completed.",
       "noScheduled": "No scheduled meetings.",
       "noCompleted": "No completed meetings.",
+      "emptyTitle": "No meetings scheduled",
+      "emptyDescription": "Meeting schedules are auto-generated for trainees",
       "meetingCompleted": "Meeting Completed",
       "meetingCompletedDesc": "The meeting has been marked as completed.",
       "loadErrorDesc": "Failed to load meeting data.",
@@ -2462,6 +2478,8 @@
       "projectList": "Project List",
       "projectListDesc": "View all project status",
       "noProjects": "No projects registered",
+      "emptyTitle": "No projects registered",
+      "emptyDescription": "Create a new project to manage team tasks",
       "createdAt": "Created",
       "memberCount": "Members",
       "completionDetail": "Completion Details",
@@ -3362,6 +3380,8 @@
       "dateTo": "Date To",
       "clearFilters": "Clear Filters",
       "noData": "No inspection history found",
+      "emptyTitle": "No inspection history",
+      "emptyDescription": "Metal detector inspection results will appear here",
       "detail": "Inspection Detail"
     },
     "report": {

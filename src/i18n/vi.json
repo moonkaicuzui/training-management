@@ -439,7 +439,9 @@
     "syncHoursAgo": "{{count}} giờ trước",
     "syncDaysAgo": "{{count}} ngày trước",
     "syncTooltipTitle": "Đồng bộ Google Sheets",
-    "syncLastSync": "Lần đồng bộ cuối"
+    "syncLastSync": "Lần đồng bộ cuối",
+    "emptyTitle": "Chưa có nhân viên nào",
+    "emptyDescription": "Thêm nhân viên hoặc nhập từ file CSV"
   },
   "program": {
     "title": "Chương trình đào tạo",
@@ -465,7 +467,9 @@
     "editDescription": "Chỉnh sửa chi tiết chương trình đào tạo",
     "tags": "Thẻ",
     "tagsPlaceholder": "Nhập thẻ cách nhau bằng dấu phẩy",
-    "confirmDelete": "Bạn có chắc muốn xóa chương trình này? Dữ liệu lịch sử sẽ được giữ lại."
+    "confirmDelete": "Bạn có chắc muốn xóa chương trình này? Dữ liệu lịch sử sẽ được giữ lại.",
+    "emptyTitle": "Chưa có chương trình nào",
+    "emptyDescription": "Thêm chương trình đào tạo để bắt đầu"
   },
   "training": {
     "date": "Ngày đào tạo",
@@ -582,7 +586,9 @@
     "memoLabel": "Ghi chú",
     "requiredFieldsError": "Vui lòng điền đầy đủ thông tin bắt buộc",
     "cancelSuccess": "Đã hủy buổi đào tạo",
-    "cancelError": "Hủy buổi đào tạo thất bại"
+    "cancelError": "Hủy buổi đào tạo thất bại",
+    "emptyTitle": "Chưa có buổi đào tạo nào",
+    "emptyDescription": "Thêm buổi đào tạo mới để quản lý lịch trình"
   },
   "progress": {
     "title": "Tiến độ đào tạo",
@@ -1012,6 +1018,8 @@
     "sessionUnit": "buổi",
     "rating": "Đánh giá",
     "emptyState": "Chưa có giảng viên nào",
+    "emptyTitle": "Chưa có giảng viên nào",
+    "emptyDescription": "Đăng ký giảng viên mới để quản lý nhân sự đào tạo",
     "trainingHistory": "Lịch sử đào tạo",
     "register": "Đăng ký",
     "trainerList": "Danh sách giảng viên",
@@ -1223,6 +1231,10 @@
     "colGrade": "Xếp loại",
     "colActions": "Thao tác",
     "emptyState": "Không có chứng chỉ nào để cấp",
+    "emptyTitle": "Không có chứng chỉ nào để cấp",
+    "emptyDescription": "Chứng chỉ sẽ hiển thị khi nhân viên hoàn thành đào tạo",
+    "historyEmptyTitle": "Chưa có chứng chỉ nào được cấp",
+    "historyEmptyDescription": "Lịch sử cấp chứng chỉ sẽ hiển thị tại đây",
     "issueCertificate": "Cấp chứng chỉ",
     "previewTitle": "Xem trước chứng chỉ",
     "print": "In",
@@ -1797,7 +1809,9 @@
       "progress": "Tiến độ",
       "weekUnit": "T",
       "processResignation": "Xử lý nghỉ việc",
-      "loadErrorDesc": "Không thể tải danh sách học viên."
+      "loadErrorDesc": "Không thể tải danh sách học viên.",
+      "emptyTitle": "Chưa có học viên nào",
+      "emptyDescription": "Đăng ký học viên mới để bắt đầu đào tạo TQC"
     },
     "meetings": {
       "title": "Quản lý cuộc họp",
@@ -1818,7 +1832,9 @@
       "weeklySchedule": "Lịch tuần",
       "oneWeek": "1 tuần",
       "oneMonth": "1 tháng",
-      "threeMonths": "3 tháng"
+      "threeMonths": "3 tháng",
+      "emptyTitle": "Chưa có lịch họp nào",
+      "emptyDescription": "Lịch phỏng vấn học viên sẽ được tạo tự động"
     },
     "building": "Tòa nhà",
     "workingArea": "Khu vực làm việc",
@@ -2462,6 +2478,8 @@
       "projectList": "Danh sách dự án",
       "projectListDesc": "Xem tình trạng tất cả dự án",
       "noProjects": "Không có dự án",
+      "emptyTitle": "Chưa có dự án nào",
+      "emptyDescription": "Tạo dự án mới để quản lý công việc nhóm",
       "createdAt": "Ngày tạo",
       "memberCount": "Thành viên",
       "completionDetail": "Chi tiết hoàn thành",
@@ -3362,6 +3380,8 @@
       "dateTo": "Đến ngày",
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có lịch sử kiểm tra",
+      "emptyTitle": "Chưa có lịch sử kiểm tra",
+      "emptyDescription": "Kết quả kiểm tra máy dò kim loại sẽ hiển thị tại đây",
       "detail": "Chi tiết kiểm tra"
     },
     "report": {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Plus, Eye, Upload, AlertTriangle, CheckCircle2, Loader2, Globe } from 'lucide-react';
+import { Search, Plus, Eye, Upload, AlertTriangle, CheckCircle2, Loader2, Globe, Users } from 'lucide-react';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ import * as api from '@/services/api';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { VirtualTable, type VirtualTableColumn } from '@/components/common/VirtualTable';
+import { EmptyState } from '@/components/common/EmptyState';
 import { departments, positions, buildings } from '@/data/constants';
 import { format } from 'date-fns';
 import type { Employee, Department, Position, Building, EmployeeStatus } from '@/types';
@@ -287,7 +288,7 @@ export default function Employees() {
             <EmployeeSyncStatus />
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ExportDropdown
             onExportExcel={() =>
               exportExcel(employees as unknown as Record<string, unknown>[], {
@@ -394,13 +395,21 @@ export default function Employees() {
           <CardTitle>{t('employee.list')}</CardTitle>
           <CardDescription>{t('employee.count', { count: employees.length })}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <VirtualTable
             data={employees}
             columns={columns}
             rowKey={(employee) => employee.employee_id}
             maxHeight={600}
-            emptyMessage={t('common.noData')}
+            emptyMessage={
+              <EmptyState
+                icon={Users}
+                title={t('employee.emptyTitle')}
+                description={t('employee.emptyDescription')}
+                actionLabel={t('employee.addEmployee')}
+                onAction={() => setCreateDialogOpen(true)}
+              />
+            }
             onRowClick={(employee) => navigate(`/employees/${employee.employee_id}`)}
             virtualizationThreshold={50}
           />

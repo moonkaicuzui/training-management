@@ -4,6 +4,11 @@
 // ============================================================
 
 import type { Grade } from '@/types';
+import {
+  calculateGrade as _calculateGrade,
+  calculateResult as _calculateResult,
+  programThresholds,
+} from '@/utils/gradeCalculator';
 
 // ========== Error Classes ==========
 
@@ -185,6 +190,8 @@ export function invalidateAllCache(): void {
 }
 
 // ========== Grade Calculation ==========
+// Delegated to unified utility: src/utils/gradeCalculator.ts
+// These wrappers maintain backward compatibility for existing callers.
 
 export function calculateGrade(
   score: number,
@@ -192,16 +199,12 @@ export function calculateGrade(
   gradeA: number,
   gradeB: number
 ): Grade {
-  if (score >= gradeAA) return 'AA';
-  if (score >= gradeA) return 'A';
-  if (score >= gradeB) return 'B';
-  return 'C';
+  return _calculateGrade(score, programThresholds(gradeAA, gradeA, gradeB));
 }
 
 export function calculateResult(
   score: number | null,
   passingScore: number
 ): 'PASS' | 'FAIL' {
-  if (score === null) return 'FAIL';
-  return score >= passingScore ? 'PASS' : 'FAIL';
+  return _calculateResult(score, passingScore);
 }

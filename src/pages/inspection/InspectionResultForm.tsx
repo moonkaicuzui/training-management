@@ -24,6 +24,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { getEmployees } from '@/services/api';
 import type { Employee } from '@/types';
 import type { InspectionPairResult, PairJudgment } from '@/types/inspection';
+import { calculateInspectionGrade } from '@/utils/gradeCalculator';
 
 const TOTAL_PAIRS = 20;
 const CARTON_COUNT = 2;
@@ -126,7 +127,7 @@ export default function InspectionResultForm() {
   const matchedCount = useMemo(() => pairs.filter((p) => p.is_match).length, [pairs]);
   const matchRate = Math.round((matchedCount / TOTAL_PAIRS) * 100);
   const result = matchRate >= 80 ? 'PASS' : 'FAIL';
-  const grade = matchRate >= 100 ? 'AA' : matchRate >= 95 ? 'A' : matchRate >= 85 ? 'B' : 'C';
+  const grade = calculateInspectionGrade(matchRate);
 
   const handlePairChange = (pairNumber: number, field: 'trainee_judgment' | 'inspector_judgment', value: PairJudgment) => {
     setPairs((prev) =>

@@ -439,7 +439,9 @@
     "syncHoursAgo": "{{count}}시간 전",
     "syncDaysAgo": "{{count}}일 전",
     "syncTooltipTitle": "Google Sheets 동기화",
-    "syncLastSync": "마지막 동기화"
+    "syncLastSync": "마지막 동기화",
+    "emptyTitle": "등록된 직원이 없습니다",
+    "emptyDescription": "직원을 추가하거나 CSV 파일을 가져오세요"
   },
   "program": {
     "title": "교육 프로그램",
@@ -465,7 +467,9 @@
     "editDescription": "교육 프로그램 상세 편집",
     "tags": "태그",
     "tagsPlaceholder": "쉼표로 구분하여 태그를 입력하세요",
-    "confirmDelete": "이 프로그램을 삭제하시겠습니까? 과거 교육 이력은 유지됩니다."
+    "confirmDelete": "이 프로그램을 삭제하시겠습니까? 과거 교육 이력은 유지됩니다.",
+    "emptyTitle": "등록된 프로그램이 없습니다",
+    "emptyDescription": "교육 프로그램을 추가하여 직원 교육을 시작하세요"
   },
   "training": {
     "date": "교육일",
@@ -582,7 +586,9 @@
     "memoLabel": "메모",
     "requiredFieldsError": "필수 정보를 입력해주세요",
     "cancelSuccess": "교육이 취소되었습니다",
-    "cancelError": "교육 취소에 실패했습니다"
+    "cancelError": "교육 취소에 실패했습니다",
+    "emptyTitle": "예정된 교육 일정이 없습니다",
+    "emptyDescription": "새 교육 세션을 추가하여 일정을 관리하세요"
   },
   "progress": {
     "title": "교육 진도 현황",
@@ -1012,6 +1018,8 @@
     "sessionUnit": "회",
     "rating": "평점",
     "emptyState": "등록된 강사가 없습니다",
+    "emptyTitle": "등록된 강사가 없습니다",
+    "emptyDescription": "신규 강사를 등록하여 교육 인력을 관리하세요",
     "trainingHistory": "교육 이력",
     "register": "등록",
     "trainerList": "강사 목록",
@@ -1223,6 +1231,10 @@
     "colGrade": "등급",
     "colActions": "액션",
     "emptyState": "발급 가능한 이수증이 없습니다",
+    "emptyTitle": "발급 가능한 이수증이 없습니다",
+    "emptyDescription": "교육을 이수한 직원이 있으면 여기에 표시됩니다",
+    "historyEmptyTitle": "발급된 이수증이 없습니다",
+    "historyEmptyDescription": "이수증을 발급하면 여기에서 이력을 확인할 수 있습니다",
     "issueCertificate": "이수증 발급",
     "previewTitle": "교육 이수증 미리보기",
     "print": "인쇄",
@@ -1797,7 +1809,9 @@
       "progress": "진행률",
       "weekUnit": "주차",
       "processResignation": "퇴사 처리",
-      "loadErrorDesc": "교육생 목록을 불러오는데 실패했습니다."
+      "loadErrorDesc": "교육생 목록을 불러오는데 실패했습니다.",
+      "emptyTitle": "등록된 교육생이 없습니다",
+      "emptyDescription": "신입 교육생을 등록하여 TQC 교육을 시작하세요"
     },
     "meetings": {
       "title": "미팅 관리",
@@ -1811,6 +1825,8 @@
       "overdueDesc": "예정일이 지났으나 완료되지 않은 미팅입니다.",
       "noScheduled": "예정된 미팅이 없습니다.",
       "noCompleted": "완료된 미팅이 없습니다.",
+      "emptyTitle": "미팅 일정이 없습니다",
+      "emptyDescription": "교육생의 면담 일정이 자동으로 생성됩니다",
       "meetingCompleted": "미팅 완료",
       "meetingCompletedDesc": "미팅이 완료 처리되었습니다.",
       "loadErrorDesc": "미팅 데이터를 불러오는데 실패했습니다.",
@@ -2462,6 +2478,8 @@
       "projectList": "프로젝트 목록",
       "projectListDesc": "전체 프로젝트 현황을 확인하세요",
       "noProjects": "등록된 프로젝트가 없습니다",
+      "emptyTitle": "등록된 프로젝트가 없습니다",
+      "emptyDescription": "새 프로젝트를 생성하여 팀 과제를 관리하세요",
       "createdAt": "생성일",
       "memberCount": "팀원",
       "completionDetail": "완료 현황 상세",
@@ -3362,6 +3380,8 @@
       "dateTo": "종료일",
       "clearFilters": "필터 초기화",
       "noData": "점검 이력이 없습니다",
+      "emptyTitle": "점검 이력이 없습니다",
+      "emptyDescription": "금속 탐지기 점검 결과를 입력하면 여기에 표시됩니다",
       "detail": "점검 상세"
     },
     "report": {

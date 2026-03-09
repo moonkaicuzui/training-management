@@ -52,10 +52,22 @@ service cloud.firestore {
       return value in allowedValues;
     }
 
-    // 쓰기 속도 제한: 같은 문서에 1초 이내 연속 update 방지
+    // 쓰기 속도 제한: 같은 문서에 1초 이내 연속 update 방지 (기본)
     function isNotTooFrequent() {
       return !('updated_at' in resource.data) ||
         request.time > resource.data.updated_at + duration.value(1, 's');
+    }
+
+    // 쓰기 속도 제한: 2초 간격 (빈번한 쓰기 컬렉션용)
+    function isNotTooFrequent2s() {
+      return !('updated_at' in resource.data) ||
+        request.time > resource.data.updated_at + duration.value(2, 's');
+    }
+
+    // 쓰기 속도 제한: 3초 간격 (신중한 입력이 필요한 컬렉션용)
+    function isNotTooFrequent3s() {
+      return !('updated_at' in resource.data) ||
+        request.time > resource.data.updated_at + duration.value(3, 's');
     }
 
     // ========== 직원 ==========
@@ -65,7 +77,7 @@ service cloud.firestore {
         && isValidString(request.resource.data.name)
         && isValidString(request.resource.data.department)
         && isValidString(request.resource.data.employee_id);
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s()
         && isValidString(request.resource.data.name)
         && isValidString(request.resource.data.department)
         && isValidString(request.resource.data.employee_id);
@@ -76,7 +88,7 @@ service cloud.firestore {
     match /training_programs/{programId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
@@ -84,7 +96,7 @@ service cloud.firestore {
     match /training_sessions/{sessionId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
@@ -97,7 +109,7 @@ service cloud.firestore {
         && isValidScore(request.resource.data.score)
         && isOneOf(request.resource.data.result, ['PASS', 'FAIL'])
         && isOneOf(request.resource.data.grade, ['AA', 'A', 'B', 'C']);
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent3s()
         && isValidString(request.resource.data.employee_id)
         && isValidString(request.resource.data.program_code)
         && isValidScore(request.resource.data.score)
@@ -178,7 +190,7 @@ service cloud.firestore {
     match /tqc_trainees/{traineeId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
@@ -197,14 +209,14 @@ service cloud.firestore {
     match /tqc_meetings/{meetingId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
     match /tqc_resignations/{resignationId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if false;  // 퇴사 기록은 삭제 불가
     }
 
@@ -224,14 +236,14 @@ service cloud.firestore {
     match /project_tasks/{taskId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
     match /project_messages/{messageId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAuthenticated() && hasAllowedDomain() &&
         (resource.data.sender_id == request.auth.uid || isAdmin());
     }
@@ -308,7 +320,7 @@ service cloud.firestore {
         && isOneOf(request.resource.data.type, ['corrective', 'preventive'])
         && isOneOf(request.resource.data.severity, ['critical', 'major', 'minor'])
         && isOneOf(request.resource.data.status, ['discovery', 'investigation', 'action', 'verification', 'closed', 'rejected']);
-      allow update: if isAuthenticated() && hasAllowedDomain()
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s()
         && isValidString(request.resource.data.title)
         && isOneOf(request.resource.data.type, ['corrective', 'preventive'])
         && isOneOf(request.resource.data.severity, ['critical', 'major', 'minor'])
@@ -334,7 +346,7 @@ service cloud.firestore {
     match /certificates/{certificateId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if false;  // 이수증은 삭제 불가 - 취소(revoke)만 가능
     }
 
@@ -441,7 +453,7 @@ service cloud.firestore {
     match /capa_root_cause_kb/{kbId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent2s();
       allow delete: if isAdmin();
     }
 
@@ -466,7 +478,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && hasAllowedDomain()
         && isValidString(request.resource.data.employee_id)
         && isValidScore(request.resource.data.match_rate);
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent3s()
         && isValidString(request.resource.data.employee_id)
         && isValidScore(request.resource.data.match_rate);
       allow delete: if false;  // 검사 결과는 삭제 불가

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ExportDropdown } from '@/components/common/ExportDropdown';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useExport } from '@/hooks/useExport';
 import {
   Card,
@@ -329,25 +330,32 @@ export default function Programs() {
           <CardDescription>{t('program.count', { count: programs.length })}</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">{t('program.code')}</TableHead>
                 <TableHead>{t('program.name')}</TableHead>
                 <TableHead>{t('program.category')}</TableHead>
-                <TableHead>{t('program.targetPositions')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('program.targetPositions')}</TableHead>
                 <TableHead className="text-center">{t('program.passingScore')}</TableHead>
-                <TableHead className="text-center">{t('program.duration')}</TableHead>
-                <TableHead className="text-center">{t('program.validity')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">{t('program.duration')}</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">{t('program.validity')}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t('common.status')}</TableHead>
                 <TableHead className="w-[80px]">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {programs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    {t('common.noData')}
+                  <TableCell colSpan={9}>
+                    <EmptyState
+                      icon={BookOpen}
+                      title={t('program.emptyTitle')}
+                      description={t('program.emptyDescription')}
+                      actionLabel={t('program.addProgram')}
+                      onAction={() => setFormDialogOpen(true)}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -373,7 +381,7 @@ export default function Programs() {
                         {t(`category.${program.category}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {program.target_positions.slice(0, 2).map((pos) => (
                           <Badge key={pos} variant="outline" className="text-xs">
@@ -390,15 +398,15 @@ export default function Programs() {
                     <TableCell className="text-center font-medium">
                       {program.passing_score}{t('program.scoreUnit')}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center hidden sm:table-cell">
                       {program.duration_hours}{t('program.hours')}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center hidden sm:table-cell">
                       {program.validity_months
                         ? `${program.validity_months}${t('program.months')}`
                         : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={program.is_active ? 'success' : 'inactive'}>
                         {program.is_active ? t('common.active') : t('common.inactive')}
                       </Badge>
@@ -438,6 +446,7 @@ export default function Programs() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -473,7 +482,7 @@ export default function Programs() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('program.code')} *</Label>
                 <Input
@@ -511,7 +520,7 @@ export default function Programs() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('program.name')} (VN)</Label>
                 <Input
@@ -528,7 +537,7 @@ export default function Programs() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('trainingLevel.title')}</Label>
                 <Select
@@ -591,7 +600,7 @@ export default function Programs() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>{t('program.passingScore')}</Label>
                 <Input

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Save, Pencil, History, AlertTriangle } from 'lucide-react';
+import { Search, Save, Pencil, History, AlertTriangle, Loader2 } from 'lucide-react';
 import { ExportDropdown } from '@/components/common/ExportDropdown';
 import { useExport } from '@/hooks/useExport';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format, differenceInMonths } from 'date-fns';
 import type { ResultInput, TrainingResult, Employee } from '@/types';
+import { calculateGrade, programThresholds } from '@/utils/gradeCalculator';
 
 interface ResultEntry {
   employee_id: string;
@@ -99,8 +101,13 @@ export default function Results() {
   const [duplicates, setDuplicates] = useState<DuplicateInfo[]>([]);
   const [pendingResults, setPendingResults] = useState<ResultInput[]>([]);
 
+  // Submission guards
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+
   // For viewing recent results
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [resultFilter, setResultFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -136,11 +143,11 @@ export default function Results() {
     }
   }, [selectedSession, session, employees]);
 
-  // Filter recent results
+  // Filter recent results (debounced search)
   const filteredResults = results.filter(r => {
-    const matchesSearch = searchQuery === '' ||
-      r.employee_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.program_code.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = debouncedSearchQuery === '' ||
+      r.employee_id.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      r.program_code.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
     const matchesResult = resultFilter === 'all' || r.result === resultFilter;
     return matchesSearch && matchesResult;
   });
@@ -202,7 +209,7 @@ export default function Results() {
   };
 
   const handleSaveResults = async () => {
-    if (!session || !program) return;
+    if (!session || !program || isSubmitting) return;
 
     const resultsToSave: ResultInput[] = resultEntries.map((entry) => ({
       session_id: session.session_id,
@@ -227,7 +234,12 @@ export default function Results() {
     }
 
     // No duplicates, save directly
-    await saveResults(resultsToSave);
+    setIsSubmitting(true);
+    try {
+      await saveResults(resultsToSave);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const saveResults = async (resultsToSave: ResultInput[]) => {
@@ -252,6 +264,8 @@ export default function Results() {
   };
 
   const handleConfirmWithDuplicates = async () => {
+    if (isSubmitting) return;
+
     // Filter out duplicates and save only non-duplicate results
     const nonDuplicateResults = pendingResults.filter(
       (r) => !duplicates.some((d) => d.employee_id === r.employee_id)
@@ -267,12 +281,17 @@ export default function Results() {
       return;
     }
 
-    await saveResults(nonDuplicateResults);
-    addToast({
-      type: 'info',
-      title: t('results.savedExcludingDuplicates'),
-      description: t('results.duplicatesExcluded', { count: duplicates.length }),
-    });
+    setIsSubmitting(true);
+    try {
+      await saveResults(nonDuplicateResults);
+      addToast({
+        type: 'info',
+        title: t('results.savedExcludingDuplicates'),
+        description: t('results.duplicatesExcluded', { count: duplicates.length }),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditResult = (result: typeof results[0]) => {
@@ -287,14 +306,17 @@ export default function Results() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingResult || !editingResult.editReason) {
-      addToast({
-        type: 'error',
-        title: t('messages.editReasonRequired'),
-      });
+    if (!editingResult || !editingResult.editReason || isEditSubmitting) {
+      if (!editingResult?.editReason) {
+        addToast({
+          type: 'error',
+          title: t('messages.editReasonRequired'),
+        });
+      }
       return;
     }
 
+    setIsEditSubmitting(true);
     try {
       await updateResult(editingResult.result_id, {
         score: editingResult.score,
@@ -314,16 +336,15 @@ export default function Results() {
         type: 'error',
         title: t('messages.saveError'),
       });
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
   // Calculate grade based on score and program thresholds
   const getGrade = (score: number | null, prog: typeof program) => {
     if (!score || !prog) return null;
-    if (score >= prog.grade_aa) return 'AA';
-    if (score >= prog.grade_a) return 'A';
-    if (score >= prog.grade_b) return 'B';
-    return 'C';
+    return calculateGrade(score, programThresholds(prog.grade_aa, prog.grade_a, prog.grade_b));
   };
 
   // Helper: get employee by ID
@@ -378,7 +399,7 @@ export default function Results() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Label>{t('results.selectSession')}</Label>
                 <Select value={selectedSession} onValueChange={setSelectedSession}>
@@ -427,6 +448,7 @@ export default function Results() {
 
             {resultEntries.length > 0 && (
               <>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -500,11 +522,16 @@ export default function Results() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSaveResults}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {t('results.saveResults')}
+                  <Button onClick={handleSaveResults} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {isSubmitting ? t('common.saving') : t('results.saveResults')}
                   </Button>
                 </div>
               </>
@@ -529,12 +556,12 @@ export default function Results() {
                 {t('results.recentDescription')}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={t('results.searchPlaceholder')}
-                  className="pl-8 w-[200px]"
+                  className="pl-8 w-full sm:w-[200px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -586,6 +613,7 @@ export default function Results() {
               {t('common.noData')}
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -689,6 +717,7 @@ export default function Results() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -774,9 +803,13 @@ export default function Results() {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleSaveEdit}>
-              <History className="h-4 w-4 mr-2" />
-              {t('results.saveEdit')}
+            <Button onClick={handleSaveEdit} disabled={isEditSubmitting}>
+              {isEditSubmitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <History className="h-4 w-4 mr-2" />
+              )}
+              {isEditSubmitting ? t('common.saving') : t('results.saveEdit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -833,10 +866,14 @@ export default function Results() {
             </Button>
             <Button
               onClick={handleConfirmWithDuplicates}
-              disabled={pendingResults.length - duplicates.length === 0}
+              disabled={pendingResults.length - duplicates.length === 0 || isSubmitting}
             >
-              <Save className="h-4 w-4 mr-2" />
-              {t('results.saveExcludingDuplicates', { count: pendingResults.length - duplicates.length })}
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              {isSubmitting ? t('common.saving') : t('results.saveExcludingDuplicates', { count: pendingResults.length - duplicates.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

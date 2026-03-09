@@ -19,7 +19,6 @@ import {
   limit,
   Timestamp,
 } from '@/services/firebase';
-import type { Grade } from '@/types';
 import type {
   InspectionResultDetail,
   InspectionResultInput,
@@ -29,6 +28,7 @@ import type {
   InspectionStrikeInfo,
 } from '@/types/inspection';
 import { logger } from '@/utils/logger';
+import { calculateInspectionGrade } from '@/utils/gradeCalculator';
 
 // ============================================================
 // Collection Names
@@ -50,13 +50,6 @@ const convertTimestamp = (
   return ts;
 };
 
-const calculateGrade = (matchRate: number): Grade => {
-  if (matchRate >= 100) return 'AA';
-  if (matchRate >= 95) return 'A';
-  if (matchRate >= 85) return 'B';
-  return 'C';
-};
-
 // ============================================================
 // Inspection Results
 // ============================================================
@@ -76,7 +69,7 @@ export const createInspectionResult = async (
     const matchedCount = input.pairs.filter((p) => p.is_match).length;
     const matchRate = Math.round((matchedCount / input.total_pairs) * 100);
     const result: 'PASS' | 'FAIL' = matchRate >= 80 ? 'PASS' : 'FAIL';
-    const grade = calculateGrade(matchRate);
+    const grade = calculateInspectionGrade(matchRate);
 
     // Get test_attempt by counting previous results for this employee + program
     const prevQuery = query(

@@ -110,12 +110,7 @@ export const GRADE_THRESHOLDS = {
   C: { min: 0, max: 70, label: 'C', result: 'FAIL' as const },
 };
 
-export function calculateGrade(score: number): { grade: string; result: 'PASS' | 'FAIL' } {
-  if (score === 100) return { grade: 'AA', result: 'PASS' };
-  if (score >= 90) return { grade: 'A', result: 'PASS' };
-  if (score >= 80) return { grade: 'B', result: 'PASS' };
-  return { grade: 'C', result: 'FAIL' };
-}
+export { calculateGradeWithResult as calculateGrade } from '@/utils/gradeCalculator';
 
 // ========== Attendance Status ==========
 

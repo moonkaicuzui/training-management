@@ -40,6 +40,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
+import { EmptyState } from '@/components/common/EmptyState';
 import { cn } from '@/lib/utils';
 import {
   format,
@@ -568,9 +569,13 @@ export default function Schedule() {
                 {t('schedule.clickCalendar')}
               </div>
             ) : selectedDateSessions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('schedule.noSessions')}
-              </div>
+              <EmptyState
+                icon={CalendarDays}
+                title={t('schedule.emptyTitle')}
+                description={t('schedule.emptyDescription')}
+                actionLabel={t('schedule.addSession')}
+                onAction={() => setCreateDialogOpen(true)}
+              />
             ) : (
               <div className="space-y-4">
                 {selectedDateSessions.map((session) => (
@@ -678,9 +683,13 @@ export default function Schedule() {
         </CardHeader>
         <CardContent>
           {sessions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {t('common.noData')}
-            </div>
+            <EmptyState
+              icon={CalendarDays}
+              title={t('schedule.emptyTitle')}
+              description={t('schedule.emptyDescription')}
+              actionLabel={t('schedule.addSession')}
+              onAction={() => setCreateDialogOpen(true)}
+            />
           ) : (
             <div className="space-y-4">
               {sessions.map((session) => (

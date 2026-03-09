@@ -31,6 +31,7 @@ import {
   useNewTQCActions,
 } from '@/stores/newTqcStore';
 import { useUIStore } from '@/stores/uiStore';
+import { EmptyState } from '@/components/common/EmptyState';
 import type { NewTQCMeetingFilters as FiltersType } from '@/types/newTqc';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isPast, isToday } from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
@@ -269,9 +270,11 @@ export default function NewTQCMeetings() {
                     ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  {t('newTQCModule.meetings.noScheduled')}
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title={t('newTQCModule.meetings.emptyTitle')}
+                  description={t('newTQCModule.meetings.emptyDescription')}
+                />
               )}
             </CardContent>
           </Card>
@@ -296,9 +299,11 @@ export default function NewTQCMeetings() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  {t('newTQCModule.meetings.noCompleted')}
-                </div>
+                <EmptyState
+                  icon={CheckCircle}
+                  title={t('newTQCModule.meetings.emptyTitle')}
+                  description={t('newTQCModule.meetings.emptyDescription')}
+                />
               )}
             </CardContent>
           </Card>

@@ -46,6 +46,7 @@ export default function MDInputForm() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     factory: '',
     line: '',
@@ -85,8 +86,9 @@ export default function MDInputForm() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.factory || !formData.result) return;
+    if (!formData.factory || !formData.result || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       const inspection = await createInspection({
         factory: formData.factory as FactoryCode,
@@ -120,6 +122,8 @@ export default function MDInputForm() {
       setSubmitted(true);
     } catch {
       // Error handled by store
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -426,8 +430,8 @@ export default function MDInputForm() {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (
-          <Button disabled={!canGoNext() || isLoading} onClick={handleSubmit}>
-            {isLoading ? (
+          <Button disabled={!canGoNext() || isLoading || isSubmitting} onClick={handleSubmit}>
+            {(isLoading || isSubmitting) ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 {t('common.saving')}

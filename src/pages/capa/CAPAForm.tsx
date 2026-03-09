@@ -85,6 +85,7 @@ export default function CAPAForm() {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load existing CAPA for editing
   useEffect(() => {
@@ -154,8 +155,9 @@ export default function CAPAForm() {
 
   // Handle submit
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       const capaInput: CAPAInput = {
         title: formData.title,
@@ -190,6 +192,8 @@ export default function CAPAForm() {
       }
     } catch {
       // Error is handled by store
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -448,9 +452,9 @@ export default function CAPAForm() {
         <Button variant="outline" onClick={() => navigate(-1)}>
           {t('capa.form.cancel')}
         </Button>
-        <Button onClick={handleSubmit} disabled={isLoading}>
+        <Button onClick={handleSubmit} disabled={isLoading || isSubmitting}>
           <Save className="h-4 w-4 mr-2" />
-          {isLoading ? t('common.saving') : isEditing ? t('capa.form.update') : t('capa.form.submit')}
+          {(isLoading || isSubmitting) ? t('common.saving') : isEditing ? t('capa.form.update') : t('capa.form.submit')}
         </Button>
       </div>
     </div>
