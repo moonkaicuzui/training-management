@@ -35,6 +35,7 @@ import {
   FolderOpen,
   Settings,
 } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { TASK_STATUS_COLORS, TASK_PRIORITY_COLORS } from '@/types/project';
@@ -309,10 +310,11 @@ export default function ProjectsDashboard() {
           </CardHeader>
           <CardContent>
             {urgentTasks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle2 className="h-12 w-12 mx-auto mb-2 text-green-500" />
-                <p>{t('projects.tasks.noTasks')}</p>
-              </div>
+              <EmptyState
+                icon={CheckCircle2}
+                title={t('projects.dashboard.urgentEmptyTitle')}
+                description={t('projects.dashboard.urgentEmptyDesc')}
+              />
             ) : (
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {urgentTasks.slice(0, 5).map((task) => (
@@ -376,10 +378,13 @@ export default function ProjectsDashboard() {
               const myTasks = fetchMyTasks();
               if (myTasks.length === 0) {
                 return (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
-                    <p className="text-sm">{t('projects.dashboard.noMyTasks')}</p>
-                  </div>
+                  <EmptyState
+                    icon={CheckCircle2}
+                    title={t('projects.dashboard.noMyTasks')}
+                    description={t('projects.dashboard.noMyTasksDesc')}
+                    actionLabel={t('projects.newTask')}
+                    onAction={() => navigate('/projects/tasks')}
+                  />
                 );
               }
               return (
@@ -677,20 +682,16 @@ export default function ProjectsDashboard() {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[60vh]">
             {projects.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>{t('projects.dashboard.noProjects')}</p>
-                <Button
-                  className="mt-4"
-                  onClick={() => {
-                    setIsProjectListOpen(false);
-                    setIsCreateProjectOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('projects.dashboard.newProject')}
-                </Button>
-              </div>
+              <EmptyState
+                icon={FolderOpen}
+                title={t('projects.dashboard.noProjects')}
+                description={t('projects.dashboard.projectListEmptyDesc')}
+                actionLabel={t('projects.dashboard.newProject')}
+                onAction={() => {
+                  setIsProjectListOpen(false);
+                  setIsCreateProjectOpen(true);
+                }}
+              />
             ) : (
               <div className="space-y-3">
                 {projects.map((project: Project) => {

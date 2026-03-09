@@ -26,7 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, X, ClipboardList } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import type { FactoryCode, InspectionResult, MDInspection, MDFailure, CAStatus } from '@/types/metalDetector';
 
@@ -184,10 +185,11 @@ export default function MDHistory() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : inspections.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Search className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>{t('metalDetector.history.noData')}</p>
-            </div>
+            <EmptyState
+              icon={ClipboardList}
+              title={t('metalDetector.history.emptyTitle')}
+              description={t('metalDetector.history.emptyDescription')}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>

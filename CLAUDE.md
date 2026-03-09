@@ -918,14 +918,20 @@ git status  # working tree clean 확인
 
 ## 13. 테스트 현황
 
-### 기존 테스트 파일
+### 테스트 파일 (24개)
 ```
+src/i18n/i18n.test.ts
+src/policies/noDelete.test.ts
 src/services/auditLogService.test.ts
+src/services/capaService.test.ts              # Phase 5 추가
 src/services/evaluationService.test.ts
+src/services/inspectionService.test.ts         # Phase 5 추가
 src/services/materialService.test.ts
 src/services/notificationService.test.ts
+src/services/resultService.test.ts             # Phase 5 추가
 src/stores/authStore.test.ts
 src/stores/capaStore.test.ts
+src/stores/inspectionStore.test.ts             # Phase 7 추가
 src/stores/projectStore.test.ts
 src/stores/trainingStore.test.ts
 src/stores/uiStore.test.ts
@@ -933,10 +939,11 @@ src/types/branded.test.ts
 src/types/capa.test.ts
 src/types/datetime.test.ts
 src/types/normalized.test.ts
+src/utils/aqlAnalyzer.test.ts                  # Phase 5 추가
+src/utils/certificationUtils.test.ts           # Phase 7 추가
 src/utils/kpiCalculator.test.ts
 src/utils/logger.test.ts
-src/i18n/i18n.test.ts
-src/policies/noDelete.test.ts
+src/utils/trainingEffectiveness.test.ts        # Phase 7 추가
 ```
 
 ### 테스트 설정
@@ -1093,17 +1100,55 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 | 7 | `i18n/locales/en.json` | 179키 동기화 | 영어 (한국어 fallback) |
 | 8 | `i18n/locales/vi.json` | 179키 동기화 | 베트남어 (한국어 fallback) |
 
+### Phase 4: CRITICAL/P0 긴급 개선 (2026-03-09, commit `8e28d17`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 로직 | 중복 교육 등록 방지 (inspectionService + aqlStore + recommendationStore) |
+| 2 | 로직 | 3진 아웃 후속조치 (REASSIGNMENT_REQUIRED 상태 + 자동 알림) |
+| 3 | i18n | 179키 영어/베트남어 번역 완료 |
+| 4 | 안정성 | ErrorBoundary 글로벌 적용 (8개 모듈 + 모든 독립 페이지) |
+| 5 | 성능 | 번들 청크 최적화 (vendor-pdf/excel/pptx/calendar/forms/table 분리) |
+
+### Phase 5: P1 안정성/보안/테스트 강화 (2026-03-09, commit `3f47c97`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 로직 | CAPA 필수필드 검증 (생성 + 단계 전환) |
+| 2 | 안정성 | 에러 핸들링 전역 강화 (trainingStore 16개, mdInspectionStore 5개, capaStore 1개) |
+| 3 | 테스트 | 핵심 서비스 테스트 104개 (inspection, capa, result, aqlAnalyzer) |
+| 4 | 로직 | 자격 만료 제한 로직 (certificationUtils.ts + Retraining 페이지) |
+| 5 | 보안 | Firestore 데이터 검증 규칙 (5개 컬렉션) |
+| 6 | 접근성 | aria 강화 (14개 파일, 28개 키) |
+
+### Phase 6: P2 코드품질/비즈니스/성능 (2026-03-09, commit `5cbf7a7`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | 리팩터링 | AQL/5PRS 중복 컴포넌트 통합 (5개 공통 + 8개 wrapper) |
+| 2 | 리팩터링 | 1000줄+ 파일 분할 (api.ts→7파일, ProjectsTasks→5파일) |
+| 3 | 비즈니스 | 교육 효과 측정 로직 (trainingEffectiveness.ts + Evaluation 탭) |
+| 4 | 비즈니스 | 자격 만료 자동 알림 (Dashboard 하루 1회 체크) |
+| 5 | 성능 | React.memo 최적화 (13개 컴포넌트) |
+| 6 | 성능 | analyticsService 쿼리 최적화 (날짜 필터 + 5분 캐시) |
+
+### Phase 7: 추가 개선 (2026-03-09, commit `7ece6fc`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | UI | 반응형 레이아웃 (6개 페이지) |
+| 2 | 리팩터링 | Grade 계산 통합 (gradeCalculator.ts) |
+| 3 | 보안 | Rate Limiting 강화 (3단계 + useDebounce + 폼 중복 방지) |
+| 4 | 배포 | Firestore rules 프로덕션 배포 |
+| 5 | 테스트 | 추가 테스트 71개 (certificationUtils, trainingEffectiveness, inspectionStore) |
+
 ### 미완료 개선 항목 (향후 로드맵)
-- [ ] 핵심 서비스 테스트 (resultService, inspectionService, capaService, aqlService)
-- [ ] WCAG 접근성 수정
-- [ ] Grade 계산 통합
-- [ ] 1000+ 라인 페이지 분할 (6 페이지)
+- [x] ~~핵심 서비스 테스트 (resultService, inspectionService, capaService, aqlService)~~ → Phase 5
+- [x] ~~WCAG 접근성 수정~~ → Phase 5 (aria 강화)
+- [x] ~~Grade 계산 통합~~ → Phase 7
+- [x] ~~1000+ 라인 페이지 분할 (6 페이지)~~ → Phase 6 (api.ts, ProjectsTasks)
 - [ ] DataTable 마이그레이션 (29 페이지)
 - [ ] React Hook Form + Zod 마이그레이션 (17 폼)
 - [ ] trainingStore → normalizedStore 전환
-- [ ] AQL/5PRS 중복 컴포넌트 추출
+- [x] ~~AQL/5PRS 중복 컴포넌트 추출~~ → Phase 6
 - [ ] E2E 테스트 (핵심 워크플로우)
-- [ ] en.json/vi.json 179키 적절한 번역 (현재 한국어 fallback)
+- [x] ~~en.json/vi.json 179키 적절한 번역~~ → Phase 4
 
 ---
 
