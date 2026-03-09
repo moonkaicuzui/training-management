@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Clock, Search, Download } from 'lucide-react';
+import { AlertTriangle, Clock, Search, Download, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,12 +37,22 @@ import { format } from 'date-fns';
 export default function Retraining() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { retrainingTargets, expiringTrainings, loading, fetchRetrainingTargets, fetchExpiringTrainings } = useTrainingStore(useShallow((state) => ({
+  const {
+    retrainingTargets,
+    expiringTrainings,
+    expiredTrainings,
+    loading,
+    fetchRetrainingTargets,
+    fetchExpiringTrainings,
+    fetchExpiredTrainings,
+  } = useTrainingStore(useShallow((state) => ({
     retrainingTargets: state.retrainingTargets,
     expiringTrainings: state.expiringTrainings,
+    expiredTrainings: state.expiredTrainings,
     loading: state.loading,
     fetchRetrainingTargets: state.fetchRetrainingTargets,
     fetchExpiringTrainings: state.fetchExpiringTrainings,
+    fetchExpiredTrainings: state.fetchExpiredTrainings,
   })));
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +64,7 @@ export default function Retraining() {
     Promise.all([
       fetchRetrainingTargets(),
       fetchExpiringTrainings(30),
+      fetchExpiredTrainings(),
     ]).catch(() => {});
   }, []);
 
@@ -71,6 +82,18 @@ export default function Retraining() {
 
   // Filter expiring trainings
   const filteredExpiringTrainings = expiringTrainings.filter(item => {
+    const matchesSearch = searchQuery === '' ||
+      item.employee.employee_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.employee.employee_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.program.program_code.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesBuilding = buildingFilter === 'all' || item.employee.building === buildingFilter;
+    const matchesDepartment = departmentFilter === 'all' || item.employee.department === departmentFilter;
+    const matchesCategory = categoryFilter === 'all' || item.program.category === categoryFilter;
+    return matchesSearch && matchesBuilding && matchesDepartment && matchesCategory;
+  });
+
+  // Filter expired trainings
+  const filteredExpiredTrainings = expiredTrainings.filter(item => {
     const matchesSearch = searchQuery === '' ||
       item.employee.employee_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.employee.employee_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,7 +125,7 @@ export default function Retraining() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('retraining.needsRetraining')}</CardTitle>
@@ -114,6 +137,20 @@ export default function Retraining() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t('retraining.failedDescription')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('retraining.expired')}</CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              {t('retraining.countItems', { count: expiredTrainings.length })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t('retraining.expiredDescription')}
             </p>
           </CardContent>
         </Card>
@@ -195,6 +232,10 @@ export default function Retraining() {
           <TabsTrigger value="failed">
             <AlertTriangle className="h-4 w-4 mr-2" />
             {t('retraining.failedTab', { count: filteredRetrainingTargets.length })}
+          </TabsTrigger>
+          <TabsTrigger value="expired">
+            <XCircle className="h-4 w-4 mr-2" />
+            {t('retraining.expiredTab', { count: filteredExpiredTrainings.length })}
           </TabsTrigger>
           <TabsTrigger value="expiring">
             <Clock className="h-4 w-4 mr-2" />
@@ -280,6 +321,88 @@ export default function Retraining() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="expired" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('retraining.expiredTitle')}</CardTitle>
+              <CardDescription>
+                {t('retraining.expiredListDescription')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredExpiredTrainings.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t('retraining.noExpiredTrainings')}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('employee.id')}</TableHead>
+                      <TableHead>{t('employee.name')}</TableHead>
+                      <TableHead>{t('employee.building')}</TableHead>
+                      <TableHead>{t('employee.department')}</TableHead>
+                      <TableHead>{t('common.program')}</TableHead>
+                      <TableHead>{t('retraining.trainingDate')}</TableHead>
+                      <TableHead>{t('retraining.expirationDate')}</TableHead>
+                      <TableHead>{t('retraining.certificationStatus')}</TableHead>
+                      <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredExpiredTrainings.map((item) => (
+                      <TableRow key={`${item.employee.employee_id}-${item.program.program_code}`}>
+                        <TableCell className="font-mono">
+                          {item.employee.employee_id}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {item.employee.employee_name}
+                        </TableCell>
+                        <TableCell>
+                          {t(`building.${item.employee.building}`)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{item.employee.department}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <Badge variant="outline" className="mb-1">
+                              {item.program.program_code}
+                            </Badge>
+                            <p className="text-sm text-muted-foreground">
+                              {item.program.program_name}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(item.lastPassDate), 'yyyy-MM-dd')}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(item.expirationDate), 'yyyy-MM-dd')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">
+                            {t('retraining.expiredDaysAgo', { days: Math.abs(item.daysUntilExpiry) })}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/employees/${item.employee.employee_id}`)}
+                          >
+                            {t('retraining.detail')}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="expiring" className="mt-4">
           <Card>
             <CardHeader>
@@ -304,7 +427,7 @@ export default function Retraining() {
                       <TableHead>{t('common.program')}</TableHead>
                       <TableHead>{t('retraining.trainingDate')}</TableHead>
                       <TableHead>{t('retraining.expirationDate')}</TableHead>
-                      <TableHead>{t('retraining.daysRemaining')}</TableHead>
+                      <TableHead>{t('retraining.certificationStatus')}</TableHead>
                       <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>

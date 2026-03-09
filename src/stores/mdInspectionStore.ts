@@ -136,30 +136,52 @@ export const useMDInspectionStore = create<MDInspectionState>()(
       },
 
       fetchFailures: async (inspectionId) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
         try {
           const failures = await api.mdInspection.getFailures(inspectionId);
           set((state) => {
             state.failures = failures;
+            state.isLoading = false;
           });
         } catch (error) {
           logger.error('[MDStore] fetchFailures failed', error);
+          set((state) => {
+            state.error = '실패 기록을 불러오는데 실패했습니다.';
+            state.isLoading = false;
+          });
         }
       },
 
       createFailure: async (data) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
         try {
           const failure = await api.mdInspection.createFailure(data);
           set((state) => {
             state.failures.unshift(failure);
+            state.isLoading = false;
           });
           return failure;
         } catch (error) {
           logger.error('[MDStore] createFailure failed', error);
+          set((state) => {
+            state.error = '실패 기록 등록에 실패했습니다.';
+            state.isLoading = false;
+          });
           throw error;
         }
       },
 
       updateFailureCA: async (id, data) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
         try {
           await api.mdInspection.updateFailure(id, data);
           set((state) => {
@@ -167,9 +189,14 @@ export const useMDInspectionStore = create<MDInspectionState>()(
             if (idx !== -1) {
               Object.assign(state.failures[idx], data);
             }
+            state.isLoading = false;
           });
         } catch (error) {
           logger.error('[MDStore] updateFailureCA failed', error);
+          set((state) => {
+            state.error = '시정조치 수정에 실패했습니다.';
+            state.isLoading = false;
+          });
           throw error;
         }
       },
@@ -177,6 +204,7 @@ export const useMDInspectionStore = create<MDInspectionState>()(
       fetchDashboardKPIs: async (year, weekNumber) => {
         set((state) => {
           state.isLoading = true;
+          state.error = null;
         });
         try {
           const kpis = await api.mdInspection.getDashboardKPIs(year, weekNumber);
@@ -187,12 +215,16 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         } catch (error) {
           logger.error('[MDStore] fetchDashboardKPIs failed', error);
           set((state) => {
+            state.error = 'KPI 데이터를 불러오는데 실패했습니다.';
             state.isLoading = false;
           });
         }
       },
 
       fetchWeeklyTrend: async (year, weekCount) => {
+        set((state) => {
+          state.error = null;
+        });
         try {
           const trend = await api.mdInspection.getWeeklyTrend(year, weekCount);
           set((state) => {
@@ -200,6 +232,9 @@ export const useMDInspectionStore = create<MDInspectionState>()(
           });
         } catch (error) {
           logger.error('[MDStore] fetchWeeklyTrend failed', error);
+          set((state) => {
+            state.error = '주간 트렌드를 불러오는데 실패했습니다.';
+          });
         }
       },
 

@@ -191,16 +191,17 @@ export default function InspectionResultForm() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-label={t('common.aria.inspectionForm')}>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ClipboardCheck className="h-6 w-6" />
+          <ClipboardCheck className="h-6 w-6" aria-hidden="true" />
           {t('inspection.result.title')}
         </h1>
       </div>
 
       {/* Step Indicator */}
+      <nav aria-label={t('common.aria.stepIndicator', { current: step, total: 4 })}>
       <div className="flex items-center gap-2">
         {STEPS.map(({ num, label, icon: Icon }) => (
           <div key={num} className="flex items-center gap-2">
@@ -221,12 +222,13 @@ export default function InspectionResultForm() {
           </div>
         ))}
       </div>
+      </nav>
 
       {/* Error */}
       {error && (
-        <Card className="border-destructive bg-destructive/10">
+        <Card className="border-destructive bg-destructive/10" role="alert">
           <CardContent className="flex items-center gap-2 py-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden="true" />
             <p className="text-destructive">{error}</p>
           </CardContent>
         </Card>
@@ -246,8 +248,8 @@ export default function InspectionResultForm() {
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-semibold">{employeeName}</span>
                   <span className="text-sm text-muted-foreground">({employeeId})</span>
-                  <Button variant="ghost" size="sm" className="ml-auto h-6 w-6 p-0" onClick={clearEmployee}>
-                    <X className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="ml-auto h-6 w-6 p-0" onClick={clearEmployee} aria-label={t('common.aria.clearEmployee')}>
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               ) : (
@@ -263,6 +265,10 @@ export default function InspectionResultForm() {
                       onFocus={() => employeeSearch.length >= 2 && setShowEmployeeDropdown(true)}
                       placeholder={t('inspection.result.selectEmployee')}
                       className="pl-9"
+                      aria-label={t('common.aria.searchEmployee')}
+                      role="combobox"
+                      aria-expanded={showEmployeeDropdown && employeeSearch.length >= 2}
+                      aria-autocomplete="list"
                     />
                     {isSearching && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -271,7 +277,7 @@ export default function InspectionResultForm() {
                     )}
                   </div>
                   {showEmployeeDropdown && employeeSearch.length >= 2 && (
-                    <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto" role="listbox">
                       {employeeResults.length === 0 && !isSearching ? (
                         <p className="p-3 text-sm text-muted-foreground text-center">
                           {t('inspection.result.noEmployeeFound')}
@@ -282,6 +288,7 @@ export default function InspectionResultForm() {
                             key={emp.employee_id}
                             className="w-full text-left px-3 py-2 hover:bg-muted/50 flex items-center gap-2 border-b last:border-b-0"
                             onClick={() => selectEmployee(emp)}
+                            role="option"
                           >
                             <User className="h-4 w-4 text-muted-foreground shrink-0" />
                             <div>

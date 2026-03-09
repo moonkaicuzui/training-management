@@ -37,6 +37,21 @@ service cloud.firestore {
       return request.resource.data[field] is timestamp;
     }
 
+    // 문자열 필드 검증: 비어있지 않은 문자열
+    function isValidString(field) {
+      return field is string && field.size() > 0;
+    }
+
+    // 점수 범위 검증: 0-100
+    function isValidScore(score) {
+      return score is number && score >= 0 && score <= 100;
+    }
+
+    // 허용 값 목록 검증
+    function isOneOf(value, allowedValues) {
+      return value in allowedValues;
+    }
+
     // 쓰기 속도 제한: 같은 문서에 1초 이내 연속 update 방지
     function isNotTooFrequent() {
       return !('updated_at' in resource.data) ||
@@ -46,8 +61,14 @@ service cloud.firestore {
     // ========== 직원 ==========
     match /employees/{employeeId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow create: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.name)
+        && isValidString(request.resource.data.department)
+        && isValidString(request.resource.data.employee_id);
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+        && isValidString(request.resource.data.name)
+        && isValidString(request.resource.data.department)
+        && isValidString(request.resource.data.employee_id);
       allow delete: if isAdmin();
     }
 
@@ -70,8 +91,18 @@ service cloud.firestore {
     // ========== 교육 결과 - 삭제 금지 (training_results) ==========
     match /training_results/{resultId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow create: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.employee_id)
+        && isValidString(request.resource.data.program_code)
+        && isValidScore(request.resource.data.score)
+        && isOneOf(request.resource.data.result, ['PASS', 'FAIL'])
+        && isOneOf(request.resource.data.grade, ['AA', 'A', 'B', 'C']);
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+        && isValidString(request.resource.data.employee_id)
+        && isValidString(request.resource.data.program_code)
+        && isValidScore(request.resource.data.score)
+        && isOneOf(request.resource.data.result, ['PASS', 'FAIL'])
+        && isOneOf(request.resource.data.grade, ['AA', 'A', 'B', 'C']);
       allow delete: if false;  // 삭제 불가 - 감사 추적 필수
     }
 
@@ -272,7 +303,16 @@ service cloud.firestore {
     // ========== CAPA (시정/예방 조치) ==========
     match /capas/{capaId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.title)
+        && isOneOf(request.resource.data.type, ['corrective', 'preventive'])
+        && isOneOf(request.resource.data.severity, ['critical', 'major', 'minor'])
+        && isOneOf(request.resource.data.status, ['discovery', 'investigation', 'action', 'verification', 'closed', 'rejected']);
+      allow update: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.title)
+        && isOneOf(request.resource.data.type, ['corrective', 'preventive'])
+        && isOneOf(request.resource.data.severity, ['critical', 'major', 'minor'])
+        && isOneOf(request.resource.data.status, ['discovery', 'investigation', 'action', 'verification', 'closed', 'rejected']);
       allow delete: if isAdmin();
     }
 
@@ -423,8 +463,12 @@ service cloud.firestore {
     // ========== 검사 교육 결과 (삭제 불가) ==========
     match /inspection_results/{id} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create: if isAuthenticated() && hasAllowedDomain();
-      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent();
+      allow create: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.employee_id)
+        && isValidScore(request.resource.data.match_rate);
+      allow update: if isAuthenticated() && hasAllowedDomain() && isNotTooFrequent()
+        && isValidString(request.resource.data.employee_id)
+        && isValidScore(request.resource.data.match_rate);
       allow delete: if false;  // 검사 결과는 삭제 불가
     }
 
@@ -451,7 +495,12 @@ service cloud.firestore {
     // ========== 금속 탐지기 점검 ==========
     match /md_inspections/{docId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
-      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.factory)
+        && isOneOf(request.resource.data.result, ['PASS', 'FAIL']);
+      allow update: if isAuthenticated() && hasAllowedDomain()
+        && isValidString(request.resource.data.factory)
+        && isOneOf(request.resource.data.result, ['PASS', 'FAIL']);
     }
 
     // ========== TECH / NEW MODEL (신규 모델) ==========

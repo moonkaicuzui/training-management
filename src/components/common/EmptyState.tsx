@@ -18,7 +18,7 @@ export function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+    <div className="flex flex-col items-center justify-center py-12 text-center px-4" role="status">
       <div className="rounded-full bg-muted p-6 mb-4">
         <Icon className="h-12 w-12 text-muted-foreground" />
       </div>

@@ -56,7 +56,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6" role="banner">
         {/* Mobile menu button */}
         <Button
           variant="ghost"
@@ -65,7 +65,7 @@ export function Header() {
           onClick={toggleSidebar}
         >
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle menu</span>
+          <span className="sr-only">{t('common.aria.toggleMenu')}</span>
         </Button>
 
         {/* Logo */}

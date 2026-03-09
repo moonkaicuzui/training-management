@@ -24,10 +24,13 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:bg-background focus:text-foreground focus:border focus:rounded-md focus:top-2 focus:left-2">
+        Skip to main content
+      </a>
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto">
           {/* Add bottom padding on mobile to account for bottom nav */}
           <div className="p-4 md:p-6 pb-20 md:pb-6">
             <Breadcrumbs />

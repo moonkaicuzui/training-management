@@ -106,6 +106,7 @@ interface ActionFormData {
 
 interface VerificationFormData {
   verificationMethod: string;
+  effectivenessScore: string;
   isEffective: boolean;
   verificationNotes: string;
   verifiedBy: string;
@@ -158,10 +159,14 @@ export default function CAPADetail() {
 
   const [verificationForm, setVerificationForm] = useState<VerificationFormData>({
     verificationMethod: '',
+    effectivenessScore: '',
     isEffective: true,
     verificationNotes: '',
     verifiedBy: user?.name || '',
   });
+
+  // Stage transition validation errors
+  const [stageValidationErrors, setStageValidationErrors] = useState<Record<string, string>>({});
 
   const [closureForm, setClosureForm] = useState<ClosureFormData>({
     finalReview: '',
@@ -209,6 +214,7 @@ export default function CAPADetail() {
       setVerificationForm((prev) => ({ ...prev, verifiedBy: user.name }));
       setClosureForm((prev) => ({ ...prev, closedBy: user.name }));
     }
+    setStageValidationErrors({});
     setAdvanceDialogOpen(true);
   };
 
@@ -217,13 +223,83 @@ export default function CAPADetail() {
     setRejectDialogOpen(true);
   };
 
-  // Validate stage-specific form data
+  // Validate stage-specific form data with error messages
+  const validateAdvanceForm = (): boolean => {
+    if (!currentCAPA) return false;
+
+    const errors: Record<string, string> = {};
+
+    switch (currentCAPA.status) {
+      case 'discovery':
+        // discovery → investigation: immediate_action 필수
+        if (!currentCAPA.discovery?.immediateActions?.trim()) {
+          errors.immediateActions = t('capa.validation.immediateActionRequired');
+        }
+        if (!investigationForm.rootCauseAnalysis.trim()) {
+          errors.rootCauseAnalysis = t('capa.validation.rootCauseRequired');
+        }
+        if (!investigationForm.impactAssessment.trim()) {
+          errors.impactAssessment = t('capa.validation.missingRequiredFields');
+        }
+        if (!investigationForm.findings.trim()) {
+          errors.findings = t('capa.validation.missingRequiredFields');
+        }
+        if (!investigationForm.investigatedBy.trim()) {
+          errors.investigatedBy = t('capa.validation.missingRequiredFields');
+        }
+        break;
+      case 'investigation':
+        // investigation → action: root_cause 필수 (already entered in investigation stage)
+        if (!actionForm.actionNotes.trim()) {
+          errors.actionNotes = t('capa.validation.missingRequiredFields');
+        }
+        if (!actionForm.plannedBy.trim()) {
+          errors.plannedBy = t('capa.validation.missingRequiredFields');
+        }
+        break;
+      case 'action':
+        // action → verification: 최소 1개 조치 항목 필수
+        if (!verificationForm.verificationMethod.trim()) {
+          errors.verificationMethod = t('capa.validation.missingRequiredFields');
+        }
+        if (!verificationForm.verificationNotes.trim()) {
+          errors.verificationNotes = t('capa.validation.missingRequiredFields');
+        }
+        if (!verificationForm.verifiedBy.trim()) {
+          errors.verifiedBy = t('capa.validation.missingRequiredFields');
+        }
+        break;
+      case 'verification':
+        // verification → closed: effectiveness_score 필수
+        if (!verificationForm.effectivenessScore.trim()) {
+          errors.effectivenessScore = t('capa.validation.effectivenessScoreRequired');
+        } else {
+          const score = Number(verificationForm.effectivenessScore);
+          if (isNaN(score) || score < 0 || score > 100) {
+            errors.effectivenessScore = t('capa.validation.effectivenessScoreRange');
+          }
+        }
+        if (!closureForm.finalReview.trim()) {
+          errors.finalReview = t('capa.validation.missingRequiredFields');
+        }
+        if (!closureForm.closedBy.trim()) {
+          errors.closedBy = t('capa.validation.missingRequiredFields');
+        }
+        break;
+    }
+
+    setStageValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Backward-compatible wrapper
   const isAdvanceFormValid = (): boolean => {
     if (!currentCAPA) return false;
 
     switch (currentCAPA.status) {
       case 'discovery':
         return (
+          (currentCAPA.discovery?.immediateActions?.trim() !== '' && currentCAPA.discovery?.immediateActions !== undefined) &&
           investigationForm.rootCauseAnalysis.trim() !== '' &&
           investigationForm.impactAssessment.trim() !== '' &&
           investigationForm.findings.trim() !== '' &&
@@ -240,11 +316,15 @@ export default function CAPADetail() {
           verificationForm.verificationNotes.trim() !== '' &&
           verificationForm.verifiedBy.trim() !== ''
         );
-      case 'verification':
+      case 'verification': {
+        const score = Number(verificationForm.effectivenessScore);
         return (
+          verificationForm.effectivenessScore.trim() !== '' &&
+          !isNaN(score) && score >= 0 && score <= 100 &&
           closureForm.finalReview.trim() !== '' &&
           closureForm.closedBy.trim() !== ''
         );
+      }
       default:
         return false;
     }
@@ -253,6 +333,7 @@ export default function CAPADetail() {
   // Handle advance stage submission
   const handleAdvanceStage = async () => {
     if (!currentCAPA || !id || !nextStatus) return;
+    if (!validateAdvanceForm()) return;
 
     setIsSubmitting(true);
     try {
@@ -280,6 +361,7 @@ export default function CAPADetail() {
         case 'action':
           stageUpdate.verification = {
             verificationMethod: verificationForm.verificationMethod,
+            effectivenessScore: Number(verificationForm.effectivenessScore) || undefined,
             isEffective: verificationForm.isEffective,
             recurrenceCheck: false,
             verifiedBy: verificationForm.verifiedBy,
@@ -287,6 +369,15 @@ export default function CAPADetail() {
           };
           break;
         case 'verification':
+          // Update verification with effectiveness score
+          stageUpdate.verification = {
+            verificationMethod: currentCAPA.verification?.verificationMethod || '',
+            effectivenessScore: Number(verificationForm.effectivenessScore),
+            isEffective: currentCAPA.verification?.isEffective ?? true,
+            recurrenceCheck: currentCAPA.verification?.recurrenceCheck ?? false,
+            verifiedBy: currentCAPA.verification?.verifiedBy || user?.name || '',
+            verificationNotes: currentCAPA.verification?.verificationNotes || '',
+          };
           stageUpdate.closure = {
             finalReview: closureForm.finalReview,
             lessonsLearned: closureForm.lessonsLearned || undefined,
@@ -349,6 +440,18 @@ export default function CAPADetail() {
       case 'discovery':
         return (
           <div className="space-y-4">
+            {/* Immediate action warning */}
+            {(!currentCAPA.discovery?.immediateActions?.trim()) && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">
+                  {t('capa.validation.immediateActionRequired')}
+                </p>
+              </div>
+            )}
+            {stageValidationErrors.immediateActions && (
+              <p className="text-sm text-destructive">{stageValidationErrors.immediateActions}</p>
+            )}
+
             {/* AI Root Cause Suggestions */}
             {currentCAPA && (
               <CAPAAISuggestions
@@ -379,7 +482,11 @@ export default function CAPADetail() {
                 }
                 rows={3}
                 placeholder={t('capa.rootCauseAnalysis')}
+                className={stageValidationErrors.rootCauseAnalysis ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.rootCauseAnalysis && (
+                <p className="text-sm text-destructive">{stageValidationErrors.rootCauseAnalysis}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="impactAssessment">{t('capa.impactAssessment')} *</Label>
@@ -394,7 +501,11 @@ export default function CAPADetail() {
                 }
                 rows={3}
                 placeholder={t('capa.impactAssessment')}
+                className={stageValidationErrors.impactAssessment ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.impactAssessment && (
+                <p className="text-sm text-destructive">{stageValidationErrors.impactAssessment}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="findings">{t('capa.findings')} *</Label>
@@ -409,7 +520,11 @@ export default function CAPADetail() {
                 }
                 rows={3}
                 placeholder={t('capa.findings')}
+                className={stageValidationErrors.findings ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.findings && (
+                <p className="text-sm text-destructive">{stageValidationErrors.findings}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="investigatedBy">{t('capa.investigatedBy')} *</Label>
@@ -423,7 +538,11 @@ export default function CAPADetail() {
                   }))
                 }
                 placeholder={t('capa.investigatedBy')}
+                className={stageValidationErrors.investigatedBy ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.investigatedBy && (
+                <p className="text-sm text-destructive">{stageValidationErrors.investigatedBy}</p>
+              )}
             </div>
           </div>
         );
@@ -444,7 +563,11 @@ export default function CAPADetail() {
                 }
                 rows={4}
                 placeholder={t('capa.actionNotesPlaceholder')}
+                className={stageValidationErrors.actionNotes ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.actionNotes && (
+                <p className="text-sm text-destructive">{stageValidationErrors.actionNotes}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="plannedBy">{t('capa.assignedTo')} *</Label>
@@ -458,7 +581,11 @@ export default function CAPADetail() {
                   }))
                 }
                 placeholder={t('capa.assignedTo')}
+                className={stageValidationErrors.plannedBy ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.plannedBy && (
+                <p className="text-sm text-destructive">{stageValidationErrors.plannedBy}</p>
+              )}
             </div>
           </div>
         );
@@ -478,7 +605,32 @@ export default function CAPADetail() {
                   }))
                 }
                 placeholder={t('capa.verificationMethod')}
+                className={stageValidationErrors.verificationMethod ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.verificationMethod && (
+                <p className="text-sm text-destructive">{stageValidationErrors.verificationMethod}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="effectivenessScore">{t('capa.form.effectivenessScoreLabel')} *</Label>
+              <Input
+                id="effectivenessScore"
+                type="number"
+                min={0}
+                max={100}
+                value={verificationForm.effectivenessScore}
+                onChange={(e) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    effectivenessScore: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.form.effectivenessScorePlaceholder')}
+                className={stageValidationErrors.effectivenessScore ? 'border-destructive' : ''}
+              />
+              {stageValidationErrors.effectivenessScore && (
+                <p className="text-sm text-destructive">{stageValidationErrors.effectivenessScore}</p>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -506,7 +658,11 @@ export default function CAPADetail() {
                 }
                 rows={3}
                 placeholder={t('capa.verificationNotesPlaceholder')}
+                className={stageValidationErrors.verificationNotes ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.verificationNotes && (
+                <p className="text-sm text-destructive">{stageValidationErrors.verificationNotes}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="verifiedBy">{t('capa.verifiedBy')} *</Label>
@@ -520,7 +676,11 @@ export default function CAPADetail() {
                   }))
                 }
                 placeholder={t('capa.verifiedBy')}
+                className={stageValidationErrors.verifiedBy ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.verifiedBy && (
+                <p className="text-sm text-destructive">{stageValidationErrors.verifiedBy}</p>
+              )}
             </div>
           </div>
         );
@@ -528,6 +688,28 @@ export default function CAPADetail() {
       case 'verification':
         return (
           <div className="space-y-4">
+            {/* Effectiveness score - required for closure */}
+            <div className="space-y-2">
+              <Label htmlFor="effectivenessScoreClosure">{t('capa.form.effectivenessScoreLabel')} *</Label>
+              <Input
+                id="effectivenessScoreClosure"
+                type="number"
+                min={0}
+                max={100}
+                value={verificationForm.effectivenessScore}
+                onChange={(e) =>
+                  setVerificationForm((prev) => ({
+                    ...prev,
+                    effectivenessScore: e.target.value,
+                  }))
+                }
+                placeholder={t('capa.form.effectivenessScorePlaceholder')}
+                className={stageValidationErrors.effectivenessScore ? 'border-destructive' : ''}
+              />
+              {stageValidationErrors.effectivenessScore && (
+                <p className="text-sm text-destructive">{stageValidationErrors.effectivenessScore}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="finalReview">{t('capa.finalReview')} *</Label>
               <Textarea
@@ -541,7 +723,11 @@ export default function CAPADetail() {
                 }
                 rows={3}
                 placeholder={t('capa.finalReviewPlaceholder')}
+                className={stageValidationErrors.finalReview ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.finalReview && (
+                <p className="text-sm text-destructive">{stageValidationErrors.finalReview}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="lessonsLearned">{t('capa.lessonsLearned')}</Label>
@@ -596,7 +782,11 @@ export default function CAPADetail() {
                   }))
                 }
                 placeholder={t('capa.closedBy')}
+                className={stageValidationErrors.closedBy ? 'border-destructive' : ''}
               />
+              {stageValidationErrors.closedBy && (
+                <p className="text-sm text-destructive">{stageValidationErrors.closedBy}</p>
+              )}
             </div>
           </div>
         );

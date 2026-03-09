@@ -25,7 +25,7 @@ export function DataTablePagination<TData>({
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">
+    <nav className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4" aria-label={t('common.aria.paginationNav')}>
       <div className="flex-1 text-sm text-muted-foreground">
         {table.getFilteredSelectedRowModel().rows.length > 0 && (
           <span>
@@ -100,6 +100,6 @@ export function DataTablePagination<TData>({
           </Button>
         </div>
       </div>
-    </div>
+    </nav>
   );
 }

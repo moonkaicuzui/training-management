@@ -287,6 +287,9 @@ export const useCAPAStore = create<CAPAState>()(
 
       // Fetch dashboard statistics
       fetchDashboardStats: async () => {
+        set((state) => {
+          state.error = null;
+        });
         try {
           const capas = await api.getAllCAPAs();
           const stats = calculateDashboardStats(capas);
@@ -296,6 +299,9 @@ export const useCAPAStore = create<CAPAState>()(
           });
         } catch (error) {
           logger.error('[CAPA Store] Failed to fetch dashboard stats:', error);
+          set((state) => {
+            state.error = 'CAPA 대시보드 통계를 불러오는데 실패했습니다.';
+          });
         }
       },
 

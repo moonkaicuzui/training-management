@@ -832,6 +832,58 @@ export async function getExpiringTrainings(days: number = 30): Promise<ExpiringT
   return expiring.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 }
 
+export async function getExpiredTrainings(): Promise<ExpiringTraining[]> {
+  const [allResults, allEmployees, allPrograms] = await Promise.all([
+    resultService.getResults(),
+    employeeService.getEmployees(),
+    programService.getPrograms(),
+  ]);
+
+  const expired: ExpiringTraining[] = [];
+  const now = new Date();
+
+  // Group results by employee and program, get latest PASS
+  const latestPasses: Record<string, TrainingResultRecord> = {};
+
+  for (const result of allResults) {
+    if (result.result !== 'PASS') continue;
+
+    const key = `${result.employee_id}-${result.program_code}`;
+    if (!latestPasses[key] || result.training_date > latestPasses[key].training_date) {
+      latestPasses[key] = result;
+    }
+  }
+
+  for (const result of Object.values(latestPasses)) {
+    const program = allPrograms.find(p => p.program_code === result.program_code);
+    if (!program || !program.validity_months) continue;
+
+    const employee = allEmployees.find(e => e.employee_id === result.employee_id);
+    if (!employee || employee.status !== 'ACTIVE') continue;
+
+    const resultDate = new Date(result.training_date);
+    const expDate = new Date(resultDate);
+    expDate.setMonth(expDate.getMonth() + program.validity_months);
+
+    const daysUntilExpiry = Math.ceil(
+      (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysUntilExpiry <= 0) {
+      expired.push({
+        employee,
+        program,
+        lastPassDate: result.training_date,
+        expirationDate: expDate.toISOString().substring(0, 10),
+        daysUntilExpiry,
+      });
+    }
+  }
+
+  // Sort by most recently expired first (least negative daysUntilExpiry)
+  return expired.sort((a, b) => b.daysUntilExpiry - a.daysUntilExpiry);
+}
+
 // ========== Search API ==========
 
 export async function globalSearch(query: string): Promise<{

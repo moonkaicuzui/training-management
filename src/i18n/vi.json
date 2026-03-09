@@ -40,7 +40,37 @@
     "optional": "Tùy chọn",
     "create": "Tạo mới",
     "change": "Thay đổi",
-    "dismiss": "Đóng"
+    "dismiss": "Đóng",
+    "aria": {
+      "dataTable": "Bảng dữ liệu",
+      "loading": "Đang tải nội dung",
+      "emptyState": "Không có dữ liệu",
+      "errorState": "Đã xảy ra lỗi",
+      "globalSearch": "Tìm kiếm toàn cục",
+      "commandPalette": "Bảng lệnh",
+      "searchInput": "Nhập từ khóa tìm kiếm",
+      "sidebar": "Điều hướng thanh bên",
+      "mainNav": "Điều hướng chính",
+      "closeSidebar": "Đóng thanh bên",
+      "toggleSection": "Chuyển đổi phần {{section}}",
+      "headerBanner": "Tiêu đề trang",
+      "toggleMenu": "Mở menu",
+      "bottomNav": "Điều hướng dưới",
+      "mainContent": "Nội dung chính",
+      "dashboard": "Nội dung chính trang tổng quan",
+      "kpiSection": "Chỉ số hiệu suất chính",
+      "chartsSection": "Phần biểu đồ",
+      "retrainingTable": "Bảng đối tượng đào tạo lại",
+      "inspectionForm": "Biểu mẫu nhập kết quả kiểm tra",
+      "capaForm": "Biểu mẫu đăng ký CAPA",
+      "stepIndicator": "Bước {{current}} / {{total}}",
+      "goBack": "Quay lại trang trước",
+      "clearEmployee": "Xóa lựa chọn nhân viên",
+      "searchEmployee": "Tìm kiếm nhân viên",
+      "paginationNav": "Điều hướng phân trang",
+      "sortColumn": "Sắp xếp theo {{column}}",
+      "clickableRow": "Nhấp để xem chi tiết {{name}}"
+    }
   },
   "header": {
     "searchPlaceholder": "Tìm kiếm theo mã hoặc tên nhân viên...",
@@ -603,7 +633,18 @@
     "expirationDate": "Ngày hết hạn",
     "daysRemaining": "Số ngày còn lại",
     "daysCount": "{{days}} ngày",
-    "detail": "Chi tiết"
+    "detail": "Chi tiết",
+    "expired": "Chứng chỉ hết hạn",
+    "expiredTab": "Hết hạn ({{count}})",
+    "expiredTitle": "Chứng chỉ đã hết hạn",
+    "expiredDescription": "Chứng chỉ đã vượt quá thời hạn hiệu lực",
+    "expiredListDescription": "Danh sách nhân viên có chứng chỉ đào tạo đã hết hạn và cần gia hạn",
+    "noExpiredTrainings": "Không có chứng chỉ hết hạn",
+    "expiredDaysAgo": "Hết hạn {{days}} ngày trước",
+    "certificationStatus": "Trạng thái chứng chỉ",
+    "statusValid": "Còn hiệu lực",
+    "statusExpiringSoon": "Sắp hết hạn",
+    "statusExpired": "Đã hết hạn"
   },
   "grade": {
     "aa": "AA",
@@ -2203,7 +2244,26 @@
       "severityLabel": "Mức độ",
       "submit": "Đăng ký",
       "update": "Cập nhật",
-      "cancel": "Hủy"
+      "cancel": "Hủy",
+      "effectivenessScoreLabel": "Điểm hiệu quả (0-100)",
+      "effectivenessScorePlaceholder": "Nhập điểm từ 0 đến 100"
+    },
+    "validation": {
+      "titleRequired": "Tiêu đề là bắt buộc.",
+      "descriptionRequired": "Mô tả là bắt buộc.",
+      "typeRequired": "Loại (khắc phục/phòng ngừa) là bắt buộc.",
+      "severityRequired": "Mức độ nghiêm trọng là bắt buộc.",
+      "sourceRequired": "Nguồn là bắt buộc.",
+      "reportedByRequired": "Thông tin người báo cáo là bắt buộc.",
+      "problemDescRequired": "Mô tả vấn đề là bắt buộc.",
+      "affectedAreaRequired": "Khu vực bị ảnh hưởng là bắt buộc.",
+      "immediateActionRequired": "Hành động ngay lập tức là bắt buộc trước khi chuyển sang giai đoạn điều tra.",
+      "rootCauseRequired": "Phân tích nguyên nhân gốc là bắt buộc trước khi chuyển sang giai đoạn hành động.",
+      "actionItemsRequired": "Ít nhất một hạng mục hành động là bắt buộc trước khi chuyển sang giai đoạn xác minh.",
+      "effectivenessScoreRequired": "Điểm hiệu quả là bắt buộc trước khi đóng.",
+      "effectivenessScoreRange": "Điểm hiệu quả phải từ 0 đến 100.",
+      "invalidStageTransition": "Chuyển đổi giai đoạn không hợp lệ.",
+      "missingRequiredFields": "Thiếu các trường bắt buộc."
     }
   },
   "trainingPlan": {

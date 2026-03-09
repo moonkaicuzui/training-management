@@ -121,19 +121,31 @@ export default function CAPAForm() {
     const errors: Partial<Record<keyof FormData, string>> = {};
 
     if (!formData.title.trim()) {
-      errors.title = t('capa.form.titleRequired');
+      errors.title = t('capa.validation.titleRequired');
     }
 
     if (!formData.description.trim()) {
-      errors.description = t('capa.form.descriptionRequired');
+      errors.description = t('capa.validation.descriptionRequired');
+    }
+
+    if (!formData.type) {
+      errors.type = t('capa.validation.typeRequired');
+    }
+
+    if (!formData.severity) {
+      errors.severity = t('capa.validation.severityRequired');
+    }
+
+    if (!formData.source) {
+      errors.source = t('capa.validation.sourceRequired');
     }
 
     if (!formData.problemDescription.trim()) {
-      errors.problemDescription = t('capa.form.problemDescRequired');
+      errors.problemDescription = t('capa.validation.problemDescRequired');
     }
 
     if (!formData.affectedArea.trim()) {
-      errors.affectedArea = t('capa.form.affectedAreaRequired');
+      errors.affectedArea = t('capa.validation.affectedAreaRequired');
     }
 
     setValidationErrors(errors);
@@ -185,8 +197,8 @@ export default function CAPAForm() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('common.aria.goBack')}>
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold">
@@ -200,9 +212,9 @@ export default function CAPAForm() {
 
       {/* Error Alert */}
       {error && (
-        <Card className="border-destructive bg-destructive/10">
+        <Card className="border-destructive bg-destructive/10" role="alert">
           <CardContent className="flex items-center gap-2 py-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden="true" />
             <p className="text-destructive">{error}</p>
           </CardContent>
         </Card>
@@ -227,9 +239,11 @@ export default function CAPAForm() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder={t('capa.form.titlePlaceholder')}
                 className={validationErrors.title ? 'border-destructive' : ''}
+                aria-invalid={!!validationErrors.title}
+                aria-describedby={validationErrors.title ? 'title-error' : undefined}
               />
               {validationErrors.title && (
-                <p className="text-sm text-destructive">{validationErrors.title}</p>
+                <p id="title-error" className="text-sm text-destructive" role="alert">{validationErrors.title}</p>
               )}
             </div>
 
@@ -244,22 +258,26 @@ export default function CAPAForm() {
                 placeholder={t('capa.form.descriptionPlaceholder')}
                 rows={3}
                 className={validationErrors.description ? 'border-destructive' : ''}
+                aria-invalid={!!validationErrors.description}
+                aria-describedby={validationErrors.description ? 'description-error' : undefined}
               />
               {validationErrors.description && (
-                <p className="text-sm text-destructive">{validationErrors.description}</p>
+                <p id="description-error" className="text-sm text-destructive" role="alert">{validationErrors.description}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('capa.form.categoryLabel')}</Label>
+                <Label>
+                  {t('capa.form.categoryLabel')} <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value: CAPAType) =>
                     setFormData({ ...formData, type: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={validationErrors.type ? 'border-destructive' : ''}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -270,17 +288,22 @@ export default function CAPAForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.type && (
+                  <p className="text-sm text-destructive">{validationErrors.type}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>{t('capa.cause')}</Label>
+                <Label>
+                  {t('capa.cause')} <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.source}
                   onValueChange={(value: CAPASource) =>
                     setFormData({ ...formData, source: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={validationErrors.source ? 'border-destructive' : ''}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -291,19 +314,24 @@ export default function CAPAForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.source && (
+                  <p className="text-sm text-destructive">{validationErrors.source}</p>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('capa.form.severityLabel')}</Label>
+                <Label>
+                  {t('capa.form.severityLabel')} <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.severity}
                   onValueChange={(value: CAPASeverity) =>
                     setFormData({ ...formData, severity: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={validationErrors.severity ? 'border-destructive' : ''}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -314,6 +342,9 @@ export default function CAPAForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.severity && (
+                  <p className="text-sm text-destructive">{validationErrors.severity}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -370,9 +401,11 @@ export default function CAPAForm() {
                 placeholder={t('capa.form.problemDescPlaceholder')}
                 rows={4}
                 className={validationErrors.problemDescription ? 'border-destructive' : ''}
+                aria-invalid={!!validationErrors.problemDescription}
+                aria-describedby={validationErrors.problemDescription ? 'problemDescription-error' : undefined}
               />
               {validationErrors.problemDescription && (
-                <p className="text-sm text-destructive">{validationErrors.problemDescription}</p>
+                <p id="problemDescription-error" className="text-sm text-destructive" role="alert">{validationErrors.problemDescription}</p>
               )}
             </div>
 
@@ -386,9 +419,11 @@ export default function CAPAForm() {
                 onChange={(e) => setFormData({ ...formData, affectedArea: e.target.value })}
                 placeholder={t('capa.form.affectedAreaPlaceholder')}
                 className={validationErrors.affectedArea ? 'border-destructive' : ''}
+                aria-invalid={!!validationErrors.affectedArea}
+                aria-describedby={validationErrors.affectedArea ? 'affectedArea-error' : undefined}
               />
               {validationErrors.affectedArea && (
-                <p className="text-sm text-destructive">{validationErrors.affectedArea}</p>
+                <p id="affectedArea-error" className="text-sm text-destructive" role="alert">{validationErrors.affectedArea}</p>
               )}
             </div>
 

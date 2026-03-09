@@ -43,6 +43,121 @@ const VALID_TRANSITIONS: Record<CAPAStatus, CAPAStatus[]> = {
 };
 
 // ============================================================
+// Validation Helpers
+// ============================================================
+
+export class CAPAValidationError extends Error {
+  field?: string;
+  constructor(message: string, field?: string) {
+    super(message);
+    this.name = 'CAPAValidationError';
+    this.field = field;
+  }
+}
+
+function validateCAPAInput(input: CAPAInput): void {
+  if (!input.title?.trim()) {
+    throw new CAPAValidationError('Title is required', 'title');
+  }
+  if (!input.description?.trim()) {
+    throw new CAPAValidationError('Description is required', 'description');
+  }
+  if (!input.type) {
+    throw new CAPAValidationError('Type is required', 'type');
+  }
+  if (!input.severity) {
+    throw new CAPAValidationError('Severity is required', 'severity');
+  }
+  if (!input.source) {
+    throw new CAPAValidationError('Source is required', 'source');
+  }
+  if (!input.owner?.trim()) {
+    throw new CAPAValidationError('Reporter/owner is required', 'owner');
+  }
+  if (!input.discovery?.problemDescription?.trim()) {
+    throw new CAPAValidationError('Problem description is required', 'problemDescription');
+  }
+  if (!input.discovery?.affectedArea?.trim()) {
+    throw new CAPAValidationError('Affected area is required', 'affectedArea');
+  }
+}
+
+function validateStageTransitionData(
+  currentStatus: CAPAStatus,
+  stageUpdate: CAPAStageUpdate,
+  existingData: Record<string, unknown>,
+): void {
+  switch (currentStatus) {
+    case 'discovery': {
+      // discovery → investigation: immediate_action 필수
+      const discovery = existingData.discovery as Record<string, unknown> | undefined;
+      if (!discovery?.immediateActions || !(discovery.immediateActions as string).trim()) {
+        throw new CAPAValidationError(
+          'Immediate action is required before advancing to investigation',
+          'immediateActions',
+        );
+      }
+      // investigation data validation
+      if (stageUpdate.investigation) {
+        if (!stageUpdate.investigation.rootCauseAnalysis?.trim()) {
+          throw new CAPAValidationError('Root cause analysis is required', 'rootCauseAnalysis');
+        }
+      }
+      break;
+    }
+    case 'investigation': {
+      // investigation → action: root_cause 필수 (from investigation data)
+      const investigation = existingData.investigation as Record<string, unknown> | undefined;
+      if (!investigation?.rootCauseAnalysis || !(investigation.rootCauseAnalysis as string).trim()) {
+        // Check if it's being provided in the update
+        if (!stageUpdate.investigation?.rootCauseAnalysis?.trim()) {
+          throw new CAPAValidationError(
+            'Root cause analysis is required before advancing to action',
+            'rootCauseAnalysis',
+          );
+        }
+      }
+      break;
+    }
+    case 'action': {
+      // action → verification: 최소 1개 조치 항목 필수
+      const action = existingData.action as Record<string, unknown> | undefined;
+      const correctiveActions = (action?.correctiveActions as unknown[]) || [];
+      const preventiveActions = (action?.preventiveActions as unknown[]) || [];
+      const totalActions = correctiveActions.length + preventiveActions.length;
+      if (totalActions === 0) {
+        throw new CAPAValidationError(
+          'At least one action item is required before advancing to verification',
+          'actionItems',
+        );
+      }
+      break;
+    }
+    case 'verification': {
+      // verification → closed: effectiveness_score 필수
+      const verification = existingData.verification as Record<string, unknown> | undefined;
+      const score = verification?.effectivenessScore as number | undefined;
+      // Check in existing data or in update
+      const updateScore = stageUpdate.verification?.effectivenessScore;
+      const finalScore = updateScore ?? score;
+      if (finalScore === undefined || finalScore === null) {
+        throw new CAPAValidationError(
+          'Effectiveness score is required before closing',
+          'effectivenessScore',
+        );
+      }
+      if (finalScore < 0 || finalScore > 100) {
+        throw new CAPAValidationError(
+          'Effectiveness score must be between 0 and 100',
+          'effectivenessScore',
+        );
+      }
+      break;
+    }
+  }
+}
+
+// ============================================================
 // Collection Name
 // ============================================================
 
@@ -139,6 +254,7 @@ export async function getCAPA(id: string): Promise<CAPA | null> {
 
 export async function createCAPA(input: CAPAInput): Promise<string> {
   try {
+    validateCAPAInput(input);
     const now = Timestamp.now();
     const capaData = {
       capaNumber: generateCAPANumber(),
@@ -200,6 +316,12 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
       throw new Error(
         `Invalid CAPA transition: ${currentStatus} → ${stageUpdate.status}. Allowed: [${allowedNext?.join(', ') ?? 'none'}]`
       );
+    }
+
+    // Validate stage-specific required data (skip for rejection)
+    if (stageUpdate.status !== 'rejected') {
+      const existingData = snapshot.data() as Record<string, unknown>;
+      validateStageTransitionData(currentStatus, stageUpdate, existingData);
     }
 
     const now = Timestamp.now();

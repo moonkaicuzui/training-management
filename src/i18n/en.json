@@ -40,7 +40,37 @@
     "optional": "Optional",
     "create": "Create",
     "change": "Change",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "aria": {
+      "dataTable": "Data table",
+      "loading": "Content is loading",
+      "emptyState": "No data available",
+      "errorState": "An error occurred",
+      "globalSearch": "Global search",
+      "commandPalette": "Command palette",
+      "searchInput": "Enter search term",
+      "sidebar": "Sidebar navigation",
+      "mainNav": "Main navigation",
+      "closeSidebar": "Close sidebar",
+      "toggleSection": "Toggle {{section}} section",
+      "headerBanner": "Page header",
+      "toggleMenu": "Open menu",
+      "bottomNav": "Bottom navigation",
+      "mainContent": "Main content",
+      "dashboard": "Dashboard main content",
+      "kpiSection": "Key performance indicators",
+      "chartsSection": "Charts section",
+      "retrainingTable": "Retraining targets table",
+      "inspectionForm": "Inspection result form",
+      "capaForm": "CAPA registration form",
+      "stepIndicator": "Step {{current}} of {{total}}",
+      "goBack": "Go back to previous page",
+      "clearEmployee": "Clear employee selection",
+      "searchEmployee": "Search employee",
+      "paginationNav": "Pagination navigation",
+      "sortColumn": "Sort by {{column}}",
+      "clickableRow": "Click to view {{name}} details"
+    }
   },
   "header": {
     "searchPlaceholder": "Search by employee ID or name...",
@@ -603,7 +633,18 @@
     "expirationDate": "Expiration Date",
     "daysRemaining": "Days Remaining",
     "daysCount": "{{days}} days",
-    "detail": "Detail"
+    "detail": "Detail",
+    "expired": "Expired Certification",
+    "expiredTab": "Expired ({{count}})",
+    "expiredTitle": "Expired Certifications",
+    "expiredDescription": "Certifications that have exceeded validity period",
+    "expiredListDescription": "List of employees whose training certifications have expired and need renewal",
+    "noExpiredTrainings": "No expired certifications",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "certificationStatus": "Certification Status",
+    "statusValid": "Valid",
+    "statusExpiringSoon": "Expiring Soon",
+    "statusExpired": "Expired"
   },
   "grade": {
     "aa": "AA",
@@ -2203,7 +2244,26 @@
       "severityLabel": "Severity",
       "submit": "Submit",
       "update": "Update",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "effectivenessScoreLabel": "Effectiveness Score (0-100)",
+      "effectivenessScorePlaceholder": "Enter a score between 0 and 100"
+    },
+    "validation": {
+      "titleRequired": "Title is required.",
+      "descriptionRequired": "Description is required.",
+      "typeRequired": "Type (corrective/preventive) is required.",
+      "severityRequired": "Severity is required.",
+      "sourceRequired": "Source is required.",
+      "reportedByRequired": "Reporter information is required.",
+      "problemDescRequired": "Problem description is required.",
+      "affectedAreaRequired": "Affected area is required.",
+      "immediateActionRequired": "Immediate action is required before advancing to investigation.",
+      "rootCauseRequired": "Root cause analysis is required before advancing to action.",
+      "actionItemsRequired": "At least one action item is required before advancing to verification.",
+      "effectivenessScoreRequired": "Effectiveness score is required before closing.",
+      "effectivenessScoreRange": "Effectiveness score must be between 0 and 100.",
+      "invalidStageTransition": "Invalid stage transition.",
+      "missingRequiredFields": "Required fields are missing."
     }
   },
   "trainingPlan": {

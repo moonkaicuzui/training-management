@@ -20,6 +20,9 @@ const sizes = {
 export function LoadingSpinner({ className, size = 'md' }: LoadingSpinnerProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
       className={cn(
         'animate-spin rounded-full border-primary border-t-transparent',
         sizes[size],
@@ -31,7 +34,7 @@ export function LoadingSpinner({ className, size = 'md' }: LoadingSpinnerProps) 
 
 export function PageLoading() {
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
+    <div className="flex items-center justify-center min-h-[400px]" role="status" aria-live="polite">
       <LoadingSpinner size="lg" />
     </div>
   );

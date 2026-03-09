@@ -40,7 +40,37 @@
     "optional": "선택사항",
     "create": "등록",
     "change": "변경",
-    "dismiss": "닫기"
+    "dismiss": "닫기",
+    "aria": {
+      "dataTable": "데이터 테이블",
+      "loading": "콘텐츠 로딩 중",
+      "emptyState": "데이터 없음",
+      "errorState": "오류 발생",
+      "globalSearch": "전체 검색",
+      "commandPalette": "명령 팔레트",
+      "searchInput": "검색어 입력",
+      "sidebar": "사이드바 내비게이션",
+      "mainNav": "메인 내비게이션",
+      "closeSidebar": "사이드바 닫기",
+      "toggleSection": "{{section}} 섹션 토글",
+      "headerBanner": "페이지 헤더",
+      "toggleMenu": "메뉴 열기",
+      "bottomNav": "하단 내비게이션",
+      "mainContent": "메인 콘텐츠",
+      "dashboard": "대시보드 메인 콘텐츠",
+      "kpiSection": "핵심 성과 지표",
+      "chartsSection": "차트 섹션",
+      "retrainingTable": "재교육 대상자 테이블",
+      "inspectionForm": "검사 결과 입력 폼",
+      "capaForm": "CAPA 등록 폼",
+      "stepIndicator": "단계 {{current}} / {{total}}",
+      "goBack": "이전 페이지로 돌아가기",
+      "clearEmployee": "직원 선택 해제",
+      "searchEmployee": "직원 검색",
+      "paginationNav": "페이지 내비게이션",
+      "sortColumn": "{{column}} 열 정렬",
+      "clickableRow": "{{name}} 상세 보기 클릭"
+    }
   },
   "header": {
     "searchPlaceholder": "직원 ID 또는 이름으로 검색...",
@@ -603,7 +633,18 @@
     "expirationDate": "만료일",
     "daysRemaining": "남은 일수",
     "daysCount": "{{days}}일",
-    "detail": "상세"
+    "detail": "상세",
+    "expired": "자격 만료",
+    "expiredTab": "자격 만료 ({{count}})",
+    "expiredTitle": "자격 만료 직원",
+    "expiredDescription": "교육 유효기간이 만료된 자격",
+    "expiredListDescription": "교육 유효기간이 만료되어 재교육이 필요한 직원 목록",
+    "noExpiredTrainings": "만료된 교육이 없습니다",
+    "expiredDaysAgo": "{{days}}일 전 만료",
+    "certificationStatus": "자격 상태",
+    "statusValid": "유효",
+    "statusExpiringSoon": "곧 만료",
+    "statusExpired": "만료됨"
   },
   "grade": {
     "aa": "AA",
@@ -2203,7 +2244,26 @@
       "severityLabel": "심각도",
       "submit": "등록",
       "update": "수정",
-      "cancel": "취소"
+      "cancel": "취소",
+      "effectivenessScoreLabel": "효과성 점수 (0-100)",
+      "effectivenessScorePlaceholder": "0~100 사이 점수를 입력하세요"
+    },
+    "validation": {
+      "titleRequired": "제목은 필수 항목입니다.",
+      "descriptionRequired": "설명은 필수 항목입니다.",
+      "typeRequired": "분류(시정/예방)는 필수 항목입니다.",
+      "severityRequired": "심각도는 필수 항목입니다.",
+      "sourceRequired": "발생 원인은 필수 항목입니다.",
+      "reportedByRequired": "보고자 정보는 필수 항목입니다.",
+      "problemDescRequired": "문제 상세 설명은 필수 항목입니다.",
+      "affectedAreaRequired": "영향 받는 영역은 필수 항목입니다.",
+      "immediateActionRequired": "즉각 조치는 조사 단계 전환 시 필수입니다.",
+      "rootCauseRequired": "근본 원인 분석은 조치 단계 전환 시 필수입니다.",
+      "actionItemsRequired": "최소 1개의 조치 항목이 검증 단계 전환 시 필수입니다.",
+      "effectivenessScoreRequired": "효과성 점수는 종료 단계 전환 시 필수입니다.",
+      "effectivenessScoreRange": "효과성 점수는 0~100 사이여야 합니다.",
+      "invalidStageTransition": "잘못된 단계 전환입니다.",
+      "missingRequiredFields": "필수 항목이 누락되었습니다."
     }
   },
   "trainingPlan": {

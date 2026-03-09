@@ -326,6 +326,7 @@ export function Sidebar() {
           'fixed left-0 top-0 z-50 h-full w-64 border-r bg-background transition-transform duration-300 md:static md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        aria-label={t('common.aria.sidebar')}
       >
         {/* Mobile Header */}
         <div className="flex h-16 items-center justify-between border-b px-4 md:hidden">
@@ -339,6 +340,7 @@ export function Sidebar() {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(false)}
+            aria-label={t('common.aria.closeSidebar')}
           >
             <X className="h-5 w-5" />
           </Button>
@@ -381,6 +383,7 @@ export function Sidebar() {
                               ? 'text-primary'
                               : 'text-muted-foreground hover:text-foreground'
                         )}
+                        aria-expanded={isOpen}
                       >
                         <span className="truncate">{t(section.titleKey)}</span>
                         <ChevronDown
@@ -408,6 +411,7 @@ export function Sidebar() {
                                   : 'text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300'
                               )
                             }
+                            aria-current={isPathMatch(location.pathname, item.href) ? 'page' : undefined}
                           >
                             <item.icon className="h-4 w-4 shrink-0" />
                             <span className="truncate">{t(item.titleKey)}</span>
