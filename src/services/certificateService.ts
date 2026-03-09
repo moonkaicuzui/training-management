@@ -156,39 +156,44 @@ const docToTemplate = (
 export const getCertificates = async (
   filters?: CertificateFilters
 ): Promise<Certificate[]> => {
-  const constraints = [];
+  try {
+    const constraints = [];
 
-  if (filters?.employee_id) {
-    constraints.push(where('employee_id', '==', filters.employee_id));
+    if (filters?.employee_id) {
+      constraints.push(where('employee_id', '==', filters.employee_id));
+    }
+    if (filters?.program_code) {
+      constraints.push(where('program_code', '==', filters.program_code));
+    }
+    if (filters?.status) {
+      constraints.push(where('status', '==', filters.status));
+    }
+
+    constraints.push(limit(500));
+
+    const q = query(collection(db, CERTIFICATES_COLLECTION), ...constraints);
+    const snapshot = await getDocs(q);
+
+    let results = snapshot.docs.map((d) =>
+      docToCertificate(d.id, d.data() as Record<string, unknown>)
+    );
+
+    // Client-side date filters
+    if (filters?.start_date) {
+      results = results.filter((r) => r.issue_date >= filters.start_date!);
+    }
+    if (filters?.end_date) {
+      results = results.filter((r) => r.issue_date <= filters.end_date!);
+    }
+
+    // Sort by issue_date descending
+    results.sort((a, b) => b.issue_date.localeCompare(a.issue_date));
+
+    return results;
+  } catch (error) {
+    logger.error('[certificateService] getCertificates failed:', error);
+    throw error;
   }
-  if (filters?.program_code) {
-    constraints.push(where('program_code', '==', filters.program_code));
-  }
-  if (filters?.status) {
-    constraints.push(where('status', '==', filters.status));
-  }
-
-  constraints.push(limit(500));
-
-  const q = query(collection(db, CERTIFICATES_COLLECTION), ...constraints);
-  const snapshot = await getDocs(q);
-
-  let results = snapshot.docs.map((d) =>
-    docToCertificate(d.id, d.data() as Record<string, unknown>)
-  );
-
-  // Client-side date filters
-  if (filters?.start_date) {
-    results = results.filter((r) => r.issue_date >= filters.start_date!);
-  }
-  if (filters?.end_date) {
-    results = results.filter((r) => r.issue_date <= filters.end_date!);
-  }
-
-  // Sort by issue_date descending
-  results.sort((a, b) => b.issue_date.localeCompare(a.issue_date));
-
-  return results;
 };
 
 /**
@@ -197,10 +202,15 @@ export const getCertificates = async (
 export const getCertificate = async (
   id: string
 ): Promise<Certificate | null> => {
-  const docRef = doc(db, CERTIFICATES_COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  return docToCertificate(docSnap.id, docSnap.data() as Record<string, unknown>);
+  try {
+    const docRef = doc(db, CERTIFICATES_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return null;
+    return docToCertificate(docSnap.id, docSnap.data() as Record<string, unknown>);
+  } catch (error) {
+    logger.error('[certificateService] getCertificate failed:', error);
+    throw error;
+  }
 };
 
 /**
@@ -209,21 +219,26 @@ export const getCertificate = async (
 export const createCertificate = async (
   data: Omit<Certificate, 'created_at'>
 ): Promise<Certificate> => {
-  const docRef = doc(db, CERTIFICATES_COLLECTION, data.certificate_id);
-  const now = new Date().toISOString();
+  try {
+    const docRef = doc(db, CERTIFICATES_COLLECTION, data.certificate_id);
+    const now = new Date().toISOString();
 
-  const certificateData = {
-    ...data,
-    created_at: serverTimestamp(),
-  };
+    const certificateData = {
+      ...data,
+      created_at: serverTimestamp(),
+    };
 
-  await setDoc(docRef, certificateData);
-  logger.log('[certificateService] Created certificate:', data.certificate_id);
+    await setDoc(docRef, certificateData);
+    logger.log('[certificateService] Created certificate:', data.certificate_id);
 
-  return {
-    ...data,
-    created_at: now,
-  };
+    return {
+      ...data,
+      created_at: now,
+    };
+  } catch (error) {
+    logger.error('[certificateService] createCertificate failed:', error);
+    throw error;
+  }
 };
 
 /**
@@ -232,39 +247,44 @@ export const createCertificate = async (
 export const createCertificatesBatch = async (
   certificates: Omit<Certificate, 'created_at'>[]
 ): Promise<Certificate[]> => {
-  if (certificates.length === 0) return [];
+  try {
+    if (certificates.length === 0) return [];
 
-  // Firestore batches are limited to 500 operations
-  const BATCH_SIZE = 450;
-  const createdCertificates: Certificate[] = [];
-  const now = new Date().toISOString();
+    // Firestore batches are limited to 500 operations
+    const BATCH_SIZE = 450;
+    const createdCertificates: Certificate[] = [];
+    const now = new Date().toISOString();
 
-  for (let i = 0; i < certificates.length; i += BATCH_SIZE) {
-    const chunk = certificates.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    for (let i = 0; i < certificates.length; i += BATCH_SIZE) {
+      const chunk = certificates.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-    for (const cert of chunk) {
-      const docRef = doc(db, CERTIFICATES_COLLECTION, cert.certificate_id);
-      batch.set(docRef, {
-        ...cert,
-        created_at: serverTimestamp(),
-      });
+      for (const cert of chunk) {
+        const docRef = doc(db, CERTIFICATES_COLLECTION, cert.certificate_id);
+        batch.set(docRef, {
+          ...cert,
+          created_at: serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+      logger.log(
+        `[certificateService] Batch created ${chunk.length} certificates (chunk ${Math.floor(i / BATCH_SIZE) + 1})`
+      );
+
+      createdCertificates.push(
+        ...chunk.map((cert) => ({
+          ...cert,
+          created_at: now,
+        }))
+      );
     }
 
-    await batch.commit();
-    logger.log(
-      `[certificateService] Batch created ${chunk.length} certificates (chunk ${Math.floor(i / BATCH_SIZE) + 1})`
-    );
-
-    createdCertificates.push(
-      ...chunk.map((cert) => ({
-        ...cert,
-        created_at: now,
-      }))
-    );
+    return createdCertificates;
+  } catch (error) {
+    logger.error('[certificateService] createCertificatesBatch failed:', error);
+    throw error;
   }
-
-  return createdCertificates;
 };
 
 /**
@@ -275,14 +295,19 @@ export const revokeCertificate = async (
   revokedBy: string,
   reason: string
 ): Promise<void> => {
-  const docRef = doc(db, CERTIFICATES_COLLECTION, certificateId);
-  await updateDoc(docRef, {
-    status: 'REVOKED',
-    revoked_at: new Date().toISOString(),
-    revoked_by: revokedBy,
-    revoke_reason: reason,
-  });
-  logger.log('[certificateService] Revoked certificate:', certificateId);
+  try {
+    const docRef = doc(db, CERTIFICATES_COLLECTION, certificateId);
+    await updateDoc(docRef, {
+      status: 'REVOKED',
+      revoked_at: new Date().toISOString(),
+      revoked_by: revokedBy,
+      revoke_reason: reason,
+    });
+    logger.log('[certificateService] Revoked certificate:', certificateId);
+  } catch (error) {
+    logger.error('[certificateService] revokeCertificate failed:', error);
+    throw error;
+  }
 };
 
 // ============================================================
@@ -295,27 +320,32 @@ export const revokeCertificate = async (
 export const getCertificateTemplates = async (
   activeOnly = true
 ): Promise<CertificateTemplate[]> => {
-  const constraints = [];
+  try {
+    const constraints = [];
 
-  if (activeOnly) {
-    constraints.push(where('is_active', '==', true));
+    if (activeOnly) {
+      constraints.push(where('is_active', '==', true));
+    }
+
+    const q = query(collection(db, TEMPLATES_COLLECTION), ...constraints);
+    const snapshot = await getDocs(q);
+
+    const templates = snapshot.docs.map((d) =>
+      docToTemplate(d.id, d.data() as Record<string, unknown>)
+    );
+
+    // Sort: default first, then by name
+    templates.sort((a, b) => {
+      if (a.is_default && !b.is_default) return -1;
+      if (!a.is_default && b.is_default) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    return templates;
+  } catch (error) {
+    logger.error('[certificateService] getCertificateTemplates failed:', error);
+    throw error;
   }
-
-  const q = query(collection(db, TEMPLATES_COLLECTION), ...constraints);
-  const snapshot = await getDocs(q);
-
-  const templates = snapshot.docs.map((d) =>
-    docToTemplate(d.id, d.data() as Record<string, unknown>)
-  );
-
-  // Sort: default first, then by name
-  templates.sort((a, b) => {
-    if (a.is_default && !b.is_default) return -1;
-    if (!a.is_default && b.is_default) return 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  return templates;
 };
 
 /**
@@ -324,10 +354,15 @@ export const getCertificateTemplates = async (
 export const getCertificateTemplate = async (
   id: string
 ): Promise<CertificateTemplate | null> => {
-  const docRef = doc(db, TEMPLATES_COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  return docToTemplate(docSnap.id, docSnap.data() as Record<string, unknown>);
+  try {
+    const docRef = doc(db, TEMPLATES_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return null;
+    return docToTemplate(docSnap.id, docSnap.data() as Record<string, unknown>);
+  } catch (error) {
+    logger.error('[certificateService] getCertificateTemplate failed:', error);
+    throw error;
+  }
 };
 
 /**
@@ -336,31 +371,36 @@ export const getCertificateTemplate = async (
 export const createCertificateTemplate = async (
   data: Omit<CertificateTemplate, 'template_id' | 'created_at' | 'updated_at'>
 ): Promise<CertificateTemplate> => {
-  const templateId = `TMPL-${Date.now()}`;
-  const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
-  const now = new Date().toISOString();
+  try {
+    const templateId = `TMPL-${Date.now()}`;
+    const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
+    const now = new Date().toISOString();
 
-  // If this template is set as default, unset any existing default
-  if (data.is_default) {
-    await unsetDefaultTemplates();
+    // If this template is set as default, unset any existing default
+    if (data.is_default) {
+      await unsetDefaultTemplates();
+    }
+
+    const templateData = {
+      ...data,
+      template_id: templateId,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    };
+
+    await setDoc(docRef, templateData);
+    logger.log('[certificateService] Created template:', templateId);
+
+    return {
+      ...data,
+      template_id: templateId,
+      created_at: now,
+      updated_at: now,
+    };
+  } catch (error) {
+    logger.error('[certificateService] createCertificateTemplate failed:', error);
+    throw error;
   }
-
-  const templateData = {
-    ...data,
-    template_id: templateId,
-    created_at: serverTimestamp(),
-    updated_at: serverTimestamp(),
-  };
-
-  await setDoc(docRef, templateData);
-  logger.log('[certificateService] Created template:', templateId);
-
-  return {
-    ...data,
-    template_id: templateId,
-    created_at: now,
-    updated_at: now,
-  };
 };
 
 /**
@@ -370,18 +410,23 @@ export const updateCertificateTemplate = async (
   templateId: string,
   updates: Partial<CertificateTemplate>
 ): Promise<void> => {
-  const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
+  try {
+    const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
 
-  // If setting as default, unset others first
-  if (updates.is_default) {
-    await unsetDefaultTemplates();
+    // If setting as default, unset others first
+    if (updates.is_default) {
+      await unsetDefaultTemplates();
+    }
+
+    await updateDoc(docRef, {
+      ...updates,
+      updated_at: serverTimestamp(),
+    });
+    logger.log('[certificateService] Updated template:', templateId);
+  } catch (error) {
+    logger.error('[certificateService] updateCertificateTemplate failed:', error);
+    throw error;
   }
-
-  await updateDoc(docRef, {
-    ...updates,
-    updated_at: serverTimestamp(),
-  });
-  logger.log('[certificateService] Updated template:', templateId);
 };
 
 /**
@@ -390,9 +435,14 @@ export const updateCertificateTemplate = async (
 export const deleteCertificateTemplate = async (
   templateId: string
 ): Promise<void> => {
-  const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
-  await deleteDoc(docRef);
-  logger.log('[certificateService] Deleted template:', templateId);
+  try {
+    const docRef = doc(db, TEMPLATES_COLLECTION, templateId);
+    await deleteDoc(docRef);
+    logger.log('[certificateService] Deleted template:', templateId);
+  } catch (error) {
+    logger.error('[certificateService] deleteCertificateTemplate failed:', error);
+    throw error;
+  }
 };
 
 /**
