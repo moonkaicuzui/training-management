@@ -1041,10 +1041,72 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 8. **감사 추적**: 모든 변경은 로그 기록
 9. **WCAG 2.1 AA**: 접근성 준수 필수
 10. **Core Web Vitals**: LCP < 2.5s, FID < 100ms, CLS < 0.1
+11. **Zustand useShallow**: 스토어에서 여러 속성 구독 시 `useShallow` 사용 (리렌더링 최적화)
+12. **serverTimestamp()**: Firestore 쓰기에 `serverTimestamp()` 사용 (`new Date()` / `Timestamp.now()` 금지)
+13. **라우트 권한 보호**: 관리자 전용 페이지는 `DevProtectedRoute` + `requiredPermission` 적용
+14. **DEV 전용 도메인**: `gmail.com`은 `import.meta.env.DEV`에서만 허용
 
 ---
 
-## Agent Team System (Claude Code Agent Teams)
+## 19. 개선 이력 (Improvement History)
+
+### Phase 1: 긴급 보안/로직/품질 수정 (2026-03-09, commit `0d4a6ba`)
+| # | 카테고리 | 파일 | 변경 내용 |
+|---|----------|------|----------|
+| 1 | 로직 | `utils/aqlAnalyzer.ts` | AQL 우선순위 임계값: CRITICAL(>50%), HIGH(>30%), MEDIUM(>10%), null(≤10%) |
+| 2 | 보안 | `types/auth.ts` | gmail.com → DEV 환경 전용 (`ALLOWED_EMAIL_DOMAINS`, `ADMIN_EMAILS`) |
+| 3 | 로직 | `services/capaService.ts` | CAPA 단계 전환 `VALID_TRANSITIONS` 검증 추가, 무효 전환 차단 |
+| 4 | 보안 | `App.tsx` | PptxTestPage를 `import.meta.env.DEV` 게이팅 |
+| 5 | 품질 | `utils/excelExport.ts`, `utils/pdfExport.ts` | 7개 export 함수에 try/catch 에러 핸들링 |
+| 6 | 테스트 | `services/notificationService.test.ts` | Firebase 모킹에 `limit: vi.fn()` 누락 수정 |
+
+### Phase 2: 성능 최적화 + 권한 강화 (2026-03-09, commit `5e16b95`)
+| # | 카테고리 | 영향 범위 | 변경 내용 |
+|---|----------|----------|----------|
+| 1 | 성능 | 35 페이지/컴포넌트 | `useShallow` 적용 (Zustand 구독 최적화) |
+| 2 | 보안 | 7 라우트 | `DevProtectedRoute` 권한 보호 적용 |
+| 3 | 데이터 | `projectService.ts`, `capaService.ts` | `serverTimestamp()` 전환 (클라이언트 시간 제거) |
+
+**useShallow 적용 파일 (35개)**:
+- Pages: EmployeeDetail, Employees, Programs, Results, Retraining, Schedule, TrainingPlan, AqlDashboard, AqlTrainingRecommendations, FivePrsDashboard, TrainingRecommendations (5PRS), CAPADashboard, CAPAForm, CAPADetail, InspectionDashboard, InspectionResultForm, InspectionEnrollments, InspectionHistory, ProjectsDashboard, ProjectsMembers, ProjectsTasks, ProjectsCalendar, ProjectsSettings, MDDashboard, MDInputForm, MDHistory, MDReport, QualityBlog, Login, TechModelList, TechReviewGuidelines
+- Components: Header, Sidebar, NotificationBell, ProtectedRoute, NotificationCenter, MonthSelector, MappingManager, TqcEmployeeLinker
+
+**라우트 권한 보호 (7개)**:
+- `/trainers` → `canManageUsers`
+- `/executive-report` → `canManageUsers`
+- `/new-tqc/settings` → `canManageUsers`
+- `/projects/settings` → `canManageUsers`
+- `/aql/training-recommendations` → `canEditResults`
+- `/five-prs/training-recommendations` → `canEditResults`
+- `/inspection/result` → `canEditResults`
+
+### Phase 3: i18n 하드코딩 한국어 → i18n 키 변환 (2026-03-09, commit `1982828`)
+| # | 파일 | 변환 키 수 | 내용 |
+|---|------|-----------|------|
+| 1 | `pages/TrainingPlan.tsx` | ~65키 | 헤더, 레이블, 우선순위, 평가, 추천사항 |
+| 2 | `components/projects/automation/constants.ts` | ~83키 | 트리거, 액션, 상태 라벨 |
+| 3 | `components/projects/automation/AutomationDialog.tsx` | ~30키 | 다이얼로그 UI 텍스트 |
+| 4 | `components/projects/automation/AutomationList.tsx` | ~25키 | 리스트 UI 텍스트 |
+| 5 | `pages/Notifications.tsx` | 5키 | 알림 페이지 텍스트 |
+| 6 | `i18n/locales/ko.json` | 179키 추가 | 한국어 번역 키 |
+| 7 | `i18n/locales/en.json` | 179키 동기화 | 영어 (한국어 fallback) |
+| 8 | `i18n/locales/vi.json` | 179키 동기화 | 베트남어 (한국어 fallback) |
+
+### 미완료 개선 항목 (향후 로드맵)
+- [ ] 핵심 서비스 테스트 (resultService, inspectionService, capaService, aqlService)
+- [ ] WCAG 접근성 수정
+- [ ] Grade 계산 통합
+- [ ] 1000+ 라인 페이지 분할 (6 페이지)
+- [ ] DataTable 마이그레이션 (29 페이지)
+- [ ] React Hook Form + Zod 마이그레이션 (17 폼)
+- [ ] trainingStore → normalizedStore 전환
+- [ ] AQL/5PRS 중복 컴포넌트 추출
+- [ ] E2E 테스트 (핵심 워크플로우)
+- [ ] en.json/vi.json 179키 적절한 번역 (현재 한국어 fallback)
+
+---
+
+## 20. Agent Team System (Claude Code Agent Teams)
 
 > **활성화**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (글로벌 + 프로젝트 설정 완료)
 > 모든 teammate는 이 CLAUDE.md를 자동으로 읽습니다.
@@ -1148,7 +1210,109 @@ Teammate 4명 생성: QUALITY(비즈니스로직), DATA(서비스), STATE(스토
 1. **Code Change Sequence**: `types/ → services/ → stores/ → components/ → pages/`
 2. **APPEND-ONLY 컬렉션**: training_results, auditLogs, enrollment_logs는 절대 UPDATE/DELETE 금지
 3. **API 레이어**: Pages → `api.*` 호출만 (서비스 직접 호출 금지)
-4. **i18n**: 모든 사용자 텍스트에 `t('key')` 사용 (하드코딩 금지)
+4. **i18n**: 모든 사용자 텍스트에 `t('key')` 사용 (하드코딩 금지), 새 키 추가 시 ko/en/vi 3개 파일 모두 동기화
 5. **Firestore 네이밍**: snake_case (firestore.rules와 서비스 코드 일치 필수)
-6. **빌드 검증**: 작업 완료 전 `npm run typecheck && npm run build` 확인
-7. **파일 충돌 최소화**: 각 teammate는 자신의 담당 파일 범위 내에서만 수정
+6. **Firestore 쓰기**: `serverTimestamp()` 사용 (`new Date()` / `Timestamp.now()` → Firestore 쓰기 금지)
+7. **Zustand 구독**: 여러 속성 구독 시 `import { useShallow } from 'zustand/react/shallow'` 사용
+8. **빌드 검증**: 작업 완료 전 `npm run typecheck && npm run build` 확인
+9. **파일 충돌 최소화**: 각 teammate는 자신의 담당 파일 범위 내에서만 수정
+
+### 실전 병렬 에이전트 실행 패턴
+
+Phase 2-3 개선 작업에서 검증된 병렬 실행 전략:
+
+#### 대규모 일괄 수정 (35+ 파일)
+```
+전략: 파일을 3-4개 배치로 분할 → 각 배치를 백그라운드 에이전트에 위임 → 결과 통합
+
+실행 예시 (Phase 2 useShallow 적용):
+  Agent 1: 핵심 페이지 8개 (EmployeeDetail, Employees, Programs, Results, ...)
+  Agent 2: AQL/5PRS/CAPA/Inspection 페이지 12개
+  Agent 3: Projects/MD/기타 페이지 + 공통 컴포넌트 18개
+
+  → 3개 에이전트 동시 실행 → 전체 완료 후 검증
+```
+
+#### i18n 키 일괄 변환 (179키)
+```
+전략: 하드코딩 한국어가 많은 파일 식별 → 에이전트에 변환 위임 → ko/en/vi 동기화
+
+주의사항:
+  - ko.json에 키 추가 후 반드시 en.json, vi.json에도 동일 키 추가
+  - i18n 일관성 테스트 통과 확인 (i18n.test.ts)
+  - 번역 미완료 시 한국어 값을 fallback으로 사용 가능
+```
+
+#### 검증 프로토콜
+```
+각 Phase 완료 후:
+  1. npm run typecheck     # TypeScript 타입 검사
+  2. npm run test:run      # 전체 테스트 (400+ tests)
+  3. npm run build         # 프로덕션 빌드
+  4. git add -A && git commit
+  5. firebase deploy --only hosting
+  6. git push
+  7. git status            # working tree clean 확인
+```
+
+#### Pre-commit Hook 주의사항
+```
+scripts/register-qa-members.js에 API 키가 포함되어 있어 pre-commit hook에서 차단됨.
+해결: git reset HEAD scripts/register-qa-members.js → 해당 파일 제외 후 커밋
+```
+
+### 25명 에이전트 전체 목록 (AGENTS.md 참조)
+
+| ID | 이름 | 역할 | Avatar | 팀 | 핵심 스킬 |
+|----|------|------|--------|-----|----------|
+| UIX | 김디자인 | UI/UX Designer | 👨‍🎨 | Frontend | 인터페이스, UX, 비주얼, Figma |
+| A11Y | 박접근 | Accessibility Expert | ♿ | Frontend | WCAG 2.1, 스크린리더, 색상 대비 |
+| RDS | 이반응 | Responsive Specialist | 📱 | Frontend | 반응형, 모바일퍼스트, 크로스디바이스 |
+| AID | 최동작 | Animation Designer | ✨ | Frontend | 마이크로인터랙션, 트랜지션, 60fps |
+| CPA | 정컴포 | Component Architect | 🧩 | Frontend | React 패턴, Compound Components, Zustand |
+| SMA | 신스테이트 | State Management | 🔄 | Frontend | Zustand, 비동기상태, Immer, persist |
+| API | 송에이피 | API Architect | 🔌 | Backend | REST, GAS, 에러핸들링, 서킷브레이커 |
+| DBE | 한데이터 | Database Engineer | 🗄️ | Backend | Firestore 스키마, 인덱스, 트랜잭션 |
+| SEC | 강보안 | Security Engineer | 🛡️ | Backend | OWASP, RBAC, XSS/CSRF, DOMPurify |
+| PRF | 오성능 | Performance Engineer | ⚡ | Backend | Core Web Vitals, 번들최적화, Virtual Scroll |
+| RTE | 류실시간 | Real-time Engineer | 📡 | Backend | WebSocket, Push, 낙관적업데이트, 오프라인 |
+| QAE | 윤품질 | QA Engineer | 🔍 | Quality | 테스트전략, 리스크기반, 버그관리 |
+| CRV | 임리뷰 | Code Reviewer | 👀 | Quality | SOLID, DRY, 복잡도분석, 리팩토링 |
+| DOC | 서문서 | Documentation Writer | 📝 | Quality | 기술문서, API문서, JSDoc, 3개국어 |
+| TAE | 배테스트 | Test Automation | 🤖 | Quality | Vitest, RTL, Playwright, CI/CD |
+| VQA | 비주얼큐에이 | Visual QA | 🎯 | Quality | 시각회귀, 픽셀비교, UI일관성 |
+| TDE | 교육전문 | Training Expert | 🎓 | Domain | QIP, 역량프레임워크, Kirkpatrick, 커리큘럼 |
+| CMP | 규정준수 | Compliance Specialist | 📋 | Domain | ISO, 감사추적, 데이터보존, APPEND-ONLY |
+| DAN | 분석가 | Data Analyst | 📈 | Domain | Recharts, KPI, 이상치탐지, 통계 |
+| DVO | 데브옵스 | DevOps Engineer | 🚀 | DevOps | Vite빌드, Firebase배포, GitHub Actions |
+| MON | 모니터링 | Monitoring Specialist | 📊 | DevOps | 에러추적, 성능메트릭, 세션리플레이 |
+| IFA | 인프라 | Infrastructure Architect | 🏗️ | DevOps | 서버리스, CDN, macOS앱, 재해복구 |
+| I18N | 국제화 | i18n Specialist | 🌏 | Specialized | i18next, ko/en/vi, 지역화, 번역품질 |
+| SYS | 시스템설계 | System Architect (Orchestrator) | 🧠 | Specialized | 아키텍처, 에이전트오케스트레이션, ADR |
+| AIS | AI통합 | AI Integration | 🤖 | Specialized | Claude API, 프롬프트엔지니어링, 추천시스템 |
+
+### 팀 간 협업 매트릭스
+```
+                              ┌─────────────┐
+                              │    SYS 🧠   │
+                              │   총괄 조율  │
+                              └──────┬──────┘
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         │                           │                           │
+         ▼                           ▼                           ▼
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│  FRONTEND (6)   │       │  BACKEND (5)    │       │  QUALITY (5)    │
+│ UIX A11Y RDS    │       │ API  DBE  SEC   │       │ QAE  CRV  DOC  │
+│ AID CPA  SMA    │◄─────►│ PRF  RTE        │◄─────►│ TAE  VQA       │
+└────────┬────────┘       └────────┬────────┘       └────────┬────────┘
+         │                         │                         │
+         └─────────────────────────┼─────────────────────────┘
+                                   │
+         ┌─────────────────────────┼─────────────────────────┐
+         ▼                         ▼                         ▼
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│  DOMAIN (3)     │       │  DEVOPS (3)     │       │ SPECIALIZED (3) │
+│ TDE  CMP  DAN   │       │ DVO  MON  IFA   │       │ I18N  SYS  AIS  │
+└─────────────────┘       └─────────────────┘       └─────────────────┘
+```

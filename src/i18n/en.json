@@ -38,6 +38,8 @@
     "next": "Next",
     "back": "Back",
     "optional": "Optional",
+    "create": "Create",
+    "change": "Change",
     "dismiss": "Dismiss"
   },
   "header": {
@@ -115,6 +117,7 @@
       "mdHistory": "Inspection History",
       "mdReport": "Report"
     },
+    "inspectorStickers": "Inspector Stickers",
     "executiveReport": "Executive Report",
     "qualityBlog": "Quality Blog",
     "qaActivityBoard": "QA Activity Board",
@@ -3310,6 +3313,49 @@
       "description": "CA Description",
       "updateStatus": "Update Status",
       "update": "Update"
+    }
+  },
+  "inspectorStickers": {
+    "title": "Inspector Sticker Management",
+    "description": "Register and manage product inspector authentication sticker IDs. Track responsible inspectors from stickers on defective products.",
+    "addSticker": "Add Sticker",
+    "listTitle": "Registered Stickers",
+    "totalCount": "Total {{count}} items",
+    "searchPlaceholder": "Search sticker ID, inspector name, employee ID...",
+    "noData": "No stickers registered. Click 'Add Sticker' to add one.",
+    "noSearchResults": "No search results found.",
+    "columns": {
+      "stickerId": "Sticker ID",
+      "employeeId": "Employee ID",
+      "employeeName": "Inspector Name",
+      "department": "Department",
+      "building": "Building",
+      "line": "Line",
+      "status": "Status",
+      "notes": "Notes"
+    },
+    "dialog": {
+      "createTitle": "Register Sticker",
+      "editTitle": "Edit Sticker Info",
+      "description": "Enter the inspector's authentication sticker information.",
+      "stickerIdPlaceholder": "e.g. STK-001",
+      "employee": "Inspector",
+      "searchEmployee": "Search by employee ID or name...",
+      "noEmployeeFound": "No results found.",
+      "notesPlaceholder": "Enter notes (optional)",
+      "deleteTitle": "Delete Sticker",
+      "deleteDescription": "Delete sticker '{{stickerId}}' (Inspector: {{employeeName}})? This action cannot be undone."
+    },
+    "validation": {
+      "stickerIdRequired": "Please enter a sticker ID.",
+      "employeeRequired": "Please select an inspector."
+    },
+    "toast": {
+      "created": "Sticker registered successfully.",
+      "updated": "Sticker info updated successfully.",
+      "deleted": "Sticker deleted successfully.",
+      "activated": "Sticker activated.",
+      "deactivated": "Sticker deactivated."
     }
   }
 }

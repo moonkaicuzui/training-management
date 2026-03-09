@@ -1939,6 +1939,30 @@ import type {
   TechModelFilters,
 } from '@/types/techModel';
 
+// ========== INSPECTOR STICKER ==========
+
+import * as inspectorStickerService from './inspectorStickerService';
+import type {
+  InspectorSticker,
+  InspectorStickerInput,
+  InspectorStickerUpdate,
+} from '@/types/inspectorSticker';
+
+export const inspectorSticker = {
+  getStickers: (status?: string): Promise<InspectorSticker[]> =>
+    inspectorStickerService.getStickers(status),
+  getSticker: (id: string): Promise<InspectorSticker | null> =>
+    inspectorStickerService.getSticker(id),
+  getStickerByStickerID: (stickerId: string): Promise<InspectorSticker | null> =>
+    inspectorStickerService.getStickerByStickerID(stickerId),
+  createSticker: (data: InspectorStickerInput): Promise<InspectorSticker> =>
+    inspectorStickerService.createSticker(data),
+  updateSticker: (id: string, updates: InspectorStickerUpdate): Promise<void> =>
+    inspectorStickerService.updateSticker(id, updates),
+  deleteSticker: (id: string): Promise<void> =>
+    inspectorStickerService.deleteSticker(id),
+};
+
 export const techModel = {
   getModels: (filters?: TechModelFilters) => techModelService.getModels(filters),
   createModel: (data: Omit<TechModel, 'id' | 'createdAt' | 'updatedAt'>) =>

@@ -94,6 +94,9 @@ const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
 const TechModelList = lazy(() => import('./pages/tech/TechModelList'));
 const TechReviewGuidelines = lazy(() => import('./pages/tech/TechReviewGuidelines'));
 
+// 검사원 스티커 관리
+const InspectorStickers = lazy(() => import('./pages/InspectorStickers'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -490,6 +493,15 @@ function App() {
                     </DevProtectedRoute>
                   } />
                 </Route>
+
+                {/* 검사원 스티커 설정 */}
+                <Route path="inspector-stickers" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <Suspense fallback={<PageLoader />}>
+                      <InspectorStickers />
+                    </Suspense>
+                  </DevProtectedRoute>
+                } />
 
                 {/* 테스트 페이지 (DEV only) */}
                 {import.meta.env.DEV && (

@@ -469,5 +469,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
     }
+
+    // ========== 검사원 스티커 (inspector_stickers) ==========
+    match /inspector_stickers/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
   }
 }

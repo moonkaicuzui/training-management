@@ -43,6 +43,7 @@ import {
   Package,
   FileCheck,
   Camera,
+  Sticker,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -141,6 +142,7 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.aql.trainingRecommendations', href: '/aql/training-recommendations', icon: GraduationCap },
   { titleKey: 'nav.fivePrs.dashboard', href: '/five-prs', icon: FileSearch },
   { titleKey: 'nav.fivePrs.trainingRecommendations', href: '/five-prs/training-recommendations', icon: Search },
+  { titleKey: 'nav.inspectorStickers', href: '/inspector-stickers', icon: Sticker },
 ];
 
 // 8. Equipment Compliance (금속 탐지기 등)

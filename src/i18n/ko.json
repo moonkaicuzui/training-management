@@ -38,6 +38,8 @@
     "next": "다음",
     "back": "이전",
     "optional": "선택사항",
+    "create": "등록",
+    "change": "변경",
     "dismiss": "닫기"
   },
   "header": {
@@ -115,6 +117,7 @@
       "mdHistory": "점검 이력",
       "mdReport": "보고서"
     },
+    "inspectorStickers": "검사원 스티커 관리",
     "executiveReport": "경영진 리포트",
     "qualityBlog": "품질 블로그",
     "qaActivityBoard": "QA 활동 게시판",
@@ -3310,6 +3313,49 @@
       "description": "시정조치 내용",
       "updateStatus": "상태 변경",
       "update": "업데이트"
+    }
+  },
+  "inspectorStickers": {
+    "title": "검사원 스티커 관리",
+    "description": "제품 검사원의 정품 인증 스티커 ID를 등록하고 관리합니다. 불량 제품의 스티커로 담당 검사원을 추적할 수 있습니다.",
+    "addSticker": "스티커 등록",
+    "listTitle": "등록된 스티커 목록",
+    "totalCount": "총 {{count}}건",
+    "searchPlaceholder": "스티커 ID, 검사원명, 사번 검색...",
+    "noData": "등록된 스티커가 없습니다. '스티커 등록' 버튼을 눌러 추가해주세요.",
+    "noSearchResults": "검색 결과가 없습니다.",
+    "columns": {
+      "stickerId": "스티커 ID",
+      "employeeId": "사번",
+      "employeeName": "검사원명",
+      "department": "부서",
+      "building": "건물",
+      "line": "라인",
+      "status": "상태",
+      "notes": "비고"
+    },
+    "dialog": {
+      "createTitle": "스티커 등록",
+      "editTitle": "스티커 정보 수정",
+      "description": "검사원의 정품 인증 스티커 정보를 입력해주세요.",
+      "stickerIdPlaceholder": "예: STK-001",
+      "employee": "검사원",
+      "searchEmployee": "사번 또는 이름으로 검색...",
+      "noEmployeeFound": "검색 결과가 없습니다.",
+      "notesPlaceholder": "비고 사항 입력 (선택)",
+      "deleteTitle": "스티커 삭제",
+      "deleteDescription": "스티커 '{{stickerId}}' (검사원: {{employeeName}})를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+    },
+    "validation": {
+      "stickerIdRequired": "스티커 ID를 입력해주세요.",
+      "employeeRequired": "검사원을 선택해주세요."
+    },
+    "toast": {
+      "created": "스티커가 등록되었습니다.",
+      "updated": "스티커 정보가 수정되었습니다.",
+      "deleted": "스티커가 삭제되었습니다.",
+      "activated": "스티커가 활성화되었습니다.",
+      "deactivated": "스티커가 비활성화되었습니다."
     }
   }
 }

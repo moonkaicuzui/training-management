@@ -38,6 +38,8 @@
     "next": "Tiếp theo",
     "back": "Quay lại",
     "optional": "Tùy chọn",
+    "create": "Tạo mới",
+    "change": "Thay đổi",
     "dismiss": "Đóng"
   },
   "header": {
@@ -115,6 +117,7 @@
       "mdHistory": "Lịch sử kiểm tra",
       "mdReport": "Báo cáo"
     },
+    "inspectorStickers": "Quản lý tem KTV",
     "executiveReport": "Báo cáo lãnh đạo",
     "qualityBlog": "Blog chất lượng",
     "qaActivityBoard": "Bảng hoạt động QA",
@@ -3310,6 +3313,49 @@
       "description": "Mô tả CA",
       "updateStatus": "Cập nhật trạng thái",
       "update": "Cập nhật"
+    }
+  },
+  "inspectorStickers": {
+    "title": "Quản lý tem kiểm tra viên",
+    "description": "Đăng ký và quản lý ID tem xác thực sản phẩm chính hãng của kiểm tra viên. Theo dõi kiểm tra viên phụ trách từ tem trên sản phẩm lỗi.",
+    "addSticker": "Thêm tem",
+    "listTitle": "Danh sách tem đã đăng ký",
+    "totalCount": "Tổng {{count}} mục",
+    "searchPlaceholder": "Tìm ID tem, tên kiểm tra viên, mã nhân viên...",
+    "noData": "Chưa có tem nào được đăng ký. Nhấn 'Thêm tem' để thêm mới.",
+    "noSearchResults": "Không tìm thấy kết quả.",
+    "columns": {
+      "stickerId": "ID Tem",
+      "employeeId": "Mã NV",
+      "employeeName": "Tên kiểm tra viên",
+      "department": "Phòng ban",
+      "building": "Tòa nhà",
+      "line": "Chuyền",
+      "status": "Trạng thái",
+      "notes": "Ghi chú"
+    },
+    "dialog": {
+      "createTitle": "Đăng ký tem",
+      "editTitle": "Sửa thông tin tem",
+      "description": "Nhập thông tin tem xác thực của kiểm tra viên.",
+      "stickerIdPlaceholder": "VD: STK-001",
+      "employee": "Kiểm tra viên",
+      "searchEmployee": "Tìm theo mã NV hoặc tên...",
+      "noEmployeeFound": "Không tìm thấy kết quả.",
+      "notesPlaceholder": "Nhập ghi chú (tùy chọn)",
+      "deleteTitle": "Xóa tem",
+      "deleteDescription": "Xóa tem '{{stickerId}}' (Kiểm tra viên: {{employeeName}})? Không thể hoàn tác."
+    },
+    "validation": {
+      "stickerIdRequired": "Vui lòng nhập ID tem.",
+      "employeeRequired": "Vui lòng chọn kiểm tra viên."
+    },
+    "toast": {
+      "created": "Đăng ký tem thành công.",
+      "updated": "Cập nhật thông tin tem thành công.",
+      "deleted": "Xóa tem thành công.",
+      "activated": "Tem đã được kích hoạt.",
+      "deactivated": "Tem đã bị vô hiệu hóa."
     }
   }
 }
