@@ -3109,7 +3109,10 @@
       "noStrikes": "Strike 경고가 없습니다",
       "startInspection": "검사 결과 입력하기",
       "manageEnrollments": "등록 관리",
-      "monthlyTrend": "월별 검사 추세"
+      "monthlyTrend": "월별 검사 추세",
+      "reassignmentRequired": "재배치 필요",
+      "reassignmentAlert": "3진 아웃 - 재배치 필요 대상자",
+      "reassignmentAlertDesc": "아래 직원들은 검사 교육(INS-001) 3회 연속 불합격으로 근무지 재배치가 필요합니다."
     },
     "result": {
       "title": "검사 결과 입력",
@@ -3175,7 +3178,8 @@
         "PENDING": "대기",
         "SCHEDULED": "예정",
         "COMPLETED": "완료",
-        "CANCELLED": "취소"
+        "CANCELLED": "취소",
+        "REASSIGNMENT_REQUIRED": "재배치 필요"
       }
     },
     "history": {

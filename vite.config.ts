@@ -143,6 +143,18 @@ export default defineConfig({
           ],
           // 차트 라이브러리는 LazyCharts에서 동적 import로 처리
           // 'vendor-charts': ['recharts'],
+          // PDF 생성 (동적 import로 사용됨 - 청크 분리로 초기 번들 제외)
+          'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+          // Excel 처리 (동적 import로 사용됨)
+          'vendor-excel': ['xlsx'],
+          // PPT 생성 (내보내기 시에만 사용)
+          'vendor-pptx': ['pptxgenjs'],
+          // 캘린더 (React.lazy 페이지에서만 사용)
+          'vendor-calendar': ['react-big-calendar'],
+          // 폼 라이브러리
+          'vendor-forms': ['react-hook-form', 'zod', '@hookform/resolvers'],
+          // 테이블 라이브러리
+          'vendor-table': ['@tanstack/react-table', '@tanstack/react-virtual'],
           // i18n
           'vendor-i18n': ['i18next', 'react-i18next'],
           // 유틸리티
@@ -156,7 +168,7 @@ export default defineConfig({
             'firebase/firestore',
           ],
           // 상태 관리
-          'vendor-state': ['zustand', 'immer'],
+          'vendor-state': ['zustand'],
         },
       },
     },

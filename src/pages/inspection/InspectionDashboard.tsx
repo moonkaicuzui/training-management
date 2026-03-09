@@ -9,6 +9,8 @@ import {
   UserCheck,
   Plus,
   TrendingUp,
+  ShieldAlert,
+  UserX,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +51,7 @@ export default function InspectionDashboard() {
   const passCount = results.filter((r) => r.match_rate >= 80).length;
   const passRate = totalInspections > 0 ? Math.round((passCount / totalInspections) * 100) : 0;
   const pendingEnrollments = enrollments.filter((e) => e.status === 'PENDING' || e.status === 'SCHEDULED').length;
+  const reassignmentRequired = enrollments.filter((e) => e.status === 'REASSIGNMENT_REQUIRED').length;
 
   // Identify employees with consecutive failures (crude check from results)
   const employeeFailStreaks = new Map<string, number>();
@@ -78,6 +81,10 @@ export default function InspectionDashboard() {
   const strikeAlerts = Array.from(employeeFailStreaks.entries())
     .filter(([, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1]);
+
+  // Separate 3-strike outs from warnings
+  const threeStrikeOuts = strikeAlerts.filter(([, count]) => count >= 3);
+  const strikeWarnings = strikeAlerts.filter(([, count]) => count < 3);
 
   // Monthly trend data
   const monthlyTrend = useMemo(() => {
@@ -142,8 +149,43 @@ export default function InspectionDashboard() {
 
       {!isLoading && (
         <>
+          {/* 3-Strike Out Alert Banner */}
+          {threeStrikeOuts.length > 0 && (
+            <Card className="border-red-400 bg-red-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-red-800">
+                  <ShieldAlert className="h-5 w-5" />
+                  {t('inspection.dashboard.reassignmentAlert')}
+                  <Badge variant="destructive" className="ml-2">
+                    {threeStrikeOuts.length}
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-red-700">
+                  {t('inspection.dashboard.reassignmentAlertDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {threeStrikeOuts.map(([employeeId, failCount]) => (
+                    <div
+                      key={employeeId}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white border border-red-200 hover:bg-red-50/50 cursor-pointer"
+                      onClick={() => navigate(`/inspection/history?employee=${employeeId}`)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserX className="h-4 w-4 text-red-600" />
+                        <p className="font-semibold text-red-800">{employeeId}</p>
+                      </div>
+                      <InspectionStrikeIndicator consecutiveFailures={failCount} />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>{t('inspection.dashboard.totalInspections')}</CardDescription>
@@ -177,8 +219,23 @@ export default function InspectionDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <div className="text-3xl font-bold text-red-600">{strikeAlerts.length}</div>
-                  {strikeAlerts.length > 0 && <AlertTriangle className="h-5 w-5 text-red-400" />}
+                  <div className="text-3xl font-bold text-yellow-600">{strikeWarnings.length}</div>
+                  {strikeWarnings.length > 0 && <AlertTriangle className="h-5 w-5 text-yellow-400" />}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className={reassignmentRequired > 0 ? 'border-red-300 bg-red-50/50' : ''}>
+              <CardHeader className="pb-2">
+                <CardDescription className={reassignmentRequired > 0 ? 'text-red-700' : ''}>
+                  {t('inspection.dashboard.reassignmentRequired')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <div className={`text-3xl font-bold ${reassignmentRequired > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                    {reassignmentRequired}
+                  </div>
+                  {reassignmentRequired > 0 && <ShieldAlert className="h-5 w-5 text-red-500" />}
                 </div>
               </CardContent>
             </Card>
@@ -253,9 +310,15 @@ export default function InspectionDashboard() {
                     {strikeAlerts.map(([employeeId, failCount]) => (
                       <div
                         key={employeeId}
-                        className="flex items-center justify-between p-3 rounded-lg border"
+                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                          failCount >= 3 ? 'border-red-300 bg-red-50' : ''
+                        }`}
+                        onClick={() => navigate(`/inspection/history?employee=${employeeId}`)}
                       >
-                        <p className="font-medium">{employeeId}</p>
+                        <div className="flex items-center gap-2">
+                          {failCount >= 3 && <UserX className="h-4 w-4 text-red-600" />}
+                          <p className={`font-medium ${failCount >= 3 ? 'text-red-800' : ''}`}>{employeeId}</p>
+                        </div>
                         <InspectionStrikeIndicator consecutiveFailures={failCount} />
                       </div>
                     ))}

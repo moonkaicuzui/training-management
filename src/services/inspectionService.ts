@@ -310,16 +310,136 @@ export const getConsecutiveFailures = async (
 };
 
 // ============================================================
+// Three-Strike Out Follow-up
+// ============================================================
+
+/**
+ * Handle 3-strike out: when an employee has 3 consecutive FAIL results.
+ * 1. Create REASSIGNMENT_REQUIRED notification
+ * 2. Update related enrollment status to REASSIGNMENT_REQUIRED
+ */
+export const handleThreeStrikeOut = async (
+  employeeId: string,
+  employeeName: string,
+  _resultId: string,
+  enrollmentId?: string
+): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+
+    // 1. Create notification
+    const notificationId = `NOTIF-REASSIGN-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const notifRef = doc(db, 'notifications', notificationId);
+    batch.set(notifRef, {
+      notification_id: notificationId,
+      type: 'REASSIGNMENT_REQUIRED',
+      priority: 'URGENT',
+      title: `3진 아웃: ${employeeName} (${employeeId})`,
+      message: `직원 ${employeeName} (${employeeId})이(가) 검사 교육(INS-001) 3회 연속 불합격으로 재배치가 필요합니다.`,
+      recipient_type: 'ALL',
+      related_entity: {
+        type: 'EMPLOYEE',
+        id: employeeId,
+      },
+      is_read: false,
+      created_at: serverTimestamp(),
+    });
+
+    // 2. Update enrollment status if linked
+    if (enrollmentId) {
+      const enrollmentRef = doc(db, ENROLLMENTS_COLLECTION, enrollmentId);
+      batch.update(enrollmentRef, {
+        status: 'REASSIGNMENT_REQUIRED',
+      });
+    } else {
+      // Find the most recent active enrollment for this employee
+      const enrollQuery = query(
+        collection(db, ENROLLMENTS_COLLECTION),
+        where('employee_id', '==', employeeId),
+        where('program_code', '==', 'INS-001'),
+        limit(50)
+      );
+      const enrollSnapshot = await getDocs(enrollQuery);
+
+      for (const d of enrollSnapshot.docs) {
+        const data = d.data();
+        if (data.status === 'COMPLETED' || data.status === 'PENDING' || data.status === 'SCHEDULED') {
+          batch.update(d.ref, {
+            status: 'REASSIGNMENT_REQUIRED',
+          });
+          break; // Update the most relevant one
+        }
+      }
+    }
+
+    await batch.commit();
+
+    logger.info(`[inspectionService] Three-strike out handled for employee ${employeeId}`);
+  } catch (error) {
+    logger.error('[inspectionService] handleThreeStrikeOut failed:', error);
+    // Non-blocking: log error but don't throw to avoid blocking result submission
+  }
+};
+
+// ============================================================
 // Enrollment Operations
 // ============================================================
 
 /**
- * Create an inspection enrollment
+ * Check if an active (PENDING/SCHEDULED) enrollment already exists
+ * for the given employee_id + program_code combination.
+ * Returns the existing enrollment if found, null otherwise.
+ */
+export const checkDuplicateEnrollment = async (
+  employeeId: string,
+  programCode: string,
+): Promise<InspectionEnrollment | null> => {
+  const q = query(
+    collection(db, ENROLLMENTS_COLLECTION),
+    where('employee_id', '==', employeeId),
+    where('program_code', '==', programCode),
+    limit(50),
+  );
+  const snapshot = await getDocs(q);
+
+  for (const d of snapshot.docs) {
+    const data = d.data();
+    if (data.status === 'PENDING' || data.status === 'SCHEDULED') {
+      return {
+        enrollment_id: data.enrollment_id || d.id,
+        employee_id: data.employee_id,
+        employee_name: data.employee_name,
+        program_code: data.program_code,
+        source: data.source,
+        source_log_id: data.source_log_id,
+        enrolled_by: data.enrolled_by,
+        enrolled_at: convertTimestamp(data.enrolled_at),
+        status: data.status,
+        scheduled_date: data.scheduled_date,
+        completed_result_id: data.completed_result_id,
+      } as InspectionEnrollment;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Create an inspection enrollment.
+ * Throws if a PENDING/SCHEDULED enrollment already exists for the same employee + program.
  */
 export const createEnrollment = async (
   input: InspectionEnrollmentInput
 ): Promise<InspectionEnrollment> => {
   try {
+    // Duplicate check: prevent re-enrollment if PENDING/SCHEDULED exists
+    const existing = await checkDuplicateEnrollment(input.employee_id, input.program_code);
+    if (existing) {
+      throw new Error(
+        `Duplicate enrollment: ${input.employee_name} (${input.employee_id}) already has a ${existing.status} enrollment for ${input.program_code} (ID: ${existing.enrollment_id})`,
+      );
+    }
+
     const enrollmentId = `ENR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const enrollment: InspectionEnrollment = {
       enrollment_id: enrollmentId,

@@ -42,7 +42,8 @@ export type InspectionEnrollmentStatus =
   | 'PENDING'
   | 'SCHEDULED'
   | 'COMPLETED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'REASSIGNMENT_REQUIRED';
 
 export interface InspectionEnrollment {
   enrollment_id: string;

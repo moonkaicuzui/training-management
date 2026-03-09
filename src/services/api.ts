@@ -1868,6 +1868,32 @@ export async function createInspectionResult(
   const result = await inspectionService.createInspectionResult(input, createdBy);
   invalidateResultCache();
   invalidateDashboardCache();
+
+  // 3-strike out check: if FAIL, check consecutive failures
+  if (result.matchRate < 80) {
+    try {
+      const strikeInfo = await inspectionService.getConsecutiveFailures(input.employee_id);
+      if (strikeInfo.requires_reassignment) {
+        // Get employee name from enrollment or use employee_id as fallback
+        let employeeName = input.employee_id;
+        if (input.enrollment_id) {
+          const enrollments = await inspectionService.getEnrollments({ employee_id: input.employee_id });
+          const enrollment = enrollments.find((e) => e.enrollment_id === input.enrollment_id);
+          if (enrollment) employeeName = enrollment.employee_name;
+        }
+
+        await inspectionService.handleThreeStrikeOut(
+          input.employee_id,
+          employeeName,
+          result.resultId,
+          input.enrollment_id
+        );
+      }
+    } catch {
+      // Non-blocking: 3-strike handling should not prevent result submission
+    }
+  }
+
   return result;
 }
 
@@ -1881,6 +1907,13 @@ export async function createInspectionEnrollment(
   input: InspectionEnrollmentInput
 ): Promise<InspectionEnrollment> {
   return inspectionService.createEnrollment(input);
+}
+
+export async function checkDuplicateInspectionEnrollment(
+  employeeId: string,
+  programCode: string,
+): Promise<InspectionEnrollment | null> {
+  return inspectionService.checkDuplicateEnrollment(employeeId, programCode);
 }
 
 export async function updateInspectionEnrollmentStatus(

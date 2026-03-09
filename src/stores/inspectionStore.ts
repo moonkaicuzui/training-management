@@ -164,15 +164,26 @@ export const useInspectionStore = create<InspectionState>()(
       enrollEmployee: async (input) => {
         set({ isSubmitting: true, error: null });
         try {
+          // createInspectionEnrollment now internally checks for duplicates
+          // and throws if a PENDING/SCHEDULED enrollment already exists
           const enrollment = await api.createInspectionEnrollment(input);
           const enrollments = [...get().enrollments, enrollment];
           set({ enrollments, isSubmitting: false });
           return enrollment;
         } catch (error) {
-          set({
-            error: getErrorMessage(error),
-            isSubmitting: false,
-          });
+          const msg = (error as Error).message || '';
+          // Surface duplicate enrollment errors with a clear message
+          if (msg.includes('Duplicate enrollment')) {
+            set({
+              error: msg,
+              isSubmitting: false,
+            });
+          } else {
+            set({
+              error: getErrorMessage(error),
+              isSubmitting: false,
+            });
+          }
           throw error;
         }
       },

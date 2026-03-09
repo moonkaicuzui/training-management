@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import Layout from './components/layout/Layout';
 import { Toaster } from './components/common/Toaster';
-import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { ErrorBoundary, PageErrorBoundary } from './components/common/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
 import { DevProtectedRoute } from './components/auth';
 import { useAuthStore } from './stores/authStore';
@@ -109,6 +109,18 @@ function PageLoader() {
   );
 }
 
+/**
+ * 모듈별 라우트 그룹을 감싸는 ErrorBoundary 래퍼
+ * PageErrorBoundary 내부에 Outlet을 렌더링하여 자식 라우트에서 발생하는 에러를 캐치
+ */
+function ModuleErrorBoundary() {
+  return (
+    <PageErrorBoundary>
+      <Outlet />
+    </PageErrorBoundary>
+  );
+}
+
 function App() {
   const initializeAuthListener = useAuthStore((state) => state.initializeAuthListener);
 
@@ -138,136 +150,182 @@ function App() {
               }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Dashboard />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Dashboard />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="programs" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Programs />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Programs />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="progress" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Progress />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Progress />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="schedule" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Schedule />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Schedule />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="results" element={
                   <DevProtectedRoute requiredPermission="canEditResults">
-                    <Suspense fallback={<PageLoader />}>
-                      <Results />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <Results />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="employees" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Employees />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Employees />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="employees/:id" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <EmployeeDetail />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <EmployeeDetail />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="retraining" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Retraining />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Retraining />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 {/* Phase 1-3 새 기능 라우트 */}
                 <Route path="attendance" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Attendance />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Attendance />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="reports" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Reports />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Reports />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="certificates" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Certificates />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Certificates />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="trainers" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <Trainers />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <Trainers />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="training-plan" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <TrainingPlan />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <TrainingPlan />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="audit-log" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <AuditLog />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <AuditLog />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="notifications" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Notifications />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Notifications />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="evaluation" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Evaluation />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Evaluation />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="materials" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Materials />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Materials />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="executive" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <ExecutiveDashboard />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <ExecutiveDashboard />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="audit" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <AuditCompliance />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <AuditCompliance />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="data-sync" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <DataSync />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <DataSync />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
                 <Route path="department" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <DepartmentDashboard />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <DepartmentDashboard />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="competency" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <Competency />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Competency />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
                 <Route path="skill-gap" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <SkillGap />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <SkillGap />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
 
                 {/* New TQC (신입 TQC 교육) 라우트 */}
-                <Route path="new-tqc">
+                <Route path="new-tqc" element={<ModuleErrorBoundary />}>
                   <Route index element={<Navigate to="/new-tqc/dashboard" replace />} />
                   <Route path="dashboard" element={
                     <Suspense fallback={<PageLoader />}>
@@ -319,7 +377,7 @@ function App() {
                 </Route>
 
                 {/* 프로젝트 관리 (품질 부서 협업 시스템) 라우트 */}
-                <Route path="projects">
+                <Route path="projects" element={<ModuleErrorBoundary />}>
                   <Route index element={<Navigate to="/projects/dashboard" replace />} />
                   <Route path="dashboard" element={
                     <Suspense fallback={<PageLoader />}>
@@ -351,7 +409,7 @@ function App() {
                 </Route>
 
                 {/* CAPA (Corrective and Preventive Action) 라우트 */}
-                <Route path="capa">
+                <Route path="capa" element={<ModuleErrorBoundary />}>
                   <Route index element={
                     <Suspense fallback={<PageLoader />}>
                       <CAPADashboard />
@@ -375,7 +433,7 @@ function App() {
                 </Route>
 
                 {/* 5PRS (검사 평가) 라우트 */}
-                <Route path="five-prs">
+                <Route path="five-prs" element={<ModuleErrorBoundary />}>
                   <Route index element={
                     <Suspense fallback={<PageLoader />}>
                       <FivePrsOriginalDashboard />
@@ -391,7 +449,7 @@ function App() {
                 </Route>
 
                 {/* AQL (검사 품질 수준) 라우트 */}
-                <Route path="aql">
+                <Route path="aql" element={<ModuleErrorBoundary />}>
                   <Route index element={
                     <Suspense fallback={<PageLoader />}>
                       <AqlDashboard />
@@ -408,13 +466,15 @@ function App() {
 
                 {/* 교육 프로그램 소개 */}
                 <Route path="program-intro" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <ProgramIntro />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <ProgramIntro />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
 
                 {/* 검사 교육 (Inspection Training) 라우트 */}
-                <Route path="inspection">
+                <Route path="inspection" element={<ModuleErrorBoundary />}>
                   <Route index element={<Navigate to="/inspection/dashboard" replace />} />
                   <Route path="dashboard" element={
                     <Suspense fallback={<PageLoader />}>
@@ -442,22 +502,26 @@ function App() {
 
                 {/* 품질 블로그 */}
                 <Route path="quality-blog" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <QualityBlog />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <QualityBlog />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
 
                 {/* AI 경영진 보고서 */}
                 <Route path="executive-report" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <ExecutiveReport />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <ExecutiveReport />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
 
                 {/* Metal Detector Inspection (금속 탐지기 점검) */}
-                <Route path="equipment/metal-detector">
+                <Route path="equipment/metal-detector" element={<ModuleErrorBoundary />}>
                   <Route index element={
                     <Suspense fallback={<PageLoader />}>
                       <MDDashboard />
@@ -481,7 +545,7 @@ function App() {
                 </Route>
 
                 {/* TECH / NEW MODEL */}
-                <Route path="tech">
+                <Route path="tech" element={<ModuleErrorBoundary />}>
                   <Route path="models" element={
                     <DevProtectedRoute requiredEmail="ksmoon@hsvina.com">
                       <Suspense fallback={<PageLoader />}><TechModelList /></Suspense>
@@ -497,18 +561,22 @@ function App() {
                 {/* 검사원 스티커 설정 */}
                 <Route path="inspector-stickers" element={
                   <DevProtectedRoute requiredPermission="canManageUsers">
-                    <Suspense fallback={<PageLoader />}>
-                      <InspectorStickers />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <InspectorStickers />
+                      </Suspense>
+                    </PageErrorBoundary>
                   </DevProtectedRoute>
                 } />
 
                 {/* 테스트 페이지 (DEV only) */}
                 {import.meta.env.DEV && (
                   <Route path="test/pptx" element={
-                    <Suspense fallback={<PageLoader />}>
-                      <PptxTestPage />
-                    </Suspense>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <PptxTestPage />
+                      </Suspense>
+                    </PageErrorBoundary>
                   } />
                 )}
               </Route>

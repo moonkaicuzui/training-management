@@ -10,6 +10,7 @@ export type NotificationType =
   | 'SESSION_CANCELLED'      // 세션 취소
   | 'RESULT_AVAILABLE'       // 결과 확인 가능
   | 'CERTIFICATE_READY'      // 이수증 발급 완료
+  | 'REASSIGNMENT_REQUIRED'  // 3진 아웃 → 재배치 필요
   | 'SYSTEM';                // 시스템 알림
 
 export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -23,7 +24,7 @@ export interface Notification {
   recipient_id?: string; // employee_id or 'ALL'
   recipient_type: 'EMPLOYEE' | 'DEPARTMENT' | 'ALL';
   related_entity?: {
-    type: 'SESSION' | 'PROGRAM' | 'EMPLOYEE' | 'RESULT';
+    type: 'SESSION' | 'PROGRAM' | 'EMPLOYEE' | 'RESULT' | 'ENROLLMENT';
     id: string;
   };
   is_read: boolean;
@@ -82,6 +83,11 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, {
     icon: 'Award',
     color: 'text-purple-500',
     label: { ko: '이수증 발급', en: 'Certificate Ready', vi: 'Chứng chỉ sẵn sàng' },
+  },
+  REASSIGNMENT_REQUIRED: {
+    icon: 'UserX',
+    color: 'text-red-600',
+    label: { ko: '재배치 필요', en: 'Reassignment Required', vi: 'Cần bố trí lại' },
   },
   SYSTEM: {
     icon: 'Bell',

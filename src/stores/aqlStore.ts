@@ -321,6 +321,21 @@ export const useAqlStore = create<AqlState>()(
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
 
+          // Check for duplicate enrollment before proceeding
+          if (programCode === 'INS-001') {
+            const existing = await inspectionService.checkDuplicateEnrollment(
+              rec.linked_employee.employee_id,
+              programCode,
+            );
+            if (existing) {
+              set((state) => {
+                state.error = `${rec.linked_employee!.employee_name} already has a ${existing.status} enrollment for ${programCode}`;
+                state.isEnrolling = false;
+              });
+              return;
+            }
+          }
+
           const enrollmentLog = await aqlService.createAqlEnrollmentLog({
             aql_employee_no: rec.aql_employee_no,
             aql_employee_name: rec.aql_employee_name,
@@ -373,12 +388,34 @@ export const useAqlStore = create<AqlState>()(
           state.error = null;
         });
 
+        let skippedCount = 0;
+
         try {
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
 
           for (const rec of recs) {
             if (!rec.linked_employee) continue;
+
+            // Check for duplicate enrollment before proceeding
+            if (programCode === 'INS-001') {
+              const existing = await inspectionService.checkDuplicateEnrollment(
+                rec.linked_employee.employee_id,
+                programCode,
+              );
+              if (existing) {
+                skippedCount++;
+                set((state) => {
+                  const idx = state.recommendations.findIndex(
+                    (r) => r.aql_employee_no === rec.aql_employee_no && r.enrollment_reason === rec.enrollment_reason
+                  );
+                  if (idx >= 0) {
+                    state.recommendations[idx].enrollment_status = 'ENROLLED';
+                  }
+                });
+                continue;
+              }
+            }
 
             const enrollmentLog = await aqlService.createAqlEnrollmentLog({
               aql_employee_no: rec.aql_employee_no,
@@ -422,6 +459,9 @@ export const useAqlStore = create<AqlState>()(
           set((state) => {
             state.isEnrolling = false;
             state.selectedIds = [];
+            if (skippedCount > 0) {
+              state.error = `${skippedCount} enrollment(s) skipped (already registered)`;
+            }
           });
         } catch (error) {
           set((state) => {

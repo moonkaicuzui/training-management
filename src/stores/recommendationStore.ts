@@ -17,6 +17,7 @@ import type {
   RecommendationFilters,
 } from '@/types/recommendation';
 import * as recommendationService from '@/services/recommendationService';
+import * as inspectionService from '@/services/inspectionService';
 import { analyzeRecommendations } from '@/utils/recommendationAnalyzer';
 import { useFivePrsStore } from '@/stores/fivePrsStore';
 import * as api from '@/services/api';
@@ -257,8 +258,23 @@ export const useRecommendationStore = create<RecommendationState>()(
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
 
-          // Create enrollment log
-          await recommendationService.createEnrollmentLog({
+          // Check for duplicate enrollment before proceeding
+          if (programCode === 'INS-001') {
+            const existing = await inspectionService.checkDuplicateEnrollment(
+              rec.linkedEmployee.employee_id,
+              programCode,
+            );
+            if (existing) {
+              set((state) => {
+                state.error = `${rec.linkedEmployee!.employee_name} already has a ${existing.status} enrollment for ${programCode}`;
+                state.isEnrolling = false;
+              });
+              return;
+            }
+          }
+
+          // Create enrollment log (APPEND-ONLY)
+          const enrollmentLog = await recommendationService.createEnrollmentLog({
             tqc_id: rec.tqc_id,
             tqc_name: rec.tqc_name,
             employee_id: rec.linkedEmployee.employee_id,
@@ -272,6 +288,18 @@ export const useRecommendationStore = create<RecommendationState>()(
             enrolled_by: 'admin',
             year_month: yearMonth,
           });
+
+          // Also create inspection_enrollments record for INS-001
+          if (programCode === 'INS-001') {
+            await inspectionService.createEnrollment({
+              employee_id: rec.linkedEmployee.employee_id,
+              employee_name: rec.linkedEmployee.employee_name,
+              program_code: 'INS-001',
+              source: 'FIVE_PRS_RECOMMENDATION',
+              source_log_id: enrollmentLog.log_id,
+              enrolled_by: 'admin',
+            });
+          }
 
           // Update recommendation status
           set((state) => {
@@ -295,6 +323,8 @@ export const useRecommendationStore = create<RecommendationState>()(
           state.error = null;
         });
 
+        let skippedCount = 0;
+
         try {
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
@@ -302,7 +332,25 @@ export const useRecommendationStore = create<RecommendationState>()(
           for (const rec of recs) {
             if (!rec.linkedEmployee) continue;
 
-            await recommendationService.createEnrollmentLog({
+            // Check for duplicate enrollment before proceeding
+            if (programCode === 'INS-001') {
+              const existing = await inspectionService.checkDuplicateEnrollment(
+                rec.linkedEmployee.employee_id,
+                programCode,
+              );
+              if (existing) {
+                skippedCount++;
+                set((state) => {
+                  const idx = state.recommendations.findIndex((r) => r.tqc_id === rec.tqc_id);
+                  if (idx >= 0) {
+                    state.recommendations[idx].enrollmentStatus = 'ENROLLED';
+                  }
+                });
+                continue;
+              }
+            }
+
+            const enrollmentLog = await recommendationService.createEnrollmentLog({
               tqc_id: rec.tqc_id,
               tqc_name: rec.tqc_name,
               employee_id: rec.linkedEmployee.employee_id,
@@ -317,6 +365,18 @@ export const useRecommendationStore = create<RecommendationState>()(
               year_month: yearMonth,
             });
 
+            // Also create inspection_enrollments record for INS-001
+            if (programCode === 'INS-001') {
+              await inspectionService.createEnrollment({
+                employee_id: rec.linkedEmployee.employee_id,
+                employee_name: rec.linkedEmployee.employee_name,
+                program_code: 'INS-001',
+                source: 'FIVE_PRS_RECOMMENDATION',
+                source_log_id: enrollmentLog.log_id,
+                enrolled_by: 'admin',
+              });
+            }
+
             set((state) => {
               const idx = state.recommendations.findIndex((r) => r.tqc_id === rec.tqc_id);
               if (idx >= 0) {
@@ -328,6 +388,9 @@ export const useRecommendationStore = create<RecommendationState>()(
           set((state) => {
             state.isEnrolling = false;
             state.selectedIds = [];
+            if (skippedCount > 0) {
+              state.error = `${skippedCount} enrollment(s) skipped (already registered)`;
+            }
           });
         } catch (error) {
           set((state) => {

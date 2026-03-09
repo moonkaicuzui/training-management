@@ -12,6 +12,7 @@ import {
   X,
   User,
   ClipboardList,
+  ShieldAlert,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ const STATUS_ICONS: Record<string, typeof Clock> = {
   SCHEDULED: Calendar,
   COMPLETED: CheckCircle2,
   CANCELLED: XCircle,
+  REASSIGNMENT_REQUIRED: ShieldAlert,
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -37,6 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
   SCHEDULED: 'bg-blue-100 text-blue-800',
   COMPLETED: 'bg-green-100 text-green-800',
   CANCELLED: 'bg-gray-100 text-gray-800',
+  REASSIGNMENT_REQUIRED: 'bg-red-100 text-red-800',
 };
 
 export default function InspectionEnrollments() {
@@ -288,7 +291,7 @@ export default function InspectionEnrollments() {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="">{t('inspection.enrollments.allStatuses')}</option>
-          {['PENDING', 'SCHEDULED', 'COMPLETED', 'CANCELLED'].map((s) => (
+          {['PENDING', 'SCHEDULED', 'COMPLETED', 'CANCELLED', 'REASSIGNMENT_REQUIRED'].map((s) => (
             <option key={s} value={s}>
               {t(`inspection.enrollments.statusTypes.${s}`)}
             </option>
