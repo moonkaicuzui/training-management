@@ -542,7 +542,8 @@
     "testAttempt": "Lần thi",
     "stopWorkingDate": "Ngày nghỉ",
     "nthAttempt": "Lần {{n}}",
-    "yearsMonths": "{{years}}n {{months}}t"
+    "yearsMonths": "{{years}}n {{months}}t",
+    "defaultEditReason": "Chỉnh sửa kết quả"
   },
   "session": {
     "title": "Lịch đào tạo",
@@ -987,6 +988,9 @@
     "message": "Tin nhắn hướng dẫn",
     "messagePlaceholder": "Nhập tin nhắn hướng dẫn tham gia đánh giá...",
     "create": "Tạo đánh giá",
+    "sampleProgram1": "Quản lý chất lượng cơ bản",
+    "sampleProgram2": "Đào tạo an toàn định kỳ",
+    "sampleProgram3": "Nâng cao năng lực lãnh đạo",
     "sheetName": "Đánh giá đào tạo",
     "exportId": "Mã đánh giá",
     "exportTrainingDate": "Ngày đào tạo",
@@ -2533,7 +2537,12 @@
       "includeRetraining": "Đưa lịch đào tạo lại cho {{count}} nhân viên vào kế hoạch năm.",
       "expiringTraining": "{{count}} đào tạo sắp hết hạn trong 30 ngày. Hãy lên kế hoạch đào tạo gia hạn.",
       "allTargetsMet": "Tất cả bộ phận đã đạt mục tiêu hoàn thành. Duy trì kế hoạch đào tạo hiện tại."
-    }
+    },
+    "deptProduction1": "Đội sản xuất 1",
+    "deptProduction2": "Đội sản xuất 2",
+    "deptQuality": "Quản lý chất lượng",
+    "deptRnD": "R&D",
+    "deptAdmin": "Hành chính"
   },
   "projects": {
     "title": "Quản lý dự án",
@@ -2764,6 +2773,7 @@
       "commentMention": "{{memberName}} đã nhắc đến bạn trong bình luận",
       "statusChanged": "Trạng thái nhiệm vụ \"{{taskTitle}}\" đã thay đổi"
     },
+    "circularDependencyError": "Phát hiện phụ thuộc vòng.",
     "automation": {
       "editAutomation": "Sửa tự động hóa",
       "addAutomation": "Thêm tự động hóa",
@@ -3560,7 +3570,8 @@
       "deleted": "Xóa tem thành công.",
       "activated": "Tem đã được kích hoạt.",
       "deactivated": "Tem đã bị vô hiệu hóa."
-    }
+    },
+    "duplicateId": "Mã tem '{{id}}' đã được đăng ký."
   },
   "systemFeedback": {
     "title": "Phản hồi hệ thống",
