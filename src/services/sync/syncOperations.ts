@@ -1,273 +1,15 @@
-// ============================================================
-// Q-TRAIN Sync Service - Sync Operations
-// Google Sheets <-> Firestore 동기화 (GAS Web App 호출)
-// ============================================================
-// Features:
-//   - Retry logic with exponential backoff (3 retries, 1s base)
-//   - Progress callback for UI tracking
-//   - Sync history logging to Firestore (sync_logs collection)
-//   - Conflict detection in sync results
-//   - Last sync timestamp tracking per collection (sync_metadata)
-//   - Pre-sync validation
-// ============================================================
-
-import {
-  db,
-  doc,
-  collection,
-  addDoc,
-  setDoc,
-  serverTimestamp,
-} from '@/services/firebase';
+import { serverTimestamp } from '@/services/firebase';
 import { logger } from '@/utils/logger';
-import type {
-  SyncDirection,
-  SyncResult,
-  SyncConflict,
-  SyncOptions,
-  SyncLogEntry,
-} from './types';
+import type { SyncDirection, SyncResult, SyncOptions } from './types';
 import { SYNC_COLLECTIONS, validateSyncConfig, validateCollections } from './config';
+import { callGAS } from './gasClient';
+import {
+  saveSyncLog,
+  updateLastSyncTimestamp,
+  normalizeSyncResult,
+  determineSyncStatus,
+} from './syncHelpers';
 
-// ============================================================
-// Configuration
-// ============================================================
-
-/** Maximum number of retry attempts for failed sync requests */
-const MAX_RETRIES = 3;
-
-/** Base delay in milliseconds for exponential backoff */
-const BASE_DELAY_MS = 1000;
-
-/** Maximum delay cap in milliseconds */
-const MAX_DELAY_MS = 10000;
-
-/** Firestore collection name for sync logs */
-const SYNC_LOGS_COLLECTION = 'sync_logs';
-
-/** Firestore collection name for sync metadata (timestamps) */
-const SYNC_METADATA_COLLECTION = 'sync_metadata';
-
-// ============================================================
-// Retry Logic with Exponential Backoff
-// ============================================================
-
-/**
- * Calculate delay for exponential backoff with jitter.
- * Formula: min(MAX_DELAY, BASE_DELAY * 2^attempt) + random jitter
- */
-function calculateBackoffDelay(attempt: number): number {
-  const exponentialDelay = BASE_DELAY_MS * Math.pow(2, attempt);
-  const cappedDelay = Math.min(exponentialDelay, MAX_DELAY_MS);
-  // Add random jitter (0-25% of the delay) to prevent thundering herd
-  const jitter = cappedDelay * Math.random() * 0.25;
-  return cappedDelay + jitter;
-}
-
-/**
- * Sleep for the specified number of milliseconds.
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Execute a function with retry logic and exponential backoff.
- * @param fn - The async function to execute
- * @param context - Description of the operation (for logging)
- * @param maxRetries - Maximum number of retry attempts
- * @returns The result of the function
- */
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  context: string,
-  maxRetries: number = MAX_RETRIES
-): Promise<T> {
-  let lastError: Error | undefined;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < maxRetries) {
-        const delay = calculateBackoffDelay(attempt);
-        logger.warn(
-          `[SyncService] ${context} failed (attempt ${attempt + 1}/${maxRetries + 1}). ` +
-            `Retrying in ${Math.round(delay)}ms...`,
-          { error: lastError.message }
-        );
-        await sleep(delay);
-      } else {
-        logger.error(
-          `[SyncService] ${context} failed after ${maxRetries + 1} attempts.`,
-          { error: lastError.message }
-        );
-      }
-    }
-  }
-
-  throw lastError!;
-}
-
-// ============================================================
-// GAS Communication
-// ============================================================
-
-/**
- * Call the GAS Web App endpoint via Cloud Functions proxy.
- * GAS API keys are stored server-side in Cloud Functions secrets,
- * not exposed in the client bundle.
- */
-async function callGAS(action: string, payload: Record<string, unknown> = {}): Promise<unknown> {
-  return withRetry(
-    async () => {
-      const response = await fetch('/api/sync/collection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          ...payload,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Sync request failed: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Sync failed');
-      }
-
-      return data.data;
-    },
-    `Sync action "${action}"`
-  );
-}
-
-// ============================================================
-// Internal Helpers
-// ============================================================
-
-/**
- * Save a sync log entry to Firestore.
- * Logs are append-only for audit trail.
- */
-async function saveSyncLog(logEntry: Omit<SyncLogEntry, 'id' | 'created_at'>): Promise<string> {
-  try {
-    const colRef = collection(db, SYNC_LOGS_COLLECTION);
-    const docRef = await addDoc(colRef, {
-      ...logEntry,
-      created_at: serverTimestamp(),
-    });
-
-    logger.info('[SyncService] Sync log saved', { logId: docRef.id });
-    return docRef.id;
-  } catch (error) {
-    // Log but don't fail the sync operation due to logging failure
-    logger.error('[SyncService] Failed to save sync log', { error });
-    return '';
-  }
-}
-
-/**
- * Update the last sync timestamp for a collection.
- * @param collectionKey - The collection key
- * @param direction - The sync direction used
- * @param status - The sync status
- * @param conflictCount - Number of conflicts detected
- */
-async function updateLastSyncTimestamp(
-  collectionKey: string,
-  direction: SyncDirection,
-  status: 'success' | 'partial' | 'failed',
-  conflictCount: number
-): Promise<void> {
-  try {
-    const docRef = doc(db, SYNC_METADATA_COLLECTION, collectionKey);
-    await setDoc(
-      docRef,
-      {
-        collection: collectionKey,
-        last_sync_at: serverTimestamp(),
-        last_sync_direction: direction,
-        last_sync_status: status,
-        last_sync_conflicts: conflictCount,
-        updated_at: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  } catch (error) {
-    // Log but don't fail the sync operation
-    logger.error('[SyncService] Failed to update last sync timestamp', {
-      collection: collectionKey,
-      error,
-    });
-  }
-}
-
-// ============================================================
-// Conflict Detection Helpers
-// ============================================================
-
-/**
- * Normalize a raw sync result from GAS, ensuring the conflicts array exists.
- * The GAS endpoint may or may not return conflicts; we ensure a consistent shape.
- */
-function normalizeSyncResult(raw: unknown): SyncResult {
-  const result = raw as Record<string, unknown>;
-
-  return {
-    collection: (result.collection as string) || '',
-    created: (result.created as number) || 0,
-    updated: (result.updated as number) || 0,
-    skipped: (result.skipped as number) || 0,
-    errors: (result.errors as string[]) || [],
-    conflicts: (result.conflicts as SyncConflict[]) || [],
-    durationMs: result.durationMs as number | undefined,
-  };
-}
-
-/**
- * Determine the sync status for a single collection result.
- */
-function determineSyncStatus(result: SyncResult): 'success' | 'partial' | 'failed' {
-  if (result.errors.length > 0 && (result.created > 0 || result.updated > 0)) {
-    return 'partial';
-  }
-  if (result.errors.length > 0 && result.created === 0 && result.updated === 0) {
-    return 'failed';
-  }
-  return 'success';
-}
-
-// ============================================================
-// Public API: Sync Operations
-// ============================================================
-
-/**
- * Sync individual collections with progress tracking and logging.
- *
- * @param collections - Array of collection keys to sync
- * @param direction - Sync direction
- * @param options - Optional settings (progress callback, user info, logging control)
- * @returns Array of sync results with conflict information
- *
- * @example
- * ```ts
- * const results = await triggerSync(
- *   ['employees', 'training_programs'],
- *   'bidirectional',
- *   {
- *     onProgress: (p) => console.log(`${p.percent}% - ${p.currentCollection}`),
- *     initiatedBy: 'admin@example.com',
- *   }
- * );
- * ```
- */
 export async function triggerSync(
   collections: string[],
   direction: SyncDirection,
@@ -275,7 +17,6 @@ export async function triggerSync(
 ): Promise<SyncResult[]> {
   const { onProgress, initiatedBy, skipLogging = false } = options;
 
-  // Pre-sync validation
   const config = validateSyncConfig();
   if (!config.valid) {
     throw new Error(`Sync configuration invalid: ${config.errors.join('; ')}`);
@@ -296,7 +37,6 @@ export async function triggerSync(
   for (let i = 0; i < collections.length; i++) {
     const collectionKey = collections[i];
 
-    // Report progress: starting this collection
     onProgress?.({
       currentCollection: collectionKey,
       currentIndex: i,
@@ -315,7 +55,6 @@ export async function triggerSync(
 
       results.push(result);
 
-      // Update last sync timestamp for this collection
       const collectionStatus = determineSyncStatus(result);
       await updateLastSyncTimestamp(
         collectionKey,
@@ -324,7 +63,6 @@ export async function triggerSync(
         result.conflicts.length
       );
 
-      // Report progress: completed this collection
       onProgress?.({
         currentCollection: collectionKey,
         currentIndex: i,
@@ -358,10 +96,8 @@ export async function triggerSync(
 
       results.push(failedResult);
 
-      // Update last sync timestamp as failed
       await updateLastSyncTimestamp(collectionKey, direction, 'failed', 0);
 
-      // Report progress: failed this collection
       onProgress?.({
         currentCollection: collectionKey,
         currentIndex: i,
@@ -380,7 +116,6 @@ export async function triggerSync(
 
   const totalDurationMs = Date.now() - startTime;
 
-  // Save sync log to Firestore
   if (!skipLogging) {
     const totalConflicts = results.reduce((sum, r) => sum + r.conflicts.length, 0);
     const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
@@ -424,28 +159,12 @@ export async function triggerSync(
   return results;
 }
 
-/**
- * Sync all collections at once with progress tracking and logging.
- *
- * @param direction - Sync direction
- * @param options - Optional settings (progress callback, user info, logging control)
- * @returns Array of sync results with conflict information
- *
- * @example
- * ```ts
- * const results = await triggerSyncAll('bidirectional', {
- *   onProgress: (p) => setProgress(p),
- *   initiatedBy: currentUser.email,
- * });
- * ```
- */
 export async function triggerSyncAll(
   direction: SyncDirection,
   options: SyncOptions = {}
 ): Promise<SyncResult[]> {
   const { onProgress, initiatedBy, skipLogging = false } = options;
 
-  // Pre-sync validation
   const config = validateSyncConfig();
   if (!config.valid) {
     throw new Error(`Sync configuration invalid: ${config.errors.join('; ')}`);
@@ -457,7 +176,6 @@ export async function triggerSyncAll(
 
   logger.info('[SyncService] Starting full sync', { direction, initiatedBy });
 
-  // Report progress: starting
   onProgress?.({
     currentCollection: 'all',
     currentIndex: 0,
@@ -473,7 +191,6 @@ export async function triggerSyncAll(
 
     const totalDurationMs = Date.now() - startTime;
 
-    // Update last sync timestamp for each collection
     for (const result of results) {
       if (result.collection) {
         const collectionStatus = determineSyncStatus(result);
@@ -486,7 +203,6 @@ export async function triggerSyncAll(
       }
     }
 
-    // Report progress: completed
     onProgress?.({
       currentCollection: 'all',
       currentIndex: allCollectionKeys.length,
@@ -495,7 +211,6 @@ export async function triggerSyncAll(
       percent: 100,
     });
 
-    // Save sync log
     if (!skipLogging) {
       const totalConflicts = results.reduce((sum, r) => sum + r.conflicts.length, 0);
       const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
@@ -536,7 +251,6 @@ export async function triggerSyncAll(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Report progress: failed
     onProgress?.({
       currentCollection: 'all',
       currentIndex: 0,
@@ -546,7 +260,6 @@ export async function triggerSyncAll(
       error: errorMessage,
     });
 
-    // Save failure log
     if (!skipLogging) {
       await saveSyncLog({
         direction,
@@ -570,10 +283,6 @@ export async function triggerSyncAll(
   }
 }
 
-/**
- * Get sync status from the GAS endpoint via Cloud Functions proxy.
- * Returns information about each sheet's current state.
- */
 export async function getSyncStatus(): Promise<
   Record<string, { sheetName: string; syncMode: string; sheetRows: number }>
 > {
