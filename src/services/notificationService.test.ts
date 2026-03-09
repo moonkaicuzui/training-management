@@ -24,6 +24,7 @@ vi.mock('@/services/firebase', () => ({
   query: vi.fn(() => 'mock-query'),
   where: vi.fn(() => 'mock-where'),
   orderBy: vi.fn(() => 'mock-orderBy'),
+  limit: vi.fn(() => 'mock-limit'),
   serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
   writeBatch: vi.fn(() => mockBatch),
   Timestamp: class MockTimestamp {

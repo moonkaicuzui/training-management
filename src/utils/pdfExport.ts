@@ -25,46 +25,46 @@ export async function exportElementToPDF(
 ): Promise<void> {
   const { orientation = 'landscape', scale = 2, margin = 10 } = options;
 
-  // Dynamic imports
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import('html2canvas'),
-    import('jspdf'),
-  ]);
+  try {
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ]);
 
-  // Capture element as canvas
-  const canvas = await html2canvas(element, {
-    scale,
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-  });
+    const canvas = await html2canvas(element, {
+      scale,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+    });
 
-  // Calculate dimensions
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF({
-    orientation,
-    unit: 'mm',
-    format: 'a4',
-  });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation,
+      unit: 'mm',
+      format: 'a4',
+    });
 
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const availableWidth = pageWidth - margin * 2;
-  const availableHeight = pageHeight - margin * 2;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const availableWidth = pageWidth - margin * 2;
+    const availableHeight = pageHeight - margin * 2;
 
-  // Scale image to fit page
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
-  const ratio = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
-  const scaledWidth = imgWidth * ratio;
-  const scaledHeight = imgHeight * ratio;
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
+    const scaledWidth = imgWidth * ratio;
+    const scaledHeight = imgHeight * ratio;
 
-  // Center image on page
-  const x = (pageWidth - scaledWidth) / 2;
-  const y = margin;
+    const x = (pageWidth - scaledWidth) / 2;
+    const y = margin;
 
-  pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
-  pdf.save(filename);
+    pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
+    pdf.save(filename);
+  } catch (error) {
+    console.error('[pdfExport] Failed to export element to PDF:', error);
+    throw new Error('PDF 파일 내보내기에 실패했습니다.');
+  }
 }
 
 /**
@@ -324,62 +324,60 @@ export async function exportToPDF<T extends Record<string, unknown>>(
     includePageNumbers = true,
   } = options;
 
-  const doc = await createPDFDocument(options);
+  try {
+    const doc = await createPDFDocument(options);
+    const { default: autoTable } = await import('jspdf-autotable');
 
-  // Dynamic import autotable
-  const { default: autoTable } = await import('jspdf-autotable');
+    const startY = addHeader(doc, title, options);
 
-  // Add header
-  const startY = addHeader(doc, title, options);
+    const tableHeaders = columns.map((col) => col.header);
+    const tableData = data.map((row) =>
+      columns.map((col) => {
+        const value = row[col.dataKey];
+        if (value === null || value === undefined) return '';
+        if (value instanceof Date) return value.toLocaleDateString('ko-KR');
+        return String(value);
+      })
+    );
 
-  // Prepare table data
-  const tableHeaders = columns.map((col) => col.header);
-  const tableData = data.map((row) =>
-    columns.map((col) => {
-      const value = row[col.dataKey];
-      if (value === null || value === undefined) return '';
-      if (value instanceof Date) return value.toLocaleDateString('ko-KR');
-      return String(value);
-    })
-  );
-
-  // Generate table using autoTable
-  autoTable(doc, {
-    head: [tableHeaders],
-    body: tableData,
-    startY,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize,
-      cellPadding: 2,
-      overflow: 'linebreak',
-    },
-    headStyles: {
-      fillColor: [30, 64, 175], // Blue-800
-      textColor: 255,
-      fontStyle: 'bold',
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252], // Gray-50
-    },
-    columnStyles: columns.reduce(
-      (acc, col, index) => {
-        if (col.width) {
-          acc[index] = { cellWidth: col.width };
-        }
-        return acc;
+    autoTable(doc, {
+      head: [tableHeaders],
+      body: tableData,
+      startY,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize,
+        cellPadding: 2,
+        overflow: 'linebreak',
       },
-      {} as Record<number, { cellWidth: number }>
-    ),
-  });
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+      columnStyles: columns.reduce(
+        (acc, col, index) => {
+          if (col.width) {
+            acc[index] = { cellWidth: col.width };
+          }
+          return acc;
+        },
+        {} as Record<number, { cellWidth: number }>
+      ),
+    });
 
-  // Add page numbers
-  if (includePageNumbers) {
-    addPageNumbers(doc, margin);
+    if (includePageNumbers) {
+      addPageNumbers(doc, margin);
+    }
+
+    doc.save(filename);
+  } catch (error) {
+    console.error('[pdfExport] Failed to export table PDF:', error);
+    throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
-
-  // Download the PDF
-  doc.save(filename);
 }
 
 /**
@@ -404,73 +402,72 @@ export async function exportMultiTablePDF<T extends Record<string, unknown>>(
     includePageNumbers = true,
   } = options;
 
-  const doc = await createPDFDocument(options);
-  const { default: autoTable } = await import('jspdf-autotable');
+  try {
+    const doc = await createPDFDocument(options);
+    const { default: autoTable } = await import('jspdf-autotable');
 
-  let currentY = addHeader(doc, title, options);
+    let currentY = addHeader(doc, title, options);
 
-  sections.forEach((section, sectionIndex) => {
-    // Check if we need a new page
-    if (sectionIndex > 0 && currentY > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      currentY = margin;
-    }
+    sections.forEach((section, sectionIndex) => {
+      if (sectionIndex > 0 && currentY > doc.internal.pageSize.height - 60) {
+        doc.addPage();
+        currentY = margin;
+      }
 
-    // Section title
-    if (sectionIndex > 0) {
-      currentY += 10;
-    }
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(section.title, margin, currentY);
-    currentY += 6;
+      if (sectionIndex > 0) {
+        currentY += 10;
+      }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(section.title, margin, currentY);
+      currentY += 6;
 
-    // Table data
-    const tableHeaders = section.columns.map((col) => col.header);
-    const tableData = section.data.map((row) =>
-      section.columns.map((col) => {
-        const value = row[col.dataKey];
-        if (value === null || value === undefined) return '';
-        if (value instanceof Date) return value.toLocaleDateString('ko-KR');
-        return String(value);
-      })
-    );
+      const tableHeaders = section.columns.map((col) => col.header);
+      const tableData = section.data.map((row) =>
+        section.columns.map((col) => {
+          const value = row[col.dataKey];
+          if (value === null || value === undefined) return '';
+          if (value instanceof Date) return value.toLocaleDateString('ko-KR');
+          return String(value);
+        })
+      );
 
-    // Generate table
-    autoTable(doc, {
-      head: [tableHeaders],
-      body: tableData,
-      startY: currentY,
-      margin: { left: margin, right: margin },
-      styles: {
-        fontSize,
-        cellPadding: 2,
-        overflow: 'linebreak',
-      },
-      headStyles: {
-        fillColor: [30, 64, 175],
-        textColor: 255,
-        fontStyle: 'bold',
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252],
-      },
-      didDrawPage: (data) => {
-        currentY = data.cursor?.y ?? margin;
-      },
+      autoTable(doc, {
+        head: [tableHeaders],
+        body: tableData,
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        styles: {
+          fontSize,
+          cellPadding: 2,
+          overflow: 'linebreak',
+        },
+        headStyles: {
+          fillColor: [30, 64, 175],
+          textColor: 255,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252],
+        },
+        didDrawPage: (data) => {
+          currentY = data.cursor?.y ?? margin;
+        },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 20;
     });
 
-    // Update currentY after table
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 20;
-  });
+    if (includePageNumbers) {
+      addPageNumbers(doc, margin);
+    }
 
-  // Add page numbers
-  if (includePageNumbers) {
-    addPageNumbers(doc, margin);
+    doc.save(filename);
+  } catch (error) {
+    console.error('[pdfExport] Failed to export multi-table PDF:', error);
+    throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
-
-  doc.save(filename);
 }
 
 /**
@@ -502,75 +499,78 @@ export async function exportTrainingResultsPDF(
     includePageNumbers = true,
   } = options;
 
-  const doc = await createPDFDocument({ ...options, orientation: 'landscape' });
-  const { default: autoTable } = await import('jspdf-autotable');
+  try {
+    const doc = await createPDFDocument({ ...options, orientation: 'landscape' });
+    const { default: autoTable } = await import('jspdf-autotable');
 
-  let currentY = addHeader(doc, title, options);
+    let currentY = addHeader(doc, title, options);
 
-  // Summary section
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Summary', margin, currentY);
-  currentY += 6;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Summary', margin, currentY);
+    currentY += 6;
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Total Employees: ${data.summary.total}`, margin, currentY);
-  currentY += 5;
-  doc.text(`Passed: ${data.summary.passed}`, margin, currentY);
-  currentY += 5;
-  doc.text(`Failed: ${data.summary.failed}`, margin, currentY);
-  currentY += 5;
-  doc.text(`Pass Rate: ${data.summary.passRate.toFixed(1)}%`, margin, currentY);
-  currentY += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Employees: ${data.summary.total}`, margin, currentY);
+    currentY += 5;
+    doc.text(`Passed: ${data.summary.passed}`, margin, currentY);
+    currentY += 5;
+    doc.text(`Failed: ${data.summary.failed}`, margin, currentY);
+    currentY += 5;
+    doc.text(`Pass Rate: ${data.summary.passRate.toFixed(1)}%`, margin, currentY);
+    currentY += 10;
 
-  // Results table
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Detailed Results', margin, currentY);
-  currentY += 6;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Detailed Results', margin, currentY);
+    currentY += 6;
 
-  const tableData = data.results.map((result) => {
-    const employee = data.employees.find((e) => e.id === result.employee_id);
-    return [
-      employee?.name ?? result.employee_id,
-      employee?.department ?? '-',
-      result.program,
-      String(result.score),
-      result.result,
-      result.date,
-    ];
-  });
+    const tableData = data.results.map((result) => {
+      const employee = data.employees.find((e) => e.id === result.employee_id);
+      return [
+        employee?.name ?? result.employee_id,
+        employee?.department ?? '-',
+        result.program,
+        String(result.score),
+        result.result,
+        result.date,
+      ];
+    });
 
-  autoTable(doc, {
-    head: [['Employee', 'Department', 'Program', 'Score', 'Result', 'Date']],
-    body: tableData,
-    startY: currentY,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize: 9,
-      cellPadding: 2,
-    },
-    headStyles: {
-      fillColor: [30, 64, 175],
-      textColor: 255,
-      fontStyle: 'bold',
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
-    columnStyles: {
-      3: { halign: 'center' },
-      4: { halign: 'center' },
-      5: { halign: 'center' },
-    },
-  });
+    autoTable(doc, {
+      head: [['Employee', 'Department', 'Program', 'Score', 'Result', 'Date']],
+      body: tableData,
+      startY: currentY,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+      columnStyles: {
+        3: { halign: 'center' },
+        4: { halign: 'center' },
+        5: { halign: 'center' },
+      },
+    });
 
-  if (includePageNumbers) {
-    addPageNumbers(doc, margin);
+    if (includePageNumbers) {
+      addPageNumbers(doc, margin);
+    }
+
+    doc.save(filename);
+  } catch (error) {
+    console.error('[pdfExport] Failed to export training results PDF:', error);
+    throw new Error('PDF 파일 내보내기에 실패했습니다.');
   }
-
-  doc.save(filename);
 }
 
 /**
@@ -593,11 +593,12 @@ export async function exportCertificatePDF(
     filename = `certificate_${data.employeeId}_${new Date().toISOString().split('T')[0]}.pdf`,
   } = options;
 
-  const doc = await createPDFDocument({ ...options, orientation: 'landscape' });
+  try {
+    const doc = await createPDFDocument({ ...options, orientation: 'landscape' });
 
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-  const centerX = pageWidth / 2;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const centerX = pageWidth / 2;
 
   // Border
   doc.setDrawColor(30, 64, 175);
@@ -658,5 +659,9 @@ export async function exportCertificatePDF(
   doc.text(data.trainerName, centerX, pageHeight - 40, { align: 'center' });
   doc.text('Trainer', centerX, pageHeight - 35, { align: 'center' });
 
-  doc.save(filename);
+    doc.save(filename);
+  } catch (error) {
+    console.error('[pdfExport] Failed to export certificate PDF:', error);
+    throw new Error('PDF 파일 내보내기에 실패했습니다.');
+  }
 }

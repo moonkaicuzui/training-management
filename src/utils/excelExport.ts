@@ -22,18 +22,16 @@ export async function exportToExcel<T extends Record<string, unknown>>(
   const { sheetName = 'Sheet1', filename = `export_${new Date().toISOString().split('T')[0]}.xlsx` } =
     options;
 
-  // 동적 import로 xlsx 라이브러리 로드
-  const XLSX = await import('xlsx');
-
-  // 워크시트 생성
-  const ws = XLSX.utils.json_to_sheet(data);
-
-  // 워크북 생성
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-  // 파일 다운로드
-  XLSX.writeFile(wb, filename);
+  try {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+  } catch (error) {
+    console.error('[excelExport] Failed to export Excel:', error);
+    throw new Error('Excel 파일 내보내기에 실패했습니다.');
+  }
 }
 
 /**
@@ -46,16 +44,20 @@ export async function exportMultiSheetExcel<T extends Record<string, unknown>>(
   sheets: Array<{ name: string; data: T[] }>,
   filename: string = `export_${new Date().toISOString().split('T')[0]}.xlsx`
 ): Promise<void> {
-  const XLSX = await import('xlsx');
+  try {
+    const XLSX = await import('xlsx');
+    const wb = XLSX.utils.book_new();
 
-  const wb = XLSX.utils.book_new();
+    sheets.forEach(({ name, data }) => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
 
-  sheets.forEach(({ name, data }) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, name);
-  });
-
-  XLSX.writeFile(wb, filename);
+    XLSX.writeFile(wb, filename);
+  } catch (error) {
+    console.error('[excelExport] Failed to export multi-sheet Excel:', error);
+    throw new Error('Excel 파일 내보내기에 실패했습니다.');
+  }
 }
 
 /**

@@ -477,12 +477,14 @@ function App() {
                   } />
                 </Route>
 
-                {/* 테스트 페이지 */}
-                <Route path="test/pptx" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <PptxTestPage />
-                  </Suspense>
-                } />
+                {/* 테스트 페이지 (DEV only) */}
+                {import.meta.env.DEV && (
+                  <Route path="test/pptx" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PptxTestPage />
+                    </Suspense>
+                  } />
+                )}
               </Route>
             </Routes>
             <Toaster />

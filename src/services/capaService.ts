@@ -29,6 +29,19 @@ import type {
 } from '@/types/capa';
 
 // ============================================================
+// Stage Transition Validation
+// ============================================================
+
+const VALID_TRANSITIONS: Record<CAPAStatus, CAPAStatus[]> = {
+  discovery: ['investigation', 'rejected'],
+  investigation: ['action', 'rejected'],
+  action: ['verification', 'rejected'],
+  verification: ['closed', 'action'],
+  closed: [],
+  rejected: [],
+};
+
+// ============================================================
 // Collection Name
 // ============================================================
 
@@ -174,6 +187,20 @@ export async function updateCAPA(id: string, update: CAPAUpdate): Promise<void> 
 
 export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate): Promise<void> {
   try {
+    // Validate stage transition
+    const docRef = doc(db, COLLECTION, id);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) {
+      throw new Error(`CAPA not found: ${id}`);
+    }
+    const currentStatus = snapshot.data().status as CAPAStatus;
+    const allowedNext = VALID_TRANSITIONS[currentStatus];
+    if (!allowedNext || !allowedNext.includes(stageUpdate.status)) {
+      throw new Error(
+        `Invalid CAPA transition: ${currentStatus} → ${stageUpdate.status}. Allowed: [${allowedNext?.join(', ') ?? 'none'}]`
+      );
+    }
+
     const now = Timestamp.now();
     const updateData: Record<string, unknown> = {
       status: stageUpdate.status,
@@ -208,7 +235,6 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
       };
     }
 
-    const docRef = doc(db, COLLECTION, id);
     await updateDoc(docRef, updateData);
     logger.log('[capaService] Updated CAPA stage:', id, stageUpdate.status);
   } catch (error) {

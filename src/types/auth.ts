@@ -104,19 +104,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
 };
 
 // 허용된 이메일 도메인 (화승 도메인)
+const DEV_DOMAINS: string[] = import.meta.env.DEV ? ['gmail.com'] : [];
 export const ALLOWED_EMAIL_DOMAINS = [
   'hwaseung.com',
   'hwaseungvina.com',
   'hsvina.com',
-  // 개발/테스트용
-  'gmail.com',
+  ...DEV_DOMAINS,
 ];
 
 // 관리자 이메일 목록 (ADMIN 역할 자동 부여)
+const DEV_ADMIN_EMAILS: string[] = import.meta.env.DEV ? ['ksmoon@gmail.com'] : [];
 export const ADMIN_EMAILS = [
   'admin@hwaseung.com',
   'qip.admin@hwaseungvina.com',
   'ksmoon@hsvina.com',
-  // 개발용
-  'ksmoon@gmail.com',
+  ...DEV_ADMIN_EMAILS,
 ];

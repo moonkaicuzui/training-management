@@ -21,9 +21,9 @@ import type { Employee, TrainingProgram } from '@/types';
 // ========== Priority Classification ==========
 
 function classifyPriority(failRate: number): AqlPriority | null {
-  if (failRate > 30) return 'CRITICAL';
-  if (failRate >= 10) return 'HIGH';
-  if (failRate > 0) return 'MEDIUM';
+  if (failRate > 50) return 'CRITICAL';
+  if (failRate > 30) return 'HIGH';
+  if (failRate > 10) return 'MEDIUM';
   return null;
 }
 
