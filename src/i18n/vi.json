@@ -893,6 +893,20 @@
   },
   "evaluation": {
     "requiredFieldsError": "Vui lòng chọn chương trình và loại đánh giá.",
+    "criteria": {
+      "contentRelevance": "Tính phù hợp nội dung",
+      "contentRelevanceDesc": "Sự liên quan và tính thực tiễn với công việc",
+      "instructorExpertise": "Chuyên môn giảng viên",
+      "instructorExpertiseDesc": "Kiến thức và khả năng truyền đạt của giảng viên",
+      "materialQuality": "Chất lượng tài liệu",
+      "materialQualityDesc": "Chất lượng giáo trình và tài liệu",
+      "environment": "Môi trường đào tạo",
+      "environmentDesc": "Tình trạng cơ sở vật chất và thiết bị",
+      "goalAchievement": "Đạt mục tiêu học tập",
+      "goalAchievementDesc": "Mức độ đạt được mục tiêu đào tạo",
+      "applicability": "Khả năng áp dụng",
+      "applicabilityDesc": "Khả năng áp dụng vào công việc thực tế"
+    },
     "title": "Đánh giá hiệu quả đào tạo",
     "description": "Đo lường hiệu quả đào tạo dựa trên mô hình 4 cấp độ Kirkpatrick",
     "exportExcel": "Xuất Excel",

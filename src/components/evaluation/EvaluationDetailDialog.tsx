@@ -29,14 +29,16 @@ interface EvaluationCriteria {
   description: string;
 }
 
-const evaluationCriteria: EvaluationCriteria[] = [
-  { id: 'c1', name: '교육 내용 적합성', weight: 20, description: '업무와의 관련성 및 실용성' },
-  { id: 'c2', name: '강사 전문성', weight: 20, description: '강사의 지식과 전달력' },
-  { id: 'c3', name: '교육 자료 품질', weight: 15, description: '교재 및 자료의 품질' },
-  { id: 'c4', name: '교육 환경', weight: 10, description: '시설 및 장비 상태' },
-  { id: 'c5', name: '학습 목표 달성', weight: 20, description: '교육 목표 달성 정도' },
-  { id: 'c6', name: '업무 적용 가능성', weight: 15, description: '실제 업무 적용 가능성' },
-];
+function getEvaluationCriteria(t: (key: string) => string): EvaluationCriteria[] {
+  return [
+    { id: 'c1', name: t('evaluation.criteria.contentRelevance'), weight: 20, description: t('evaluation.criteria.contentRelevanceDesc') },
+    { id: 'c2', name: t('evaluation.criteria.instructorExpertise'), weight: 20, description: t('evaluation.criteria.instructorExpertiseDesc') },
+    { id: 'c3', name: t('evaluation.criteria.materialQuality'), weight: 15, description: t('evaluation.criteria.materialQualityDesc') },
+    { id: 'c4', name: t('evaluation.criteria.environment'), weight: 10, description: t('evaluation.criteria.environmentDesc') },
+    { id: 'c5', name: t('evaluation.criteria.goalAchievement'), weight: 20, description: t('evaluation.criteria.goalAchievementDesc') },
+    { id: 'c6', name: t('evaluation.criteria.applicability'), weight: 15, description: t('evaluation.criteria.applicabilityDesc') },
+  ];
+}
 
 function getScoreColor(score: number) {
   if (score >= 4.5) return 'text-green-600';
@@ -113,6 +115,7 @@ export function EvaluationDetailDialog({
   evaluation,
 }: EvaluationDetailDialogProps) {
   const { t } = useTranslation();
+  const evaluationCriteria = getEvaluationCriteria(t);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

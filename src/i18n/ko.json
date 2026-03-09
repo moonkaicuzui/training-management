@@ -893,6 +893,20 @@
   },
   "evaluation": {
     "requiredFieldsError": "프로그램과 평가 유형을 선택해주세요.",
+    "criteria": {
+      "contentRelevance": "교육 내용 적합성",
+      "contentRelevanceDesc": "업무와의 관련성 및 실용성",
+      "instructorExpertise": "강사 전문성",
+      "instructorExpertiseDesc": "강사의 지식과 전달력",
+      "materialQuality": "교육 자료 품질",
+      "materialQualityDesc": "교재 및 자료의 품질",
+      "environment": "교육 환경",
+      "environmentDesc": "시설 및 장비 상태",
+      "goalAchievement": "학습 목표 달성",
+      "goalAchievementDesc": "교육 목표 달성 정도",
+      "applicability": "업무 적용 가능성",
+      "applicabilityDesc": "실제 업무 적용 가능성"
+    },
     "title": "교육 효과성 평가",
     "description": "Kirkpatrick 4단계 모델 기반 교육 효과 측정",
     "exportExcel": "엑셀 다운로드",

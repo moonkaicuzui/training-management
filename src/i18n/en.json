@@ -893,6 +893,20 @@
   },
   "evaluation": {
     "requiredFieldsError": "Please select a program and evaluation type.",
+    "criteria": {
+      "contentRelevance": "Content Relevance",
+      "contentRelevanceDesc": "Relevance and practicality to work",
+      "instructorExpertise": "Instructor Expertise",
+      "instructorExpertiseDesc": "Instructor knowledge and delivery",
+      "materialQuality": "Material Quality",
+      "materialQualityDesc": "Quality of textbooks and materials",
+      "environment": "Training Environment",
+      "environmentDesc": "Facilities and equipment condition",
+      "goalAchievement": "Goal Achievement",
+      "goalAchievementDesc": "Degree of training goal achievement",
+      "applicability": "Work Applicability",
+      "applicabilityDesc": "Applicability to actual work"
+    },
     "title": "Training Effectiveness Evaluation",
     "description": "Training effectiveness measurement based on Kirkpatrick 4-level model",
     "exportExcel": "Export Excel",
