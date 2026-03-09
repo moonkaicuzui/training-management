@@ -191,7 +191,7 @@ export default function ProjectsSettings() {
 
   // 카테고리 삭제
   const handleDelete = async (categoryId: string) => {
-    if (confirm('이 카테고리를 삭제하시겠습니까?')) {
+    if (confirm(t('projects.settings.deleteCategoryConfirm'))) {
       await deleteCategory(categoryId);
     }
   };
@@ -257,7 +257,7 @@ export default function ProjectsSettings() {
 
   // 자동화 삭제
   const handleDeleteAutomation = useCallback(async (automationId: string) => {
-    if (confirm('이 자동화 규칙을 삭제하시겠습니까?')) {
+    if (confirm(t('projects.settings.deleteAutomationConfirm'))) {
       await deleteAutomation(automationId);
     }
   }, [deleteAutomation]);
@@ -272,7 +272,7 @@ export default function ProjectsSettings() {
       const { id, createdAt, updatedAt, runCount, lastRunAt, ...automationData } = automation;
       await createAutomation({
         ...automationData,
-        name: `${automation.name} (복사본)`,
+        name: `${automation.name} (${t('projects.settings.copy')})`,
         projectId: currentProjectId,
         isActive: false,
       });

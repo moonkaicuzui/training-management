@@ -28,39 +28,39 @@ export interface TriggerOption {
 export const TRIGGER_OPTIONS: TriggerOption[] = [
   {
     value: 'task_status_changed',
-    label: '상태 변경',
+    label: 'projects.automation.triggerStatusChanged',
     icon: React.createElement(RefreshCw, { className: 'h-4 w-4' }),
-    description: '과제 상태가 변경되었을 때'
+    description: 'projects.automation.triggerStatusChangedDesc'
   },
   {
     value: 'task_assignee_changed',
-    label: '담당자 변경',
+    label: 'projects.automation.triggerAssigneeChanged',
     icon: React.createElement(UserPlus, { className: 'h-4 w-4' }),
-    description: '과제 담당자가 변경되었을 때'
+    description: 'projects.automation.triggerAssigneeChangedDesc'
   },
   {
     value: 'task_due_date',
-    label: '마감일 도래',
+    label: 'projects.automation.triggerDueDate',
     icon: React.createElement(Clock, { className: 'h-4 w-4' }),
-    description: '과제 마감일이 다가왔을 때'
+    description: 'projects.automation.triggerDueDateDesc'
   },
   {
     value: 'task_created',
-    label: '과제 생성',
+    label: 'projects.automation.triggerTaskCreated',
     icon: React.createElement(Plus, { className: 'h-4 w-4' }),
-    description: '새 과제가 생성되었을 때'
+    description: 'projects.automation.triggerTaskCreatedDesc'
   },
   {
     value: 'task_progress_changed',
-    label: '진행률 변경',
+    label: 'projects.automation.triggerProgressChanged',
     icon: React.createElement(Target, { className: 'h-4 w-4' }),
-    description: '과제 진행률이 변경되었을 때'
+    description: 'projects.automation.triggerProgressChangedDesc'
   },
   {
     value: 'scheduled_time',
-    label: '예약 시간',
+    label: 'projects.automation.triggerScheduledTime',
     icon: React.createElement(CalendarPlus, { className: 'h-4 w-4' }),
-    description: '지정된 시간에 실행'
+    description: 'projects.automation.triggerScheduledTimeDesc'
   },
 ];
 
@@ -75,56 +75,56 @@ export interface ActionOption {
 export const ACTION_OPTIONS: ActionOption[] = [
   {
     value: 'change_status',
-    label: '상태 변경',
+    label: 'projects.automation.actionChangeStatus',
     icon: React.createElement(RefreshCw, { className: 'h-4 w-4' }),
-    description: '과제 상태를 변경합니다'
+    description: 'projects.automation.actionChangeStatusDesc'
   },
   {
     value: 'change_assignee',
-    label: '담당자 변경',
+    label: 'projects.automation.actionChangeAssignee',
     icon: React.createElement(UserPlus, { className: 'h-4 w-4' }),
-    description: '과제 담당자를 변경합니다'
+    description: 'projects.automation.actionChangeAssigneeDesc'
   },
   {
     value: 'send_notification',
-    label: '알림 전송',
+    label: 'projects.automation.actionSendNotification',
     icon: React.createElement(Bell, { className: 'h-4 w-4' }),
-    description: '인앱 알림을 전송합니다'
+    description: 'projects.automation.actionSendNotificationDesc'
   },
   {
     value: 'send_email',
-    label: '이메일 전송',
+    label: 'projects.automation.actionSendEmail',
     icon: React.createElement(Mail, { className: 'h-4 w-4' }),
-    description: '이메일을 전송합니다'
+    description: 'projects.automation.actionSendEmailDesc'
   },
   {
     value: 'create_task',
-    label: '과제 생성',
+    label: 'projects.automation.actionCreateTask',
     icon: React.createElement(CalendarPlus, { className: 'h-4 w-4' }),
-    description: '새 과제를 자동 생성합니다'
+    description: 'projects.automation.actionCreateTaskDesc'
   },
   {
     value: 'add_comment',
-    label: '댓글 추가',
+    label: 'projects.automation.actionAddComment',
     icon: React.createElement(MessageSquare, { className: 'h-4 w-4' }),
-    description: '자동 댓글을 추가합니다'
+    description: 'projects.automation.actionAddCommentDesc'
   },
   {
     value: 'extend_due_date',
-    label: '마감일 연장',
+    label: 'projects.automation.actionExtendDueDate',
     icon: React.createElement(Clock, { className: 'h-4 w-4' }),
-    description: '마감일을 연장합니다'
+    description: 'projects.automation.actionExtendDueDateDesc'
   },
 ];
 
-// 상태 라벨
+// 상태 라벨 (i18n keys)
 export const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: '예정',
-  in_progress: '진행중',
-  delayed_start: '시작지연',
-  delayed_complete: '완료지연',
-  review: '검토중',
-  done: '완료',
+  todo: 'projects.automation.statusTodo',
+  in_progress: 'projects.automation.statusInProgress',
+  delayed_start: 'projects.automation.statusDelayedStart',
+  delayed_complete: 'projects.automation.statusDelayedComplete',
+  review: 'projects.automation.statusReview',
+  done: 'projects.automation.statusDone',
 };
 
 // 유틸리티 함수들

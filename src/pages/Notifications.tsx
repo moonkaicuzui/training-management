@@ -341,7 +341,7 @@ export default function NotificationsPage() {
             </div>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="유형" />
+                <SelectValue placeholder={t('notificationPage.colType')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('notificationPage.allTypes')}</SelectItem>
@@ -355,7 +355,7 @@ export default function NotificationsPage() {
             </Select>
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
               <SelectTrigger className="w-full md:w-32">
-                <SelectValue placeholder="우선순위" />
+                <SelectValue placeholder={t('notificationPage.colPriority')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('notificationPage.priorityAll')}</SelectItem>
@@ -579,7 +579,7 @@ export default function NotificationsPage() {
             <div className="space-y-2">
               <h4 className="font-medium">{t('notificationPage.reminderTiming')}</h4>
               <p className="text-sm text-muted-foreground">
-                교육 시작 전 알림을 받을 시기를 선택하세요
+                {t('notificationPage.reminderTimingDesc')}
               </p>
               <div className="flex flex-wrap gap-2">
                 {[1, 3, 7, 14, 30].map((days) => (
@@ -605,7 +605,7 @@ export default function NotificationsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSettingsDialogOpen(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={async () => {
               try {
@@ -615,7 +615,7 @@ export default function NotificationsPage() {
               }
               setSettingsDialogOpen(false);
             }}>
-              저장
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

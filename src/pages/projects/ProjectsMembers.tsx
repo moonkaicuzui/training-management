@@ -444,7 +444,7 @@ export default function ProjectsMembers() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="홍길동"
+                  placeholder={t('projects.members.namePlaceholder')}
                   className="pl-10"
                 />
               </div>
@@ -478,7 +478,7 @@ export default function ProjectsMembers() {
                     id="department"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    placeholder="품질관리팀"
+                    placeholder={t('projects.members.departmentPlaceholder')}
                     className="pl-10"
                   />
                 </div>
@@ -494,7 +494,7 @@ export default function ProjectsMembers() {
                     id="position"
                     value={formData.position}
                     onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    placeholder="과장"
+                    placeholder={t('projects.members.positionPlaceholder')}
                     className="pl-10"
                   />
                 </div>

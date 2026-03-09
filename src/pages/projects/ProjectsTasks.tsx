@@ -355,7 +355,7 @@ export default function ProjectsTasks() {
 
   // 과제 삭제
   const handleDeleteTask = useCallback(async () => {
-    if (selectedTask && confirm('이 과제를 삭제하시겠습니까?')) {
+    if (selectedTask && confirm(t('projects.tasks.deleteConfirm'))) {
       await deleteTask(selectedTask.id);
       setIsDialogOpen(false);
       setSelectedTask(null);
@@ -857,7 +857,7 @@ export default function ProjectsTasks() {
                                       ...barStyle,
                                       backgroundColor: TASK_STATUS_COLORS[task.status],
                                     }}
-                                    title={`${task.title}\n시작: ${toDate(task.startDate)?.toLocaleDateString() || '-'}\n마감: ${toDate(task.dueDate)?.toLocaleDateString() || '-'}`}
+                                    title={`${task.title}\n${t('projects.tasks.startDate')}: ${toDate(task.startDate)?.toLocaleDateString() || '-'}\n${t('projects.tasks.dueDate')}: ${toDate(task.dueDate)?.toLocaleDateString() || '-'}`}
                                     onClick={() => handleTaskClick(task)}
                                   >
                                     <span className="text-xs text-white truncate">

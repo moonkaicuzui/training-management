@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -92,6 +93,7 @@ export default function AutomationDialog({
     [automation]
   );
 
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<AutomationFormData>(initialFormData);
 
   // automation이 변경될 때 폼 리셋 (key prop 대신 사용)
@@ -143,10 +145,10 @@ export default function AutomationDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            {automation ? '자동화 수정' : '새 자동화 추가'}
+            {automation ? t('projects.automation.editAutomation') : t('projects.automation.addAutomation')}
           </DialogTitle>
           <DialogDescription>
-            트리거 조건과 실행할 액션을 설정하세요
+            {t('projects.automation.dialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,21 +156,21 @@ export default function AutomationDialog({
           {/* 기본 정보 */}
           <div className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="automation-name">자동화 이름 *</Label>
+              <Label htmlFor="automation-name">{t('projects.automation.nameLabel')} *</Label>
               <Input
                 id="automation-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="예: 완료 시 알림 전송"
+                placeholder={t('projects.automation.namePlaceholder')}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="automation-desc">설명</Label>
+              <Label htmlFor="automation-desc">{t('projects.automation.descriptionLabel')}</Label>
               <Input
                 id="automation-desc"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="자동화 규칙에 대한 설명"
+                placeholder={t('projects.automation.descriptionPlaceholder')}
               />
             </div>
           </div>
@@ -179,10 +181,10 @@ export default function AutomationDialog({
           <div className="space-y-4">
             <h4 className="font-medium flex items-center gap-2">
               <Target className="h-4 w-4 text-blue-500" />
-              트리거 (When)
+              {t('projects.automation.triggerWhen')}
             </h4>
             <p className="text-sm text-muted-foreground">
-              어떤 조건에서 자동화가 실행될지 선택하세요
+              {t('projects.automation.triggerDescription')}
             </p>
 
             <div className="grid grid-cols-2 gap-3">
@@ -205,10 +207,10 @@ export default function AutomationDialog({
                     }`}>
                       {trigger.icon}
                     </div>
-                    <span className="font-medium text-sm">{trigger.label}</span>
+                    <span className="font-medium text-sm">{t(trigger.label)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 ml-8">
-                    {trigger.description}
+                    {t(trigger.description)}
                   </p>
                 </button>
               ))}
@@ -216,12 +218,12 @@ export default function AutomationDialog({
 
             {/* 트리거 조건 상세 */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <h5 className="text-sm font-medium">조건 설정</h5>
+              <h5 className="text-sm font-medium">{t('projects.automation.conditionSettings')}</h5>
 
               {formData.triggerType === 'task_status_changed' && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label className="text-xs">이전 상태 (선택)</Label>
+                    <Label className="text-xs">{t('projects.automation.fromStatus')}</Label>
                     <Select
                       value={formData.triggerConditions.fromStatus || '__any__'}
                       onValueChange={(value) => setFormData({
@@ -233,18 +235,18 @@ export default function AutomationDialog({
                       })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="모든 상태" />
+                        <SelectValue placeholder={t('projects.automation.allStatuses')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__any__">모든 상태</SelectItem>
+                        <SelectItem value="__any__">{t('projects.automation.allStatuses')}</SelectItem>
                         {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                          <SelectItem key={value} value={value}>{t(label)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label className="text-xs">변경될 상태</Label>
+                    <Label className="text-xs">{t('projects.automation.toStatus')}</Label>
                     <Select
                       value={formData.triggerConditions.toStatus || '__any__'}
                       onValueChange={(value) => setFormData({
@@ -256,12 +258,12 @@ export default function AutomationDialog({
                       })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="상태 선택" />
+                        <SelectValue placeholder={t('projects.automation.selectStatus')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__any__">모든 상태</SelectItem>
+                        <SelectItem value="__any__">{t('projects.automation.allStatuses')}</SelectItem>
                         {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                          <SelectItem key={value} value={value}>{t(label)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -271,7 +273,7 @@ export default function AutomationDialog({
 
               {formData.triggerType === 'task_due_date' && (
                 <div className="grid gap-2">
-                  <Label className="text-xs">마감일 며칠 전</Label>
+                  <Label className="text-xs">{t('projects.automation.daysBefore')}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -290,7 +292,7 @@ export default function AutomationDialog({
 
               {formData.triggerType === 'task_progress_changed' && (
                 <div className="grid gap-2">
-                  <Label className="text-xs">진행률 임계값 (%)</Label>
+                  <Label className="text-xs">{t('projects.automation.progressThreshold')}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -311,7 +313,7 @@ export default function AutomationDialog({
                 formData.triggerType === 'task_assignee_changed' ||
                 formData.triggerType === 'scheduled_time') && (
                 <p className="text-sm text-muted-foreground">
-                  이 트리거는 추가 조건 설정이 필요하지 않습니다.
+                  {t('projects.automation.noAdditionalConditions')}
                 </p>
               )}
             </div>
@@ -325,10 +327,10 @@ export default function AutomationDialog({
               <div>
                 <h4 className="font-medium flex items-center gap-2">
                   <GitBranch className="h-4 w-4 text-green-500" />
-                  액션 (Then)
+                  {t('projects.automation.actionThen')}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  트리거 조건 충족 시 실행할 작업을 추가하세요
+                  {t('projects.automation.actionDescription')}
                 </p>
               </div>
             </div>
@@ -345,13 +347,13 @@ export default function AutomationDialog({
                       </div>
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">{actionOption?.label}</span>
+                          <span className="font-medium text-sm">{actionOption ? t(actionOption.label) : ''}</span>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeAction(index)}
-                            title="액션 삭제"
-                            aria-label="액션 삭제"
+                            title={t('projects.automation.deleteAction')}
+                            aria-label={t('projects.automation.deleteAction')}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
@@ -364,11 +366,11 @@ export default function AutomationDialog({
                             onValueChange={(value) => updateActionParams(index, { status: value })}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder="변경할 상태 선택" />
+                              <SelectValue placeholder={t('projects.automation.selectTargetStatus')} />
                             </SelectTrigger>
                             <SelectContent>
                               {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                                <SelectItem key={value} value={value}>{t(label)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -379,7 +381,7 @@ export default function AutomationDialog({
                           action.type === 'add_comment') && (
                           <Input
                             className="h-8"
-                            placeholder="메시지 내용"
+                            placeholder={t('projects.automation.messagePlaceholder')}
                             value={action.params.message || ''}
                             onChange={(e) => updateActionParams(index, { message: e.target.value })}
                           />
@@ -389,7 +391,7 @@ export default function AutomationDialog({
                           <Input
                             type="number"
                             className="h-8"
-                            placeholder="연장 일수"
+                            placeholder={t('projects.automation.extendDaysPlaceholder')}
                             min={1}
                             value={action.params.daysToExtend || ''}
                             onChange={(e) => updateActionParams(index, { daysToExtend: parseInt(e.target.value) })}
@@ -412,7 +414,7 @@ export default function AutomationDialog({
                   className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-muted-foreground/30 hover:border-green-500/50 hover:bg-green-500/5 transition-all text-sm"
                 >
                   <Plus className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">{action.label}</span>
+                  <span className="text-muted-foreground">{t(action.label)}</span>
                 </button>
               ))}
             </div>
@@ -425,19 +427,19 @@ export default function AutomationDialog({
               <div className="bg-muted/30 rounded-lg p-4">
                 <h5 className="text-sm font-medium mb-3 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  워크플로우 미리보기
+                  {t('projects.automation.workflowPreview')}
                 </h5>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-sm">
                     {getTriggerIcon(formData.triggerType)}
-                    <span>{getTriggerLabel(formData.triggerType)}</span>
+                    <span>{t(getTriggerLabel(formData.triggerType))}</span>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   {formData.actions.map((action, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-full text-sm">
                         {getActionIcon(action.type)}
-                        <span>{getActionLabel(action.type)}</span>
+                        <span>{t(getActionLabel(action.type))}</span>
                       </div>
                       {index < formData.actions.length - 1 && (
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -456,19 +458,19 @@ export default function AutomationDialog({
             <div className="flex-1 text-sm text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-amber-500" />
               {!formData.name.trim()
-                ? '자동화 이름을 입력해주세요'
-                : '최소 1개 이상의 액션을 추가해주세요'}
+                ? t('projects.automation.validationName')
+                : t('projects.automation.validationAction')}
             </div>
           )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!isValid || isLoading}
             >
-              {isLoading ? '저장 중...' : automation ? '수정' : '추가'}
+              {isLoading ? t('common.saving') : automation ? t('common.edit') : t('common.add')}
             </Button>
           </div>
         </DialogFooter>

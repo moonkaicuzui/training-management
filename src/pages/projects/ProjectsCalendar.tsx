@@ -382,7 +382,7 @@ export default function ProjectsCalendar() {
             const statusIcon = session.status === 'COMPLETED' ? '✅ ' : '📚 ';
             return {
               id: `session-${session.session_id}`,
-              title: `${statusIcon}${session.trainer_name || '교육'} - ${session.location || ''}`.trim(),
+              title: `${statusIcon}${session.trainer_name || t('projects.calendar.training')} - ${session.location || ''}`.trim(),
               start: sessionDate,
               end: sessionDate,
               allDay: true,
@@ -393,7 +393,7 @@ export default function ProjectsCalendar() {
           });
 
     return [...eventItems, ...taskItems, ...sessionItems];
-  }, [events, tasks, sessions, categories, hiddenTypes]);
+  }, [events, tasks, sessions, categories, hiddenTypes, t]);
 
   // 이벤트 스타일 — Apple Calendar: pastel bg + left border + dark text
   const eventStyleGetter = useCallback((event: CalendarEventItem) => {
@@ -555,7 +555,7 @@ export default function ProjectsCalendar() {
 
   // 이벤트 삭제
   const handleDelete = async () => {
-    if (selectedEvent && confirm('이 일정을 삭제하시겠습니까?')) {
+    if (selectedEvent && confirm(t('projects.calendar.deleteConfirm'))) {
       await deleteEvent(selectedEvent.id);
       setIsDialogOpen(false);
       setSelectedEvent(null);
@@ -629,10 +629,10 @@ export default function ProjectsCalendar() {
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           <Filter className="h-3.5 w-3.5" />
-          {showLegend ? '범례 접기' : '범례 펼치기'}
+          {showLegend ? t('projects.calendar.hideLegend') : t('projects.calendar.showLegend')}
           {hiddenTypes.size > 0 && (
             <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-              {hiddenTypes.size} 숨김
+              {t('projects.calendar.hiddenCount', { count: hiddenTypes.size })}
             </Badge>
           )}
         </button>
@@ -675,7 +675,7 @@ export default function ProjectsCalendar() {
               onClick={() => toggleFilter('sessions')}
             >
               <GraduationCap className="h-3 w-3" />
-              교육
+              {t('projects.calendar.training')}
             </Badge>
 
             {/* 과제 범례 */}
@@ -689,7 +689,7 @@ export default function ProjectsCalendar() {
               onClick={() => toggleFilter('tasks')}
             >
               <CheckCircle2 className="h-3 w-3" />
-              과제
+              {t('projects.calendar.taskLabel')}
             </Badge>
 
             {/* 필터 초기화 */}
@@ -699,7 +699,7 @@ export default function ProjectsCalendar() {
                 className="cursor-pointer hover:bg-secondary/80 text-xs"
                 onClick={() => setHiddenTypes(new Set())}
               >
-                전체 표시
+                {t('projects.calendar.showAll')}
               </Badge>
             )}
           </div>

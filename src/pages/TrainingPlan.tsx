@@ -108,7 +108,7 @@ function MonthlyCalendarView({ plan }: { plan: AnnualPlan }) {
                   </Badge>
                 ))}
                 {programsInMonth.length > 2 && (
-                  <p className="text-xs text-muted-foreground text-center">+{programsInMonth.length - 2}개</p>
+                  <p className="text-xs text-muted-foreground text-center">+{programsInMonth.length - 2}{t('trainingPlan.countUnit')}</p>
                 )}
               </div>
             )}
@@ -179,18 +179,18 @@ function PlanDetailDialog({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">전체 진행률</span>
+              <span className="text-sm font-medium">{t('trainingPlan.overallProgress')}</span>
               <span className="text-sm font-bold">{overallProgress}%</span>
             </div>
             <Progress value={overallProgress} className="h-2" />
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="text-center p-2 bg-muted rounded">
                 <p className="text-lg font-bold">{totalStats.actualSessions}/{totalStats.sessions}</p>
-                <p className="text-xs text-muted-foreground">완료/계획 세션</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.completedPlannedSessions')}</p>
               </div>
               <div className="text-center p-2 bg-muted rounded">
                 <p className="text-lg font-bold">{totalStats.actualParticipants}/{totalStats.participants}</p>
-                <p className="text-xs text-muted-foreground">완료/목표 인원</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.completedTargetParticipants')}</p>
               </div>
             </div>
           </CardContent>
@@ -198,13 +198,13 @@ function PlanDetailDialog({
 
         {/* 월별 캘린더 */}
         <div>
-          <h4 className="text-sm font-medium mb-3">월별 교육 일정</h4>
+          <h4 className="text-sm font-medium mb-3">{t('trainingPlan.monthlySchedule')}</h4>
           <MonthlyCalendarView plan={plan} />
         </div>
 
         {/* 프로그램별 상세 */}
         <div>
-          <h4 className="text-sm font-medium mb-3">프로그램별 계획</h4>
+          <h4 className="text-sm font-medium mb-3">{t('trainingPlan.programPlan')}</h4>
           <div className="space-y-2">
             {plan.planned_programs.map((prog) => {
               const isExpanded = expandedPrograms.has(prog.program_code);
@@ -227,11 +227,11 @@ function PlanDetailDialog({
                               prog.priority === 'HIGH' ? 'destructive' :
                               prog.priority === 'MEDIUM' ? 'warning' : 'secondary'
                             }>
-                              {prog.priority === 'HIGH' ? '높음' : prog.priority === 'MEDIUM' ? '보통' : '낮음'}
+                              {prog.priority === 'HIGH' ? t('trainingPlan.priority.high') : prog.priority === 'MEDIUM' ? t('trainingPlan.priority.medium') : t('trainingPlan.priority.low')}
                             </Badge>
                             <div className="text-right">
                               <p className="text-sm font-bold">{prog.completion_rate}%</p>
-                              <p className="text-xs text-muted-foreground">완료율</p>
+                              <p className="text-xs text-muted-foreground">{t('trainingPlan.completionRate')}</p>
                             </div>
                           </div>
                         </div>
@@ -241,24 +241,24 @@ function PlanDetailDialog({
                       <CardContent className="pt-0 pb-3 px-3">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-muted rounded-lg">
                           <div>
-                            <p className="text-xs text-muted-foreground">계획 세션</p>
-                            <p className="font-bold">{prog.planned_sessions}회</p>
+                            <p className="text-xs text-muted-foreground">{t('trainingPlan.plannedSessions')}</p>
+                            <p className="font-bold">{prog.planned_sessions}{t('trainingPlan.sessionUnit')}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">완료 세션</p>
-                            <p className="font-bold">{prog.actual_sessions}회</p>
+                            <p className="text-xs text-muted-foreground">{t('trainingPlan.completedSessions')}</p>
+                            <p className="font-bold">{prog.actual_sessions}{t('trainingPlan.sessionUnit')}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">목표 인원</p>
-                            <p className="font-bold">{prog.target_participants}명</p>
+                            <p className="text-xs text-muted-foreground">{t('trainingPlan.targetParticipants')}</p>
+                            <p className="font-bold">{prog.target_participants}{t('trainingPlan.personUnit')}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">실제 참여</p>
-                            <p className="font-bold">{prog.actual_participants}명</p>
+                            <p className="text-xs text-muted-foreground">{t('trainingPlan.actualParticipants')}</p>
+                            <p className="font-bold">{prog.actual_participants}{t('trainingPlan.personUnit')}</p>
                           </div>
                         </div>
                         <div className="mt-3">
-                          <p className="text-xs text-muted-foreground mb-1">예정 월</p>
+                          <p className="text-xs text-muted-foreground mb-1">{t('trainingPlan.scheduledMonths')}</p>
                           <div className="flex flex-wrap gap-1">
                             {prog.scheduled_months?.map((month) => {
                               const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
@@ -272,8 +272,8 @@ function PlanDetailDialog({
                         </div>
                         {prog.budget && (
                           <div className="mt-2">
-                            <p className="text-xs text-muted-foreground">예산</p>
-                            <p className="font-medium">{prog.budget.toLocaleString()}원</p>
+                            <p className="text-xs text-muted-foreground">{t('trainingPlan.budget')}</p>
+                            <p className="font-medium">{prog.budget.toLocaleString()}{t('trainingPlan.currencyUnit')}</p>
                           </div>
                         )}
                       </CardContent>
@@ -311,15 +311,16 @@ function QualityMetricsSummary({
   passRate: number;
   onViewRetraining: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Card className="border-l-4 border-l-orange-500">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-orange-500" />
-          품질 관리 현황 (Quality Management Status)
+          {t('trainingPlan.qualityManagementStatus')}
         </CardTitle>
         <CardDescription>
-          생산계획 수립 시 고려해야 할 품질 지표
+          {t('trainingPlan.qualityMetricsDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -330,7 +331,7 @@ function QualityMetricsSummary({
             </div>
             <div>
               <p className="text-2xl font-bold text-red-600">{retrainingCount}</p>
-              <p className="text-xs text-muted-foreground">재교육 필요</p>
+              <p className="text-xs text-muted-foreground">{t('trainingPlan.retrainingNeeded')}</p>
             </div>
           </div>
 
@@ -340,7 +341,7 @@ function QualityMetricsSummary({
             </div>
             <div>
               <p className="text-2xl font-bold text-yellow-600">{expiringCount}</p>
-              <p className="text-xs text-muted-foreground">만료 임박 (30일)</p>
+              <p className="text-xs text-muted-foreground">{t('trainingPlan.expiringWithin30Days')}</p>
             </div>
           </div>
 
@@ -350,14 +351,14 @@ function QualityMetricsSummary({
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">{passRate}%</p>
-              <p className="text-xs text-muted-foreground">전체 합격률</p>
+              <p className="text-xs text-muted-foreground">{t('trainingPlan.overallPassRate')}</p>
             </div>
           </div>
 
           <div className="flex items-center justify-center">
             <Button variant="outline" size="sm" onClick={onViewRetraining} className="w-full">
               <RefreshCw className="h-4 w-4 mr-2" />
-              재교육 계획 연계
+              {t('trainingPlan.linkRetrainingPlan')}
             </Button>
           </div>
         </div>
@@ -366,8 +367,8 @@ function QualityMetricsSummary({
           <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
             <p className="text-sm text-orange-700 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              <span className="font-medium">주의:</span>
-              재교육 대상자 {retrainingCount}명이 있습니다. 연간 계획에 재교육 세션을 포함하세요.
+              <span className="font-medium">{t('trainingPlan.caution')}:</span>
+              {t('trainingPlan.retrainingWarning', { count: retrainingCount })}
             </p>
           </div>
         )}
@@ -378,15 +379,16 @@ function QualityMetricsSummary({
 
 // 부서별 교육 현황 컴포넌트
 function DepartmentTrainingStatus({ departments }: { departments: Array<{ name: string; total: number; completed: number; rate: number }> }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Building2 className="h-5 w-5" />
-          부서별 교육 현황
+          {t('trainingPlan.departmentTrainingStatus')}
         </CardTitle>
         <CardDescription>
-          부서별 연간 교육 이수 현황
+          {t('trainingPlan.departmentAnnualStatus')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -396,7 +398,7 @@ function DepartmentTrainingStatus({ departments }: { departments: Array<{ name: 
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{dept.name}</span>
                 <span className="text-muted-foreground">
-                  {dept.completed}/{dept.total}명 ({dept.rate}%)
+                  {dept.completed}/{dept.total}{t('trainingPlan.personUnit')} ({dept.rate}%)
                 </span>
               </div>
               <Progress value={dept.rate} className="h-2" />
@@ -410,26 +412,27 @@ function DepartmentTrainingStatus({ departments }: { departments: Array<{ name: 
 
 // 프로그램별 품질 현황 컴포넌트
 function ProgramQualityStatus({ programs }: { programs: Array<{ code: string; name: string; sessions: number; passRate: number; retrainingNeeded: number }> }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          프로그램별 품질 현황
+          {t('trainingPlan.programQualityStatus')}
         </CardTitle>
         <CardDescription>
-          교육 프로그램별 합격률 및 재교육 현황
+          {t('trainingPlan.programQualityDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>프로그램</TableHead>
-              <TableHead className="text-center">세션</TableHead>
-              <TableHead className="text-center">합격률</TableHead>
-              <TableHead className="text-center">재교육 필요</TableHead>
-              <TableHead className="text-center">상태</TableHead>
+              <TableHead>{t('trainingPlan.program')}</TableHead>
+              <TableHead className="text-center">{t('trainingPlan.sessions')}</TableHead>
+              <TableHead className="text-center">{t('trainingPlan.passRate')}</TableHead>
+              <TableHead className="text-center">{t('trainingPlan.retrainingNeeded')}</TableHead>
+              <TableHead className="text-center">{t('common.status')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -449,7 +452,7 @@ function ProgramQualityStatus({ programs }: { programs: Array<{ code: string; na
                 </TableCell>
                 <TableCell className="text-center">
                   {prog.retrainingNeeded > 0 ? (
-                    <Badge variant="destructive">{prog.retrainingNeeded}명</Badge>
+                    <Badge variant="destructive">{prog.retrainingNeeded}{t('trainingPlan.personUnit')}</Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
@@ -640,7 +643,7 @@ export default function TrainingPlanPage() {
       setFormData({ plan_name: '', year: new Date().getFullYear(), period: 'YEARLY', total_budget: 0 });
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '계획 생성 실패');
+      setError(err instanceof Error ? err.message : t('trainingPlan.createPlanError'));
     } finally {
       setIsCreating(false);
     }
@@ -662,7 +665,7 @@ export default function TrainingPlanPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/retraining')}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            재교육 현황
+            {t('trainingPlan.retrainingStatus')}
           </Button>
           <Button onClick={() => { setFormData({ plan_name: '', year: new Date().getFullYear(), period: 'YEARLY', total_budget: 0 }); setCreateDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
@@ -676,7 +679,7 @@ export default function TrainingPlanPage() {
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mr-3" />
-            <span className="text-muted-foreground">교육 계획을 불러오는 중...</span>
+            <span className="text-muted-foreground">{t('trainingPlan.loadingPlans')}</span>
           </CardContent>
         </Card>
       )}
@@ -691,7 +694,7 @@ export default function TrainingPlanPage() {
             </div>
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
+              {t('common.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -710,15 +713,15 @@ export default function TrainingPlanPage() {
         <TabsList>
           <TabsTrigger value="overview">
             <Calendar className="h-4 w-4 mr-2" />
-            계획 개요
+            {t('trainingPlan.tabs.overview')}
           </TabsTrigger>
           <TabsTrigger value="quality">
             <TrendingUp className="h-4 w-4 mr-2" />
-            품질 분석
+            {t('trainingPlan.tabs.qualityAnalysis')}
           </TabsTrigger>
           <TabsTrigger value="departments">
             <Building2 className="h-4 w-4 mr-2" />
-            부서별 현황
+            {t('trainingPlan.tabs.departmentStatus')}
           </TabsTrigger>
         </TabsList>
 
@@ -729,7 +732,7 @@ export default function TrainingPlanPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              {new Date().getFullYear()}년 교육 계획 현황
+              {t('trainingPlan.yearPlanStatus', { year: new Date().getFullYear() })}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -737,34 +740,34 @@ export default function TrainingPlanPage() {
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                 <Target className="h-8 w-8 text-blue-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold">{stats.programs}</p>
-                <p className="text-xs text-muted-foreground">교육 프로그램</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.trainingPrograms')}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                 <Calendar className="h-8 w-8 text-green-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold">{stats.sessions}</p>
-                <p className="text-xs text-muted-foreground">계획 세션</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.plannedSessions')}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                 <Users className="h-8 w-8 text-purple-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold">{stats.participants}</p>
-                <p className="text-xs text-muted-foreground">목표 인원</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.targetParticipants')}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                 <BarChart3 className="h-8 w-8 text-orange-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold">{stats.progress}%</p>
-                <p className="text-xs text-muted-foreground">진행률</p>
+                <p className="text-xs text-muted-foreground">{t('trainingPlan.progressRate')}</p>
               </div>
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm">연간 진행률</span>
+                <span className="text-sm">{t('trainingPlan.annualProgress')}</span>
                 <span className="text-sm font-bold">{stats.progress}%</span>
               </div>
               <Progress value={stats.progress} className="h-3" />
             </div>
             <div className="mt-4 flex justify-end">
               <Button variant="outline" onClick={() => handleViewDetail(currentYearPlan)}>
-                상세 보기
+                {t('trainingPlan.viewDetail')}
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -776,8 +779,8 @@ export default function TrainingPlanPage() {
       {currentYearPlan && (
         <Card>
           <CardHeader>
-            <CardTitle>월별 교육 일정</CardTitle>
-            <CardDescription>{new Date().getFullYear()}년 월별 교육 예정 현황</CardDescription>
+            <CardTitle>{t('trainingPlan.monthlySchedule')}</CardTitle>
+            <CardDescription>{t('trainingPlan.monthlyScheduleDescription', { year: new Date().getFullYear() })}</CardDescription>
           </CardHeader>
           <CardContent>
             <MonthlyCalendarView plan={currentYearPlan} />
@@ -790,18 +793,18 @@ export default function TrainingPlanPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>교육 계획 목록</CardTitle>
-              <CardDescription>연도별 교육 계획 관리</CardDescription>
+              <CardTitle>{t('trainingPlan.planList')}</CardTitle>
+              <CardDescription>{t('trainingPlan.planListDescription')}</CardDescription>
             </div>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="2025">2025년</SelectItem>
-                <SelectItem value="2024">2024년</SelectItem>
-                <SelectItem value="2023">2023년</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -810,15 +813,15 @@ export default function TrainingPlanPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>계획명</TableHead>
-                <TableHead>연도</TableHead>
-                <TableHead>기간</TableHead>
-                <TableHead>프로그램</TableHead>
-                <TableHead>세션</TableHead>
-                <TableHead>예산</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>진행률</TableHead>
-                <TableHead className="text-right">액션</TableHead>
+                <TableHead>{t('trainingPlan.planName')}</TableHead>
+                <TableHead>{t('trainingPlan.year')}</TableHead>
+                <TableHead>{t('trainingPlan.period')}</TableHead>
+                <TableHead>{t('trainingPlan.program')}</TableHead>
+                <TableHead>{t('trainingPlan.sessions')}</TableHead>
+                <TableHead>{t('trainingPlan.budget')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
+                <TableHead>{t('trainingPlan.progressRate')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -826,7 +829,7 @@ export default function TrainingPlanPage() {
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    등록된 교육 계획이 없습니다
+                    {t('trainingPlan.noPlans')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -843,17 +846,17 @@ export default function TrainingPlanPage() {
                           <p className="text-xs text-muted-foreground">{plan.plan_id}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{plan.year}년</TableCell>
+                      <TableCell>{plan.year}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {plan.period === 'YEARLY' ? '연간' :
-                           plan.period === 'QUARTERLY' ? '분기' : '월간'}
+                          {plan.period === 'YEARLY' ? t('trainingPlan.periodType.yearly') :
+                           plan.period === 'QUARTERLY' ? t('trainingPlan.periodType.quarterly') : t('trainingPlan.periodType.monthly')}
                         </Badge>
                       </TableCell>
-                      <TableCell>{plan.planned_programs.length}개</TableCell>
-                      <TableCell>{totalSessions}회</TableCell>
+                      <TableCell>{plan.planned_programs.length}</TableCell>
+                      <TableCell>{totalSessions}</TableCell>
                       <TableCell>
-                        {plan.total_budget ? `${(plan.total_budget / 100000000).toFixed(1)}억` : '-'}
+                        {plan.total_budget ? `${(plan.total_budget / 100000000).toFixed(1)}${t('trainingPlan.hundredMillionUnit')}` : '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={
@@ -875,12 +878,12 @@ export default function TrainingPlanPage() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" onClick={() => handleViewDetail(plan)}>
-                            상세
+                            {t('common.detail')}
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label="교육 계획 수정"
+                            aria-label={t('trainingPlan.editPlan')}
                             onClick={() => handleViewDetail(plan)}
                           >
                             <Edit className="h-4 w-4" />
@@ -906,10 +909,10 @@ export default function TrainingPlanPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <RefreshCw className="h-5 w-5 text-orange-500" />
-                재교육 필요 인원 상세
+                {t('trainingPlan.retrainingDetailTitle')}
               </CardTitle>
               <CardDescription>
-                불합격 또는 만료로 인한 재교육 대상자 목록
+                {t('trainingPlan.retrainingDetailDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -917,11 +920,11 @@ export default function TrainingPlanPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>직원명</TableHead>
-                      <TableHead>부서</TableHead>
-                      <TableHead>프로그램</TableHead>
-                      <TableHead>점수</TableHead>
-                      <TableHead>상태</TableHead>
+                      <TableHead>{t('trainingPlan.employeeName')}</TableHead>
+                      <TableHead>{t('trainingPlan.department')}</TableHead>
+                      <TableHead>{t('trainingPlan.program')}</TableHead>
+                      <TableHead>{t('common.score')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -946,7 +949,7 @@ export default function TrainingPlanPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-red-600 border-red-300">
-                            재교육 필요
+                            {t('trainingPlan.retrainingNeeded')}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -956,8 +959,8 @@ export default function TrainingPlanPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <p className="font-medium">재교육 대상자가 없습니다</p>
-                  <p className="text-sm">모든 직원이 교육을 정상적으로 이수했습니다</p>
+                  <p className="font-medium">{t('trainingPlan.noRetrainingTargets')}</p>
+                  <p className="text-sm">{t('trainingPlan.allEmployeesCompleted')}</p>
                 </div>
               )}
             </CardContent>
@@ -968,10 +971,10 @@ export default function TrainingPlanPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Clock className="h-5 w-5 text-yellow-500" />
-                만료 임박 교육 (30일 이내)
+                {t('trainingPlan.expiringTrainingTitle')}
               </CardTitle>
               <CardDescription>
-                유효기간 만료가 임박한 교육 목록
+                {t('trainingPlan.expiringTrainingDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -979,11 +982,11 @@ export default function TrainingPlanPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>직원명</TableHead>
-                      <TableHead>부서</TableHead>
-                      <TableHead>프로그램</TableHead>
-                      <TableHead>만료일</TableHead>
-                      <TableHead>남은 일수</TableHead>
+                      <TableHead>{t('trainingPlan.employeeName')}</TableHead>
+                      <TableHead>{t('trainingPlan.department')}</TableHead>
+                      <TableHead>{t('trainingPlan.program')}</TableHead>
+                      <TableHead>{t('trainingPlan.expirationDate')}</TableHead>
+                      <TableHead>{t('trainingPlan.daysRemaining')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1016,8 +1019,8 @@ export default function TrainingPlanPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <p className="font-medium">만료 임박 교육이 없습니다</p>
-                  <p className="text-sm">30일 이내 만료 예정인 교육이 없습니다</p>
+                  <p className="font-medium">{t('trainingPlan.noExpiringTraining')}</p>
+                  <p className="text-sm">{t('trainingPlan.noExpiringTrainingDesc')}</p>
                 </div>
               )}
             </CardContent>
@@ -1031,21 +1034,21 @@ export default function TrainingPlanPage() {
           {/* 부서별 상세 현황 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">부서별 교육 이수 상세</CardTitle>
+              <CardTitle className="text-base">{t('trainingPlan.departmentCompletionDetail')}</CardTitle>
               <CardDescription>
-                부서별 교육 프로그램 이수 현황
+                {t('trainingPlan.departmentCompletionDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>부서</TableHead>
-                    <TableHead className="text-center">총원</TableHead>
-                    <TableHead className="text-center">이수 완료</TableHead>
-                    <TableHead className="text-center">미이수</TableHead>
-                    <TableHead className="text-center">이수율</TableHead>
-                    <TableHead className="text-center">상태</TableHead>
+                    <TableHead>{t('trainingPlan.department')}</TableHead>
+                    <TableHead className="text-center">{t('trainingPlan.totalEmployees')}</TableHead>
+                    <TableHead className="text-center">{t('trainingPlan.completedCount')}</TableHead>
+                    <TableHead className="text-center">{t('trainingPlan.incompleteCount')}</TableHead>
+                    <TableHead className="text-center">{t('trainingPlan.completionRate')}</TableHead>
+                    <TableHead className="text-center">{t('common.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1067,13 +1070,13 @@ export default function TrainingPlanPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         {dept.rate >= 95 ? (
-                          <Badge variant="success">우수</Badge>
+                          <Badge variant="success">{t('trainingPlan.rating.excellent')}</Badge>
                         ) : dept.rate >= 80 ? (
-                          <Badge variant="secondary">양호</Badge>
+                          <Badge variant="secondary">{t('trainingPlan.rating.good')}</Badge>
                         ) : dept.rate >= 60 ? (
-                          <Badge variant="warning">주의</Badge>
+                          <Badge variant="warning">{t('trainingPlan.rating.caution')}</Badge>
                         ) : (
-                          <Badge variant="destructive">미흡</Badge>
+                          <Badge variant="destructive">{t('trainingPlan.rating.poor')}</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -1088,7 +1091,7 @@ export default function TrainingPlanPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-blue-500" />
-                품질 부서장 권고사항
+                {t('trainingPlan.qualityManagerRecommendations')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1097,8 +1100,7 @@ export default function TrainingPlanPage() {
                   <li key={dept.name} className="flex items-start gap-2">
                     <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>{dept.name}</strong>의 이수율이 {dept.rate}%로 목표(80%) 미달입니다.
-                      추가 교육 세션을 계획하세요.
+                      {t('trainingPlan.recommendation.belowTarget', { dept: dept.name, rate: dept.rate })}
                     </span>
                   </li>
                 ))}
@@ -1106,8 +1108,7 @@ export default function TrainingPlanPage() {
                   <li className="flex items-start gap-2">
                     <RefreshCw className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
                     <span>
-                      재교육 대상자 <strong>{qualityMetrics.retrainingCount}명</strong>에 대한
-                      재교육 일정을 연간 계획에 포함하세요.
+                      {t('trainingPlan.recommendation.includeRetraining', { count: qualityMetrics.retrainingCount })}
                     </span>
                   </li>
                 )}
@@ -1115,8 +1116,7 @@ export default function TrainingPlanPage() {
                   <li className="flex items-start gap-2">
                     <Clock className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>{qualityMetrics.expiringCount}건</strong>의 교육이 30일 내 만료됩니다.
-                      갱신 교육을 계획하세요.
+                      {t('trainingPlan.recommendation.expiringTraining', { count: qualityMetrics.expiringCount })}
                     </span>
                   </li>
                 )}
@@ -1124,7 +1124,7 @@ export default function TrainingPlanPage() {
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                     <span>
-                      모든 부서가 목표 이수율을 달성했습니다. 현재 교육 계획을 유지하세요.
+                      {t('trainingPlan.recommendation.allTargetsMet')}
                     </span>
                   </li>
                 )}
@@ -1156,10 +1156,10 @@ export default function TrainingPlanPage() {
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="plan_name">계획명 *</Label>
+              <Label htmlFor="plan_name">{t('trainingPlan.planName')} *</Label>
               <Input
                 id="plan_name"
-                placeholder="예: 2025년 연간 교육 계획"
+                placeholder={t('trainingPlan.planNamePlaceholder')}
                 value={formData.plan_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, plan_name: e.target.value }))}
               />
@@ -1176,7 +1176,7 @@ export default function TrainingPlanPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {[2024, 2025, 2026, 2027, 2028].map((y) => (
-                    <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1192,15 +1192,15 @@ export default function TrainingPlanPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="YEARLY">연간</SelectItem>
-                  <SelectItem value="QUARTERLY">분기</SelectItem>
-                  <SelectItem value="MONTHLY">월간</SelectItem>
+                  <SelectItem value="YEARLY">{t('trainingPlan.periodType.yearly')}</SelectItem>
+                  <SelectItem value="QUARTERLY">{t('trainingPlan.periodType.quarterly')}</SelectItem>
+                  <SelectItem value="MONTHLY">{t('trainingPlan.periodType.monthly')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="total_budget">예산 (만원)</Label>
+              <Label htmlFor="total_budget">{t('trainingPlan.budgetLabel')}</Label>
               <Input
                 id="total_budget"
                 type="number"
