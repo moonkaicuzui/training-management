@@ -175,6 +175,7 @@
     "peopleCompetency": "인력 & 역량",
     "newTQC": "신입 TQC 관리",
     "projectsCapa": "프로젝트 & CAPA",
+    "capa": "CAPA 관리",
     "projects": "프로젝트 관리",
     "inspection": "검사 교육",
     "inspectionAqlFivePrs": "검사 교육 AQL/5PRS",
@@ -2208,6 +2209,45 @@
   },
   "capa": {
     "title": "시정/예방 조치",
+    "dashboardPage": {
+      "title": "CAPA 관리",
+      "subtitle": "시정 및 예방 조치 워크플로우",
+      "newCapa": "새 CAPA 등록",
+      "totalCapa": "전체 CAPA",
+      "closedThisMonth": "이번 달 종료: {{count}}건",
+      "inProgress": "진행 중",
+      "overdue": "기한 초과: {{count}}건",
+      "avgResolutionTime": "평균 해결 시간",
+      "days": "{{count}}일",
+      "effectivenessRate": "효과성: {{rate}}%",
+      "bySeverity": "심각도별",
+      "capaList": "CAPA 목록",
+      "capaListDesc": "등록된 시정/예방 조치 목록",
+      "searchPlaceholder": "CAPA 검색...",
+      "allStatus": "모든 상태",
+      "noCapa": "등록된 CAPA가 없습니다.",
+      "createFirst": "새 CAPA 등록하기",
+      "noResults": "검색 결과가 없습니다.",
+      "workflowStatus": "워크플로우 현황",
+      "workflowStatusDesc": "단계별 CAPA 진행 현황"
+    },
+    "statusLabels": {
+      "discovery": "발견",
+      "investigation": "조사",
+      "action": "조치",
+      "verification": "검증",
+      "closed": "종료",
+      "rejected": "반려"
+    },
+    "severityLabels": {
+      "critical": "심각",
+      "major": "중대",
+      "minor": "경미"
+    },
+    "typeLabels": {
+      "corrective": "시정조치",
+      "preventive": "예방조치"
+    },
     "backToList": "목록으로 돌아가기",
     "editAction": "CAPA 수정",
     "description": "설명",

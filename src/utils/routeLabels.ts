@@ -51,6 +51,21 @@ const routeLabelMap: Record<string, string> = {
   result: 'nav.inspection.result',
   enrollments: 'nav.inspection.enrollments',
   history: 'nav.inspection.history',
+  // AQL
+  aql: 'nav.aql.dashboard',
+  // Metal Detector
+  equipment: 'sidebar.equipmentCompliance',
+  'metal-detector': 'nav.equipment.mdDashboard',
+  input: 'nav.equipment.mdInput',
+  report: 'nav.equipment.mdReport',
+  // Quality Blog
+  'quality-blog': 'nav.qualityBlog',
+  // Executive Report
+  'executive-report': 'nav.executiveReport',
+  // Inspector Stickers
+  'inspector-stickers': 'nav.inspectorStickers',
+  // System Feedback
+  'system-feedback': 'nav.systemFeedback',
   // Program Intro
   'program-intro': 'nav.programIntro',
 };

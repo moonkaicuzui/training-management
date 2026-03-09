@@ -30,8 +30,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCAPAStore } from '@/stores/capaStore';
 import {
   CAPA_STATUS_LABELS,
-  CAPA_TYPE_LABELS,
-  CAPA_SEVERITY_LABELS,
   type CAPAStatus,
 } from '@/types/capa';
 
@@ -56,7 +54,7 @@ const STATUS_ICONS: Record<CAPAStatus, typeof Clock> = {
 };
 
 export default function CAPADashboard() {
-  useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const {
@@ -121,15 +119,15 @@ export default function CAPADashboard() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <ShieldCheck className="h-6 w-6" />
-            CAPA 관리
+            {t('capa.dashboardPage.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            시정 및 예방 조치 워크플로우
+            {t('capa.dashboardPage.subtitle')}
           </p>
         </div>
         <Button onClick={() => navigate('/capa/new')}>
           <Plus className="h-4 w-4 mr-2" />
-          새 CAPA 등록
+          {t('capa.dashboardPage.newCapa')}
         </Button>
       </div>
 
@@ -148,20 +146,20 @@ export default function CAPADashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전체 CAPA</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.totalCapa')}</CardTitle>
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{dashboardStats.total}</div>
               <p className="text-xs text-muted-foreground">
-                이번 달 종료: {dashboardStats.closedThisMonth}건
+                {t('capa.dashboardPage.closedThisMonth', { count: dashboardStats.closedThisMonth })}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">진행 중</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.inProgress')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -172,29 +170,29 @@ export default function CAPADashboard() {
                   (dashboardStats.byStatus.verification || 0)}
               </div>
               <p className="text-xs text-muted-foreground">
-                기한 초과: {dashboardStats.overdue}건
+                {t('capa.dashboardPage.overdue', { count: dashboardStats.overdue })}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">평균 해결 시간</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.avgResolutionTime')}</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {dashboardStats.averageResolutionDays}일
+                {t('capa.dashboardPage.days', { count: dashboardStats.averageResolutionDays })}
               </div>
               <p className="text-xs text-muted-foreground">
-                효과성: {dashboardStats.effectivenessRate}%
+                {t('capa.dashboardPage.effectivenessRate', { rate: dashboardStats.effectivenessRate })}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">심각도별</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.bySeverity')}</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -217,8 +215,8 @@ export default function CAPADashboard() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>CAPA 목록</CardTitle>
-          <CardDescription>등록된 시정/예방 조치 목록</CardDescription>
+          <CardTitle>{t('capa.dashboardPage.capaList')}</CardTitle>
+          <CardDescription>{t('capa.dashboardPage.capaListDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-4">
@@ -226,7 +224,7 @@ export default function CAPADashboard() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="CAPA 검색..."
+                placeholder={t('capa.dashboardPage.searchPlaceholder')}
                 className="pl-8"
                 value={searchText}
                 onChange={handleSearchChange}
@@ -238,10 +236,10 @@ export default function CAPADashboard() {
               value={statusFilter}
               onChange={handleStatusFilterChange}
             >
-              <option value="all">모든 상태</option>
-              {Object.entries(CAPA_STATUS_LABELS).map(([value, label]) => (
+              <option value="all">{t('capa.dashboardPage.allStatus')}</option>
+              {(Object.keys(CAPA_STATUS_LABELS) as CAPAStatus[]).map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(`capa.statusLabels.${value}`)}
                 </option>
               ))}
             </select>
@@ -257,17 +255,17 @@ export default function CAPADashboard() {
               {capas.length === 0 ? (
                 <>
                   <ShieldCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>등록된 CAPA가 없습니다.</p>
+                  <p>{t('capa.dashboardPage.noCapa')}</p>
                   <Button
                     variant="link"
                     onClick={() => navigate('/capa/new')}
                     className="mt-2"
                   >
-                    새 CAPA 등록하기
+                    {t('capa.dashboardPage.createFirst')}
                   </Button>
                 </>
               ) : (
-                <p>검색 결과가 없습니다.</p>
+                <p>{t('capa.dashboardPage.noResults')}</p>
               )}
             </div>
           ) : (
@@ -288,7 +286,7 @@ export default function CAPADashboard() {
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{capa.capaNumber}</span>
                           <Badge variant="outline" className="text-xs">
-                            {CAPA_TYPE_LABELS[capa.type]}
+                            {t(`capa.typeLabels.${capa.type}`)}
                           </Badge>
                           <Badge
                             variant={
@@ -300,7 +298,7 @@ export default function CAPADashboard() {
                             }
                             className="text-xs"
                           >
-                            {CAPA_SEVERITY_LABELS[capa.severity]}
+                            {t(`capa.severityLabels.${capa.severity}`)}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -310,7 +308,7 @@ export default function CAPADashboard() {
                     </div>
                     <div className="flex items-center gap-4">
                       <Badge className={STATUS_COLORS[capa.status]}>
-                        {CAPA_STATUS_LABELS[capa.status]}
+                        {t(`capa.statusLabels.${capa.status}`)}
                       </Badge>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
@@ -325,8 +323,8 @@ export default function CAPADashboard() {
       {/* Workflow Status Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>워크플로우 현황</CardTitle>
-          <CardDescription>단계별 CAPA 진행 현황</CardDescription>
+          <CardTitle>{t('capa.dashboardPage.workflowStatus')}</CardTitle>
+          <CardDescription>{t('capa.dashboardPage.workflowStatusDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -341,7 +339,7 @@ export default function CAPADashboard() {
                 >
                   <StatusIcon className="h-6 w-6 mx-auto mb-2" />
                   <div className="text-2xl font-bold">{count}</div>
-                  <div className="text-xs">{CAPA_STATUS_LABELS[status]}</div>
+                  <div className="text-xs">{t(`capa.statusLabels.${status}`)}</div>
                 </div>
               );
             })}

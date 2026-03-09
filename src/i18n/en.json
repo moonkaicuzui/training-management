@@ -175,6 +175,7 @@
     "peopleCompetency": "People & Competency",
     "newTQC": "New TQC Management",
     "projectsCapa": "Projects & CAPA",
+    "capa": "CAPA Management",
     "projects": "Project Management",
     "inspection": "Inspection Training",
     "inspectionAqlFivePrs": "Inspection Training AQL/5PRS",
@@ -2208,6 +2209,45 @@
   },
   "capa": {
     "title": "Corrective/Preventive Actions",
+    "dashboardPage": {
+      "title": "CAPA Management",
+      "subtitle": "Corrective and Preventive Action Workflow",
+      "newCapa": "New CAPA",
+      "totalCapa": "Total CAPA",
+      "closedThisMonth": "Closed this month: {{count}}",
+      "inProgress": "In Progress",
+      "overdue": "Overdue: {{count}}",
+      "avgResolutionTime": "Avg Resolution Time",
+      "days": "{{count}} days",
+      "effectivenessRate": "Effectiveness: {{rate}}%",
+      "bySeverity": "By Severity",
+      "capaList": "CAPA List",
+      "capaListDesc": "Registered corrective/preventive action list",
+      "searchPlaceholder": "Search CAPA...",
+      "allStatus": "All Status",
+      "noCapa": "No CAPA records found.",
+      "createFirst": "Create New CAPA",
+      "noResults": "No search results.",
+      "workflowStatus": "Workflow Status",
+      "workflowStatusDesc": "CAPA progress by stage"
+    },
+    "statusLabels": {
+      "discovery": "Discovery",
+      "investigation": "Investigation",
+      "action": "Action",
+      "verification": "Verification",
+      "closed": "Closed",
+      "rejected": "Rejected"
+    },
+    "severityLabels": {
+      "critical": "Critical",
+      "major": "Major",
+      "minor": "Minor"
+    },
+    "typeLabels": {
+      "corrective": "Corrective",
+      "preventive": "Preventive"
+    },
     "backToList": "Back to list",
     "editAction": "Edit CAPA",
     "description": "Description",

@@ -175,6 +175,7 @@
     "peopleCompetency": "Nhân sự & Năng lực",
     "newTQC": "Quản lý TQC mới",
     "projectsCapa": "Dự án & CAPA",
+    "capa": "Quản lý CAPA",
     "projects": "Quản lý dự án",
     "inspection": "Đào tạo kiểm tra",
     "inspectionAqlFivePrs": "Đào tạo kiểm tra AQL/5PRS",
@@ -2208,6 +2209,45 @@
   },
   "capa": {
     "title": "Hành động khắc phục/phòng ngừa",
+    "dashboardPage": {
+      "title": "Quản lý CAPA",
+      "subtitle": "Quy trình hành động khắc phục và phòng ngừa",
+      "newCapa": "Tạo CAPA mới",
+      "totalCapa": "Tổng CAPA",
+      "closedThisMonth": "Đóng tháng này: {{count}}",
+      "inProgress": "Đang tiến hành",
+      "overdue": "Quá hạn: {{count}}",
+      "avgResolutionTime": "Thời gian giải quyết TB",
+      "days": "{{count}} ngày",
+      "effectivenessRate": "Hiệu quả: {{rate}}%",
+      "bySeverity": "Theo mức độ",
+      "capaList": "Danh sách CAPA",
+      "capaListDesc": "Danh sách hành động khắc phục/phòng ngừa đã đăng ký",
+      "searchPlaceholder": "Tìm kiếm CAPA...",
+      "allStatus": "Tất cả trạng thái",
+      "noCapa": "Không có bản ghi CAPA nào.",
+      "createFirst": "Tạo CAPA mới",
+      "noResults": "Không có kết quả tìm kiếm.",
+      "workflowStatus": "Trạng thái quy trình",
+      "workflowStatusDesc": "Tiến độ CAPA theo giai đoạn"
+    },
+    "statusLabels": {
+      "discovery": "Phát hiện",
+      "investigation": "Điều tra",
+      "action": "Hành động",
+      "verification": "Xác minh",
+      "closed": "Đóng",
+      "rejected": "Từ chối"
+    },
+    "severityLabels": {
+      "critical": "Nghiêm trọng",
+      "major": "Lớn",
+      "minor": "Nhỏ"
+    },
+    "typeLabels": {
+      "corrective": "Khắc phục",
+      "preventive": "Phòng ngừa"
+    },
     "backToList": "Quay lại danh sách",
     "editAction": "Sửa CAPA",
     "description": "Mô tả",
