@@ -22,7 +22,6 @@ import {
   Settings,
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { globalSearch } from '@/services/api';
 import type { Employee, TrainingProgram } from '@/types';
 
 interface CommandPaletteProps {
@@ -78,6 +77,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       setSearchResults({ employees: [], programs: [] });
       return;
     }
+    const { globalSearch } = await import('@/services/api');
     const results = await globalSearch(q);
     setSearchResults(results);
   }, []);
