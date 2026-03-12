@@ -957,7 +957,11 @@ src/utils/trainingEffectiveness.test.ts        # Phase 7 추가
 ## 14. 성능 최적화 현황
 
 ### 번들 최적화
-- Manual chunks: vendor-react, vendor-ui, vendor-firebase, vendor-i18n, vendor-utils, vendor-icons, vendor-state
+- Manual chunks: React 무관 독립 라이브러리만 분리 (vendor-firebase, vendor-pdf, vendor-excel, vendor-pptx)
+- **주의**: React 의존 라이브러리를 별도 vendor 청크로 분리하면 TDZ(Temporal Dead Zone) 에러 발생
+  - 금지: vendor-react, vendor-ui, vendor-i18n, vendor-forms, vendor-table, vendor-state, vendor-calendar 등
+  - 원인: Vite/Rollup 수동 청크 분리 시 모듈 초기화 순서 보장 불가
+  - 이력: 2026-03-12 프로덕션 백색 화면 (vendor-calendar, vendor-i18n TDZ 에러) → 긴급 수정 (commit fac6aa2)
 - Recharts: LazyCharts 동적 import (초기 번들 제외)
 - 모든 페이지: React.lazy() + Suspense
 
@@ -1180,6 +1184,20 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 - [ ] E2E 테스트 (핵심 워크플로우)
 - [x] ~~en.json/vi.json 179키 적절한 번역~~ → Phase 4
 - [ ] 750-1000줄 파일 추가 분할 (14개 파일: Schedule, Materials, Results 등)
+- [ ] 번들 최적화: 메인 청크 967KB → code splitting 추가 (React 의존 라이브러리 안전 분리 방법 조사)
+
+### Phase 10: 프로덕션 백색 화면 긴급 수정 (2026-03-12, commit `fac6aa2`)
+| # | 카테고리 | 파일 | 변경 내용 |
+|---|----------|------|----------|
+| 1 | 긴급수정 | `vite.config.ts` | React 의존 라이브러리 수동 청크 분리 제거 (TDZ 에러 해결) |
+
+**원인**: `manualChunks`로 React 의존 라이브러리를 별도 vendor 청크로 분리 시 모듈 초기화 순서 미보장
+- `vendor-calendar`: `ReferenceError: Cannot access 'w' before initialization`
+- `vendor-i18n`: `TypeError: Cannot read properties of undefined (reading 'createContext')`
+
+**수정**: React 무관 독립 라이브러리(firebase, jspdf, xlsx, pptxgenjs)만 수동 청크 유지, 나머지는 Vite 기본 전략 위임
+
+**영향**: 메인 번들 475KB → 967KB (gzip 287KB). 추후 안전한 code splitting 방법 검토 필요.
 
 ---
 
