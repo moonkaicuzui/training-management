@@ -176,7 +176,7 @@ export const updateThresholds = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTIONS.THRESHOLDS, THRESHOLD_DOC_ID);
-    const { threshold_id: _, ...cleanUpdates } = updates;
+    const { threshold_id: _threshold_id, ...cleanUpdates } = updates;
     await setDoc(docRef, {
       ...cleanUpdates,
       threshold_id: THRESHOLD_DOC_ID,

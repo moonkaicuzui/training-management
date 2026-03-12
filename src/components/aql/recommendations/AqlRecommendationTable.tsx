@@ -49,6 +49,47 @@ const REASON_COLORS: Record<AqlEnrollmentReason, string> = {
   SUPERVISOR_ESCALATION: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
+function SortIcon({ columnKey, sortKey, sortAsc }: { columnKey: SortKey; sortKey: SortKey; sortAsc: boolean }) {
+  if (sortKey !== columnKey) {
+    return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
+  }
+  return sortAsc ? (
+    <ArrowUp className="ml-1 h-3 w-3" />
+  ) : (
+    <ArrowDown className="ml-1 h-3 w-3" />
+  );
+}
+
+function SortableHeader({
+  columnKey,
+  label,
+  className,
+  sortKey,
+  sortAsc,
+  onSort,
+}: {
+  columnKey: SortKey;
+  label: string;
+  className?: string;
+  sortKey: SortKey;
+  sortAsc: boolean;
+  onSort: (key: SortKey) => void;
+}) {
+  return (
+    <TableHead className={className}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-3 h-8"
+        onClick={() => onSort(columnKey)}
+      >
+        {label}
+        <SortIcon columnKey={columnKey} sortKey={sortKey} sortAsc={sortAsc} />
+      </Button>
+    </TableHead>
+  );
+}
+
 function getSortValue(rec: AqlTrainingRecommendation, key: SortKey): string | number {
   switch (key) {
     case 'aql_employee_no':
@@ -142,39 +183,6 @@ export function AqlRecommendationTable({
     }
   };
 
-  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
-    if (sortKey !== columnKey) {
-      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
-    }
-    return sortAsc ? (
-      <ArrowUp className="ml-1 h-3 w-3" />
-    ) : (
-      <ArrowDown className="ml-1 h-3 w-3" />
-    );
-  };
-
-  const SortableHeader = ({
-    columnKey,
-    label,
-    className,
-  }: {
-    columnKey: SortKey;
-    label: string;
-    className?: string;
-  }) => (
-    <TableHead className={className}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={() => handleSort(columnKey)}
-      >
-        {label}
-        <SortIcon columnKey={columnKey} />
-      </Button>
-    </TableHead>
-  );
-
   return (
     <div className="overflow-auto">
       <Table>
@@ -192,47 +200,58 @@ export function AqlRecommendationTable({
             <SortableHeader
               columnKey="aql_employee_no"
               label={t('aql.recommendations.employeeNo')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="name"
               label={t('aql.recommendations.name', 'Name')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="aql_inspector"
               label={t('aql.recommendations.aqlInspector', 'AQL Inspector')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="supervisor"
               label={t('aql.recommendations.supervisor')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="building"
               label={t('aql.recommendations.building', 'Building')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="fail_rate"
               label={t('aql.recommendations.failRate', 'Fail Rate')}
               className="text-right"
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="priority_score"
               label={t('aql.recommendations.priority', 'Priority')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="reason"
               label={t('aql.recommendations.reason', 'Reason')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="programs"
               label={t('aql.recommendations.programs', 'Programs')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="linked"
               label={t('aql.recommendations.linkStatus', 'Link')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
               columnKey="status"
               label={t('aql.recommendations.actions', 'Actions')}
+              sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
           </TableRow>
         </TableHeader>

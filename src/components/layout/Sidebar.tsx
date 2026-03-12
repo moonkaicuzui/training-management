@@ -48,8 +48,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -348,7 +346,7 @@ export const Sidebar = memo(function Sidebar() {
           </Button>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-4rem)] md:h-screen py-2">
+        <div className="h-[calc(100vh-4rem)] md:h-screen py-2 overflow-y-auto overflow-x-hidden scrollbar-thin">
           {categories.map((category, catIdx) => (
             <div key={category.labelKey}>
               {/* Category Label */}
@@ -366,38 +364,35 @@ export const Sidebar = memo(function Sidebar() {
                 );
 
                 return (
-                  <Collapsible
+                  <div
                     key={section.titleKey}
-                    open={isOpen}
-                    onOpenChange={() => toggleSection(section.titleKey)}
                     className={cn(
                       'transition-colors duration-200',
                       isOpen && 'bg-blue-50 dark:bg-blue-950/30'
                     )}
                   >
-                    <CollapsibleTrigger asChild>
-                      <button
+                    <button
+                      onClick={() => toggleSection(section.titleKey)}
+                      className={cn(
+                        'flex w-full items-center justify-between px-5 py-1.5 text-xs font-semibold tracking-tight transition-colors',
+                        isOpen
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : hasActiveItem
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      aria-expanded={isOpen}
+                    >
+                      <span className="truncate">{t(section.titleKey)}</span>
+                      <ChevronDown
                         className={cn(
-                          'flex w-full items-center justify-between px-5 py-1.5 text-xs font-semibold tracking-tight transition-colors',
-                          isOpen
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : hasActiveItem
-                              ? 'text-primary'
-                              : 'text-muted-foreground hover:text-foreground'
+                          'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
+                          isOpen ? 'rotate-0' : '-rotate-90'
                         )}
-                        aria-expanded={isOpen}
-                      >
-                        <span className="truncate">{t(section.titleKey)}</span>
-                        <ChevronDown
-                          className={cn(
-                            'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
-                            isOpen ? 'rotate-0' : '-rotate-90'
-                          )}
-                        />
-                      </button>
-                    </CollapsibleTrigger>
+                      />
+                    </button>
 
-                    <CollapsibleContent>
+                    {isOpen && (
                       <nav className="space-y-0.5 px-3 pb-1 border-l-2 border-blue-400 dark:border-blue-500 ml-4 mr-1">
                         {section.items.map((item) => (
                           <NavLink
@@ -425,8 +420,8 @@ export const Sidebar = memo(function Sidebar() {
                           </NavLink>
                         ))}
                       </nav>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -452,7 +447,7 @@ export const Sidebar = memo(function Sidebar() {
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </aside>
     </>
   );

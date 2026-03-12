@@ -64,7 +64,7 @@ export default function SkillGapPage() {
       setEmployees(emps.filter((e) => e.status === 'ACTIVE'));
       setPrograms(progs.filter((p) => p.is_active));
       setLearningPaths(paths.filter((lp) => lp.is_active));
-    } catch (error) {
+    } catch {
       toast({ title: t('messages.loadError'), variant: 'destructive' });
     } finally {
       setLoading(false);

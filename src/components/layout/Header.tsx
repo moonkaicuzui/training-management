@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useState, memo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Menu, Globe, User, LogOut, Shield, BookOpen, Eye, Command } from 'lucide-react';
@@ -16,12 +16,17 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
-import { CommandPalette } from '@/components/common/CommandPalette';
-import { NotificationCenter } from '@/components/common/NotificationCenter';
-import { NotificationBell } from '@/components/layout/NotificationBell';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import type { Language } from '@/types';
 import type { UserRole } from '@/types/auth';
+
+// Lazy-load heavy components to reduce main bundle size
+// CommandPalette: cmdk(12KB) + component
+// NotificationBell: projectStore(25KB) + projectService(35KB)
+// NotificationCenter: notificationStore + component
+const CommandPalette = lazy(() => import('@/components/common/CommandPalette').then(m => ({ default: m.CommandPalette })));
+const NotificationCenter = lazy(() => import('@/components/common/NotificationCenter').then(m => ({ default: m.NotificationCenter })));
+const NotificationBell = lazy(() => import('@/components/layout/NotificationBell').then(m => ({ default: m.NotificationBell })));
 
 const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'vi', name: 'Tiếng Việt', flag: '\u{1F1FB}\u{1F1F3}' },
@@ -91,11 +96,15 @@ export const Header = memo(function Header() {
         </Button>
 
         <div className="flex items-center gap-2">
-          {/* Project Notification Bell */}
-          <NotificationBell />
+          {/* Project Notification Bell (lazy-loaded to exclude projectStore from main bundle) */}
+          <Suspense fallback={null}>
+            <NotificationBell />
+          </Suspense>
 
-          {/* Notification Center */}
-          <NotificationCenter />
+          {/* Notification Center (lazy-loaded) */}
+          <Suspense fallback={null}>
+            <NotificationCenter />
+          </Suspense>
 
           {/* Language Selector */}
           <DropdownMenu>
@@ -192,8 +201,10 @@ export const Header = memo(function Header() {
         </div>
       </header>
 
-      {/* Command Palette */}
-      <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+      {/* Command Palette (lazy-loaded to exclude cmdk from main bundle) */}
+      <Suspense fallback={null}>
+        <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+      </Suspense>
     </>
   );
 });

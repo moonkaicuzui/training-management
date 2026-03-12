@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { logger } from '@/utils/logger';
-import errorReporting from '@/utils/sentry';
+
+// sentry를 동적으로 로드하여 메인 번들에서 제외 (에러 발생 시에만 필요)
+const loadErrorReporting = () => import('@/utils/sentry').then(m => m.default);
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -57,17 +59,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    * errorReporting 서비스를 통해 개발/프로덕션 환경 모두에서 에러를 캡처합니다.
    */
   private reportError(error: Error, errorInfo: ErrorInfo): void {
-    errorReporting.captureException(error, {
-      level: 'error',
-      componentStack: errorInfo.componentStack ?? undefined,
-      extra: {
-        retryCount: this.state.retryCount,
-        maxRetries: this.props.maxRetries ?? 3,
-      },
-      tags: {
-        boundary: 'ErrorBoundary',
-        source: 'componentDidCatch',
-      },
+    loadErrorReporting().then(errorReporting => {
+      errorReporting.captureException(error, {
+        level: 'error',
+        componentStack: errorInfo.componentStack ?? undefined,
+        extra: {
+          retryCount: this.state.retryCount,
+          maxRetries: this.props.maxRetries ?? 3,
+        },
+        tags: {
+          boundary: 'ErrorBoundary',
+          source: 'componentDidCatch',
+        },
+      });
     });
   }
 
@@ -226,10 +230,12 @@ export function PageErrorBoundary({ children }: { children: ReactNode }) {
       onError={(error, errorInfo) => {
         logger.error('[Page Error]', error.message);
         logger.error('[Page Error] Component Stack:', errorInfo.componentStack);
-        errorReporting.captureException(error, {
-          level: 'error',
-          componentStack: errorInfo.componentStack ?? undefined,
-          tags: { boundary: 'PageErrorBoundary' },
+        loadErrorReporting().then(errorReporting => {
+          errorReporting.captureException(error, {
+            level: 'error',
+            componentStack: errorInfo.componentStack ?? undefined,
+            tags: { boundary: 'PageErrorBoundary' },
+          });
         });
       }}
     >
@@ -254,12 +260,14 @@ export function SectionErrorBoundary({ children, sectionName }: SectionErrorBoun
       fallback={<SectionErrorFallback sectionName={sectionName} />}
       onError={(error) => {
         logger.warn(`[Section Error: ${sectionName || 'Unknown'}]`, error.message);
-        errorReporting.captureException(error, {
-          level: 'warning',
-          tags: {
-            boundary: 'SectionErrorBoundary',
-            section: sectionName || 'Unknown',
-          },
+        loadErrorReporting().then(errorReporting => {
+          errorReporting.captureException(error, {
+            level: 'warning',
+            tags: {
+              boundary: 'SectionErrorBoundary',
+              section: sectionName || 'Unknown',
+            },
+          });
         });
       }}
     >

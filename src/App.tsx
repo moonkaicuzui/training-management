@@ -6,7 +6,7 @@ import Layout from './components/layout/Layout';
 import { Toaster } from './components/common/Toaster';
 import { ErrorBoundary, PageErrorBoundary } from './components/common/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
-import { DevProtectedRoute } from './components/auth';
+import { DevProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
 // 페이지 레이지 로딩으로 초기 번들 크기 감소

@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { Breadcrumbs } from '@/components/common/Breadcrumbs';
-import { KeyboardShortcutsDialog } from '@/components/common/KeyboardShortcutsDialog';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+
+// Lazy-load: Dialog UI (~25KB source) only needed when user presses '?'
+const KeyboardShortcutsDialog = lazy(() =>
+  import('@/components/common/KeyboardShortcutsDialog').then(m => ({ default: m.KeyboardShortcutsDialog }))
+);
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -41,8 +45,12 @@ export default function Layout() {
       {/* Mobile Bottom Navigation */}
       <BottomNav />
 
-      {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      {/* Keyboard Shortcuts Dialog (lazy-loaded) */}
+      {shortcutsOpen && (
+        <Suspense fallback={null}>
+          <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+        </Suspense>
+      )}
     </div>
   );
 }

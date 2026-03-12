@@ -3,6 +3,7 @@ import * as aqlService from '@/services/aqlService';
 import { parseManpowerCsv } from '@/utils/manpowerCsvParser';
 import type { StoreSet, StoreGet } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const createLinkActions = (set: StoreSet, _get: StoreGet) => ({
   createAqlLink: async (input: Omit<import('@/types/aql').AqlEmployeeLink, 'link_id' | 'created_at'>) => {
     try {

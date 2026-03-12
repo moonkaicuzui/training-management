@@ -57,7 +57,7 @@ export default function CompetencyPage() {
       setEmployeeCompetencies(empComps);
       setEmployees(emps.filter((e) => e.status === 'ACTIVE'));
       setLearningPaths(paths);
-    } catch (error) {
+    } catch {
       toast({
         title: t('messages.loadError'),
         variant: 'destructive',
