@@ -166,7 +166,8 @@
       "reviewGuidelines": "Review Guidelines"
     },
     "systemFeedback": "System Feedback",
-    "hrSync": "HR Employee Sync"
+    "hrSync": "HR Employee Sync",
+    "hrAnalytics": "HR Analytics"
   },
   "sidebar": {
     "cat": {
@@ -3876,6 +3877,132 @@
       "deactivated": "Deactivated",
       "deactivatedDesc": "Employee {{id}} has been deactivated.",
       "error": "Error"
+    }
+  },
+  "hrAnalytics": {
+    "title": "HR Integration Analytics",
+    "description": "Cross-analysis of HR V2 data and Q-TRAIN training data with 6 analytics scenarios.",
+    "loadData": "Load Data",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "tabs": {
+      "effectiveness": "Effectiveness",
+      "risk": "Risk Training",
+      "newHire": "New Hires",
+      "quality": "Quality Sync",
+      "department": "Department",
+      "turnover": "Turnover"
+    },
+    "table": {
+      "employee": "Employee",
+      "program": "Program",
+      "date": "Date",
+      "team": "Team",
+      "building": "Building"
+    },
+    "riskLevel": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "tqcStatus": {
+      "not_enrolled": "Not Enrolled",
+      "in_training": "In Training",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "effectiveness": {
+      "description": "Measure training effectiveness by comparing pre/post HR quality metrics.",
+      "totalAnalyzed": "Total Analyzed",
+      "avgRiskChange": "Avg Risk Score Change",
+      "avgAqlChange": "Avg AQL Change",
+      "before": "Before",
+      "after": "After",
+      "change": "Change"
+    },
+    "risk": {
+      "description": "Recommend targeted training for employees with risk_score >= 25.",
+      "score": "Risk Score",
+      "level": "Risk Level",
+      "factors": "Risk Factors",
+      "recommended": "Recommended",
+      "status": "Training Status"
+    },
+    "newHire": {
+      "description": "TQC/NEWCOMER training status for new hires and employees under 60 days.",
+      "totalNewHires": "Total New Hires",
+      "tqcEnrolled": "TQC Enrolled",
+      "tqcCompleted": "TQC Completed",
+      "avgCompletion": "Avg Completion",
+      "hireDate": "Hire Date",
+      "daysEmployed": "Days Employed",
+      "tqcStatusLabel": "TQC Status",
+      "completionRate": "Completion Rate",
+      "action": "Action",
+      "enrollTqc": "Enroll TQC"
+    },
+    "quality": {
+      "description": "Compare Q-TRAIN AQL/5PRS data with HR V2 quality metrics.",
+      "comparisonTitle": "Quality Data Comparison",
+      "discrepancies": "discrepancies",
+      "qtrainAql": "Q-TRAIN Fail Rate",
+      "hrV2Aql": "HR V2 Pass Rate",
+      "inspGrade": "Insp. Grade",
+      "match": "Match",
+      "mismatch": "Mismatch",
+      "ok": "OK"
+    },
+    "department": {
+      "description": "Analyze training completion rates and performance by department.",
+      "chartTitle": "Completion Rate / Pass Rate by Department",
+      "dept": "Department",
+      "active": "Active",
+      "completionRate": "Completion",
+      "avgScore": "Avg Score",
+      "passRate": "Pass Rate",
+      "topPerformers": "Top Performers",
+      "needsAttention": "Needs Attention"
+    },
+    "turnover": {
+      "description": "Analyze correlation between training completion and turnover over the last 6 months.",
+      "chartTitle": "Retention Rate by Training Status",
+      "period": "Period",
+      "totalResignations": "Resignations",
+      "withTraining": "Trained",
+      "withoutTraining": "Untrained",
+      "trainingRetention": "Trained Retention",
+      "noTrainingRetention": "Untrained Retention",
+      "trainedRetention": "Retention rate of trained employees",
+      "untrainedRetention": "Retention rate of untrained employees",
+      "trainedRetentionShort": "Trained Ret.",
+      "untrainedRetentionShort": "Untrained Ret.",
+      "tqcSurvival": "TQC Survival Rate",
+      "tqcSurvivalDesc": "3-month survival rate of TQC graduates",
+      "trainedLine": "Trained Retention",
+      "untrainedLine": "Untrained Retention",
+      "tqcLine": "TQC Survival",
+      "avgHoursResigned": "Avg Hrs (Resigned)",
+      "avgHoursRetained": "Avg Hrs (Retained)"
+    },
+    "empty": {
+      "effectiveness": "Click Load Data to view training effectiveness analysis.",
+      "risk": "Click Load Data to view risk-based training recommendations.",
+      "newHire": "Click Load Data to view new hire training status.",
+      "quality": "Click Load Data to view quality data comparison.",
+      "department": "Click Load Data to view department training rates.",
+      "turnover": "Click Load Data to view turnover correlation analysis."
     }
   }
 }

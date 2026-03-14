@@ -166,7 +166,8 @@
       "reviewGuidelines": "Hướng dẫn đánh giá"
     },
     "systemFeedback": "Phản hồi hệ thống",
-    "hrSync": "Đồng bộ nhân viên HR"
+    "hrSync": "Đồng bộ nhân viên HR",
+    "hrAnalytics": "Phân tích HR"
   },
   "sidebar": {
     "cat": {
@@ -3876,6 +3877,132 @@
       "deactivated": "Đã vô hiệu hóa",
       "deactivatedDesc": "Nhân viên {{id}} đã bị vô hiệu hóa.",
       "error": "Lỗi"
+    }
+  },
+  "hrAnalytics": {
+    "title": "Phân tích liên kết HR",
+    "description": "Phân tích chéo dữ liệu HR V2 và dữ liệu đào tạo Q-TRAIN với 6 kịch bản phân tích.",
+    "loadData": "Tải dữ liệu",
+    "months": {
+      "january": "Tháng 1",
+      "february": "Tháng 2",
+      "march": "Tháng 3",
+      "april": "Tháng 4",
+      "may": "Tháng 5",
+      "june": "Tháng 6",
+      "july": "Tháng 7",
+      "august": "Tháng 8",
+      "september": "Tháng 9",
+      "october": "Tháng 10",
+      "november": "Tháng 11",
+      "december": "Tháng 12"
+    },
+    "tabs": {
+      "effectiveness": "Hiệu quả",
+      "risk": "Rủi ro",
+      "newHire": "Nhân viên mới",
+      "quality": "Chất lượng",
+      "department": "Phòng ban",
+      "turnover": "Nghỉ việc"
+    },
+    "table": {
+      "employee": "Nhân viên",
+      "program": "Chương trình",
+      "date": "Ngày",
+      "team": "Nhóm",
+      "building": "Tòa nhà"
+    },
+    "riskLevel": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "tqcStatus": {
+      "not_enrolled": "Chưa đăng ký",
+      "in_training": "Đang đào tạo",
+      "completed": "Hoàn thành",
+      "failed": "Không đạt"
+    },
+    "effectiveness": {
+      "description": "Đo lường hiệu quả đào tạo bằng cách so sánh chỉ số chất lượng HR trước/sau.",
+      "totalAnalyzed": "Tổng phân tích",
+      "avgRiskChange": "Thay đổi điểm rủi ro TB",
+      "avgAqlChange": "Thay đổi AQL TB",
+      "before": "Trước",
+      "after": "Sau",
+      "change": "Thay đổi"
+    },
+    "risk": {
+      "description": "Đề xuất đào tạo cho nhân viên có risk_score >= 25.",
+      "score": "Điểm rủi ro",
+      "level": "Mức rủi ro",
+      "factors": "Yếu tố rủi ro",
+      "recommended": "Đề xuất",
+      "status": "Trạng thái đào tạo"
+    },
+    "newHire": {
+      "description": "Tình trạng đào tạo TQC/NEWCOMER cho nhân viên mới và dưới 60 ngày.",
+      "totalNewHires": "Tổng nhân viên mới",
+      "tqcEnrolled": "Đã đăng ký TQC",
+      "tqcCompleted": "Hoàn thành TQC",
+      "avgCompletion": "Hoàn thành TB",
+      "hireDate": "Ngày vào",
+      "daysEmployed": "Số ngày làm việc",
+      "tqcStatusLabel": "Trạng thái TQC",
+      "completionRate": "Tỷ lệ hoàn thành",
+      "action": "Hành động",
+      "enrollTqc": "Đăng ký TQC"
+    },
+    "quality": {
+      "description": "So sánh dữ liệu AQL/5PRS của Q-TRAIN với chỉ số chất lượng HR V2.",
+      "comparisonTitle": "So sánh dữ liệu chất lượng",
+      "discrepancies": "không khớp",
+      "qtrainAql": "Tỷ lệ lỗi Q-TRAIN",
+      "hrV2Aql": "Tỷ lệ đạt HR V2",
+      "inspGrade": "Loại kiểm tra",
+      "match": "Khớp",
+      "mismatch": "Không khớp",
+      "ok": "OK"
+    },
+    "department": {
+      "description": "Phân tích tỷ lệ hoàn thành đào tạo và hiệu suất theo phòng ban.",
+      "chartTitle": "Tỷ lệ hoàn thành / Tỷ lệ đạt theo phòng ban",
+      "dept": "Phòng ban",
+      "active": "Hoạt động",
+      "completionRate": "Hoàn thành",
+      "avgScore": "Điểm TB",
+      "passRate": "Tỷ lệ đạt",
+      "topPerformers": "Xuất sắc",
+      "needsAttention": "Cần chú ý"
+    },
+    "turnover": {
+      "description": "Phân tích mối tương quan giữa đào tạo và tỷ lệ nghỉ việc trong 6 tháng gần nhất.",
+      "chartTitle": "Tỷ lệ giữ chân theo tình trạng đào tạo",
+      "period": "Giai đoạn",
+      "totalResignations": "Nghỉ việc",
+      "withTraining": "Có đào tạo",
+      "withoutTraining": "Không đào tạo",
+      "trainingRetention": "Giữ chân (có ĐT)",
+      "noTrainingRetention": "Giữ chân (không ĐT)",
+      "trainedRetention": "Tỷ lệ giữ chân NV có đào tạo",
+      "untrainedRetention": "Tỷ lệ giữ chân NV không đào tạo",
+      "trainedRetentionShort": "Có ĐT",
+      "untrainedRetentionShort": "Không ĐT",
+      "tqcSurvival": "Tỷ lệ sống sót TQC",
+      "tqcSurvivalDesc": "Tỷ lệ sống sót 3 tháng của NV hoàn thành TQC",
+      "trainedLine": "Giữ chân có đào tạo",
+      "untrainedLine": "Giữ chân không đào tạo",
+      "tqcLine": "Sống sót TQC",
+      "avgHoursResigned": "Giờ TB (nghỉ việc)",
+      "avgHoursRetained": "Giờ TB (ở lại)"
+    },
+    "empty": {
+      "effectiveness": "Nhấn Tải dữ liệu để xem kết quả phân tích hiệu quả đào tạo.",
+      "risk": "Nhấn Tải dữ liệu để xem đề xuất đào tạo theo rủi ro.",
+      "newHire": "Nhấn Tải dữ liệu để xem tình trạng đào tạo nhân viên mới.",
+      "quality": "Nhấn Tải dữ liệu để xem so sánh dữ liệu chất lượng.",
+      "department": "Nhấn Tải dữ liệu để xem tỷ lệ hoàn thành đào tạo theo phòng ban.",
+      "turnover": "Nhấn Tải dữ liệu để xem phân tích tương quan nghỉ việc."
     }
   }
 }

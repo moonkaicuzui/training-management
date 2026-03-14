@@ -104,6 +104,9 @@ const SystemFeedback = lazy(() => import('./pages/SystemFeedback'));
 // HR V2 직원 데이터 동기화
 const HRSync = lazy(() => import('./pages/HRSync'));
 
+// HR V2 연계 분석 대시보드
+const HRAnalytics = lazy(() => import('./pages/HRAnalytics'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -589,6 +592,17 @@ function App() {
                     <PageErrorBoundary>
                       <Suspense fallback={<PageLoader />}>
                         <HRSync />
+                      </Suspense>
+                    </PageErrorBoundary>
+                  </DevProtectedRoute>
+                } />
+
+                {/* HR V2 연계 분석 대시보드 (관리자 전용) */}
+                <Route path="hr-analytics" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <HRAnalytics />
                       </Suspense>
                     </PageErrorBoundary>
                   </DevProtectedRoute>

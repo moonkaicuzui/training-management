@@ -167,6 +167,7 @@ const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.materials', href: '/materials', icon: FolderOpen },
   { titleKey: 'nav.dataSync', href: '/data-sync', icon: RefreshCcw },
   { titleKey: 'nav.hrSync', href: '/hr-sync', icon: UserCog },
+  { titleKey: 'nav.hrAnalytics', href: '/hr-analytics', icon: BarChart3 },
   { titleKey: 'nav.systemFeedback', href: '/system-feedback', icon: MessageSquarePlus },
 ];
 

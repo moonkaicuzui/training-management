@@ -166,7 +166,8 @@
       "reviewGuidelines": "모델 리뷰지침"
     },
     "systemFeedback": "시스템 피드백",
-    "hrSync": "HR 직원 동기화"
+    "hrSync": "HR 직원 동기화",
+    "hrAnalytics": "HR 분석"
   },
   "sidebar": {
     "cat": {
@@ -3876,6 +3877,132 @@
       "deactivated": "비활성화 완료",
       "deactivatedDesc": "직원 {{id}}이(가) 비활성화되었습니다.",
       "error": "오류 발생"
+    }
+  },
+  "hrAnalytics": {
+    "title": "HR 연계 분석",
+    "description": "HR V2 데이터와 Q-TRAIN 교육 데이터를 연계하여 6가지 분석을 제공합니다.",
+    "loadData": "데이터 조회",
+    "months": {
+      "january": "1월",
+      "february": "2월",
+      "march": "3월",
+      "april": "4월",
+      "may": "5월",
+      "june": "6월",
+      "july": "7월",
+      "august": "8월",
+      "september": "9월",
+      "october": "10월",
+      "november": "11월",
+      "december": "12월"
+    },
+    "tabs": {
+      "effectiveness": "교육 효과",
+      "risk": "위험 직원",
+      "newHire": "신입 교육",
+      "quality": "품질 비교",
+      "department": "부서별",
+      "turnover": "이직률"
+    },
+    "table": {
+      "employee": "직원",
+      "program": "프로그램",
+      "date": "날짜",
+      "team": "팀",
+      "building": "건물"
+    },
+    "riskLevel": {
+      "high": "고위험",
+      "medium": "중위험",
+      "low": "저위험"
+    },
+    "tqcStatus": {
+      "not_enrolled": "미등록",
+      "in_training": "교육 중",
+      "completed": "수료",
+      "failed": "불합격"
+    },
+    "effectiveness": {
+      "description": "교육 전후 HR 품질 지표를 비교하여 교육 효과를 측정합니다.",
+      "totalAnalyzed": "분석 대상",
+      "avgRiskChange": "평균 위험 점수 변화",
+      "avgAqlChange": "평균 AQL 변화",
+      "before": "교육 전",
+      "after": "교육 후",
+      "change": "변화"
+    },
+    "risk": {
+      "description": "risk_score 25점 이상 직원에게 맞춤 교육을 추천합니다.",
+      "score": "위험 점수",
+      "level": "위험 수준",
+      "factors": "위험 요인",
+      "recommended": "추천 교육",
+      "status": "교육 상태"
+    },
+    "newHire": {
+      "description": "이번 달 신입 및 60일 미만 직원의 TQC/NEWCOMER 교육 이수 현황입니다.",
+      "totalNewHires": "신입 직원 수",
+      "tqcEnrolled": "TQC 등록",
+      "tqcCompleted": "TQC 수료",
+      "avgCompletion": "평균 완료율",
+      "hireDate": "입사일",
+      "daysEmployed": "근무일수",
+      "tqcStatusLabel": "TQC 상태",
+      "completionRate": "완료율",
+      "action": "조치",
+      "enrollTqc": "TQC 등록"
+    },
+    "quality": {
+      "description": "Q-TRAIN AQL/5PRS 데이터와 HR V2 품질 지표를 비교합니다.",
+      "comparisonTitle": "품질 데이터 비교",
+      "discrepancies": "건 불일치",
+      "qtrainAql": "Q-TRAIN 불합격률",
+      "hrV2Aql": "HR V2 합격률",
+      "inspGrade": "검사 등급",
+      "match": "일치 여부",
+      "mismatch": "불일치",
+      "ok": "일치"
+    },
+    "department": {
+      "description": "부서별 교육 프로그램 완료율과 성과를 분석합니다.",
+      "chartTitle": "부서별 완료율 / 합격률",
+      "dept": "부서",
+      "active": "활성 직원",
+      "completionRate": "완료율",
+      "avgScore": "평균 점수",
+      "passRate": "합격률",
+      "topPerformers": "우수 직원",
+      "needsAttention": "미이수 직원"
+    },
+    "turnover": {
+      "description": "최근 6개월간 교육 이수와 이직률의 상관관계를 분석합니다.",
+      "chartTitle": "교육 여부별 잔류율 추이",
+      "period": "기간",
+      "totalResignations": "총 퇴사",
+      "withTraining": "교육 O",
+      "withoutTraining": "교육 X",
+      "trainingRetention": "교육 이수 잔류율",
+      "noTrainingRetention": "교육 미수 잔류율",
+      "trainedRetention": "교육받은 직원 잔류율",
+      "untrainedRetention": "교육 미수 직원 잔류율",
+      "trainedRetentionShort": "교육O 잔류율",
+      "untrainedRetentionShort": "교육X 잔류율",
+      "tqcSurvival": "TQC 수료 생존율",
+      "tqcSurvivalDesc": "TQC 수료자 3개월 생존율",
+      "trainedLine": "교육 이수 잔류율",
+      "untrainedLine": "교육 미수 잔류율",
+      "tqcLine": "TQC 수료 생존율",
+      "avgHoursResigned": "퇴사자 평균 교육시간",
+      "avgHoursRetained": "잔류자 평균 교육시간"
+    },
+    "empty": {
+      "effectiveness": "데이터 조회 버튼을 클릭하여 교육 효과 분석 결과를 확인하세요.",
+      "risk": "데이터 조회 버튼을 클릭하여 위험 직원 교육 추천을 확인하세요.",
+      "newHire": "데이터 조회 버튼을 클릭하여 신입 교육 현황을 확인하세요.",
+      "quality": "데이터 조회 버튼을 클릭하여 품질 데이터 비교 결과를 확인하세요.",
+      "department": "데이터 조회 버튼을 클릭하여 부서별 교육 완료율을 확인하세요.",
+      "turnover": "데이터 조회 버튼을 클릭하여 이직률 분석 결과를 확인하세요."
     }
   }
 }

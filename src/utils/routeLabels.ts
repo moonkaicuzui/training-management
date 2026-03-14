@@ -68,6 +68,8 @@ const routeLabelMap: Record<string, string> = {
   'system-feedback': 'nav.systemFeedback',
   // HR Sync
   'hr-sync': 'nav.hrSync',
+  // HR Analytics
+  'hr-analytics': 'nav.hrAnalytics',
   // Program Intro
   'program-intro': 'nav.programIntro',
 };
