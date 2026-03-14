@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { KPIAnomalyBadge } from '@/components/dashboard/KPIAnomalyBadge';
+import { HRSummaryCards } from '@/components/dashboard/HRSummaryCards';
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { DashboardRetrainingTable } from '@/components/dashboard/DashboardRetrainingTable';
 import { DashboardBuildingChart } from '@/components/dashboard/DashboardBuildingChart';
@@ -21,6 +22,8 @@ import { useKPIAnomalies } from '@/hooks/useKPIAnomalies';
 import { useNormalizedTrainingStore } from '@/stores';
 import { checkAndCreateExpiryNotifications } from '@/services/api';
 import { PageLoading } from '@/components/common/LoadingSpinner';
+import { getCurrentHRSummary, syncCurrentHRSummary } from '@/services/hrIntegrationService';
+import type { HRSummary } from '@/services/hrIntegrationService';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -61,6 +64,23 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
+  // HR V2 연동 상태
+  const [hrData, setHrData] = useState<HRSummary | null>(null);
+  const [hrLoading, setHrLoading] = useState(true);
+  const [hrSyncing, setHrSyncing] = useState(false);
+
+  const handleHRSync = useCallback(async () => {
+    setHrSyncing(true);
+    try {
+      const data = await syncCurrentHRSummary();
+      if (data) setHrData(data);
+    } catch (err) {
+      logger.error('[Dashboard] HR 동기화 실패:', err);
+    } finally {
+      setHrSyncing(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isDataLoaded) return;
 
@@ -82,6 +102,27 @@ export default function Dashboard() {
 
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // HR V2 데이터 로드 (별도 effect - 메인 대시보드 로딩을 차단하지 않음)
+  useEffect(() => {
+    let cancelled = false;
+    const loadHR = async () => {
+      try {
+        const data = await getCurrentHRSummary();
+        if (!cancelled) {
+          setHrData(data);
+        }
+      } catch (err) {
+        logger.warn('[Dashboard] HR 데이터 로드 실패 (비차단):', err);
+      } finally {
+        if (!cancelled) {
+          setHrLoading(false);
+        }
+      }
+    };
+    loadHR();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -212,6 +253,15 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section aria-label={t('dashboard.hr.title')}>
+        <HRSummaryCards
+          hrData={hrData}
+          isLoading={hrLoading}
+          onSync={handleHRSync}
+          isSyncing={hrSyncing}
+        />
       </section>
 
       <DashboardCharts monthlyData={monthlyData} gradeDistribution={gradeDistribution} />

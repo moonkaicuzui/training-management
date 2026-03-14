@@ -389,7 +389,24 @@
     "noMonthlyDataDesc": "Chưa có buổi đào tạo nào được lên lịch. Tạo buổi đào tạo đầu tiên để bắt đầu.",
     "scheduleTraining": "Lên lịch đào tạo",
     "noGradeData": "Không có dữ liệu xếp loại",
-    "noGradeDataDesc": "Chưa có kết quả đào tạo nào được nhập. Nhập kết quả đào tạo để xem thống kê."
+    "noGradeDataDesc": "Chưa có kết quả đào tạo nào được nhập. Nhập kết quả đào tạo để xem thống kê.",
+    "hr": {
+      "title": "Tình hình nhân sự",
+      "noData": "Không thể tải dữ liệu nhân sự",
+      "sync": "Đồng bộ",
+      "syncTooltip": "Đồng bộ dữ liệu mới nhất từ HR V2",
+      "lastSync": "Lần đồng bộ cuối",
+      "activeHeadcount": "Nhân viên",
+      "attendanceRate": "Tỷ lệ chuyên cần",
+      "turnoverRate": "Tỷ lệ nghỉ việc",
+      "newHires": "Nhân viên mới",
+      "resignations": "Nghỉ việc",
+      "avgTenure": "Thâm niên TB",
+      "years": "năm",
+      "good": "Tốt",
+      "warning": "Chú ý",
+      "critical": "Nguy hiểm"
+    }
   },
   "employee": {
     "title": "Quản lý nhân viên",

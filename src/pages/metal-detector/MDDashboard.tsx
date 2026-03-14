@@ -18,12 +18,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShieldAlert, AlertTriangle, Activity, Wrench, RefreshCw, TrendingDown, TrendingUp, Minus, Mail } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertTriangle, Activity, Wrench, RefreshCw, TrendingDown, TrendingUp, Minus, Mail, Users } from 'lucide-react';
 import { LazyBarChart, LazyLineChart } from '@/components/charts/LazyCharts';
 import MDEmailSettings from '@/components/metal-detector/MDEmailSettings';
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import type { FactoryCode, ImprovementStatus } from '@/types/metalDetector';
+import { getCurrentHRSummary } from '@/services/hrIntegrationService';
+import type { HRSummary } from '@/services/hrIntegrationService';
+import { logger } from '@/utils/logger';
 
 function getISOWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -63,6 +66,14 @@ export default function MDDashboard() {
   const currentWeek = getISOWeekNumber(new Date());
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
+
+  // HR V2 인사 데이터 (재직 인원 컨텍스트)
+  const [hrData, setHrData] = useState<HRSummary | null>(null);
+  useEffect(() => {
+    getCurrentHRSummary()
+      .then(setHrData)
+      .catch((err) => logger.warn('[MDDashboard] HR 데이터 로드 실패:', err));
+  }, []);
 
   const weekOptions = useMemo(() => {
     const weeks = [];
@@ -150,7 +161,15 @@ export default function MDDashboard() {
       {/* ===== KPI SUMMARY ===== */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('metalDetector.weeklyReport.kpiSummary')}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">{t('metalDetector.weeklyReport.kpiSummary')}</CardTitle>
+            {hrData && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Users className="h-3 w-3" />
+                {t('dashboard.hr.activeHeadcount')}: {hrData.activeHeadcount.toLocaleString()}
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-7">
