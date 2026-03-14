@@ -21,6 +21,9 @@ import type {
   MDFilters,
   MDDashboardKPI,
   MDWeeklyTrend,
+  MDWeeklyComparison,
+  MDRepeatedIssueSummary,
+  MDEmailRecipient,
 } from '@/types/metalDetector';
 
 import {
@@ -139,4 +142,18 @@ export const mdInspection = {
     mdInspectionService.getDashboardKPIs(year, weekNumber),
   getWeeklyTrend: (year: number, weekCount?: number): Promise<MDWeeklyTrend[]> =>
     mdInspectionService.getWeeklyTrend(year, weekCount),
+  getWeeklyComparison: (year: number, weekNumber: number): Promise<MDWeeklyComparison> =>
+    mdInspectionService.getWeeklyComparison(year, weekNumber),
+  getRepeatedIssues: (year: number, weekNumber: number): Promise<MDRepeatedIssueSummary> =>
+    mdInspectionService.getRepeatedIssues(year, weekNumber),
+  getEmailRecipients: (): Promise<MDEmailRecipient[]> =>
+    mdInspectionService.getEmailRecipients(),
+  addEmailRecipient: (data: Omit<MDEmailRecipient, 'id' | 'createdAt' | 'updatedAt'>): Promise<MDEmailRecipient> =>
+    mdInspectionService.addEmailRecipient(data),
+  updateEmailRecipient: (id: string, data: Partial<Omit<MDEmailRecipient, 'id' | 'createdAt'>>): Promise<void> =>
+    mdInspectionService.updateEmailRecipient(id, data),
+  removeEmailRecipient: (id: string): Promise<void> =>
+    mdInspectionService.removeEmailRecipient(id),
+  getRecipientsForNotification: (type: 'weeklyReport' | 'failAlert' | 'caOverdue'): Promise<MDEmailRecipient[]> =>
+    mdInspectionService.getRecipientsForNotification(type),
 };

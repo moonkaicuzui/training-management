@@ -3527,6 +3527,61 @@
       "description": "Mô tả CA",
       "updateStatus": "Cập nhật trạng thái",
       "update": "Cập nhật"
+    },
+    "machineId": "Mã thiết bị",
+    "quickEntry": {
+      "title": "Nhập nhanh",
+      "detailedTitle": "Nhập chi tiết",
+      "todayCount": "Hôm nay: {{count}}",
+      "saved": "Đã lưu",
+      "tip": "Nhập nhanh: Nhà máy/Ngày/Người kiểm tra/Độ nhạy được giữ lại sau khi lưu. Chỉ cần thay đổi Line và Mã thiết bị."
+    },
+    "weeklyReport": {
+      "kpiSummary": "Tóm tắt KPI",
+      "totalChecked": "Tổng thiết bị kiểm tra",
+      "failedLastWeek": "Lỗi tuần trước",
+      "failedThisWeek": "Lỗi tuần này",
+      "fixedOnTime": "Sửa đúng hạn",
+      "maintenanceFixRate": "Tỷ lệ sửa chữa",
+      "repeatedIssues": "Lỗi lặp lại",
+      "repeatedRate": "Tỷ lệ lỗi lặp",
+      "factoryComparison": "So sánh theo nhà máy",
+      "improvement": "Cải thiện",
+      "improved": "Cải thiện",
+      "noChange": "Không đổi",
+      "increased": "Tăng",
+      "repeatedIssueAnalysis": "Phân tích thiết bị lỗi lặp",
+      "keyIssue": "Vấn đề chính",
+      "status": "Trạng thái",
+      "repeated": "Lặp lại",
+      "passRateComparison": "So sánh tỷ lệ đạt (2 tuần)",
+      "lastWeek": "Tuần trước",
+      "thisWeek": "Tuần này"
+    },
+    "email": {
+      "settings": "Cài đặt email",
+      "sendReport": "Gửi báo cáo",
+      "recipients": "Danh sách người nhận",
+      "addRecipient": "Thêm người nhận",
+      "name": "Tên",
+      "email": "Email",
+      "role": "Vai trò",
+      "roles": {
+        "manager": "Quản lý",
+        "maintenance": "Bảo trì",
+        "auditor": "Kiểm toán"
+      },
+      "factory": "Nhà máy",
+      "allFactories": "Tất cả",
+      "weeklyReport": "Báo cáo hàng tuần",
+      "failAlert": "Cảnh báo lỗi",
+      "caOverdue": "CA quá hạn",
+      "active": "Hoạt động",
+      "delete": "Xóa",
+      "deleteConfirm": "Xóa người nhận này?",
+      "saved": "Đã lưu",
+      "sendSuccess": "Đã gửi báo cáo",
+      "noRecipients": "Chưa có người nhận. Thêm người nhận trước."
     }
   },
   "inspectorStickers": {
@@ -3690,7 +3745,13 @@
       "createFailureFailed": "Không thể đăng ký hồ sơ lỗi.",
       "updateCorrectiveActionFailed": "Không thể cập nhật hành động khắc phục.",
       "fetchKPIsFailed": "Không thể tải dữ liệu KPI.",
-      "fetchWeeklyTrendFailed": "Không thể tải xu hướng hàng tuần."
+      "fetchWeeklyTrendFailed": "Không thể tải xu hướng hàng tuần.",
+      "fetchWeeklyComparisonFailed": "Không thể tải dữ liệu so sánh hàng tuần.",
+      "fetchRepeatedIssuesFailed": "Không thể tải dữ liệu lỗi lặp lại.",
+      "fetchEmailRecipientsFailed": "Không thể tải danh sách người nhận email.",
+      "addEmailRecipientFailed": "Không thể thêm người nhận email.",
+      "updateEmailRecipientFailed": "Không thể cập nhật người nhận email.",
+      "removeEmailRecipientFailed": "Không thể xóa người nhận email."
     },
     "techModel": {
       "fetchModelsFailed": "Không thể tải dữ liệu mô hình.",

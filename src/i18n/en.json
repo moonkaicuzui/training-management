@@ -3527,6 +3527,61 @@
       "description": "CA Description",
       "updateStatus": "Update Status",
       "update": "Update"
+    },
+    "machineId": "Machine ID",
+    "quickEntry": {
+      "title": "Quick Entry",
+      "detailedTitle": "Detailed Entry",
+      "todayCount": "Today: {{count}}",
+      "saved": "Saved",
+      "tip": "Quick Entry: Factory/Date/Inspector/Sensitivity are retained after save. Just change Line and Machine ID."
+    },
+    "weeklyReport": {
+      "kpiSummary": "KPI Summary",
+      "totalChecked": "Total Machines Checked",
+      "failedLastWeek": "Failed Last Week",
+      "failedThisWeek": "Failed This Week",
+      "fixedOnTime": "Fixed On Time",
+      "maintenanceFixRate": "Maintenance Fix Rate",
+      "repeatedIssues": "Repeated Issues",
+      "repeatedRate": "Repeated Issue Rate",
+      "factoryComparison": "Weekly Comparison by Factory",
+      "improvement": "Improvement",
+      "improved": "Improved",
+      "noChange": "No Change",
+      "increased": "Increased",
+      "repeatedIssueAnalysis": "Repeated Issue Machine Analysis",
+      "keyIssue": "Key Issue",
+      "status": "Status",
+      "repeated": "Repeated",
+      "passRateComparison": "Pass Rate Comparison (2 Weeks)",
+      "lastWeek": "Last Week",
+      "thisWeek": "This Week"
+    },
+    "email": {
+      "settings": "Email Settings",
+      "sendReport": "Send Report",
+      "recipients": "Recipients",
+      "addRecipient": "Add Recipient",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "roles": {
+        "manager": "Manager",
+        "maintenance": "Maintenance",
+        "auditor": "Auditor"
+      },
+      "factory": "Factory",
+      "allFactories": "All",
+      "weeklyReport": "Weekly Report",
+      "failAlert": "FAIL Alert",
+      "caOverdue": "CA Overdue",
+      "active": "Active",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this recipient?",
+      "saved": "Saved",
+      "sendSuccess": "Report sent",
+      "noRecipients": "No recipients. Add recipients first."
     }
   },
   "inspectorStickers": {
@@ -3690,7 +3745,13 @@
       "createFailureFailed": "Failed to register failure record.",
       "updateCorrectiveActionFailed": "Failed to update corrective action.",
       "fetchKPIsFailed": "Failed to load KPI data.",
-      "fetchWeeklyTrendFailed": "Failed to load weekly trend."
+      "fetchWeeklyTrendFailed": "Failed to load weekly trend.",
+      "fetchWeeklyComparisonFailed": "Failed to load weekly comparison data.",
+      "fetchRepeatedIssuesFailed": "Failed to load repeated issues data.",
+      "fetchEmailRecipientsFailed": "Failed to load email recipients.",
+      "addEmailRecipientFailed": "Failed to add email recipient.",
+      "updateEmailRecipientFailed": "Failed to update email recipient.",
+      "removeEmailRecipientFailed": "Failed to remove email recipient."
     },
     "techModel": {
       "fetchModelsFailed": "Failed to load model data.",

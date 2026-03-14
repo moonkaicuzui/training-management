@@ -1,9 +1,12 @@
 /**
  * Metal Detector Input Form
- * 4-Step Wizard: Factory/Line → Inspection Info → Sensitivity → Result
+ * 두 가지 모드: 빠른 입력 (Quick) + 상세 입력 (Detailed 4-Step Wizard)
+ *
+ * 빠른 입력: 한 화면에 모든 필드, 기본값 PASS, 연속 입력 최적화
+ * 상세 입력: FAIL 시 상세 사유 입력을 위한 4단계 마법사
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap, ClipboardList } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,10 +26,12 @@ import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 
 const FACTORIES: FactoryCode[] = ['A', 'B', 'C', 'D'];
 const STEPS = ['factory', 'info', 'sensitivity', 'result'] as const;
+const SESSION_KEY = 'md_quick_entry_session';
 
 interface FormData {
   factory: FactoryCode | '';
   line: string;
+  machineId: string;
   inspectionDate: string;
   inspectorName: string;
   productName: string;
@@ -33,38 +40,202 @@ interface FormData {
   nonFe: string;
   result: InspectionResult | '';
   remarks: string;
-  // Failure fields
   failureType: string;
   failureDescription: string;
+}
+
+/** localStorage에서 세션 데이터 복원 (공장, 날짜, 검사자) */
+function loadSession(): Partial<FormData> {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return {};
+    const data = JSON.parse(raw);
+    // 날짜가 오늘인 경우만 복원
+    if (data.inspectionDate === new Date().toISOString().split('T')[0]) {
+      return data;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSession(data: Partial<FormData>) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      factory: data.factory,
+      inspectionDate: data.inspectionDate,
+      inspectorName: data.inspectorName,
+    }));
+  } catch { /* ignore */ }
 }
 
 export default function MDInputForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { createInspection, createFailure, isLoading, error } = useMDInspectionStore(useShallow((state) => ({ createInspection: state.createInspection, createFailure: state.createFailure, isLoading: state.isLoading, error: state.error })));
+  const { inspections, createInspection, createFailure, isLoading, error, fetchInspections } =
+    useMDInspectionStore(useShallow((state) => ({
+      inspections: state.inspections,
+      createInspection: state.createInspection,
+      createFailure: state.createFailure,
+      isLoading: state.isLoading,
+      error: state.error,
+      fetchInspections: state.fetchInspections,
+    })));
   const user = useAuthStore((s) => s.user);
 
+  const [mode, setMode] = useState<'quick' | 'detailed'>('quick');
   const [currentStep, setCurrentStep] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
+  const [todayCount, setTodayCount] = useState(0);
+  const [lastSubmitted, setLastSubmitted] = useState<{ line: string; machineId: string; result: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 세션 복원
+  const session = useMemo(() => loadSession(), []);
+
   const [formData, setFormData] = useState<FormData>({
-    factory: '',
+    factory: (session.factory as FactoryCode) || '',
     line: '',
-    inspectionDate: new Date().toISOString().split('T')[0],
-    inspectorName: user?.name || '',
+    machineId: '',
+    inspectionDate: session.inspectionDate || new Date().toISOString().split('T')[0],
+    inspectorName: session.inspectorName || user?.name || '',
     productName: '',
     fe: '',
     sus: '',
     nonFe: '',
-    result: '',
+    result: 'PASS', // 빠른 입력 기본값: PASS
     remarks: '',
     failureType: '',
     failureDescription: '',
   });
 
-  const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
+  // 최근 장비 ID 목록 (자동완성용)
+  const recentMachineIds = useMemo(() => {
+    const ids = new Set<string>();
+    inspections.forEach((i) => {
+      if (i.machineId) ids.add(i.machineId);
+    });
+    return Array.from(ids).sort();
+  }, [inspections]);
+
+  // 해당 공장의 최근 라인 목록
+  const recentLines = useMemo(() => {
+    const lines = new Set<string>();
+    inspections
+      .filter((i) => i.factory === formData.factory)
+      .forEach((i) => lines.add(i.line));
+    return Array.from(lines).sort();
+  }, [inspections, formData.factory]);
+
+  // 오늘 입력 건수 계산
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const count = inspections.filter((i) => i.inspectionDate === today).length;
+    setTodayCount(count);
+  }, [inspections]);
+
+  // 초기 데이터 로드 (최근 장비 목록용)
+  useEffect(() => {
+    fetchInspections({ year: new Date().getFullYear() });
+  }, [fetchInspections]);
+
+  const updateField = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // ============ 제출 로직 ============
+
+  const canSubmitQuick = () => {
+    if (!formData.factory || !formData.line.trim() || !formData.result) return false;
+    if (!formData.fe || !formData.sus || !formData.nonFe) return false;
+    if (formData.result === 'FAIL' && (!formData.failureType || !formData.failureDescription.trim())) return false;
+    return true;
   };
+
+  const handleSubmit = async () => {
+    if (!formData.factory || !formData.result || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const inspection = await createInspection({
+        factory: formData.factory as FactoryCode,
+        line: formData.line,
+        machineId: formData.machineId.trim() || undefined,
+        inspectionDate: formData.inspectionDate,
+        result: formData.result as InspectionResult,
+        inspectorName: formData.inspectorName,
+        inspectorId: user?.id,
+        sensitivity: {
+          fe: parseFloat(formData.fe),
+          sus: parseFloat(formData.sus),
+          nonFe: parseFloat(formData.nonFe),
+        },
+        productName: formData.productName || undefined,
+        remarks: formData.remarks || undefined,
+      });
+
+      if (formData.result === 'FAIL') {
+        await createFailure({
+          inspectionId: inspection.id,
+          factory: formData.factory as FactoryCode,
+          line: formData.line,
+          failureDate: formData.inspectionDate,
+          failureType: formData.failureType,
+          description: formData.failureDescription,
+          caStatus: 'pending',
+        });
+      }
+
+      // 세션 저장 (공장, 날짜, 검사자 유지)
+      saveSession(formData);
+
+      // 결과 표시
+      setLastSubmitted({
+        line: formData.line,
+        machineId: formData.machineId,
+        result: formData.result as string,
+      });
+      setTodayCount((c) => c + 1);
+
+      if (mode === 'quick') {
+        // 빠른 입력: 장비별 필드만 초기화, 공장/날짜/검사자/감도 유지
+        setFormData((prev) => ({
+          ...prev,
+          line: '',
+          machineId: '',
+          result: 'PASS',
+          remarks: '',
+          failureType: '',
+          failureDescription: '',
+          // 감도는 유지 (같은 장비 유형이면 비슷)
+        }));
+
+        // 3초 후 성공 메시지 숨기기
+        setTimeout(() => setLastSubmitted(null), 3000);
+      } else {
+        // 상세 입력: 기존 동작
+        setFormData((prev) => ({
+          ...prev,
+          line: '',
+          machineId: '',
+          fe: '',
+          sus: '',
+          nonFe: '',
+          result: '',
+          remarks: '',
+          failureType: '',
+          failureDescription: '',
+        }));
+        setCurrentStep(0);
+      }
+    } catch {
+      // Error handled by store
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ============ 상세 입력 네비게이션 ============
 
   const canGoNext = () => {
     switch (currentStep) {
@@ -85,119 +256,19 @@ export default function MDInputForm() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!formData.factory || !formData.result || isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      const inspection = await createInspection({
-        factory: formData.factory as FactoryCode,
-        line: formData.line,
-        inspectionDate: formData.inspectionDate,
-        result: formData.result as InspectionResult,
-        inspectorName: formData.inspectorName,
-        inspectorId: user?.id,
-        sensitivity: {
-          fe: parseFloat(formData.fe),
-          sus: parseFloat(formData.sus),
-          nonFe: parseFloat(formData.nonFe),
-        },
-        productName: formData.productName || undefined,
-        remarks: formData.remarks || undefined,
-      });
-
-      // FAIL → 자동 MDFailure 생성
-      if (formData.result === 'FAIL') {
-        await createFailure({
-          inspectionId: inspection.id,
-          factory: formData.factory as FactoryCode,
-          line: formData.line,
-          failureDate: formData.inspectionDate,
-          failureType: formData.failureType,
-          description: formData.failureDescription,
-          caStatus: 'pending',
-        });
-      }
-
-      setSubmitted(true);
-    } catch {
-      // Error handled by store
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6 space-y-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-            <h2 className="text-xl font-semibold">{t('metalDetector.input.success')}</h2>
-            <p className="text-muted-foreground">{t('metalDetector.input.successDesc')}</p>
-            <div className="flex gap-2 justify-center">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSubmitted(false);
-                  setCurrentStep(0);
-                  setFormData({
-                    ...formData,
-                    line: '',
-                    fe: '',
-                    sus: '',
-                    nonFe: '',
-                    result: '',
-                    remarks: '',
-                    failureType: '',
-                    failureDescription: '',
-                  });
-                }}
-              >
-                {t('metalDetector.input.addAnother')}
-              </Button>
-              <Button onClick={() => navigate('/equipment/metal-detector/history')}>
-                {t('metalDetector.input.viewHistory')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // ============ 렌더링 ============
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('metalDetector.input.title')}</h1>
-        <p className="text-muted-foreground">{t('metalDetector.input.description')}</p>
-      </div>
-
-      {/* Step Indicator */}
-      <div className="flex items-center gap-2">
-        {STEPS.map((step, idx) => (
-          <div key={step} className="flex items-center">
-            <div
-              className={`flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium ${
-                idx === currentStep
-                  ? 'bg-primary text-primary-foreground'
-                  : idx < currentStep
-                    ? 'bg-green-500 text-white'
-                    : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              {idx < currentStep ? '✓' : idx + 1}
-            </div>
-            {idx < STEPS.length - 1 && (
-              <div
-                className={`h-0.5 w-8 mx-1 ${
-                  idx < currentStep ? 'bg-green-500' : 'bg-muted'
-                }`}
-              />
-            )}
-          </div>
-        ))}
+    <div className="max-w-2xl mx-auto space-y-4">
+      {/* Header + 오늘 입력 카운터 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('metalDetector.input.title')}</h1>
+          <p className="text-muted-foreground">{t('metalDetector.input.description')}</p>
+        </div>
+        <Badge variant="secondary" className="text-base px-3 py-1">
+          {t('metalDetector.quickEntry.todayCount', { count: todayCount })}
+        </Badge>
       </div>
 
       {error && (
@@ -207,240 +278,370 @@ export default function MDInputForm() {
         </Alert>
       )}
 
-      {/* Step Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t(`metalDetector.input.step${currentStep + 1}Title`)}</CardTitle>
-          <CardDescription>{t(`metalDetector.input.step${currentStep + 1}Desc`)}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Step 1: Factory & Line */}
-          {currentStep === 0 && (
-            <>
-              <div className="space-y-2">
-                <Label>{t('metalDetector.factory.label')}</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {FACTORIES.map((f) => (
+      {/* 성공 토스트 (빠른 입력 모드) */}
+      {lastSubmitted && mode === 'quick' && (
+        <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700 dark:text-green-400">
+            {lastSubmitted.machineId || lastSubmitted.line} — {lastSubmitted.result === 'PASS' ? t('metalDetector.result.pass') : t('metalDetector.result.fail')} {t('metalDetector.quickEntry.saved')}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 모드 선택 탭 */}
+      <Tabs value={mode} onValueChange={(v) => setMode(v as 'quick' | 'detailed')}>
+        <TabsList className="w-full">
+          <TabsTrigger value="quick" className="flex-1 gap-2">
+            <Zap className="h-4 w-4" />
+            {t('metalDetector.quickEntry.title')}
+          </TabsTrigger>
+          <TabsTrigger value="detailed" className="flex-1 gap-2">
+            <ClipboardList className="h-4 w-4" />
+            {t('metalDetector.quickEntry.detailedTitle')}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ===== 빠른 입력 모드 ===== */}
+        <TabsContent value="quick" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              {/* Row 1: 공장 + 날짜 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.factory.label')}</Label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {FACTORIES.map((f) => (
+                      <Button
+                        key={f}
+                        variant={formData.factory === f ? 'default' : 'outline'}
+                        size="sm"
+                        className="w-full"
+                        onClick={() => updateField('factory', f)}
+                      >
+                        {f}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.input.date')}</Label>
+                  <Input
+                    type="date"
+                    value={formData.inspectionDate}
+                    onChange={(e) => updateField('inspectionDate', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: 라인 + 장비 ID + 검사자 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.line')}</Label>
+                  <Input
+                    placeholder={formData.factory ? `${formData.factory}-1` : 'A-1'}
+                    value={formData.line}
+                    onChange={(e) => updateField('line', e.target.value)}
+                    list="recent-lines"
+                  />
+                  {recentLines.length > 0 && (
+                    <datalist id="recent-lines">
+                      {recentLines.map((l) => <option key={l} value={l} />)}
+                    </datalist>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.machineId')}</Label>
+                  <Input
+                    placeholder="D210103"
+                    value={formData.machineId}
+                    onChange={(e) => updateField('machineId', e.target.value)}
+                    list="recent-machines"
+                  />
+                  {recentMachineIds.length > 0 && (
+                    <datalist id="recent-machines">
+                      {recentMachineIds.map((id) => <option key={id} value={id} />)}
+                    </datalist>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.input.inspector')}</Label>
+                  <Input
+                    value={formData.inspectorName}
+                    onChange={(e) => updateField('inspectorName', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: 감도 (3개 한 줄) */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.sensitivity.fe')} (mm)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formData.fe}
+                    onChange={(e) => updateField('fe', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.sensitivity.sus')} (mm)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formData.sus}
+                    onChange={(e) => updateField('sus', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('metalDetector.sensitivity.nonFe')} (mm)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formData.nonFe}
+                    onChange={(e) => updateField('nonFe', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: 결과 (크게) + 제출 */}
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label className="mb-2 block">{t('metalDetector.input.resultLabel')}</Label>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
-                      key={f}
-                      variant={formData.factory === f ? 'default' : 'outline'}
-                      className="w-full"
-                      onClick={() => updateField('factory', f)}
+                      type="button"
+                      variant={formData.result === 'PASS' ? 'default' : 'outline'}
+                      className={formData.result === 'PASS' ? 'bg-green-600 hover:bg-green-700 h-12 text-lg' : 'h-12 text-lg'}
+                      onClick={() => updateField('result', 'PASS')}
                     >
-                      Factory {f}
+                      PASS
                     </Button>
-                  ))}
+                    <Button
+                      type="button"
+                      variant={formData.result === 'FAIL' ? 'default' : 'outline'}
+                      className={formData.result === 'FAIL' ? 'bg-red-600 hover:bg-red-700 h-12 text-lg' : 'h-12 text-lg'}
+                      onClick={() => updateField('result', 'FAIL')}
+                    >
+                      FAIL
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="line">{t('metalDetector.line')}</Label>
-                <Input
-                  id="line"
-                  placeholder={`e.g. ${formData.factory || 'A'}-1`}
-                  value={formData.line}
-                  onChange={(e) => updateField('line', e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Step 2: Inspection Info */}
-          {currentStep === 1 && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="date">{t('metalDetector.input.date')}</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.inspectionDate}
-                  onChange={(e) => updateField('inspectionDate', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="inspector">{t('metalDetector.input.inspector')}</Label>
-                <Input
-                  id="inspector"
-                  value={formData.inspectorName}
-                  onChange={(e) => updateField('inspectorName', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="product">
-                  {t('metalDetector.input.productName')}
-                  <span className="text-muted-foreground ml-1">({t('common.optional')})</span>
-                </Label>
-                <Input
-                  id="product"
-                  value={formData.productName}
-                  onChange={(e) => updateField('productName', e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Step 3: Sensitivity */}
-          {currentStep === 2 && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="fe">{t('metalDetector.sensitivity.fe')} (mm)</Label>
-                <Input
-                  id="fe"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.fe}
-                  onChange={(e) => updateField('fe', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sus">{t('metalDetector.sensitivity.sus')} (mm)</Label>
-                <Input
-                  id="sus"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.sus}
-                  onChange={(e) => updateField('sus', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nonFe">{t('metalDetector.sensitivity.nonFe')} (mm)</Label>
-                <Input
-                  id="nonFe"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.nonFe}
-                  onChange={(e) => updateField('nonFe', e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Step 4: Result */}
-          {currentStep === 3 && (
-            <>
-              <div className="space-y-2">
-                <Label>{t('metalDetector.input.resultLabel')}</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant={formData.result === 'PASS' ? 'default' : 'outline'}
-                    className={formData.result === 'PASS' ? 'bg-green-600 hover:bg-green-700' : ''}
-                    size="lg"
-                    onClick={() => updateField('result', 'PASS')}
-                  >
-                    {t('metalDetector.result.pass')}
-                  </Button>
-                  <Button
-                    variant={formData.result === 'FAIL' ? 'default' : 'outline'}
-                    className={formData.result === 'FAIL' ? 'bg-red-600 hover:bg-red-700' : ''}
-                    size="lg"
-                    onClick={() => updateField('result', 'FAIL')}
-                  >
-                    {t('metalDetector.result.fail')}
-                  </Button>
-                </div>
+                <Button
+                  className="h-12 px-8 text-lg"
+                  disabled={!canSubmitQuick() || isLoading || isSubmitting}
+                  onClick={handleSubmit}
+                >
+                  {(isLoading || isSubmitting) ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    t('common.save')
+                  )}
+                </Button>
               </div>
 
+              {/* FAIL 상세 (빠른 입력에서도) */}
               {formData.result === 'FAIL' && (
-                <div className="space-y-4 p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
-                  <h4 className="font-medium text-red-700 dark:text-red-400">
+                <div className="space-y-3 p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
+                  <h4 className="font-medium text-red-700 dark:text-red-400 text-sm">
                     {t('metalDetector.input.failureDetails')}
                   </h4>
-                  <div className="space-y-2">
-                    <Label htmlFor="failureType">{t('metalDetector.input.failureType')}</Label>
-                    <Select
-                      value={formData.failureType}
-                      onValueChange={(v) => updateField('failureType', v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('common.select')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sensitivity_drift">{t('metalDetector.failureTypes.sensitivityDrift')}</SelectItem>
-                        <SelectItem value="equipment_malfunction">{t('metalDetector.failureTypes.equipmentMalfunction')}</SelectItem>
-                        <SelectItem value="calibration_error">{t('metalDetector.failureTypes.calibrationError')}</SelectItem>
-                        <SelectItem value="foreign_object">{t('metalDetector.failureTypes.foreignObject')}</SelectItem>
-                        <SelectItem value="other">{t('metalDetector.failureTypes.other')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="failureDesc">{t('metalDetector.input.failureDesc')}</Label>
-                    <Textarea
-                      id="failureDesc"
-                      value={formData.failureDescription}
-                      onChange={(e) => updateField('failureDescription', e.target.value)}
-                      rows={3}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t('metalDetector.input.failureType')}</Label>
+                      <Select value={formData.failureType} onValueChange={(v) => updateField('failureType', v)}>
+                        <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sensitivity_drift">{t('metalDetector.failureTypes.sensitivityDrift')}</SelectItem>
+                          <SelectItem value="equipment_malfunction">{t('metalDetector.failureTypes.equipmentMalfunction')}</SelectItem>
+                          <SelectItem value="calibration_error">{t('metalDetector.failureTypes.calibrationError')}</SelectItem>
+                          <SelectItem value="foreign_object">{t('metalDetector.failureTypes.foreignObject')}</SelectItem>
+                          <SelectItem value="other">{t('metalDetector.failureTypes.other')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t('metalDetector.input.failureDesc')}</Label>
+                      <Textarea
+                        value={formData.failureDescription}
+                        onChange={(e) => updateField('failureDescription', e.target.value)}
+                        rows={2}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="remarks">
-                  {t('metalDetector.input.remarks')}
-                  <span className="text-muted-foreground ml-1">({t('common.optional')})</span>
-                </Label>
-                <Textarea
-                  id="remarks"
-                  value={formData.remarks}
-                  onChange={(e) => updateField('remarks', e.target.value)}
-                  rows={2}
-                />
-              </div>
+          {/* 빠른 입력 팁 */}
+          <p className="text-xs text-muted-foreground text-center">
+            {t('metalDetector.quickEntry.tip')}
+          </p>
+        </TabsContent>
 
-              {/* Summary */}
-              <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
-                <h4 className="font-medium">{t('metalDetector.input.summary')}</h4>
-                <div className="grid grid-cols-2 gap-1">
-                  <span className="text-muted-foreground">{t('metalDetector.factory.label')}:</span>
-                  <span>Factory {formData.factory}</span>
-                  <span className="text-muted-foreground">{t('metalDetector.line')}:</span>
-                  <span>{formData.line}</span>
-                  <span className="text-muted-foreground">{t('metalDetector.input.date')}:</span>
-                  <span>{formData.inspectionDate}</span>
-                  <span className="text-muted-foreground">{t('metalDetector.sensitivity.fe')}:</span>
-                  <span>{formData.fe} mm</span>
-                  <span className="text-muted-foreground">{t('metalDetector.sensitivity.sus')}:</span>
-                  <span>{formData.sus} mm</span>
-                  <span className="text-muted-foreground">{t('metalDetector.sensitivity.nonFe')}:</span>
-                  <span>{formData.nonFe} mm</span>
+        {/* ===== 상세 입력 모드 (기존 4단계 마법사) ===== */}
+        <TabsContent value="detailed" className="space-y-4 mt-4">
+          {/* Step Indicator */}
+          <div className="flex items-center gap-2">
+            {STEPS.map((step, idx) => (
+              <div key={step} className="flex items-center">
+                <div className={`flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium ${
+                  idx === currentStep ? 'bg-primary text-primary-foreground'
+                    : idx < currentStep ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {idx < currentStep ? '\u2713' : idx + 1}
                 </div>
+                {idx < STEPS.length - 1 && (
+                  <div className={`h-0.5 w-8 mx-1 ${idx < currentStep ? 'bg-green-500' : 'bg-muted'}`} />
+                )}
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          disabled={currentStep === 0}
-          onClick={() => setCurrentStep((s) => s - 1)}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          {t('common.back')}
-        </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t(`metalDetector.input.step${currentStep + 1}Title`)}</CardTitle>
+              <CardDescription>{t(`metalDetector.input.step${currentStep + 1}Desc`)}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Step 1: Factory & Line */}
+              {currentStep === 0 && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.factory.label')}</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {FACTORIES.map((f) => (
+                        <Button key={f} variant={formData.factory === f ? 'default' : 'outline'} className="w-full" onClick={() => updateField('factory', f)}>
+                          Factory {f}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.line')}</Label>
+                    <Input placeholder={`e.g. ${formData.factory || 'A'}-1`} value={formData.line} onChange={(e) => updateField('line', e.target.value)} list="recent-lines-d" />
+                    {recentLines.length > 0 && <datalist id="recent-lines-d">{recentLines.map((l) => <option key={l} value={l} />)}</datalist>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.machineId')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
+                    <Input placeholder="e.g. D210103" value={formData.machineId} onChange={(e) => updateField('machineId', e.target.value)} list="recent-machines-d" />
+                    {recentMachineIds.length > 0 && <datalist id="recent-machines-d">{recentMachineIds.map((id) => <option key={id} value={id} />)}</datalist>}
+                  </div>
+                </>
+              )}
 
-        {currentStep < STEPS.length - 1 ? (
-          <Button disabled={!canGoNext()} onClick={() => setCurrentStep((s) => s + 1)}>
-            {t('common.next')}
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        ) : (
-          <Button disabled={!canGoNext() || isLoading || isSubmitting} onClick={handleSubmit}>
-            {(isLoading || isSubmitting) ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t('common.saving')}
-              </>
+              {/* Step 2: Inspection Info */}
+              {currentStep === 1 && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.input.date')}</Label>
+                    <Input type="date" value={formData.inspectionDate} onChange={(e) => updateField('inspectionDate', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.input.inspector')}</Label>
+                    <Input value={formData.inspectorName} onChange={(e) => updateField('inspectorName', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.input.productName')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
+                    <Input value={formData.productName} onChange={(e) => updateField('productName', e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {/* Step 3: Sensitivity */}
+              {currentStep === 2 && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.sensitivity.fe')} (mm)</Label>
+                    <Input type="number" step="0.1" min="0" value={formData.fe} onChange={(e) => updateField('fe', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.sensitivity.sus')} (mm)</Label>
+                    <Input type="number" step="0.1" min="0" value={formData.sus} onChange={(e) => updateField('sus', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.sensitivity.nonFe')} (mm)</Label>
+                    <Input type="number" step="0.1" min="0" value={formData.nonFe} onChange={(e) => updateField('nonFe', e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {/* Step 4: Result */}
+              {currentStep === 3 && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.input.resultLabel')}</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button variant={formData.result === 'PASS' ? 'default' : 'outline'} className={formData.result === 'PASS' ? 'bg-green-600 hover:bg-green-700' : ''} size="lg" onClick={() => updateField('result', 'PASS')}>
+                        {t('metalDetector.result.pass')}
+                      </Button>
+                      <Button variant={formData.result === 'FAIL' ? 'default' : 'outline'} className={formData.result === 'FAIL' ? 'bg-red-600 hover:bg-red-700' : ''} size="lg" onClick={() => updateField('result', 'FAIL')}>
+                        {t('metalDetector.result.fail')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {formData.result === 'FAIL' && (
+                    <div className="space-y-4 p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
+                      <h4 className="font-medium text-red-700 dark:text-red-400">{t('metalDetector.input.failureDetails')}</h4>
+                      <div className="space-y-2">
+                        <Label>{t('metalDetector.input.failureType')}</Label>
+                        <Select value={formData.failureType} onValueChange={(v) => updateField('failureType', v)}>
+                          <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sensitivity_drift">{t('metalDetector.failureTypes.sensitivityDrift')}</SelectItem>
+                            <SelectItem value="equipment_malfunction">{t('metalDetector.failureTypes.equipmentMalfunction')}</SelectItem>
+                            <SelectItem value="calibration_error">{t('metalDetector.failureTypes.calibrationError')}</SelectItem>
+                            <SelectItem value="foreign_object">{t('metalDetector.failureTypes.foreignObject')}</SelectItem>
+                            <SelectItem value="other">{t('metalDetector.failureTypes.other')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t('metalDetector.input.failureDesc')}</Label>
+                        <Textarea value={formData.failureDescription} onChange={(e) => updateField('failureDescription', e.target.value)} rows={3} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>{t('metalDetector.input.remarks')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
+                    <Textarea value={formData.remarks} onChange={(e) => updateField('remarks', e.target.value)} rows={2} />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Navigation */}
+          <div className="flex justify-between">
+            <Button variant="outline" disabled={currentStep === 0} onClick={() => setCurrentStep((s) => s - 1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />{t('common.back')}
+            </Button>
+            {currentStep < STEPS.length - 1 ? (
+              <Button disabled={!canGoNext()} onClick={() => setCurrentStep((s) => s + 1)}>
+                {t('common.next')}<ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             ) : (
-              t('common.save')
+              <Button disabled={!canGoNext() || isLoading || isSubmitting} onClick={handleSubmit}>
+                {(isLoading || isSubmitting) ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('common.saving')}</> : t('common.save')}
+              </Button>
             )}
-          </Button>
-        )}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* 하단 바로가기 */}
+      <div className="flex justify-center gap-4 pt-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/equipment/metal-detector/history')}>
+          {t('metalDetector.input.viewHistory')}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/equipment/metal-detector')}>
+          {t('metalDetector.dashboard.title')}
+        </Button>
       </div>
     </div>
   );

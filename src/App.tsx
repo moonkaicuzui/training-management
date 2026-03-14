@@ -89,6 +89,7 @@ const MDDashboard = lazy(() => import('./pages/metal-detector/MDDashboard'));
 const MDInputForm = lazy(() => import('./pages/metal-detector/MDInputForm'));
 const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
 const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
+const MDSeedData = lazy(() => import('./pages/metal-detector/MDSeedData'));
 
 // TECH / NEW MODEL 페이지
 const TechModelList = lazy(() => import('./pages/tech/TechModelList'));
@@ -545,6 +546,13 @@ function App() {
                       <MDReport />
                     </Suspense>
                   } />
+                  {import.meta.env.DEV && (
+                    <Route path="seed" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <MDSeedData />
+                      </Suspense>
+                    } />
+                  )}
                 </Route>
 
                 {/* TECH / NEW MODEL */}

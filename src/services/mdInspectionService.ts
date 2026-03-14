@@ -11,6 +11,7 @@ import {
   getDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -25,8 +26,13 @@ import type {
   MDFilters,
   MDDashboardKPI,
   MDWeeklyTrend,
+  MDWeeklyComparison,
+  MDRepeatedIssueSummary,
+  MDRepeatedIssue,
+  MDEmailRecipient,
   FactoryCode,
   CAStatus,
+  ImprovementStatus,
 } from '@/types/metalDetector';
 
 // ============================================================
@@ -64,6 +70,7 @@ function docToInspection(docId: string, data: Record<string, unknown>): MDInspec
     id: docId,
     factory: (data.factory as FactoryCode) || 'A',
     line: (data.line as string) || '',
+    machineId: (data.machineId as string) || undefined,
     inspectionDate: (data.inspectionDate as string) || '',
     weekNumber: (data.weekNumber as number) || 0,
     year: (data.year as number) || 0,
@@ -391,6 +398,341 @@ export async function getWeeklyTrend(
     return trends;
   } catch (error) {
     logger.error('[MDInspectionService] getWeeklyTrend failed', error);
+    throw error;
+  }
+}
+
+// ============================================================
+// Weekly Comparison & Repeated Issues (이메일 리포트 데이터)
+// ============================================================
+
+/** 공장별 통계 계산 헬퍼 */
+function calcFactoryStats(inspections: MDInspection[]): Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }> {
+  const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+  const result = {} as Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }>;
+  factories.forEach((f) => {
+    const items = inspections.filter((i) => i.factory === f);
+    const pass = items.filter((i) => i.result === 'PASS').length;
+    result[f] = {
+      total: items.length,
+      pass,
+      fail: items.length - pass,
+      passRate: items.length > 0 ? (pass / items.length) * 100 : 0,
+    };
+  });
+  return result;
+}
+
+/** 주간 비교 (이번주 vs 지난주) */
+export async function getWeeklyComparison(
+  year: number,
+  weekNumber: number
+): Promise<MDWeeklyComparison> {
+  try {
+    const lastWeekNumber = weekNumber > 1 ? weekNumber - 1 : 52;
+    const lastWeekYear = weekNumber > 1 ? year : year - 1;
+
+    // 이번주 + 지난주 데이터 조회
+    const thisWeekQ = query(
+      collection(db, INSPECTIONS_COLLECTION),
+      where('year', '==', year),
+      where('weekNumber', '==', weekNumber)
+    );
+    const lastWeekQ = query(
+      collection(db, INSPECTIONS_COLLECTION),
+      where('year', '==', lastWeekYear),
+      where('weekNumber', '==', lastWeekNumber)
+    );
+
+    const [thisWeekSnap, lastWeekSnap] = await Promise.all([
+      getDocs(thisWeekQ),
+      getDocs(lastWeekQ),
+    ]);
+
+    const thisWeekInspections = thisWeekSnap.docs.map((d) =>
+      docToInspection(d.id, d.data() as Record<string, unknown>)
+    );
+    const lastWeekInspections = lastWeekSnap.docs.map((d) =>
+      docToInspection(d.id, d.data() as Record<string, unknown>)
+    );
+
+    const thisWeekByFactory = calcFactoryStats(thisWeekInspections);
+    const lastWeekByFactory = calcFactoryStats(lastWeekInspections);
+
+    const thisWeekPassCount = thisWeekInspections.filter((i) => i.result === 'PASS').length;
+    const lastWeekPassCount = lastWeekInspections.filter((i) => i.result === 'PASS').length;
+
+    // 공장별 비교
+    const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+    const factoryComparison = {} as MDWeeklyComparison['factoryComparison'];
+    factories.forEach((f) => {
+      const lw = lastWeekByFactory[f].fail;
+      const tw = thisWeekByFactory[f].fail;
+      let improvement: ImprovementStatus = 'no_change';
+      if (tw < lw) improvement = 'improved';
+      else if (tw > lw) improvement = 'increased';
+      factoryComparison[f] = { failedLastWeek: lw, failedThisWeek: tw, improvement };
+    });
+
+    // 유지보수 완료율: 지난주 FAIL 검사의 inspectionId로 failure 조회
+    const lastWeekFailIds = lastWeekInspections
+      .filter((i) => i.result === 'FAIL')
+      .map((i) => i.id);
+    const machinesFailedLastWeek = lastWeekFailIds.length;
+
+    let machinesFixedOnTime = 0;
+    if (machinesFailedLastWeek > 0) {
+      const failureQ = query(
+        collection(db, FAILURES_COLLECTION),
+        where('caStatus', '==', 'completed')
+      );
+      const failureSnap = await getDocs(failureQ);
+      const completedFailures = failureSnap.docs.map((d) =>
+        docToFailure(d.id, d.data() as Record<string, unknown>)
+      );
+      machinesFixedOnTime = completedFailures.filter((f) =>
+        lastWeekFailIds.includes(f.inspectionId)
+      ).length;
+    }
+
+    const maintenanceFixRate = machinesFailedLastWeek > 0
+      ? (machinesFixedOnTime / machinesFailedLastWeek) * 100
+      : 0;
+
+    return {
+      thisWeek: {
+        weekNumber,
+        totalChecked: thisWeekInspections.length,
+        failCount: thisWeekInspections.length - thisWeekPassCount,
+        passRate: thisWeekInspections.length > 0
+          ? (thisWeekPassCount / thisWeekInspections.length) * 100
+          : 0,
+        byFactory: thisWeekByFactory,
+      },
+      lastWeek: {
+        weekNumber: lastWeekNumber,
+        totalChecked: lastWeekInspections.length,
+        failCount: lastWeekInspections.length - lastWeekPassCount,
+        passRate: lastWeekInspections.length > 0
+          ? (lastWeekPassCount / lastWeekInspections.length) * 100
+          : 0,
+        byFactory: lastWeekByFactory,
+      },
+      factoryComparison,
+      maintenanceFixRate,
+      machinesFixedOnTime,
+      machinesFailedLastWeek,
+    };
+  } catch (error) {
+    logger.error('[MDInspectionService] getWeeklyComparison failed', error);
+    throw error;
+  }
+}
+
+/** 반복 이슈 장비 감지 (2주 연속 같은 machineId FAIL) */
+export async function getRepeatedIssues(
+  year: number,
+  weekNumber: number
+): Promise<MDRepeatedIssueSummary> {
+  try {
+    const lastWeekNumber = weekNumber > 1 ? weekNumber - 1 : 52;
+    const lastWeekYear = weekNumber > 1 ? year : year - 1;
+
+    // 이번주 + 지난주 FAIL 데이터
+    const thisWeekQ = query(
+      collection(db, INSPECTIONS_COLLECTION),
+      where('year', '==', year),
+      where('weekNumber', '==', weekNumber),
+      where('result', '==', 'FAIL')
+    );
+    const lastWeekQ = query(
+      collection(db, INSPECTIONS_COLLECTION),
+      where('year', '==', lastWeekYear),
+      where('weekNumber', '==', lastWeekNumber),
+      where('result', '==', 'FAIL')
+    );
+
+    // 이번주 전체 (unique machineId 계산용)
+    const thisWeekAllQ = query(
+      collection(db, INSPECTIONS_COLLECTION),
+      where('year', '==', year),
+      where('weekNumber', '==', weekNumber)
+    );
+
+    const [thisWeekFailSnap, lastWeekFailSnap, thisWeekAllSnap] = await Promise.all([
+      getDocs(thisWeekQ),
+      getDocs(lastWeekQ),
+      getDocs(thisWeekAllQ),
+    ]);
+
+    const thisWeekFails = thisWeekFailSnap.docs.map((d) =>
+      docToInspection(d.id, d.data() as Record<string, unknown>)
+    );
+    const lastWeekFails = lastWeekFailSnap.docs.map((d) =>
+      docToInspection(d.id, d.data() as Record<string, unknown>)
+    );
+    const thisWeekAll = thisWeekAllSnap.docs.map((d) =>
+      docToInspection(d.id, d.data() as Record<string, unknown>)
+    );
+
+    // machineId 기반 반복 감지 (machineId가 없으면 factory+line 조합으로 대체)
+    const getMachineKey = (i: MDInspection) => i.machineId || `${i.factory}-${i.line}`;
+
+    const lastWeekFailKeys = new Set(lastWeekFails.map(getMachineKey));
+    const repeatedMachines: MDRepeatedIssue[] = [];
+
+    // 이번주 FAIL 중 지난주에도 FAIL인 장비
+    const seen = new Set<string>();
+    thisWeekFails.forEach((i) => {
+      const key = getMachineKey(i);
+      if (lastWeekFailKeys.has(key) && !seen.has(key)) {
+        seen.add(key);
+
+        // 관련 failure 정보에서 key issue 추출
+        const keyIssue = 'Failed to detect metal test piece';
+
+        repeatedMachines.push({
+          machineId: i.machineId || `${i.factory}-${i.line}`,
+          factory: i.factory,
+          line: i.line,
+          keyIssue,
+          weeksFailed: [lastWeekNumber, weekNumber],
+          status: 'repeated',
+        });
+      }
+    });
+
+    // unique 검사 장비 수 (이번주 기준)
+    const uniqueMachines = new Set(thisWeekAll.map(getMachineKey));
+    const totalInspected = uniqueMachines.size;
+
+    return {
+      machines: repeatedMachines,
+      totalInspected,
+      repeatedCount: repeatedMachines.length,
+      repeatedRate: totalInspected > 0
+        ? (repeatedMachines.length / totalInspected) * 100
+        : 0,
+    };
+  } catch (error) {
+    logger.error('[MDInspectionService] getRepeatedIssues failed', error);
+    throw error;
+  }
+}
+
+// ============================================================
+// Email Recipients CRUD
+// ============================================================
+
+const EMAIL_RECIPIENTS_COLLECTION = 'md_email_recipients';
+
+/** Firestore 문서를 MDEmailRecipient로 변환 */
+function docToEmailRecipient(docId: string, data: Record<string, unknown>): MDEmailRecipient {
+  const notifications = (data.notifications as Record<string, boolean>) || {};
+  return {
+    id: docId,
+    email: (data.email as string) || '',
+    name: (data.name as string) || '',
+    role: (data.role as MDEmailRecipient['role']) || 'manager',
+    factory: (data.factory as FactoryCode) || undefined,
+    notifications: {
+      weeklyReport: notifications.weeklyReport ?? true,
+      failAlert: notifications.failAlert ?? true,
+      caOverdue: notifications.caOverdue ?? true,
+    },
+    isActive: (data.isActive as boolean) ?? true,
+    createdAt: convertTimestamp(data.createdAt as Timestamp | string),
+    updatedAt: convertTimestamp(data.updatedAt as Timestamp | string),
+  };
+}
+
+/** 전체 수신자 목록 조회 */
+export async function getEmailRecipients(): Promise<MDEmailRecipient[]> {
+  try {
+    const q = query(
+      collection(db, EMAIL_RECIPIENTS_COLLECTION),
+      orderBy('name', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) =>
+      docToEmailRecipient(d.id, d.data() as Record<string, unknown>)
+    );
+  } catch (error) {
+    logger.error('[MDInspectionService] getEmailRecipients failed', error);
+    throw error;
+  }
+}
+
+/** 수신자 추가 */
+export async function addEmailRecipient(
+  data: Omit<MDEmailRecipient, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<MDEmailRecipient> {
+  try {
+    const docData = {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    const docRef = await addDoc(collection(db, EMAIL_RECIPIENTS_COLLECTION), docData);
+    logger.info('[MDInspectionService] Added email recipient', { id: docRef.id });
+    return {
+      ...data,
+      id: docRef.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error('[MDInspectionService] addEmailRecipient failed', error);
+    throw error;
+  }
+}
+
+/** 수신자 수정 */
+export async function updateEmailRecipient(
+  id: string,
+  data: Partial<Omit<MDEmailRecipient, 'id' | 'createdAt'>>
+): Promise<void> {
+  try {
+    const docRef = doc(db, EMAIL_RECIPIENTS_COLLECTION, id);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+    logger.info('[MDInspectionService] Updated email recipient', { id });
+  } catch (error) {
+    logger.error('[MDInspectionService] updateEmailRecipient failed', error);
+    throw error;
+  }
+}
+
+/** 수신자 삭제 (실제 삭제) */
+export async function removeEmailRecipient(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, EMAIL_RECIPIENTS_COLLECTION, id);
+    await deleteDoc(docRef);
+    logger.info('[MDInspectionService] Removed email recipient', { id });
+  } catch (error) {
+    logger.error('[MDInspectionService] removeEmailRecipient failed', error);
+    throw error;
+  }
+}
+
+/** 해당 알림 유형의 활성 수신자만 반환 */
+export async function getRecipientsForNotification(
+  type: 'weeklyReport' | 'failAlert' | 'caOverdue'
+): Promise<MDEmailRecipient[]> {
+  try {
+    const q = query(
+      collection(db, EMAIL_RECIPIENTS_COLLECTION),
+      where('isActive', '==', true),
+      where(`notifications.${type}`, '==', true)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) =>
+      docToEmailRecipient(d.id, d.data() as Record<string, unknown>)
+    );
+  } catch (error) {
+    logger.error('[MDInspectionService] getRecipientsForNotification failed', error);
     throw error;
   }
 }

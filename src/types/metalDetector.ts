@@ -17,6 +17,7 @@ export interface MDInspection {
   id: string;
   factory: FactoryCode;
   line: string;              // e.g. "A-1", "B-3"
+  machineId?: string;        // 장비 고유 ID (e.g. "D210103")
   inspectionDate: string;    // YYYY-MM-DD
   weekNumber: number;        // ISO week number
   year: number;
@@ -85,4 +86,68 @@ export interface MDWeeklyTrend {
   pass: number;
   fail: number;
   passRate: number;
+}
+
+// 개선 상태
+export type ImprovementStatus = 'improved' | 'no_change' | 'increased';
+
+// 주간 비교 (이번주 vs 지난주)
+export interface MDWeeklyComparison {
+  thisWeek: {
+    weekNumber: number;
+    totalChecked: number;
+    failCount: number;
+    passRate: number;
+    byFactory: Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }>;
+  };
+  lastWeek: {
+    weekNumber: number;
+    totalChecked: number;
+    failCount: number;
+    passRate: number;
+    byFactory: Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }>;
+  };
+  factoryComparison: Record<FactoryCode, {
+    failedLastWeek: number;
+    failedThisWeek: number;
+    improvement: ImprovementStatus;
+  }>;
+  maintenanceFixRate: number;  // 지난주 FAIL 중 CA 완료된 비율 (%)
+  machinesFixedOnTime: number; // 수리 완료 장비 수
+  machinesFailedLastWeek: number; // 지난주 불합격 장비 수
+}
+
+// 반복 이슈 장비
+export interface MDRepeatedIssue {
+  machineId: string;
+  factory: FactoryCode;
+  line: string;
+  keyIssue: string;       // failureType 또는 description
+  weeksFailed: number[];  // 불합격된 주차 목록
+  status: 'repeated';
+}
+
+// 반복 이슈 요약
+export interface MDRepeatedIssueSummary {
+  machines: MDRepeatedIssue[];
+  totalInspected: number;   // 전체 검사 장비 수 (unique machineId)
+  repeatedCount: number;    // 반복 이슈 장비 수
+  repeatedRate: number;     // 반복 이슈율 (%)
+}
+
+// 이메일 수신자 설정
+export interface MDEmailRecipient {
+  id: string;
+  email: string;
+  name: string;
+  role: 'manager' | 'maintenance' | 'auditor';  // 역할별 수신 구분
+  factory?: FactoryCode;  // 특정 공장 담당자 (없으면 전체)
+  notifications: {
+    weeklyReport: boolean;   // 주간 리포트 수신
+    failAlert: boolean;      // FAIL 발생 시 알림
+    caOverdue: boolean;      // CA 기한 초과 알림
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

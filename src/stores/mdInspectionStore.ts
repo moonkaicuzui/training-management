@@ -16,6 +16,9 @@ import type {
   MDFilters,
   MDDashboardKPI,
   MDWeeklyTrend,
+  MDWeeklyComparison,
+  MDRepeatedIssueSummary,
+  MDEmailRecipient,
 } from '@/types/metalDetector';
 
 // ========== Store Interface ==========
@@ -26,6 +29,9 @@ interface MDInspectionState {
   failures: MDFailure[];
   dashboardKPIs: MDDashboardKPI | null;
   weeklyTrend: MDWeeklyTrend[];
+  weeklyComparison: MDWeeklyComparison | null;
+  repeatedIssues: MDRepeatedIssueSummary | null;
+  emailRecipients: MDEmailRecipient[];
 
   // UI State
   isLoading: boolean;
@@ -51,6 +57,17 @@ interface MDInspectionState {
   ) => Promise<void>;
   fetchDashboardKPIs: (year: number, weekNumber?: number) => Promise<void>;
   fetchWeeklyTrend: (year: number, weekCount?: number) => Promise<void>;
+  fetchWeeklyComparison: (year: number, weekNumber: number) => Promise<void>;
+  fetchRepeatedIssues: (year: number, weekNumber: number) => Promise<void>;
+  fetchEmailRecipients: () => Promise<void>;
+  addEmailRecipient: (
+    data: Omit<MDEmailRecipient, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<void>;
+  updateEmailRecipient: (
+    id: string,
+    data: Partial<Omit<MDEmailRecipient, 'id' | 'createdAt'>>
+  ) => Promise<void>;
+  removeEmailRecipient: (id: string) => Promise<void>;
   setFilters: (filters: MDFilters) => void;
   clearError: () => void;
 }
@@ -65,6 +82,9 @@ export const useMDInspectionStore = create<MDInspectionState>()(
       failures: [],
       dashboardKPIs: null,
       weeklyTrend: [],
+      weeklyComparison: null,
+      repeatedIssues: null,
+      emailRecipients: [],
       isLoading: false,
       error: null,
       filters: {},
@@ -236,6 +256,114 @@ export const useMDInspectionStore = create<MDInspectionState>()(
           set((state) => {
             state.error = i18n.t('errors.metalDetector.fetchWeeklyTrendFailed');
           });
+        }
+      },
+
+      fetchWeeklyComparison: async (year, weekNumber) => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          const comparison = await api.mdInspection.getWeeklyComparison(year, weekNumber);
+          set((state) => {
+            state.weeklyComparison = comparison;
+          });
+        } catch (error) {
+          logger.error('[MDStore] fetchWeeklyComparison failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.fetchWeeklyComparisonFailed');
+          });
+        }
+      },
+
+      fetchRepeatedIssues: async (year, weekNumber) => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          const issues = await api.mdInspection.getRepeatedIssues(year, weekNumber);
+          set((state) => {
+            state.repeatedIssues = issues;
+          });
+        } catch (error) {
+          logger.error('[MDStore] fetchRepeatedIssues failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.fetchRepeatedIssuesFailed');
+          });
+        }
+      },
+
+      fetchEmailRecipients: async () => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          const recipients = await api.mdInspection.getEmailRecipients();
+          set((state) => {
+            state.emailRecipients = recipients;
+          });
+        } catch (error) {
+          logger.error('[MDStore] fetchEmailRecipients failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.fetchEmailRecipientsFailed');
+          });
+        }
+      },
+
+      addEmailRecipient: async (data) => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          const recipient = await api.mdInspection.addEmailRecipient(data);
+          set((state) => {
+            state.emailRecipients.push(recipient);
+          });
+        } catch (error) {
+          logger.error('[MDStore] addEmailRecipient failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.addEmailRecipientFailed');
+          });
+          throw error;
+        }
+      },
+
+      updateEmailRecipient: async (id, data) => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          await api.mdInspection.updateEmailRecipient(id, data);
+          set((state) => {
+            const idx = state.emailRecipients.findIndex((r) => r.id === id);
+            if (idx !== -1) {
+              Object.assign(state.emailRecipients[idx], data);
+            }
+          });
+        } catch (error) {
+          logger.error('[MDStore] updateEmailRecipient failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.updateEmailRecipientFailed');
+          });
+          throw error;
+        }
+      },
+
+      removeEmailRecipient: async (id) => {
+        set((state) => {
+          state.error = null;
+        });
+        try {
+          await api.mdInspection.removeEmailRecipient(id);
+          set((state) => {
+            state.emailRecipients = state.emailRecipients.filter((r) => r.id !== id);
+          });
+        } catch (error) {
+          logger.error('[MDStore] removeEmailRecipient failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.removeEmailRecipientFailed');
+          });
+          throw error;
         }
       },
 

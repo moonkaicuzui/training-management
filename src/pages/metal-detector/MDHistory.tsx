@@ -198,6 +198,7 @@ export default function MDHistory() {
                     <TableHead>{t('metalDetector.input.date')}</TableHead>
                     <TableHead>{t('metalDetector.factory.label')}</TableHead>
                     <TableHead>{t('metalDetector.line')}</TableHead>
+                    <TableHead>{t('metalDetector.machineId')}</TableHead>
                     <TableHead>{t('metalDetector.input.resultLabel')}</TableHead>
                     <TableHead>{t('metalDetector.sensitivity.fe')}</TableHead>
                     <TableHead>{t('metalDetector.sensitivity.sus')}</TableHead>
@@ -217,6 +218,7 @@ export default function MDHistory() {
                       </TableCell>
                       <TableCell>Factory {inspection.factory}</TableCell>
                       <TableCell>{inspection.line}</TableCell>
+                      <TableCell className="font-mono text-xs">{inspection.machineId || '-'}</TableCell>
                       <TableCell>
                         <Badge
                           variant={inspection.result === 'PASS' ? 'default' : 'destructive'}
