@@ -66,6 +66,8 @@ const routeLabelMap: Record<string, string> = {
   'inspector-stickers': 'nav.inspectorStickers',
   // System Feedback
   'system-feedback': 'nav.systemFeedback',
+  // HR Sync
+  'hr-sync': 'nav.hrSync',
   // Program Intro
   'program-intro': 'nav.programIntro',
 };

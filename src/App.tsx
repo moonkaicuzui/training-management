@@ -101,6 +101,9 @@ const InspectorStickers = lazy(() => import('./pages/InspectorStickers'));
 // 시스템 피드백 (이슈 등록 / 개선 요청)
 const SystemFeedback = lazy(() => import('./pages/SystemFeedback'));
 
+// HR V2 직원 데이터 동기화
+const HRSync = lazy(() => import('./pages/HRSync'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -575,6 +578,17 @@ function App() {
                     <PageErrorBoundary>
                       <Suspense fallback={<PageLoader />}>
                         <InspectorStickers />
+                      </Suspense>
+                    </PageErrorBoundary>
+                  </DevProtectedRoute>
+                } />
+
+                {/* HR V2 직원 데이터 동기화 (관리자 전용) */}
+                <Route path="hr-sync" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <HRSync />
                       </Suspense>
                     </PageErrorBoundary>
                   </DevProtectedRoute>

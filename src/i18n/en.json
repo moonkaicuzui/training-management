@@ -165,7 +165,8 @@
       "models": "New Models",
       "reviewGuidelines": "Review Guidelines"
     },
-    "systemFeedback": "System Feedback"
+    "systemFeedback": "System Feedback",
+    "hrSync": "HR Employee Sync"
   },
   "sidebar": {
     "cat": {
@@ -3803,5 +3804,78 @@
     "sectionLoadError": "Unable to load this section",
     "unknownError": "An unknown error occurred",
     "unhandledError": "An error occurred"
+  },
+  "hrSync": {
+    "title": "HR V2 Employee Sync",
+    "description": "Read employee data from HR V2 system and sync with Q-TRAIN. Detect new hires, resignations, and department transfers, and guide training actions.",
+    "selectPeriod": "Select Sync Period",
+    "selectPeriodDesc": "Select the month/year to read HR V2 data.",
+    "year": "Year",
+    "month": "Month",
+    "detectChanges": "Detect Changes",
+    "runSync": "Run Sync",
+    "count": "",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "eventType": {
+      "newHire": "New Hire",
+      "resignation": "Resignation",
+      "departmentChange": "Dept. Change",
+      "buildingChange": "Building Change"
+    },
+    "detail": {
+      "hireDate": "Hire Date",
+      "team": "Team",
+      "building": "Building",
+      "position": "Position",
+      "resignDate": "Resign Date",
+      "previousTeam": "Previous Team"
+    },
+    "eventList": "Change Event List",
+    "eventListDesc": "{{count}} change events detected.",
+    "table": {
+      "type": "Type",
+      "employeeId": "Employee ID",
+      "employeeName": "Name",
+      "details": "Details",
+      "action": "Action"
+    },
+    "action": {
+      "goTQC": "TQC Enrollment",
+      "deactivate": "Deactivate",
+      "checkPrograms": "Check Programs"
+    },
+    "syncCompleteTitle": "Sync Complete",
+    "totalHR": "HR Total",
+    "updated": "Updated",
+    "errorsCount": "Errors",
+    "syncTime": "Sync Time",
+    "empty": {
+      "title": "Awaiting Sync",
+      "description": "Select month/year and click 'Detect Changes' or 'Run Sync' to detect employee changes from HR V2 system."
+    },
+    "toast": {
+      "noChanges": "No Changes",
+      "noChangesDesc": "No employee data changes found for the selected month.",
+      "changesDetected": "Changes Detected",
+      "changesDetectedDesc": "{{count}} change events detected.",
+      "syncComplete": "Sync Complete",
+      "syncCompleteDesc": "{{updated}} of {{total}} HR employees updated.",
+      "deactivated": "Deactivated",
+      "deactivatedDesc": "Employee {{id}} has been deactivated.",
+      "error": "Error"
+    }
   }
 }

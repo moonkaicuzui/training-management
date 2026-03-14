@@ -165,7 +165,8 @@
       "models": "Mẫu mới",
       "reviewGuidelines": "Hướng dẫn đánh giá"
     },
-    "systemFeedback": "Phản hồi hệ thống"
+    "systemFeedback": "Phản hồi hệ thống",
+    "hrSync": "Đồng bộ nhân viên HR"
   },
   "sidebar": {
     "cat": {
@@ -3803,5 +3804,78 @@
     "sectionLoadError": "Không thể tải phần này",
     "unknownError": "Đã xảy ra lỗi không xác định",
     "unhandledError": "Đã xảy ra lỗi"
+  },
+  "hrSync": {
+    "title": "Đồng bộ nhân viên HR V2",
+    "description": "Đọc dữ liệu nhân viên từ hệ thống HR V2 và đồng bộ với Q-TRAIN. Phát hiện nhân viên mới, nghỉ việc, chuyển phòng ban và hướng dẫn đào tạo.",
+    "selectPeriod": "Chọn kỳ đồng bộ",
+    "selectPeriodDesc": "Chọn tháng/năm để đọc dữ liệu HR V2.",
+    "year": "Năm",
+    "month": "Tháng",
+    "detectChanges": "Phát hiện thay đổi",
+    "runSync": "Chạy đồng bộ",
+    "count": "",
+    "months": {
+      "january": "Tháng 1",
+      "february": "Tháng 2",
+      "march": "Tháng 3",
+      "april": "Tháng 4",
+      "may": "Tháng 5",
+      "june": "Tháng 6",
+      "july": "Tháng 7",
+      "august": "Tháng 8",
+      "september": "Tháng 9",
+      "october": "Tháng 10",
+      "november": "Tháng 11",
+      "december": "Tháng 12"
+    },
+    "eventType": {
+      "newHire": "Nhân viên mới",
+      "resignation": "Nghỉ việc",
+      "departmentChange": "Chuyển phòng",
+      "buildingChange": "Chuyển tòa nhà"
+    },
+    "detail": {
+      "hireDate": "Ngày vào",
+      "team": "Nhóm",
+      "building": "Tòa nhà",
+      "position": "Chức vụ",
+      "resignDate": "Ngày nghỉ",
+      "previousTeam": "Nhóm trước"
+    },
+    "eventList": "Danh sách sự kiện thay đổi",
+    "eventListDesc": "Phát hiện {{count}} sự kiện thay đổi.",
+    "table": {
+      "type": "Loại",
+      "employeeId": "Mã NV",
+      "employeeName": "Tên",
+      "details": "Chi tiết",
+      "action": "Hành động"
+    },
+    "action": {
+      "goTQC": "Đăng ký TQC",
+      "deactivate": "Vô hiệu hóa",
+      "checkPrograms": "Kiểm tra chương trình"
+    },
+    "syncCompleteTitle": "Đồng bộ hoàn tất",
+    "totalHR": "Tổng HR",
+    "updated": "Cập nhật",
+    "errorsCount": "Lỗi",
+    "syncTime": "Thời gian đồng bộ",
+    "empty": {
+      "title": "Chờ đồng bộ",
+      "description": "Chọn tháng/năm và nhấn 'Phát hiện thay đổi' hoặc 'Chạy đồng bộ' để phát hiện thay đổi nhân viên từ hệ thống HR V2."
+    },
+    "toast": {
+      "noChanges": "Không có thay đổi",
+      "noChangesDesc": "Không có thay đổi dữ liệu nhân viên trong tháng đã chọn.",
+      "changesDetected": "Phát hiện thay đổi",
+      "changesDetectedDesc": "Phát hiện {{count}} sự kiện thay đổi.",
+      "syncComplete": "Đồng bộ hoàn tất",
+      "syncCompleteDesc": "{{updated}} trong {{total}} nhân viên HR đã được cập nhật.",
+      "deactivated": "Đã vô hiệu hóa",
+      "deactivatedDesc": "Nhân viên {{id}} đã bị vô hiệu hóa.",
+      "error": "Lỗi"
+    }
   }
 }

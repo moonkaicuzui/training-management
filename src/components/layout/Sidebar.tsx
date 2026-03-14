@@ -45,6 +45,7 @@ import {
   Camera,
   Sticker,
   MessageSquarePlus,
+  UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -165,6 +166,7 @@ const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.auditLog', href: '/audit-log', icon: History },
   { titleKey: 'nav.materials', href: '/materials', icon: FolderOpen },
   { titleKey: 'nav.dataSync', href: '/data-sync', icon: RefreshCcw },
+  { titleKey: 'nav.hrSync', href: '/hr-sync', icon: UserCog },
   { titleKey: 'nav.systemFeedback', href: '/system-feedback', icon: MessageSquarePlus },
 ];
 
