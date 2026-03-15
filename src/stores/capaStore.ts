@@ -11,6 +11,7 @@ import { immer } from 'zustand/middleware/immer';
 import type { Timestamp } from 'firebase/firestore';
 import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 import type {
   CAPA,
   CAPAInput,
@@ -157,7 +158,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to fetch CAPAs:', error);
           set((state) => {
-            state.error = 'CAPA 목록을 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.capa.listFetchFailed');
             state.isLoading = false;
           });
         }
@@ -175,7 +176,7 @@ export const useCAPAStore = create<CAPAState>()(
 
           if (!capa) {
             set((state) => {
-              state.error = 'CAPA를 찾을 수 없습니다.';
+              state.error = i18n.t('errors.capa.notFound');
               state.isLoading = false;
             });
             return null;
@@ -190,7 +191,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to fetch CAPA:', error);
           set((state) => {
-            state.error = 'CAPA를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.capa.fetchFailed');
             state.isLoading = false;
           });
           return null;
@@ -218,7 +219,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to create CAPA:', error);
           set((state) => {
-            state.error = 'CAPA 생성에 실패했습니다.';
+            state.error = i18n.t('errors.capa.createFailed');
             state.isLoading = false;
           });
           throw error;
@@ -249,7 +250,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to update CAPA:', error);
           set((state) => {
-            state.error = 'CAPA 업데이트에 실패했습니다.';
+            state.error = i18n.t('errors.capa.updateFailed');
             state.isLoading = false;
           });
           throw error;
@@ -278,7 +279,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to update CAPA stage:', error);
           set((state) => {
-            state.error = 'CAPA 단계 업데이트에 실패했습니다.';
+            state.error = i18n.t('errors.capa.stageUpdateFailed');
             state.isLoading = false;
           });
           throw error;
@@ -300,7 +301,7 @@ export const useCAPAStore = create<CAPAState>()(
         } catch (error) {
           logger.error('[CAPA Store] Failed to fetch dashboard stats:', error);
           set((state) => {
-            state.error = 'CAPA 대시보드 통계를 불러오는데 실패했습니다.';
+            state.error = i18n.t('errors.capa.dashboardFetchFailed');
           });
         }
       },

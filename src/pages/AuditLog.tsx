@@ -122,7 +122,7 @@ export default function AuditLogPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('auditLog.title')}</h1>
           <p className="text-muted-foreground">{t('auditLog.description')}</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" disabled title={t('common.comingSoon')}>
           <Download className="h-4 w-4 mr-2" />
           {t('auditLog.exportLogs')}
         </Button>

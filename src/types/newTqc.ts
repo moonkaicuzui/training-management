@@ -240,6 +240,11 @@ export interface NewTQCTraineeUpdate {
   trainer_id?: string;
   status?: NewTQCTraineeStatus;
   notes?: string;
+  final_test_score?: number;
+  final_grade?: string;
+  final_result?: 'PASS' | 'FAIL';
+  certificate_issued?: boolean;
+  certificate_date?: string;
 }
 
 export interface NewTQCColorBlindTestInput {
@@ -312,6 +317,20 @@ export interface NewTQCTraineeWithDetails extends NewTQCTrainee {
 // ========== Helper Functions ==========
 
 /**
+ * Safely add months to a date, clamping to end-of-month on overflow.
+ * e.g., Jan 31 + 1 month = Feb 28 (not Mar 3)
+ */
+function safeAddMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() !== day) {
+    d.setDate(0); // Previous month's last day
+  }
+  return d;
+}
+
+/**
  * Calculate meeting dates based on start date
  */
 export function calculateMeetingDates(startDate: string): {
@@ -324,11 +343,8 @@ export function calculateMeetingDates(startDate: string): {
   const oneWeek = new Date(start);
   oneWeek.setDate(oneWeek.getDate() + 7);
 
-  const oneMonth = new Date(start);
-  oneMonth.setMonth(oneMonth.getMonth() + 1);
-
-  const threeMonths = new Date(start);
-  threeMonths.setMonth(threeMonths.getMonth() + 3);
+  const oneMonth = safeAddMonths(start, 1);
+  const threeMonths = safeAddMonths(start, 3);
 
   return {
     oneWeek: oneWeek.toISOString().split('T')[0],

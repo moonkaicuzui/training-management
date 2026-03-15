@@ -20,6 +20,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useProjectStore } from '@/stores/projectStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { vi as viLocale } from 'date-fns/locale/vi';
 import { useUIStore } from '@/stores/uiStore';
 
 export function NotificationBell() {
@@ -54,7 +55,7 @@ export function NotificationBell() {
     try {
       return formatDistanceToNow(d, {
         addSuffix: true,
-        locale: language === 'ko' ? ko : undefined,
+        locale: language === 'ko' ? ko : language === 'vi' ? viLocale : undefined,
       });
     } catch {
       return '';

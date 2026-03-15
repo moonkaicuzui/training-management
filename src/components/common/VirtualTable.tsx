@@ -5,6 +5,7 @@
  */
 
 import { useRef, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Table,
@@ -59,11 +60,13 @@ export function VirtualTable<T>({
   rowKey,
   estimateRowHeight = 53,
   maxHeight = 600,
-  emptyMessage = 'No data available',
+  emptyMessage,
   onRowClick,
   rowClassName,
   virtualizationThreshold = 50,
 }: VirtualTableProps<T>) {
+  const { t } = useTranslation();
+  const resolvedEmptyMessage = emptyMessage ?? t('common.noData');
   const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
@@ -101,7 +104,7 @@ export function VirtualTable<T>({
               colSpan={columns.length}
               className="text-center py-8 text-muted-foreground"
             >
-              {emptyMessage}
+              {resolvedEmptyMessage}
             </TableCell>
           </TableRow>
         </TableBody>

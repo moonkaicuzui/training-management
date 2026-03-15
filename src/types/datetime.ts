@@ -30,7 +30,10 @@ export type YearMonth = string & { __brand: 'YearMonth' };
  * Type guards for date/time validation
  */
 export const isISODate = (value: string): value is ISODate => {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return false;
+  return d.toISOString().startsWith(value);
 };
 
 export const isISODateTime = (value: string): value is ISODateTime => {
@@ -128,7 +131,12 @@ export const parseTimeString = (time: TimeString): { hours: number; minutes: num
  */
 export const addMonths = (date: ISODate, months: number): ISODate => {
   const d = parseISODate(date);
+  const day = d.getDate();
   d.setMonth(d.getMonth() + months);
+  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
+  if (d.getDate() !== day) {
+    d.setDate(0); // Previous month's last day
+  }
   return createISODateStrict(d);
 };
 

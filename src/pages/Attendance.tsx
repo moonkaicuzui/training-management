@@ -258,10 +258,10 @@ export default function AttendancePage() {
         session_id: selectedSession.session_id,
         count: attendances.length,
       });
-      alert(t('messages.saveSuccess'));
+      toast({ title: t('messages.saveSuccess') });
     } catch (error) {
       logger.error('Failed to save attendance:', error);
-      alert(t('messages.saveError'));
+      toast({ title: t('messages.saveError'), variant: 'destructive' });
     }
   };
 

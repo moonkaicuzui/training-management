@@ -251,7 +251,7 @@ export default function NewTQCTrainees() {
                     <TableHead>{t('newTQCModule.trainees.week')}</TableHead>
                     <TableHead>{t('newTQCModule.trainees.startDate')}</TableHead>
                     <TableHead>{t('common.status')}</TableHead>
-                    <TableHead>Color Blind</TableHead>
+                    <TableHead>{t('newTQCModule.trainees.colorBlind')}</TableHead>
                     <TableHead>{t('newTQCModule.trainees.progress')}</TableHead>
                     <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>

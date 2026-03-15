@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
 import { format } from 'date-fns';
 import * as api from '@/services/api';
+import { useAuthStore } from '@/stores/authStore';
 import type { Certificate } from '@/services/certificateService';
 import { Award, FileText, History, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +24,7 @@ import type {
 
 export default function CertificatesPage() {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
@@ -153,7 +155,7 @@ export default function CertificatesPage() {
   const handleRevoke = async () => {
     if (!showRevokeDialog || !revokeReason.trim()) return;
     try {
-      await api.revokeCertificate(showRevokeDialog, 'current_user', revokeReason);
+      await api.revokeCertificate(showRevokeDialog, user?.email || 'unknown', revokeReason);
       setShowRevokeDialog(null);
       setRevokeReason('');
       await loadIssuedCertificates();

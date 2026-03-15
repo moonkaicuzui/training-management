@@ -16,6 +16,7 @@ import {
   orderBy,
   serverTimestamp,
   Timestamp,
+  arrayUnion,
 } from '@/services/firebase';
 import { storage } from '@/services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -145,10 +146,6 @@ export const addComment = async (
   comment: { author: string; text: string }
 ): Promise<void> => {
   const docRef = doc(db, COLLECTION, id);
-  const snapshot = await getDoc(docRef);
-  if (!snapshot.exists()) throw new Error('Feedback not found');
-
-  const existingComments = (snapshot.data()?.comments as Array<Record<string, unknown>>) || [];
   const newComment = {
     author: comment.author,
     text: comment.text,
@@ -156,7 +153,7 @@ export const addComment = async (
   };
 
   await updateDoc(docRef, {
-    comments: [...existingComments, newComment],
+    comments: arrayUnion(newComment),
     updatedAt: serverTimestamp(),
   });
 };

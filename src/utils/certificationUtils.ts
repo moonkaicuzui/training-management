@@ -29,7 +29,12 @@ export function getExpiryDate(
 
   const trainingDate = new Date(result.training_date);
   const expiryDate = new Date(trainingDate);
+  const day = expiryDate.getDate();
   expiryDate.setMonth(expiryDate.getMonth() + program.validity_months);
+  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
+  if (expiryDate.getDate() !== day) {
+    expiryDate.setDate(0);
+  }
 
   return expiryDate;
 }

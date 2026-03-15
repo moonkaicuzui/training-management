@@ -430,26 +430,6 @@ export const Sidebar = memo(function Sidebar() {
             </div>
           ))}
 
-          {/* Quick Stats */}
-          <div className="px-3 py-4">
-            <div className="rounded-lg bg-muted p-4">
-              <h3 className="text-sm font-semibold mb-2">{t('sidebar.quickStats')}</h3>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div className="flex justify-between">
-                  <span>{t('sidebar.monthlyTrainings')}</span>
-                  <span className="font-medium text-foreground">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sidebar.passRate')}</span>
-                  <span className="font-medium text-status-pass">95%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sidebar.retrainingNeeded')}</span>
-                  <span className="font-medium text-destructive">3</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </aside>
     </>

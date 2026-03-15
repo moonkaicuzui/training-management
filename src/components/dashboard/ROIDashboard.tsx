@@ -140,7 +140,7 @@ const ROIDashboard = memo(function ROIDashboard({
 
     for (const result of results) {
       const employee = employees.find((e) => e.employee_id === result.employee_id);
-      const dept = employee?.building || 'Unknown';
+      const dept = employee?.building || t('common.unknown');
 
       if (!deptMap[dept]) {
         deptMap[dept] = { passed: 0, total: 0, employees: new Set() };

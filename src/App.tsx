@@ -627,6 +627,9 @@ function App() {
                     </PageErrorBoundary>
                   } />
                 )}
+
+                {/* 404 catch-all: 존재하지 않는 경로 → 대시보드로 리다이렉트 */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>
             <Toaster />

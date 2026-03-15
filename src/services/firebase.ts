@@ -40,6 +40,8 @@ import {
   serverTimestamp,
   onSnapshot,
   startAfter,
+  increment,
+  arrayUnion,
 } from 'firebase/firestore';
 import type {
   Firestore,
@@ -56,6 +58,7 @@ import { getAnalytics, isSupported } from 'firebase/analytics';
 import type { Analytics } from 'firebase/analytics';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { logger } from '@/utils/logger';
+import { ADMIN_EMAILS } from '@/types/auth';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -113,13 +116,6 @@ if (recaptchaSiteKey) {
   });
   logger.info('App Check initialized with reCAPTCHA Enterprise');
 }
-
-// Admin email addresses
-const ADMIN_EMAILS = [
-  'admin@hwaseung.com',
-  'qip.admin@hwaseungvina.com',
-  'ksmoon@hsvina.com'
-];
 
 /**
  * Sign in with email and password
@@ -403,5 +399,7 @@ export {
   serverTimestamp,
   onSnapshot,
   startAfter,
+  increment,
+  arrayUnion,
 };
 export type { Transaction, WriteBatch, DocumentReference, CollectionReference, DocumentData, QueryConstraint };

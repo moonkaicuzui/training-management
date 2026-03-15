@@ -35,6 +35,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import {
@@ -91,6 +92,7 @@ export default function Schedule() {
     addToast: state.addToast,
     language: state.language,
   })));
+  const user = useAuthStore((state) => state.user);
 
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -206,7 +208,7 @@ export default function Schedule() {
         notes: formData.notes,
         status: 'PLANNED',
         attendees: [],
-        created_by: 'admin',
+        created_by: user?.email || user?.name || 'unknown',
       });
       addToast({ type: 'success', title: t('messages.saveSuccess') });
       setCreateDialogOpen(false);
@@ -329,7 +331,7 @@ export default function Schedule() {
                             <Eye className="h-4 w-4 mr-2" />
                             {t('schedule.viewDetail')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem disabled className="opacity-50">
                             <Pencil className="h-4 w-4 mr-2" />
                             {t('common.edit')}
                           </DropdownMenuItem>

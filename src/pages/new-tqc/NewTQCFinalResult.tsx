@@ -70,15 +70,12 @@ export default function NewTQCFinalResult() {
     try {
       await updateTrainee({
         trainee_id: traineeId,
+        final_test_score: score,
+        final_grade: grade,
+        final_result: result,
         status: result === 'PASS' ? 'COMPLETED' : undefined,
       });
-      // Update local state to reflect the change
-      const trainee = trainees.find(tr => tr.trainee_id === traineeId);
-      if (trainee) {
-        trainee.final_test_score = score;
-        trainee.final_grade = grade;
-        trainee.final_result = result;
-      }
+      // updateTrainee가 스토어를 자동 갱신하므로 직접 변경 불필요
       setEditingScores(prev => {
         const newState = { ...prev };
         delete newState[traineeId];

@@ -58,7 +58,12 @@ export function isTrainingValid(
 
   const trainingDate = new Date(result.training_date);
   const expirationDate = new Date(trainingDate);
+  const day = expirationDate.getDate();
   expirationDate.setMonth(expirationDate.getMonth() + program.validity_months);
+  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
+  if (expirationDate.getDate() !== day) {
+    expirationDate.setDate(0);
+  }
 
   return expirationDate > referenceDate;
 }
@@ -74,7 +79,12 @@ export function getExpirationDate(
 
   const trainingDate = new Date(result.training_date);
   const expirationDate = new Date(trainingDate);
+  const day = expirationDate.getDate();
   expirationDate.setMonth(expirationDate.getMonth() + program.validity_months);
+  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
+  if (expirationDate.getDate() !== day) {
+    expirationDate.setDate(0);
+  }
 
   return expirationDate;
 }

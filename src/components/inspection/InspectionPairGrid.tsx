@@ -107,6 +107,7 @@ function JudgmentButtons({
   value: PairJudgment;
   onChange: (v: PairJudgment) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-1">
       <Button
@@ -116,7 +117,7 @@ function JudgmentButtons({
         className={cn('h-7 px-3 text-xs', value === 'PASS' && 'bg-green-600 hover:bg-green-700')}
         onClick={() => onChange('PASS')}
       >
-        PASS
+        {t('inspection.common.pass')}
       </Button>
       <Button
         type="button"
@@ -125,13 +126,14 @@ function JudgmentButtons({
         className={cn('h-7 px-3 text-xs', value === 'FAIL' && 'bg-red-600 hover:bg-red-700')}
         onClick={() => onChange('FAIL')}
       >
-        FAIL
+        {t('inspection.common.fail')}
       </Button>
     </div>
   );
 }
 
 function JudgmentBadge({ value }: { value: PairJudgment }) {
+  const { t } = useTranslation();
   return (
     <span
       className={cn(
@@ -139,7 +141,7 @@ function JudgmentBadge({ value }: { value: PairJudgment }) {
         value === 'PASS' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
       )}
     >
-      {value}
+      {value === 'PASS' ? t('inspection.common.pass') : t('inspection.common.fail')}
     </span>
   );
 }

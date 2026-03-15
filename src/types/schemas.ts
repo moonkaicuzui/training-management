@@ -55,7 +55,7 @@ export type ProgramFormValues = z.infer<typeof programFormSchema>;
 // ========== Training Result Schemas ==========
 
 export const resultFormSchema = z.object({
-  session_id: z.string().min(1, 'validation.required'),
+  session_id: z.string().optional(),
   employee_id: z.string().min(1, 'validation.required'),
   score: z.number().min(0).max(100).optional(),
   result: z.enum(['PASS', 'FAIL', 'ABSENT']),

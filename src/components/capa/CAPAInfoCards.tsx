@@ -29,9 +29,6 @@ import { Separator } from '@/components/ui/separator';
 
 import { STATUS_COLORS } from '@/components/capa/CAPAStageDialogs';
 import {
-  CAPA_STATUS_LABELS,
-  CAPA_PRIORITY_LABELS,
-  CAPA_SOURCE_LABELS,
   type CAPAStatus,
   type CAPA,
 } from '@/types/capa';
@@ -95,7 +92,7 @@ export function DiscoveryCard({ currentCAPA }: DiscoveryCardProps) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">{t('capa.cause')}</p>
-            <p className="mt-1">{CAPA_SOURCE_LABELS[currentCAPA.source]}</p>
+            <p className="mt-1">{t(`capa.sourceLabels.${currentCAPA.source}`)}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t('capa.affectedArea')}</p>
@@ -394,13 +391,13 @@ export function StatusCard({
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t('capa.stage')}</span>
           <Badge className={STATUS_COLORS[currentCAPA.status]}>
-            {CAPA_STATUS_LABELS[currentCAPA.status]}
+            {t(`capa.statusLabels.${currentCAPA.status}`)}
           </Badge>
         </div>
         <Separator />
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t('capa.priority')}</span>
-          <span>{CAPA_PRIORITY_LABELS[currentCAPA.priority]}</span>
+          <span>{t(`capa.priorityLabels.${currentCAPA.priority}`)}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t('capa.assignedTo')}</span>
@@ -425,7 +422,7 @@ export function StatusCard({
                   onClick={onAdvance}
                 >
                   <ArrowRight className="h-4 w-4 mr-2" />
-                  {CAPA_STATUS_LABELS[nextStatus]}
+                  {t(`capa.statusLabels.${nextStatus}`)}
                 </Button>
               )}
               {canReject && (

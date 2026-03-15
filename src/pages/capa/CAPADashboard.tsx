@@ -28,10 +28,9 @@ import { Badge } from '@/components/ui/badge';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useCAPAStore } from '@/stores/capaStore';
-import {
-  CAPA_STATUS_LABELS,
-  type CAPAStatus,
-} from '@/types/capa';
+import type { CAPAStatus } from '@/types/capa';
+
+const CAPA_STATUSES: CAPAStatus[] = ['discovery', 'investigation', 'action', 'verification', 'closed', 'rejected'];
 
 // Status colors for badges
 const STATUS_COLORS: Record<CAPAStatus, string> = {
@@ -198,13 +197,13 @@ export default function CAPADashboard() {
             <CardContent>
               <div className="flex gap-2">
                 <Badge variant="destructive">
-                  Critical: {dashboardStats.bySeverity.critical || 0}
+                  {t('capa.severityLabels.critical')}: {dashboardStats.bySeverity.critical || 0}
                 </Badge>
                 <Badge variant="secondary">
-                  Major: {dashboardStats.bySeverity.major || 0}
+                  {t('capa.severityLabels.major')}: {dashboardStats.bySeverity.major || 0}
                 </Badge>
                 <Badge variant="outline">
-                  Minor: {dashboardStats.bySeverity.minor || 0}
+                  {t('capa.severityLabels.minor')}: {dashboardStats.bySeverity.minor || 0}
                 </Badge>
               </div>
             </CardContent>
@@ -237,7 +236,7 @@ export default function CAPADashboard() {
               onChange={handleStatusFilterChange}
             >
               <option value="all">{t('capa.dashboardPage.allStatus')}</option>
-              {(Object.keys(CAPA_STATUS_LABELS) as CAPAStatus[]).map((value) => (
+              {CAPA_STATUSES.map((value) => (
                 <option key={value} value={value}>
                   {t(`capa.statusLabels.${value}`)}
                 </option>
@@ -328,7 +327,7 @@ export default function CAPADashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(Object.keys(CAPA_STATUS_LABELS) as CAPAStatus[]).map((status) => {
+            {CAPA_STATUSES.map((status) => {
               const StatusIcon = STATUS_ICONS[status];
               const count = dashboardStats?.byStatus[status] || 0;
               return (

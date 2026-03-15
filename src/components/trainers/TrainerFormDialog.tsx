@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
+import { useUIStore } from '@/stores/uiStore';
 import * as api from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ export default function TrainerFormDialog({
   trainer,
 }: TrainerFormDialogProps) {
   const { t } = useTranslation();
+  const addToast = useUIStore((s) => s.addToast);
   const isEdit = !!trainer;
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -75,6 +77,7 @@ export default function TrainerFormDialog({
       onClose();
     } catch (error) {
       logger.error('Failed to save trainer:', error);
+      addToast({ type: 'error', title: t('messages.saveError') });
     } finally {
       setIsSaving(false);
     }

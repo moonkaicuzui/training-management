@@ -182,13 +182,13 @@ describe('capaService', () => {
       expect(addDoc).toHaveBeenCalledTimes(1);
     });
 
-    it('CAPA 번호가 CAPA-{year}-{3자리} 형식으로 자동 생성된다', async () => {
+    it('CAPA 번호가 CAPA-{year}-{timestamp}-{random} 형식으로 자동 생성된다', async () => {
       vi.mocked(addDoc).mockResolvedValue({ id: 'new-capa-id' } as never);
 
       await createCAPA(baseCAPAInput);
 
       const savedData = vi.mocked(addDoc).mock.calls[0][1] as Record<string, unknown>;
-      expect(savedData.capaNumber).toMatch(/^CAPA-\d{4}-\d{3}$/);
+      expect(savedData.capaNumber).toMatch(/^CAPA-\d{4}-[a-z0-9]+-[a-z0-9]+$/);
     });
 
     it('초기 상태는 discovery이다', async () => {

@@ -16,6 +16,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   CheckCircle2,
   Trash2,
   MessageSquare,
@@ -89,6 +99,7 @@ export function TaskDetailDialog({
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [taskFormData, setTaskFormData] = useState<TaskFormData>({
     title: '',
     description: '',
@@ -149,11 +160,18 @@ export function TaskDetailDialog({
     });
   }, [selectedTask, taskFormData, onSaveTask]);
 
-  const handleDeleteTask = useCallback(async () => {
-    if (selectedTask && confirm(t('projects.tasks.deleteConfirm'))) {
-      await onDeleteTask(selectedTask.id);
+  const handleDeleteTask = useCallback(() => {
+    if (selectedTask) {
+      setShowDeleteConfirm(true);
     }
-  }, [selectedTask, onDeleteTask, t]);
+  }, [selectedTask]);
+
+  const handleConfirmDeleteTask = useCallback(async () => {
+    if (selectedTask) {
+      await onDeleteTask(selectedTask.id);
+      setShowDeleteConfirm(false);
+    }
+  }, [selectedTask, onDeleteTask]);
 
   const handleTabChange = useCallback((tab: 'details' | 'messages') => {
     setActiveTab(tab);
@@ -273,6 +291,27 @@ export function TaskDetailDialog({
           </DialogFooter>
         )}
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('projects.tasks.deleteConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteTask}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

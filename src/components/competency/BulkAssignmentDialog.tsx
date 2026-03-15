@@ -77,7 +77,7 @@ export function BulkAssignmentDialog({
           competency_id: bulkCompetencyId,
           current_level: 'NOVICE',
           target_level: bulkTargetLevel,
-          last_assessed_at: new Date().toISOString(),
+          last_assessed_at: '', // serverTimestamp() 로 서비스 레이어에서 덮어쓰기
           assessed_by: 'admin',
           evidence: [],
         })

@@ -118,7 +118,7 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
 
       if (row['Error'] && rejectQty > 0) {
         const defectList = parseDefectTypes(row['Error']);
-        const perType = rejectQty / defectList.length;
+        const perType = defectList.length > 0 ? rejectQty / defectList.length : 0;
         defectList.forEach((defect) => {
           tqc.defects[defect] = (tqc.defects[defect] || 0) + perType;
           defectMap[defect] = (defectMap[defect] || 0) + perType;
@@ -135,10 +135,12 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
     buildingMap[building].totalReject += rejectQty;
     if (row['Error'] && rejectQty > 0) {
       const defectList = parseDefectTypes(row['Error']);
-      defectList.forEach((defect) => {
-        buildingMap[building].defects[defect] =
-          (buildingMap[building].defects[defect] || 0) + rejectQty / defectList.length;
-      });
+      if (defectList.length > 0) {
+        defectList.forEach((defect) => {
+          buildingMap[building].defects[defect] =
+            (buildingMap[building].defects[defect] || 0) + rejectQty / defectList.length;
+        });
+      }
     }
 
     // Model
@@ -150,10 +152,12 @@ export function processRawData(rows: FivePrsRawRow[]): ProcessedData {
     modelMap[model].totalReject += rejectQty;
     if (row['Error'] && rejectQty > 0) {
       const modelDefectList = parseDefectTypes(row['Error']);
-      modelDefectList.forEach((defect) => {
-        modelMap[model].defects[defect] =
-          (modelMap[model].defects[defect] || 0) + rejectQty / modelDefectList.length;
-      });
+      if (modelDefectList.length > 0) {
+        modelDefectList.forEach((defect) => {
+          modelMap[model].defects[defect] =
+            (modelMap[model].defects[defect] || 0) + rejectQty / modelDefectList.length;
+        });
+      }
     }
 
     // PO

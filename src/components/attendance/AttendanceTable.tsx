@@ -55,6 +55,7 @@ export function AttendanceTable({
                 <Checkbox
                   checked={selectedEmployees.size === attendees.length && attendees.length > 0}
                   onCheckedChange={onSelectAll}
+                  aria-label={t('attendance.selectAll')}
                 />
               </TableHead>
               <TableHead>{t('employee.id')}</TableHead>
@@ -74,6 +75,7 @@ export function AttendanceTable({
                     onCheckedChange={(checked) =>
                       onSelectEmployee(employee.employee_id, checked as boolean)
                     }
+                    aria-label={t('attendance.selectEmployee', { name: employee.employee_name })}
                   />
                 </TableCell>
                 <TableCell className="font-mono">{employee.employee_id}</TableCell>

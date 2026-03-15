@@ -30,10 +30,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCAPAStore } from '@/stores/capaStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
-  CAPA_TYPE_LABELS,
-  CAPA_SEVERITY_LABELS,
-  CAPA_PRIORITY_LABELS,
-  CAPA_SOURCE_LABELS,
   type CAPAType,
   type CAPASeverity,
   type CAPAPriority,
@@ -285,9 +281,9 @@ export default function CAPAForm() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CAPA_TYPE_LABELS).map(([value, label]) => (
+                    {(['corrective', 'preventive'] as CAPAType[]).map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {t(`capa.typeLabels.${value}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -311,9 +307,9 @@ export default function CAPAForm() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CAPA_SOURCE_LABELS).map(([value, label]) => (
+                    {(['audit', 'customer', 'internal', 'supplier', 'process', 'training'] as CAPASource[]).map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {t(`capa.sourceLabels.${value}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -339,9 +335,9 @@ export default function CAPAForm() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CAPA_SEVERITY_LABELS).map(([value, label]) => (
+                    {(['critical', 'major', 'minor'] as CAPASeverity[]).map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {t(`capa.severityLabels.${value}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -363,9 +359,9 @@ export default function CAPAForm() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CAPA_PRIORITY_LABELS).map(([value, label]) => (
+                    {(['high', 'medium', 'low'] as CAPAPriority[]).map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {t(`capa.priorityLabels.${value}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>

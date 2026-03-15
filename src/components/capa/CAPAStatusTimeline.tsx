@@ -16,7 +16,6 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  CAPA_STATUS_LABELS,
   CAPA_STATUS_ORDER,
   type CAPAStatus,
 } from '@/types/capa';
@@ -50,6 +49,7 @@ interface WorkflowStepsProps {
 }
 
 export function WorkflowSteps({ currentCAPA }: WorkflowStepsProps) {
+  const { t } = useTranslation();
   const currentStageIndex = CAPA_STATUS_ORDER.indexOf(currentCAPA.status);
   const filteredStatuses = CAPA_STATUS_ORDER.filter(s => s !== 'rejected');
 
@@ -84,7 +84,7 @@ export function WorkflowSteps({ currentCAPA }: WorkflowStepsProps) {
                       isCurrent ? 'font-medium' : 'text-muted-foreground'
                     }`}
                   >
-                    {CAPA_STATUS_LABELS[status]}
+                    {t(`capa.statusLabels.${status}`)}
                   </span>
                 </div>
                 {index < filteredStatuses.length - 1 && (

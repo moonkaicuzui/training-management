@@ -5,6 +5,7 @@ import { Settings, MailOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Notification } from '@/types/notification';
 import * as api from '@/services/api';
+import { useAuthStore } from '@/stores/authStore';
 import {
   NotificationStatsCards,
   NotificationFilters,
@@ -16,6 +17,7 @@ import type { NotificationSettings } from '@/components/notifications';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export default function NotificationsPage() {
 
   const loadSettings = useCallback(async () => {
     try {
-      const savedSettings = await api.getNotificationSettings('current-user');
+      const savedSettings = await api.getNotificationSettings(user?.id || user?.email || '');
       if (savedSettings) {
         setSettings(savedSettings);
       }
@@ -96,7 +98,7 @@ export default function NotificationsPage() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await api.markAllNotificationsAsRead('current-user');
+      await api.markAllNotificationsAsRead(user?.id || user?.email || '');
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch {
       loadData();
@@ -157,7 +159,7 @@ export default function NotificationsPage() {
 
   const handleSaveSettings = async () => {
     try {
-      await api.updateNotificationSettings('current-user', settings);
+      await api.updateNotificationSettings(user?.id || user?.email || '', settings);
     } catch {
       // 설정 저장 실패 무시
     }

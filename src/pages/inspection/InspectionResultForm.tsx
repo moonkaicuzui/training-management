@@ -307,7 +307,7 @@ export default function InspectionResultForm() {
               )}
             </div>
             <div>
-              <Label>Enrollment ID ({t('common.optional')})</Label>
+              <Label>{t('inspection.result.enrollmentId')} ({t('common.optional')})</Label>
               <Input
                 value={enrollmentId}
                 onChange={(e) => setEnrollmentId(e.target.value)}

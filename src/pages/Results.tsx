@@ -20,6 +20,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
 import type { ResultInput } from '@/types';
@@ -48,6 +49,7 @@ export default function Results() {
     updateResult: state.updateResult,
   })));
   const addToast = useUIStore((s) => s.addToast);
+  const user = useAuthStore((state) => state.user);
   const { exporting, exportExcel, exportPDF } = useExport();
 
   const [selectedSession, setSelectedSession] = useState<string>('');
@@ -179,7 +181,7 @@ export default function Results() {
       training_date: session.session_date,
       score: entry.score,
       result: entry.result,
-      evaluated_by: 'admin',
+      evaluated_by: user?.email || user?.name || 'unknown',
       remarks: entry.remarks,
     }));
 

@@ -49,7 +49,7 @@ const bottomNavItems: NavItem[] = [
 export const BottomNav = memo(function BottomNav() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { setSidebarOpen } = useUIStore();
+  const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
 
   // Check if current path matches any main nav item
   const isOnMainPage = bottomNavItems.some(item =>
@@ -61,7 +61,7 @@ export const BottomNav = memo(function BottomNav() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t safe-area-bottom"
       role="navigation"
-      aria-label="Main navigation"
+      aria-label={t('common.aria.mainNavigation')}
     >
       <div className="grid grid-cols-5 h-16">
         {bottomNavItems.map((item) => {

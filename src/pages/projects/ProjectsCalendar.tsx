@@ -13,6 +13,16 @@ import { addHours } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Calendar as CalendarIcon,
   Plus,
   AlertTriangle,
@@ -66,6 +76,8 @@ export default function ProjectsCalendar() {
   // Legend filter state
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
   const [showLegend, setShowLegend] = useState(true);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // 인라인 카테고리 생성 상태
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
@@ -217,13 +229,20 @@ export default function ProjectsCalendar() {
   }, [formData, selectedEvent, updateEvent, createEvent, user]);
 
   // 이벤트 삭제
-  const handleDelete = useCallback(async () => {
-    if (selectedEvent && confirm(t('projects.calendar.deleteConfirm'))) {
+  const handleDelete = useCallback(() => {
+    if (selectedEvent) {
+      setShowDeleteConfirm(true);
+    }
+  }, [selectedEvent]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (selectedEvent) {
       await deleteEvent(selectedEvent.id);
       setIsDialogOpen(false);
       setSelectedEvent(null);
     }
-  }, [selectedEvent, deleteEvent, t]);
+    setShowDeleteConfirm(false);
+  }, [selectedEvent, deleteEvent]);
 
   // 현재 선택된 카테고리 (다이얼로그용)
   const selectedCategory = useMemo(
@@ -315,6 +334,27 @@ export default function ProjectsCalendar() {
         onNewCategoryColorChange={setNewCategoryColor}
         onCreateCategory={handleCreateCategory}
       />
+
+      {/* 이벤트 삭제 확인 다이얼로그 */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('projects.calendar.deleteConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

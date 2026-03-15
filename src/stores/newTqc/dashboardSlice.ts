@@ -2,7 +2,7 @@ import * as api from '@/services/api';
 import { fetchActiveType3Employees } from '@/services/aqlService';
 import type { StoreSet, StoreGet } from './types';
 
-export const createDashboardActions = (set: StoreSet, get: StoreGet) => ({
+export const createDashboardActions = (set: StoreSet, _get: StoreGet) => ({
   fetchDashboardStats: async () => {
     set(state => ({
       loading: { ...state.loading, dashboard: true },
@@ -11,13 +11,13 @@ export const createDashboardActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const dashboardStats = await api.getNewTQCDashboardStats();
-      set({ dashboardStats, loading: { ...get().loading, dashboard: false } });
+      set(state => ({ dashboardStats, loading: { ...state.loading, dashboard: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch dashboard stats';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, dashboard: false },
-      });
+        loading: { ...state.loading, dashboard: false },
+      }));
     }
   },
 
@@ -29,13 +29,13 @@ export const createDashboardActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const employees = await fetchActiveType3Employees();
-      set({ hrType3Employees: employees, loading: { ...get().loading, hrEmployees: false } });
+      set(state => ({ hrType3Employees: employees, loading: { ...state.loading, hrEmployees: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch HR TYPE-3 employees';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, hrEmployees: false },
-      });
+        loading: { ...state.loading, hrEmployees: false },
+      }));
     }
   },
 });

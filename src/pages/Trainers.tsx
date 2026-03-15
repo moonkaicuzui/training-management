@@ -6,6 +6,16 @@ import { Users, BarChart3, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { TrainingSession, TrainingResultRecord } from '@/types';
 import TrainerAnalytics from '@/components/training/TrainerAnalytics';
 import {
@@ -26,6 +36,7 @@ export default function TrainersPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<TrainerWithStats | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TrainerWithStats | null>(null);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [results, setResults] = useState<TrainingResultRecord[]>([]);
 
@@ -90,15 +101,21 @@ export default function TrainersPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (trainer: TrainerWithStats) => {
-    if (!window.confirm(t('trainers.confirmDelete', { name: trainer.trainer_name }))) return;
+  const handleDelete = (trainer: TrainerWithStats) => {
+    setDeleteTarget(trainer);
+  };
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteTrainer(trainer.trainer_id);
+      await api.deleteTrainer(deleteTarget.trainer_id);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete trainer');
+    } finally {
+      setDeleteTarget(null);
     }
-  };
+  }, [deleteTarget, loadData]);
 
   return (
     <div className="space-y-6">
@@ -191,6 +208,27 @@ export default function TrainersPage() {
         onSaved={loadData}
         trainer={editingTrainer}
       />
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('trainers.confirmDelete', { name: deleteTarget?.trainer_name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

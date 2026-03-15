@@ -17,13 +17,13 @@ export const createResignationActions = (set: StoreSet, get: StoreGet) => ({
       const resignations = await api.getNewTQCResignations(
         filters || get().resignationFilters
       );
-      set({ resignations, loading: { ...get().loading, resignations: false } });
+      set(state => ({ resignations, loading: { ...state.loading, resignations: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch resignations';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, resignations: false },
-      });
+        loading: { ...state.loading, resignations: false },
+      }));
     }
   },
 
@@ -35,13 +35,13 @@ export const createResignationActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const resignationAnalysis = await api.getNewTQCResignationAnalysis();
-      set({ resignationAnalysis, loading: { ...get().loading, analysis: false } });
+      set(state => ({ resignationAnalysis, loading: { ...state.loading, analysis: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch resignation analysis';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, analysis: false },
-      });
+        loading: { ...state.loading, analysis: false },
+      }));
     }
   },
 
@@ -69,10 +69,10 @@ export const createResignationActions = (set: StoreSet, get: StoreGet) => ({
       return newResignation;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create resignation';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },

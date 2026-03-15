@@ -27,7 +27,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 import {
-  CAPA_STATUS_LABELS,
   type CAPAStatus,
   type CAPAStageUpdate,
   type CAPA,
@@ -326,14 +325,14 @@ export function AdvanceStageDialog({
         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
           <div className="flex items-center gap-2">
             <Badge className={STATUS_COLORS[currentCAPA.status]}>
-              {CAPA_STATUS_LABELS[currentCAPA.status]}
+              {t(`capa.statusLabels.${currentCAPA.status}`)}
             </Badge>
           </div>
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
           <div className="flex items-center gap-2">
             {nextStatus && (
               <Badge className={STATUS_COLORS[nextStatus]}>
-                {CAPA_STATUS_LABELS[nextStatus]}
+                {t(`capa.statusLabels.${nextStatus}`)}
               </Badge>
             )}
           </div>
@@ -388,6 +387,12 @@ export function RejectDialog({
     try {
       const stageUpdate: CAPAStageUpdate = {
         status: 'rejected',
+        closure: {
+          finalReview: rejectReason,
+          documentationComplete: false,
+          knowledgeShared: false,
+          closedBy: '',
+        },
       };
       await onSubmit(stageUpdate);
       onOpenChange(false);

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,7 +19,11 @@ const styles = {
 };
 
 export function Toaster() {
-  const { toasts, removeToast } = useUIStore();
+  const { t } = useTranslation();
+  const { toasts, removeToast } = useUIStore(useShallow((s) => ({
+    toasts: s.toasts,
+    removeToast: s.removeToast,
+  })));
 
   if (toasts.length === 0) return null;
 
@@ -43,6 +49,7 @@ export function Toaster() {
             <button
               onClick={() => removeToast(toast.id)}
               className="shrink-0 rounded-full p-1 hover:bg-white/20 transition-colors"
+              aria-label={t('common.close')}
             >
               <X className="h-4 w-4" />
             </button>

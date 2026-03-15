@@ -8,6 +8,16 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Zap } from 'lucide-react';
 import { AutomationList, AutomationDialog } from '@/components/projects/automation';
 import type { AutomationFormData } from '@/components/projects/automation/constants';
@@ -44,6 +54,7 @@ export function AutomationSection({
 
   const [isAutomationDialogOpen, setIsAutomationDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const handleToggleAutomation = useCallback((automationId: string) => {
     onToggleAutomation(automationId);
@@ -94,11 +105,16 @@ export function AutomationSection({
     }
   }, [currentProjectId, userId, selectedAutomation, onCreateAutomation, onUpdateAutomation]);
 
-  const handleDeleteAutomation = useCallback(async (automationId: string) => {
-    if (confirm(t('projects.settings.deleteAutomationConfirm'))) {
-      await onDeleteAutomation(automationId);
+  const handleDeleteAutomation = useCallback((automationId: string) => {
+    setDeleteTargetId(automationId);
+  }, []);
+
+  const handleConfirmDeleteAutomation = useCallback(async () => {
+    if (deleteTargetId) {
+      await onDeleteAutomation(deleteTargetId);
+      setDeleteTargetId(null);
     }
-  }, [onDeleteAutomation, t]);
+  }, [deleteTargetId, onDeleteAutomation]);
 
   const handleDuplicateAutomation = useCallback(async (automation: Automation) => {
     if (!currentProjectId) return;
@@ -125,7 +141,6 @@ export function AutomationSection({
 
     onUpdateAutomation(automation.id, {
       runCount: (automation.runCount || 0) + 1,
-      lastRunAt: new Date(),
     });
   }, [onUpdateAutomation, toast, t]);
 
@@ -171,6 +186,27 @@ export function AutomationSection({
           )}
         </CardContent>
       </Card>
+
+      {/* 자동화 삭제 확인 다이얼로그 */}
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('projects.settings.deleteAutomationConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteAutomation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 자동화 추가/수정 다이얼로그 */}
       <AutomationDialog

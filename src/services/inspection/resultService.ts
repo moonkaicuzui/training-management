@@ -51,7 +51,7 @@ export const createInspectionResult = async (
 ): Promise<{ resultId: string; inspectionId: string; matchRate: number }> => {
   try {
     const matchedCount = input.pairs.filter((p) => p.is_match).length;
-    const matchRate = Math.round((matchedCount / input.total_pairs) * 100);
+    const matchRate = input.total_pairs > 0 ? Math.round((matchedCount / input.total_pairs) * 100) : 0;
     const result: 'PASS' | 'FAIL' = matchRate >= 80 ? 'PASS' : 'FAIL';
     const grade = calculateInspectionGrade(matchRate);
 

@@ -131,9 +131,9 @@ export default function DataSync() {
     const time = lastSyncTime[key];
     if (!time) return '-';
     const diff = Math.round((Date.now() - time.getTime()) / 1000);
-    if (diff < 60) return `${diff}${t('sync.secondsAgo', 's ago')}`;
+    if (diff < 60) return `${diff}${t('sync.secondsAgo')}`;
     const mins = Math.round(diff / 60);
-    return `${mins}${t('sync.minutesAgo', 'm ago')}`;
+    return `${mins}${t('sync.minutesAgo')}`;
   };
 
   return (

@@ -16,6 +16,9 @@ import {
   query,
   where,
   orderBy,
+  serverTimestamp,
+  increment,
+  arrayUnion,
 } from '@/services/firebase';
 
 const COLLECTION = 'capa_root_cause_kb';
@@ -66,8 +69,8 @@ export async function createKBEntry(
   const now = new Date().toISOString();
   const docRef = await addDoc(collection(db, COLLECTION), {
     ...data,
-    created_at: now,
-    updated_at: now,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
   });
   return { kb_id: docRef.id, ...data, created_at: now, updated_at: now };
 }
@@ -81,9 +84,9 @@ export async function adoptSuggestion(kbId: string): Promise<void> {
   const newConfidence = Math.round((newAdoption / total) * 100);
 
   await updateDoc(doc(db, COLLECTION, kbId), {
-    adoption_count: newAdoption,
+    adoption_count: increment(1),
     confidence_score: newConfidence,
-    updated_at: new Date().toISOString(),
+    updated_at: serverTimestamp(),
   });
 }
 
@@ -96,19 +99,15 @@ export async function rejectSuggestion(kbId: string): Promise<void> {
   const newConfidence = Math.round((entry.adoption_count / total) * 100);
 
   await updateDoc(doc(db, COLLECTION, kbId), {
-    rejection_count: newRejection,
+    rejection_count: increment(1),
     confidence_score: newConfidence,
-    updated_at: new Date().toISOString(),
+    updated_at: serverTimestamp(),
   });
 }
 
 export async function addRelatedCAPA(kbId: string, capaId: string): Promise<void> {
-  const entry = await getKBEntry(kbId);
-  if (!entry) return;
-
-  const relatedIds = [...(entry.related_capa_ids || []), capaId];
   await updateDoc(doc(db, COLLECTION, kbId), {
-    related_capa_ids: relatedIds,
-    updated_at: new Date().toISOString(),
+    related_capa_ids: arrayUnion(capaId),
+    updated_at: serverTimestamp(),
   });
 }

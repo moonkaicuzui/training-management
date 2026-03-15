@@ -299,7 +299,7 @@ export const revokeCertificate = async (
     const docRef = doc(db, CERTIFICATES_COLLECTION, certificateId);
     await updateDoc(docRef, {
       status: 'REVOKED',
-      revoked_at: new Date().toISOString(),
+      revoked_at: serverTimestamp(),
       revoked_by: revokedBy,
       revoke_reason: reason,
     });

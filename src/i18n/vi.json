@@ -19,13 +19,14 @@
     "export": "Xuất Excel",
     "download": "Tải xuống",
     "viewAll": "Xem tất cả",
+    "skipToMain": "Chuyển đến nội dung chính",
     "detail": "Chi tiết",
     "program": "Chương trình",
     "failDate": "Ngày không đạt",
     "score": "Điểm",
     "retry": "Thử lại",
     "tbd": "Chưa xác định",
-    "count": "",
+    "count": "trường hợp",
     "select": "Chọn",
     "name": "Tên",
     "saving": "Đang lưu...",
@@ -48,6 +49,10 @@
     "inProgress": "Đang thực hiện",
     "pending": "Chờ xử lý",
     "creating": "Đang tạo...",
+    "unknown": "Không xác định",
+    "comingSoon": "Sắp ra mắt",
+    "confirmDeleteTitle": "Xác nhận xóa",
+    "confirmDeleteDescription": "Bạn có chắc muốn xóa mục này? Hành động này không thể hoàn tác.",
     "aria": {
       "dataTable": "Bảng dữ liệu",
       "loading": "Đang tải nội dung",
@@ -58,6 +63,7 @@
       "searchInput": "Nhập từ khóa tìm kiếm",
       "sidebar": "Điều hướng thanh bên",
       "mainNav": "Điều hướng chính",
+      "mainNavigation": "Điều hướng chính",
       "closeSidebar": "Đóng thanh bên",
       "toggleSection": "Chuyển đổi phần {{section}}",
       "headerBanner": "Tiêu đề trang",
@@ -468,6 +474,8 @@
     "syncDaysAgo": "{{count}} ngày trước",
     "syncTooltipTitle": "Đồng bộ Google Sheets",
     "syncLastSync": "Lần đồng bộ cuối",
+    "syncSheetCount": "Sheet: {{count}}",
+    "syncFirestoreCount": "Firestore: {{count}}",
     "emptyTitle": "Chưa có nhân viên nào",
     "emptyDescription": "Thêm nhân viên hoặc nhập từ file CSV"
   },
@@ -913,7 +921,9 @@
     "addSuccessDesc": "Học viên đã được thêm vào buổi học.",
     "absentWithReason": "Vắng (có lý do)",
     "absenceReason": "Lý do vắng",
-    "reasonPlaceholder": "Nhập lý do vắng..."
+    "reasonPlaceholder": "Nhập lý do vắng...",
+    "selectAll": "Chọn tất cả",
+    "selectEmployee": "Chọn {{name}}"
   },
   "evaluation": {
     "requiredFieldsError": "Vui lòng chọn chương trình và loại đánh giá.",
@@ -1869,6 +1879,7 @@
       "week": "Tuần",
       "startDate": "Ngày bắt đầu",
       "progress": "Tiến độ",
+      "colorBlind": "Mù màu",
       "weekUnit": "T",
       "processResignation": "Xử lý nghỉ việc",
       "loadErrorDesc": "Không thể tải danh sách học viên.",
@@ -2303,6 +2314,19 @@
       "critical": "Nghiêm trọng",
       "major": "Lớn",
       "minor": "Nhỏ"
+    },
+    "priorityLabels": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "sourceLabels": {
+      "audit": "Kiểm toán",
+      "customer": "Khiếu nại khách hàng",
+      "internal": "Phát hiện nội bộ",
+      "supplier": "Nhà cung cấp",
+      "process": "Sự cố quy trình",
+      "training": "Liên quan đào tạo"
     },
     "typeLabels": {
       "corrective": "Khắc phục",
@@ -3368,6 +3392,7 @@
       "submitSuccess": "Kết quả kiểm tra đã được lưu thành công",
       "submitError": "Lỗi khi lưu kết quả",
       "confirmSubmit": "Gửi kết quả này?",
+      "enrollmentId": "Mã đăng ký",
       "notes": "Ghi chú",
       "cartonCount": "Số thùng",
       "totalPairs": "Tổng số đôi",
@@ -3756,6 +3781,15 @@
       "createMessageFailed": "Không thể tạo tin nhắn.",
       "resolveMessageFailed": "Không thể giải quyết tin nhắn."
     },
+    "capa": {
+      "listFetchFailed": "Không thể tải danh sách CAPA.",
+      "notFound": "Không tìm thấy CAPA.",
+      "fetchFailed": "Không thể tải CAPA.",
+      "createFailed": "Không thể tạo CAPA.",
+      "updateFailed": "Không thể cập nhật CAPA.",
+      "stageUpdateFailed": "Không thể cập nhật giai đoạn CAPA.",
+      "dashboardFetchFailed": "Không thể tải thống kê bảng điều khiển CAPA."
+    },
     "metalDetector": {
       "fetchInspectionsFailed": "Không thể tải dữ liệu kiểm tra.",
       "createInspectionFailed": "Không thể đăng ký kiểm tra.",
@@ -3815,7 +3849,7 @@
     "month": "Tháng",
     "detectChanges": "Phát hiện thay đổi",
     "runSync": "Chạy đồng bộ",
-    "count": "",
+    "count": "người",
     "months": {
       "january": "Tháng 1",
       "february": "Tháng 2",

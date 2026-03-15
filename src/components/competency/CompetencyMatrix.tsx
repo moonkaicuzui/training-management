@@ -91,7 +91,7 @@ export function CompetencyMatrix({
         competency_id: levelDialogData.competencyId,
         current_level: newLevel,
         target_level: 'COMPETENT',
-        last_assessed_at: new Date().toISOString(),
+        last_assessed_at: '', // serverTimestamp() 로 서비스 레이어에서 덮어쓰기
         assessed_by: 'admin',
         evidence: [],
       });

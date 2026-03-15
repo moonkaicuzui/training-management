@@ -14,6 +14,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -45,6 +55,7 @@ export function TeamSettingsDialog({
   const [editingTeam, setEditingTeam] = useState<NewTQCTeam | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<NewTQCTeam | null>(null);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -110,11 +121,7 @@ export function TeamSettingsDialog({
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (confirm(t('newTqc.settings.confirmDelete', { name: team.team_name }))) {
-                                onDeleteTeam(team.team_id);
-                              }
-                            }}
+                            onClick={() => setDeleteTarget(team)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -143,6 +150,32 @@ export function TeamSettingsDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('newTqc.settings.confirmDelete', { name: deleteTarget?.team_name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) {
+                  onDeleteTeam(deleteTarget.team_id);
+                  setDeleteTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Team Form Dialog */}
       <TeamFormDialog

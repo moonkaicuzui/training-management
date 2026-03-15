@@ -162,11 +162,7 @@ export default function Programs() {
       if (editingProgram) {
         await updateProgram(editingProgram.program_code, programPayload);
       } else {
-        await createProgram({
-          ...programPayload,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as TrainingProgram);
+        await createProgram(programPayload as TrainingProgram);
       }
 
       addToast({ type: 'success', title: t('messages.saveSuccess') });

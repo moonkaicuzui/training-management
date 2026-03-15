@@ -2,7 +2,7 @@ import type { NewTQCTeamInput, NewTQCTeamUpdate } from '@/types';
 import * as api from '@/services/api';
 import type { StoreSet, StoreGet } from './types';
 
-export const createTeamActions = (set: StoreSet, get: StoreGet) => ({
+export const createTeamActions = (set: StoreSet, _get: StoreGet) => ({
   fetchTeams: async (includeInactive = false) => {
     set(state => ({
       loading: { ...state.loading, teams: true },
@@ -11,13 +11,13 @@ export const createTeamActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const teams = await api.getNewTQCTeams(includeInactive);
-      set({ teams, loading: { ...get().loading, teams: false } });
+      set(state => ({ teams, loading: { ...state.loading, teams: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch teams';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, teams: false },
-      });
+        loading: { ...state.loading, teams: false },
+      }));
     }
   },
 
@@ -36,10 +36,10 @@ export const createTeamActions = (set: StoreSet, get: StoreGet) => ({
       return newTeam;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create team';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -62,10 +62,10 @@ export const createTeamActions = (set: StoreSet, get: StoreGet) => ({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update team';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -88,10 +88,10 @@ export const createTeamActions = (set: StoreSet, get: StoreGet) => ({
       }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to deactivate team';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },

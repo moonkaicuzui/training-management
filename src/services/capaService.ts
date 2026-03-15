@@ -187,10 +187,9 @@ function convertCAPAFromFirestore(docSnap: { id: string; data: () => Record<stri
 
 function generateCAPANumber(): string {
   const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, '0');
-  return `CAPA-${year}-${random}`;
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 6);
+  return `CAPA-${year}-${timestamp}-${random}`;
 }
 
 // ============================================================

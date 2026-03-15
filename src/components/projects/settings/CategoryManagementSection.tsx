@@ -20,6 +20,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -49,6 +59,7 @@ export function CategoryManagementSection({
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     color: CATEGORY_COLORS[0],
@@ -95,9 +106,14 @@ export function CategoryManagementSection({
     }
   };
 
-  const handleDelete = async (categoryId: string) => {
-    if (confirm(t('projects.settings.deleteCategoryConfirm'))) {
-      await onDeleteCategory(categoryId);
+  const handleDelete = (categoryId: string) => {
+    setDeleteTargetId(categoryId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteTargetId) {
+      await onDeleteCategory(deleteTargetId);
+      setDeleteTargetId(null);
     }
   };
 
@@ -169,6 +185,27 @@ export function CategoryManagementSection({
           )}
         </CardContent>
       </Card>
+
+      {/* 카테고리 삭제 확인 다이얼로그 */}
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('projects.settings.deleteCategoryConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 카테고리 추가/수정 다이얼로그 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

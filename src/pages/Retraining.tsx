@@ -118,7 +118,7 @@ export default function Retraining() {
             {t('retraining.pageDescription')}
           </p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" disabled title={t('common.comingSoon')}>
           <Download className="h-4 w-4 mr-2" />
           {t('common.export')}
         </Button>

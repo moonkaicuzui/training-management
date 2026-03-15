@@ -18,13 +18,13 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const trainees = await api.getNewTQCTrainees(filters || get().traineeFilters);
-      set({ trainees, loading: { ...get().loading, trainees: false } });
+      set(state => ({ trainees, loading: { ...state.loading, trainees: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch trainees';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, trainees: false },
-      });
+        loading: { ...state.loading, trainees: false },
+      }));
     }
   },
 
@@ -36,16 +36,16 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const trainee = await api.getNewTQCTraineeWithDetails(traineeId);
-      set({
+      set(state => ({
         selectedTrainee: trainee,
-        loading: { ...get().loading, traineeDetail: false },
-      });
+        loading: { ...state.loading, traineeDetail: false },
+      }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch trainee detail';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, traineeDetail: false },
-      });
+        loading: { ...state.loading, traineeDetail: false },
+      }));
     }
   },
 
@@ -68,10 +68,10 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
       return newTrainee;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create trainee';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -98,10 +98,10 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update trainee';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -145,10 +145,10 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
       return newTest;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create color blind test';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -187,10 +187,10 @@ export const createTraineeActions = (set: StoreSet, get: StoreGet) => ({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update training stage';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },

@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import { TaskDetailDialog } from '@/components/projects/TaskDetailDialog';
 
 export default function ProjectsTasks() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const STATUS_LABELS: Record<TaskStatus, string> = {
     todo: t('projects.status.planned'),
@@ -353,7 +355,7 @@ export default function ProjectsTasks() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.href = '/projects/calendar'}
+                    onClick={() => navigate('/projects/calendar')}
                   >
                     <Calendar className="h-4 w-4 mr-2" />
                     {t('projects.calendar.title')}

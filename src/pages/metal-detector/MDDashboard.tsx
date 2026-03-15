@@ -23,6 +23,7 @@ import { LazyBarChart, LazyLineChart } from '@/components/charts/LazyCharts';
 import MDEmailSettings from '@/components/metal-detector/MDEmailSettings';
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { FactoryCode, ImprovementStatus } from '@/types/metalDetector';
 import { getCurrentHRSummary } from '@/services/hrIntegrationService';
 import type { HRSummary } from '@/services/hrIntegrationService';
@@ -44,6 +45,7 @@ const IMPROVEMENT_CONFIG: Record<ImprovementStatus, { color: string; icon: typeo
 
 export default function MDDashboard() {
   const { t } = useTranslation();
+  const addToast = useUIStore((s) => s.addToast);
   const {
     weeklyComparison,
     repeatedIssues,
@@ -123,7 +125,7 @@ export default function MDDashboard() {
             size="sm"
             onClick={() => {
               // Send report handler - 향후 EMAIL 에이전트와 연동
-              window.alert(t('metalDetector.email.sendSuccess'));
+              addToast({ type: 'success', title: t('metalDetector.email.sendSuccess') });
             }}
           >
             <Mail className="h-4 w-4 mr-1" />

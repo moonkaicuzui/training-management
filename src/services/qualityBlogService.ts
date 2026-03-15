@@ -17,6 +17,7 @@ import {
   limit,
   serverTimestamp,
   Timestamp,
+  increment,
 } from '@/services/firebase';
 import { storage } from '@/services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -193,11 +194,7 @@ export const deletePost = async (id: string): Promise<void> => {
 export const incrementViewCount = async (id: string): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTION, id);
-    const snapshot = await getDoc(docRef);
-    if (snapshot.exists()) {
-      const currentCount = (snapshot.data()?.viewCount as number) || 0;
-      await updateDoc(docRef, { viewCount: currentCount + 1 });
-    }
+    await updateDoc(docRef, { viewCount: increment(1) });
   } catch (error) {
     logger.error('[qualityBlogService] incrementViewCount failed:', error);
     throw error;

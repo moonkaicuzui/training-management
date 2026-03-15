@@ -28,7 +28,7 @@ interface SyncStatusData {
 
 export function EmployeeSyncStatus() {
   const { t } = useTranslation();
-  const { addToast } = useUIStore();
+  const addToast = useUIStore((s) => s.addToast);
   const [syncStatus, setSyncStatus] = useState<SyncStatusData | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -144,7 +144,7 @@ export function EmployeeSyncStatus() {
             )}
             {syncStatus?.total_sheet_employees != null && (
               <p className="text-xs">
-                Sheet: {syncStatus.total_sheet_employees} | Firestore: {syncStatus.total_firestore_employees}
+                {t('employee.syncSheetCount', { count: syncStatus.total_sheet_employees })} | {t('employee.syncFirestoreCount', { count: syncStatus.total_firestore_employees })}
               </p>
             )}
           </TooltipContent>

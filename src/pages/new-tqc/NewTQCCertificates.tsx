@@ -54,12 +54,10 @@ export default function NewTQCCertificates() {
     try {
       await updateTrainee({
         trainee_id: traineeId,
+        certificate_issued: true,
+        certificate_date: new Date().toISOString().split('T')[0],
       });
-      const trainee = trainees.find(tr => tr.trainee_id === traineeId);
-      if (trainee) {
-        trainee.certificate_issued = true;
-        trainee.certificate_date = new Date().toISOString().split('T')[0];
-      }
+      // updateTrainee가 스토어를 자동 갱신하므로 직접 변경 불필요
       addToast({
         type: 'success',
         title: t('messages.saveSuccess'),
@@ -74,8 +72,20 @@ export default function NewTQCCertificates() {
 
   const handleIssueAll = async () => {
     const notIssued = eligibleTrainees.filter(tr => !tr.certificate_issued);
-    for (const trainee of notIssued) {
-      await handleIssueCertificate(trainee.trainee_id);
+    const results = await Promise.allSettled(
+      notIssued.map(trainee => updateTrainee({
+        trainee_id: trainee.trainee_id,
+        certificate_issued: true,
+        certificate_date: new Date().toISOString().split('T')[0],
+      }))
+    );
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    const failCount = results.filter(r => r.status === 'rejected').length;
+    if (successCount > 0) {
+      addToast({ type: 'success', title: t('messages.saveSuccess'), description: `${successCount}/${notIssued.length}` });
+    }
+    if (failCount > 0) {
+      addToast({ type: 'error', title: t('messages.saveError'), description: `${failCount} failed` });
     }
   };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -10,6 +10,16 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Card,
   CardContent,
@@ -36,6 +46,7 @@ import {
   useNewTQCActions,
 } from '@/stores/newTqcStore';
 import { NEW_TQC_TRAINERS, DEFAULT_TRAINING_STAGES } from '@/types/newTqc';
+import type { NewTQCTeam } from '@/types/newTqc';
 import { format } from 'date-fns';
 
 export default function NewTQCSettings() {
@@ -47,6 +58,7 @@ export default function NewTQCSettings() {
   const { fetchTeams, createTeam, updateTeam, deleteTeam } = useNewTQCActions();
 
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<NewTQCTeam | null>(null);
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -79,6 +91,12 @@ export default function NewTQCSettings() {
       });
     }
   };
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    await deleteTeam(deleteTarget.team_id);
+    setDeleteTarget(null);
+  }, [deleteTarget, deleteTeam]);
 
   if (loading.teams && teams.length === 0) {
     return <PageLoading />;
@@ -181,11 +199,7 @@ export default function NewTQCSettings() {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (confirm(t('newTqc.settings.confirmDelete', { name: team.team_name }))) {
-                                deleteTeam(team.team_id);
-                              }
-                            }}
+                            onClick={() => setDeleteTarget(team)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -292,6 +306,27 @@ export default function NewTQCSettings() {
           await fetchTeams(true);
         }}
       />
+
+      {/* 팀 삭제 확인 다이얼로그 */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('newTqc.settings.confirmDelete', { name: deleteTarget?.team_name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -12,6 +12,16 @@ import { useTranslation } from 'react-i18next';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Newspaper, Plus, AlertTriangle, Loader2 } from 'lucide-react';
 
 import { useShallow } from 'zustand/react/shallow';
@@ -64,6 +74,7 @@ export default function QualityBlog() {
   const [formData, setFormData] = useState<BlogFormData>(defaultBlogForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<QualityBlogPost | null>(null);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -225,11 +236,16 @@ export default function QualityBlog() {
   };
 
   // 삭제
-  const handleDelete = async (post: QualityBlogPost) => {
-    if (!confirm(t('blog.deleteConfirm', { title: post.title }))) return;
-    await deletePost(post.id);
+  const handleDelete = (post: QualityBlogPost) => {
+    setDeleteTarget(post);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deletePost(deleteTarget.id);
     setIsDetailOpen(false);
     setViewingPost(null);
+    setDeleteTarget(null);
   };
 
   return (
@@ -327,6 +343,27 @@ export default function QualityBlog() {
         hasCoverImage={!!editingPost?.coverImage}
         onSubmit={handleSubmit}
       />
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('blog.deleteConfirm', { title: deleteTarget?.title })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

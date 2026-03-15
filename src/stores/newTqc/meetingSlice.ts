@@ -16,13 +16,13 @@ export const createMeetingActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const meetings = await api.getNewTQCMeetings(filters || get().meetingFilters);
-      set({ meetings, loading: { ...get().loading, meetings: false } });
+      set(state => ({ meetings, loading: { ...state.loading, meetings: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch meetings';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, meetings: false },
-      });
+        loading: { ...state.loading, meetings: false },
+      }));
     }
   },
 
@@ -34,13 +34,13 @@ export const createMeetingActions = (set: StoreSet, get: StoreGet) => ({
 
     try {
       const upcomingMeetings = await api.getNewTQCUpcomingMeetings(days);
-      set({ upcomingMeetings, loading: { ...get().loading, meetings: false } });
+      set(state => ({ upcomingMeetings, loading: { ...state.loading, meetings: false } }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch upcoming meetings';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, meetings: false },
-      });
+        loading: { ...state.loading, meetings: false },
+      }));
     }
   },
 
@@ -63,10 +63,10 @@ export const createMeetingActions = (set: StoreSet, get: StoreGet) => ({
       return newMeeting;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create meeting';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },
@@ -102,10 +102,10 @@ export const createMeetingActions = (set: StoreSet, get: StoreGet) => ({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update meeting';
-      set({
+      set(state => ({
         error: message,
-        loading: { ...get().loading, saving: false },
-      });
+        loading: { ...state.loading, saving: false },
+      }));
       throw error;
     }
   },

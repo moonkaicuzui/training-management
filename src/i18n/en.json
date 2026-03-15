@@ -19,13 +19,14 @@
     "export": "Export Excel",
     "download": "Download",
     "viewAll": "View All",
+    "skipToMain": "Skip to main content",
     "detail": "Detail",
     "program": "Program",
     "failDate": "Fail Date",
     "score": "Score",
     "retry": "Retry",
     "tbd": "TBD",
-    "count": "",
+    "count": "cases",
     "select": "Select",
     "name": "Name",
     "saving": "Saving...",
@@ -48,6 +49,10 @@
     "inProgress": "In Progress",
     "pending": "Pending",
     "creating": "Creating...",
+    "unknown": "Unknown",
+    "comingSoon": "Coming soon",
+    "confirmDeleteTitle": "Confirm Delete",
+    "confirmDeleteDescription": "Are you sure you want to delete this item? This action cannot be undone.",
     "aria": {
       "dataTable": "Data table",
       "loading": "Content is loading",
@@ -58,6 +63,7 @@
       "searchInput": "Enter search term",
       "sidebar": "Sidebar navigation",
       "mainNav": "Main navigation",
+      "mainNavigation": "Main navigation",
       "closeSidebar": "Close sidebar",
       "toggleSection": "Toggle {{section}} section",
       "headerBanner": "Page header",
@@ -468,6 +474,8 @@
     "syncDaysAgo": "{{count}}d ago",
     "syncTooltipTitle": "Google Sheets Sync",
     "syncLastSync": "Last sync",
+    "syncSheetCount": "Sheet: {{count}}",
+    "syncFirestoreCount": "Firestore: {{count}}",
     "emptyTitle": "No employees registered",
     "emptyDescription": "Add employees or import from a CSV file"
   },
@@ -913,7 +921,9 @@
     "addSuccessDesc": "Trainee has been added to the session.",
     "absentWithReason": "Absent (with reason)",
     "absenceReason": "Absence Reason",
-    "reasonPlaceholder": "Enter absence reason..."
+    "reasonPlaceholder": "Enter absence reason...",
+    "selectAll": "Select all",
+    "selectEmployee": "Select {{name}}"
   },
   "evaluation": {
     "requiredFieldsError": "Please select a program and evaluation type.",
@@ -1869,6 +1879,7 @@
       "week": "Week",
       "startDate": "Start Date",
       "progress": "Progress",
+      "colorBlind": "Color Blind",
       "weekUnit": "W",
       "processResignation": "Process Resignation",
       "loadErrorDesc": "Failed to load trainee list.",
@@ -2303,6 +2314,19 @@
       "critical": "Critical",
       "major": "Major",
       "minor": "Minor"
+    },
+    "priorityLabels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "sourceLabels": {
+      "audit": "Audit",
+      "customer": "Customer Complaint",
+      "internal": "Internal Finding",
+      "supplier": "Supplier",
+      "process": "Process Issue",
+      "training": "Training Related"
     },
     "typeLabels": {
       "corrective": "Corrective",
@@ -3368,6 +3392,7 @@
       "submitSuccess": "Inspection result saved successfully",
       "submitError": "Error saving result",
       "confirmSubmit": "Submit this result?",
+      "enrollmentId": "Enrollment ID",
       "notes": "Notes",
       "cartonCount": "Carton Count",
       "totalPairs": "Total Pairs",
@@ -3756,6 +3781,15 @@
       "createMessageFailed": "Failed to create message.",
       "resolveMessageFailed": "Failed to resolve message."
     },
+    "capa": {
+      "listFetchFailed": "Failed to load CAPA list.",
+      "notFound": "CAPA not found.",
+      "fetchFailed": "Failed to load CAPA.",
+      "createFailed": "Failed to create CAPA.",
+      "updateFailed": "Failed to update CAPA.",
+      "stageUpdateFailed": "Failed to update CAPA stage.",
+      "dashboardFetchFailed": "Failed to load CAPA dashboard statistics."
+    },
     "metalDetector": {
       "fetchInspectionsFailed": "Failed to load inspection data.",
       "createInspectionFailed": "Failed to register inspection.",
@@ -3815,7 +3849,7 @@
     "month": "Month",
     "detectChanges": "Detect Changes",
     "runSync": "Run Sync",
-    "count": "",
+    "count": "persons",
     "months": {
       "january": "January",
       "february": "February",

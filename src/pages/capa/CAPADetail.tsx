@@ -27,9 +27,6 @@ import { useCAPAStore } from '@/stores/capaStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import {
-  CAPA_STATUS_LABELS,
-  CAPA_SEVERITY_LABELS,
-  CAPA_TYPE_LABELS,
   CAPA_STATUS_ORDER,
   type CAPAStageUpdate,
 } from '@/types/capa';
@@ -149,10 +146,10 @@ export default function CAPADetail() {
             <div className="flex items-center gap-2 mb-1">
               <Badge variant="outline">{currentCAPA.capaNumber}</Badge>
               <Badge className={SEVERITY_COLORS[currentCAPA.severity]}>
-                {CAPA_SEVERITY_LABELS[currentCAPA.severity]}
+                {t(`capa.severityLabels.${currentCAPA.severity}`)}
               </Badge>
               <Badge variant="secondary">
-                {CAPA_TYPE_LABELS[currentCAPA.type]}
+                {t(`capa.typeLabels.${currentCAPA.type}`)}
               </Badge>
             </div>
             <h1 className="text-2xl font-bold">{currentCAPA.title}</h1>
@@ -168,7 +165,7 @@ export default function CAPADetail() {
           {canAdvance && nextStatus && (
             <Button onClick={() => setAdvanceDialogOpen(true)}>
               <ArrowRight className="h-4 w-4 mr-2" />
-              {t('capa.advanceStage')}: {CAPA_STATUS_LABELS[nextStatus]}
+              {t('capa.advanceStage')}: {t(`capa.statusLabels.${nextStatus}`)}
             </Button>
           )}
           <Button variant="outline" onClick={() => navigate(`/capa/${id}/edit`)}>

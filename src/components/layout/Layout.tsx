@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -12,6 +13,7 @@ const KeyboardShortcutsDialog = lazy(() =>
 );
 
 export default function Layout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -29,7 +31,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-background">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:bg-background focus:text-foreground focus:border focus:rounded-md focus:top-2 focus:left-2">
-        Skip to main content
+        {t('common.skipToMain')}
       </a>
       <Header />
       <div className="flex">

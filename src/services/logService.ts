@@ -14,6 +14,7 @@ import {
   where,
   getDocs,
   Timestamp,
+  serverTimestamp,
 } from '@/services/firebase';
 import type {
   ProgramChangeLog,
@@ -131,6 +132,19 @@ export const logProgramChange = async (
   const logId = `PCL-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
   const changedAt = new Date().toISOString();
 
+  const firestoreData = {
+    log_id: logId,
+    program_code: programCode,
+    action,
+    changed_by: changedBy,
+    before_data: beforeData ? JSON.stringify(beforeData) : null,
+    after_data: afterData ? JSON.stringify(afterData) : null,
+    changed_at: serverTimestamp(),
+  };
+
+  const docRef = doc(db, PROGRAM_CHANGE_LOGS_COLLECTION, logId);
+  await setDoc(docRef, firestoreData);
+
   const logData: ProgramChangeLog = {
     log_id: logId,
     program_code: programCode,
@@ -140,9 +154,6 @@ export const logProgramChange = async (
     after_data: afterData ? JSON.stringify(afterData) : null,
     changed_at: changedAt,
   };
-
-  const docRef = doc(db, PROGRAM_CHANGE_LOGS_COLLECTION, logId);
-  await setDoc(docRef, logData);
 
   return logData;
 };
@@ -197,6 +208,19 @@ export const logResultEdit = async (
   const logId = `REL-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
   const editedAt = new Date().toISOString();
 
+  const firestoreData = {
+    log_id: logId,
+    result_id: resultId,
+    before_data: JSON.stringify(beforeData),
+    after_data: JSON.stringify(afterData),
+    edit_reason: editReason,
+    edited_by: editedBy,
+    edited_at: serverTimestamp(),
+  };
+
+  const docRef = doc(db, RESULT_EDIT_LOGS_COLLECTION, logId);
+  await setDoc(docRef, firestoreData);
+
   const logData: ResultEditLog = {
     log_id: logId,
     result_id: resultId,
@@ -206,9 +230,6 @@ export const logResultEdit = async (
     edited_by: editedBy,
     edited_at: editedAt,
   };
-
-  const docRef = doc(db, RESULT_EDIT_LOGS_COLLECTION, logId);
-  await setDoc(docRef, logData);
 
   return logData;
 };

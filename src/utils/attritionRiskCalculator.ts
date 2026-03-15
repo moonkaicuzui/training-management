@@ -127,13 +127,13 @@ function calculateMeetingAttendance(input: TraineeRiskInput): RiskFactor {
 
   for (const meeting of input.meetings) {
     if (meeting.status === 'MISSED') {
-      if (meeting.meetingType === 'WEEK_1') {
+      if (meeting.meetingType === '1WEEK') {
         score += 10;
         missedMeetings.push('Week-1');
-      } else if (meeting.meetingType === 'MONTH_1') {
+      } else if (meeting.meetingType === '1MONTH') {
         score += 15;
         missedMeetings.push('Month-1');
-      } else if (meeting.meetingType === 'MONTH_3') {
+      } else if (meeting.meetingType === '3MONTH') {
         score += 20;
         missedMeetings.push('Month-3');
       }
