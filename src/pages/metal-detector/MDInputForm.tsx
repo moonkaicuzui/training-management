@@ -454,16 +454,16 @@ export default function MDInputForm() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               {/* Row 1: 구역 + 날짜 */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('metalDetector.factory.label')}</Label>
-                  <div className="grid grid-cols-5 gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {FACTORIES.map((f) => (
                       <Button
                         key={f.code}
                         variant={formData.factory === f.code ? 'default' : 'outline'}
                         size="sm"
-                        className="w-full text-xs px-1"
+                        className="text-xs px-2"
                         onClick={() => { updateField('factory', f.code); updateField('line', ''); setLineSearch(''); }}
                       >
                         {f.label}
@@ -482,7 +482,7 @@ export default function MDInputForm() {
               </div>
 
               {/* Row 2: 라인 + 장비 ID */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>{t('metalDetector.line')}</Label>
                   <div className="relative">
