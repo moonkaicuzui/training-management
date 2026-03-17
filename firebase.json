@@ -20,18 +20,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "redirects": [
-      {
-        "source": "/m/metal-check{,/**}",
-        "destination": "/equipment/metal-detector/input",
-        "type": 301
-      },
-      {
-        "source": "/m/metal-check.html",
-        "destination": "/equipment/metal-detector/input",
-        "type": 301
-      }
-    ],
     "rewrites": [
       {
         "source": "/api/**",
@@ -39,6 +27,10 @@
           "functionId": "api",
           "region": "asia-southeast1"
         }
+      },
+      {
+        "source": "/m/metal-check",
+        "destination": "/m/metal-check.html"
       },
       {
         "source": "**",
@@ -80,6 +72,15 @@
           {
             "key": "Strict-Transport-Security",
             "value": "max-age=31536000; includeSubDomains; preload"
+          }
+        ]
+      },
+      {
+        "source": "/m/**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.google.com https://firestore.googleapis.com wss://*.firebaseio.com; object-src 'none'; base-uri 'self'; upgrade-insecure-requests"
           }
         ]
       },
