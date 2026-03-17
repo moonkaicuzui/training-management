@@ -56,6 +56,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // 새 배포 시 즉시 활성화 (캐시 문제 방지)
+        skipWaiting: true,
+        clientsClaim: true,
         // 캐싱 전략
         runtimeCaching: [
           {
