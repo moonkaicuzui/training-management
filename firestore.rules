@@ -545,5 +545,38 @@ service cloud.firestore {
       allow update: if isAuthenticated() && hasAllowedDomain();
       allow delete: if isAdmin();
     }
+
+    // ========== 트레이너 일일 업무 지시 (trainer_directives) ==========
+    match /trainer_directives/{directiveId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      // Cloud Function에서만 생성, 트레이너/관리자가 상태 업데이트 가능
+      allow create: if false; // Cloud Function only (admin SDK bypasses rules)
+      allow update: if isTrainer()
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'read_at', 'acknowledged_at']);
+      allow delete: if isAdmin();
+    }
+
+    // ========== 트레이너 설정 (trainer_config) ==========
+    match /trainer_config/{configId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow write: if isAdmin();
+    }
+
+    // ========== 교육 효과 추적 (training_effectiveness) ==========
+    match /training_effectiveness/{effectivenessId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if false; // Cloud Function only
+      allow update: if false; // Cloud Function only
+      allow delete: if isAdmin();
+    }
+
+    // ========== 통합 품질 메트릭 (unified_quality_metrics) ==========
+    match /unified_quality_metrics/{metricId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if false; // Cloud Function only
+      allow update: if false; // Cloud Function only
+      allow delete: if isAdmin();
+    }
   }
 }

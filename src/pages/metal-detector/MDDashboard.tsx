@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShieldAlert, AlertTriangle, Activity, Wrench, RefreshCw, TrendingDown, TrendingUp, Minus, Mail, Users } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertTriangle, Activity, Wrench, RefreshCw, TrendingDown, TrendingUp, Minus, Mail, Users, UserCheck } from 'lucide-react';
 import { LazyBarChart, LazyLineChart } from '@/components/charts/LazyCharts';
 import MDEmailSettings from '@/components/metal-detector/MDEmailSettings';
 import { useShallow } from 'zustand/react/shallow';
@@ -50,18 +50,22 @@ export default function MDDashboard() {
     weeklyComparison,
     repeatedIssues,
     weeklyTrend,
+    inspections,
     isLoading,
     fetchWeeklyComparison,
     fetchRepeatedIssues,
     fetchWeeklyTrend,
+    fetchInspections,
   } = useMDInspectionStore(useShallow((s) => ({
     weeklyComparison: s.weeklyComparison,
     repeatedIssues: s.repeatedIssues,
     weeklyTrend: s.weeklyTrend,
+    inspections: s.inspections,
     isLoading: s.isLoading,
     fetchWeeklyComparison: s.fetchWeeklyComparison,
     fetchRepeatedIssues: s.fetchRepeatedIssues,
     fetchWeeklyTrend: s.fetchWeeklyTrend,
+    fetchInspections: s.fetchInspections,
   })));
 
   const currentYear = new Date().getFullYear();
@@ -87,9 +91,44 @@ export default function MDDashboard() {
     fetchWeeklyComparison(selectedYear, selectedWeek);
     fetchRepeatedIssues(selectedYear, selectedWeek);
     fetchWeeklyTrend(selectedYear, 12);
-  }, [selectedYear, selectedWeek, fetchWeeklyComparison, fetchRepeatedIssues, fetchWeeklyTrend]);
+    fetchInspections({ year: selectedYear, weekNumber: selectedWeek });
+  }, [selectedYear, selectedWeek, fetchWeeklyComparison, fetchRepeatedIssues, fetchWeeklyTrend, fetchInspections]);
 
   const comp = weeklyComparison;
+
+  // 검사자별 통계 (해당 주차)
+  const inspectorStats = useMemo(() => {
+    const weekInspections = inspections.filter(
+      (i) => i.year === selectedYear && i.weekNumber === selectedWeek
+    );
+    const statsMap = new Map<string, {
+      inspectorId: string;
+      inspectorName: string;
+      total: number;
+      pass: number;
+      fail: number;
+      passRate: number;
+    }>();
+
+    weekInspections.forEach((i) => {
+      const key = i.inspectorId || i.inspectorName || 'unknown';
+      const existing = statsMap.get(key) || {
+        inspectorId: i.inspectorId || '-',
+        inspectorName: i.inspectorName || '-',
+        total: 0,
+        pass: 0,
+        fail: 0,
+        passRate: 0,
+      };
+      existing.total++;
+      if (i.result === 'PASS') existing.pass++;
+      else existing.fail++;
+      existing.passRate = existing.total > 0 ? (existing.pass / existing.total) * 100 : 0;
+      statsMap.set(key, existing);
+    });
+
+    return Array.from(statsMap.values()).sort((a, b) => b.total - a.total);
+  }, [inspections, selectedYear, selectedWeek]);
 
   // Weekly trend chart data
   const trendChartData = weeklyTrend.map((w) => ({
@@ -385,6 +424,57 @@ export default function MDDashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* ===== INSPECTOR PERFORMANCE ===== */}
+      {inspectorStats.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserCheck className="h-4 w-4" />
+              {t('metalDetector.dashboard.inspectorPerformance')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('metalDetector.input.inspectorId')}</TableHead>
+                  <TableHead>{t('metalDetector.input.inspector')}</TableHead>
+                  <TableHead className="text-center">{t('metalDetector.dashboard.totalInspections')}</TableHead>
+                  <TableHead className="text-center">{t('metalDetector.result.pass')}</TableHead>
+                  <TableHead className="text-center">{t('metalDetector.result.fail')}</TableHead>
+                  <TableHead className="text-center">{t('metalDetector.dashboard.passRate')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inspectorStats.map((stat) => (
+                  <TableRow key={stat.inspectorId}>
+                    <TableCell className="font-mono text-sm">{stat.inspectorId}</TableCell>
+                    <TableCell>{stat.inspectorName}</TableCell>
+                    <TableCell className="text-center font-medium">{stat.total}</TableCell>
+                    <TableCell className="text-center text-green-600">{stat.pass}</TableCell>
+                    <TableCell className="text-center text-red-600">{stat.fail}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant="outline"
+                        className={
+                          stat.passRate === 100
+                            ? 'text-green-600 border-green-200'
+                            : stat.passRate >= 90
+                              ? 'text-blue-600 border-blue-200'
+                              : 'text-red-600 border-red-200'
+                        }
+                      >
+                        {stat.passRate.toFixed(0)}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ===== Charts ===== */}
       <div className="grid gap-6 lg:grid-cols-2">

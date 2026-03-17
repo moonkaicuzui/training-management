@@ -1,9 +1,9 @@
 /**
  * Metal Detector Input Form
- * 두 가지 모드: 빠른 입력 (Quick) + 상세 입력 (Detailed 4-Step Wizard)
+ * 두 가지 모드: 빠른 입력 (Quick) + 상세 입력 (Detailed 3-Step Wizard)
  *
  * 빠른 입력: 한 화면에 모든 필드, 기본값 PASS, 연속 입력 최적화
- * 상세 입력: FAIL 시 상세 사유 입력을 위한 4단계 마법사
+ * 상세 입력: FAIL 시 상세 사유 입력을 위한 3단계 마법사
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -22,10 +22,13 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap, Cli
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useAuthStore } from '@/stores/authStore';
+import { fetchHREmployees } from '@/services/hrIntegrationService';
+import type { HREmployeeRecord } from '@/services/hrIntegrationService';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
+import { logger } from '@/utils/logger';
 
 const FACTORIES: FactoryCode[] = ['A', 'B', 'C', 'D'];
-const STEPS = ['factory', 'info', 'sensitivity', 'result'] as const;
+const STEPS = ['factory', 'info', 'result'] as const;
 const SESSION_KEY = 'md_quick_entry_session';
 
 interface FormData {
@@ -33,11 +36,9 @@ interface FormData {
   line: string;
   machineId: string;
   inspectionDate: string;
+  inspectorId: string;
   inspectorName: string;
   productName: string;
-  fe: string;
-  sus: string;
-  nonFe: string;
   result: InspectionResult | '';
   remarks: string;
   failureType: string;
@@ -65,6 +66,7 @@ function saveSession(data: Partial<FormData>) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       factory: data.factory,
       inspectionDate: data.inspectionDate,
+      inspectorId: data.inspectorId,
       inspectorName: data.inspectorName,
     }));
   } catch { /* ignore */ }
@@ -90,6 +92,10 @@ export default function MDInputForm() {
   const [lastSubmitted, setLastSubmitted] = useState<{ line: string; machineId: string; result: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // HR V2 직원 목록
+  const [hrEmployees, setHrEmployees] = useState<HREmployeeRecord[]>([]);
+  const [hrLoading, setHrLoading] = useState(false);
+
   // 세션 복원
   const session = useMemo(() => loadSession(), []);
 
@@ -98,16 +104,50 @@ export default function MDInputForm() {
     line: '',
     machineId: '',
     inspectionDate: session.inspectionDate || new Date().toISOString().split('T')[0],
+    inspectorId: session.inspectorId || '',
     inspectorName: session.inspectorName || user?.name || '',
     productName: '',
-    fe: '',
-    sus: '',
-    nonFe: '',
     result: 'PASS', // 빠른 입력 기본값: PASS
     remarks: '',
     failureType: '',
     failureDescription: '',
   });
+
+  // HR V2 직원 데이터 로드
+  useEffect(() => {
+    const loadHREmployees = async () => {
+      setHrLoading(true);
+      try {
+        const now = new Date();
+        const monthNames = [
+          'january', 'february', 'march', 'april', 'may', 'june',
+          'july', 'august', 'september', 'october', 'november', 'december',
+        ];
+        const employees = await fetchHREmployees(monthNames[now.getMonth()], now.getFullYear());
+        // 재직 중인 직원만 필터
+        setHrEmployees(employees.filter((e) => e.is_active));
+      } catch (err) {
+        logger.warn('[MDInputForm] HR 직원 데이터 로드 실패:', err);
+      } finally {
+        setHrLoading(false);
+      }
+    };
+    loadHREmployees();
+  }, []);
+
+  // 검사자 검색 필터
+  const [inspectorSearch, setInspectorSearch] = useState('');
+
+  const filteredEmployees = useMemo(() => {
+    if (!inspectorSearch.trim()) return hrEmployees.slice(0, 50); // 초기 50명
+    const query = inspectorSearch.toLowerCase();
+    return hrEmployees.filter(
+      (e) =>
+        e.employee_id.toLowerCase().includes(query) ||
+        e.employee_name.toLowerCase().includes(query) ||
+        e.team.toLowerCase().includes(query)
+    ).slice(0, 50);
+  }, [hrEmployees, inspectorSearch]);
 
   // 최근 장비 ID 목록 (자동완성용)
   const recentMachineIds = useMemo(() => {
@@ -143,11 +183,23 @@ export default function MDInputForm() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  // 검사자 선택 핸들러
+  const handleInspectorSelect = useCallback((employeeId: string) => {
+    const employee = hrEmployees.find((e) => e.employee_id === employeeId);
+    if (employee) {
+      setFormData((prev) => ({
+        ...prev,
+        inspectorId: employee.employee_id,
+        inspectorName: employee.employee_name,
+      }));
+    }
+  }, [hrEmployees]);
+
   // ============ 제출 로직 ============
 
   const canSubmitQuick = () => {
     if (!formData.factory || !formData.line.trim() || !formData.result) return false;
-    if (!formData.fe || !formData.sus || !formData.nonFe) return false;
+    if (!formData.inspectorId) return false;
     if (formData.result === 'FAIL' && (!formData.failureType || !formData.failureDescription.trim())) return false;
     return true;
   };
@@ -164,12 +216,7 @@ export default function MDInputForm() {
         inspectionDate: formData.inspectionDate,
         result: formData.result as InspectionResult,
         inspectorName: formData.inspectorName,
-        inspectorId: user?.id,
-        sensitivity: {
-          fe: parseFloat(formData.fe),
-          sus: parseFloat(formData.sus),
-          nonFe: parseFloat(formData.nonFe),
-        },
+        inspectorId: formData.inspectorId || user?.id,
         productName: formData.productName || undefined,
         remarks: formData.remarks || undefined,
       });
@@ -198,7 +245,7 @@ export default function MDInputForm() {
       setTodayCount((c) => c + 1);
 
       if (mode === 'quick') {
-        // 빠른 입력: 장비별 필드만 초기화, 공장/날짜/검사자/감도 유지
+        // 빠른 입력: 장비별 필드만 초기화, 공장/날짜/검사자 유지
         setFormData((prev) => ({
           ...prev,
           line: '',
@@ -207,7 +254,6 @@ export default function MDInputForm() {
           remarks: '',
           failureType: '',
           failureDescription: '',
-          // 감도는 유지 (같은 장비 유형이면 비슷)
         }));
 
         // 3초 후 성공 메시지 숨기기
@@ -218,9 +264,6 @@ export default function MDInputForm() {
           ...prev,
           line: '',
           machineId: '',
-          fe: '',
-          sus: '',
-          nonFe: '',
           result: '',
           remarks: '',
           failureType: '',
@@ -242,10 +285,8 @@ export default function MDInputForm() {
       case 0:
         return formData.factory !== '' && formData.line.trim() !== '';
       case 1:
-        return formData.inspectionDate !== '' && formData.inspectorName.trim() !== '';
+        return formData.inspectionDate !== '' && formData.inspectorId !== '';
       case 2:
-        return formData.fe !== '' && formData.sus !== '' && formData.nonFe !== '';
-      case 3:
         if (formData.result === '') return false;
         if (formData.result === 'FAIL') {
           return formData.failureType.trim() !== '' && formData.failureDescription.trim() !== '';
@@ -255,6 +296,60 @@ export default function MDInputForm() {
         return false;
     }
   };
+
+  // ============ 검사자 선택 UI ============
+
+  const renderInspectorSelector = (id: string) => (
+    <div className="space-y-2">
+      <Label>{t('metalDetector.input.inspectorId')}</Label>
+      {hrLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {t('common.loading')}
+        </div>
+      ) : hrEmployees.length > 0 ? (
+        <>
+          <Input
+            placeholder={t('metalDetector.input.inspectorSearch')}
+            value={inspectorSearch}
+            onChange={(e) => setInspectorSearch(e.target.value)}
+            className="mb-1"
+          />
+          <Select
+            value={formData.inspectorId}
+            onValueChange={handleInspectorSelect}
+          >
+            <SelectTrigger id={id}>
+              <SelectValue placeholder={t('metalDetector.input.selectInspector')} />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredEmployees.map((emp) => (
+                <SelectItem key={emp.employee_id} value={emp.employee_id}>
+                  {emp.employee_id} - {emp.employee_name} ({emp.team})
+                </SelectItem>
+              ))}
+              {filteredEmployees.length === 0 && (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  {t('common.noResults')}
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+          {formData.inspectorId && (
+            <p className="text-xs text-muted-foreground">
+              {t('metalDetector.input.selectedInspector')}: {formData.inspectorId} - {formData.inspectorName}
+            </p>
+          )}
+        </>
+      ) : (
+        <Input
+          value={formData.inspectorName}
+          onChange={(e) => updateField('inspectorName', e.target.value)}
+          placeholder={t('metalDetector.input.inspectorNameFallback')}
+        />
+      )}
+    </div>
+  );
 
   // ============ 렌더링 ============
 
@@ -333,8 +428,8 @@ export default function MDInputForm() {
                 </div>
               </div>
 
-              {/* Row 2: 라인 + 장비 ID + 검사자 */}
-              <div className="grid grid-cols-3 gap-3">
+              {/* Row 2: 라인 + 장비 ID */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>{t('metalDetector.line')}</Label>
                   <Input
@@ -363,48 +458,10 @@ export default function MDInputForm() {
                     </datalist>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.input.inspector')}</Label>
-                  <Input
-                    value={formData.inspectorName}
-                    onChange={(e) => updateField('inspectorName', e.target.value)}
-                  />
-                </div>
               </div>
 
-              {/* Row 3: 감도 (3개 한 줄) */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.sensitivity.fe')} (mm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.fe}
-                    onChange={(e) => updateField('fe', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.sensitivity.sus')} (mm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.sus}
-                    onChange={(e) => updateField('sus', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.sensitivity.nonFe')} (mm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.nonFe}
-                    onChange={(e) => updateField('nonFe', e.target.value)}
-                  />
-                </div>
-              </div>
+              {/* Row 3: 검사자 ID (HR V2 연동) */}
+              {renderInspectorSelector('quick-inspector')}
 
               {/* Row 4: 결과 (크게) + 제출 */}
               <div className="flex items-end gap-3">
@@ -482,7 +539,7 @@ export default function MDInputForm() {
           </p>
         </TabsContent>
 
-        {/* ===== 상세 입력 모드 (기존 4단계 마법사) ===== */}
+        {/* ===== 상세 입력 모드 (3단계 마법사) ===== */}
         <TabsContent value="detailed" className="space-y-4 mt-4">
           {/* Step Indicator */}
           <div className="flex items-center gap-2">
@@ -540,10 +597,7 @@ export default function MDInputForm() {
                     <Label>{t('metalDetector.input.date')}</Label>
                     <Input type="date" value={formData.inspectionDate} onChange={(e) => updateField('inspectionDate', e.target.value)} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.input.inspector')}</Label>
-                    <Input value={formData.inspectorName} onChange={(e) => updateField('inspectorName', e.target.value)} />
-                  </div>
+                  {renderInspectorSelector('detailed-inspector')}
                   <div className="space-y-2">
                     <Label>{t('metalDetector.input.productName')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
                     <Input value={formData.productName} onChange={(e) => updateField('productName', e.target.value)} />
@@ -551,26 +605,8 @@ export default function MDInputForm() {
                 </>
               )}
 
-              {/* Step 3: Sensitivity */}
+              {/* Step 3: Result */}
               {currentStep === 2 && (
-                <>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.sensitivity.fe')} (mm)</Label>
-                    <Input type="number" step="0.1" min="0" value={formData.fe} onChange={(e) => updateField('fe', e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.sensitivity.sus')} (mm)</Label>
-                    <Input type="number" step="0.1" min="0" value={formData.sus} onChange={(e) => updateField('sus', e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.sensitivity.nonFe')} (mm)</Label>
-                    <Input type="number" step="0.1" min="0" value={formData.nonFe} onChange={(e) => updateField('nonFe', e.target.value)} />
-                  </div>
-                </>
-              )}
-
-              {/* Step 4: Result */}
-              {currentStep === 3 && (
                 <>
                   <div className="space-y-2">
                     <Label>{t('metalDetector.input.resultLabel')}</Label>

@@ -65,7 +65,7 @@ function getISOWeekNumber(date: Date): number {
 
 /** Firestore 문서를 MDInspection으로 변환 */
 function docToInspection(docId: string, data: Record<string, unknown>): MDInspection {
-  const sensitivity = (data.sensitivity as Record<string, number>) || {};
+  const sensitivity = data.sensitivity as Record<string, number> | undefined;
   return {
     id: docId,
     factory: (data.factory as FactoryCode) || 'A',
@@ -77,11 +77,11 @@ function docToInspection(docId: string, data: Record<string, unknown>): MDInspec
     result: (data.result as MDInspection['result']) || 'PASS',
     inspectorName: (data.inspectorName as string) || '',
     inspectorId: (data.inspectorId as string) || undefined,
-    sensitivity: {
+    sensitivity: sensitivity ? {
       fe: sensitivity.fe ?? 0,
       sus: sensitivity.sus ?? 0,
       nonFe: sensitivity.nonFe ?? 0,
-    },
+    } : undefined,
     productName: (data.productName as string) || undefined,
     remarks: (data.remarks as string) || undefined,
     createdAt: convertTimestamp(data.createdAt as Timestamp | string),

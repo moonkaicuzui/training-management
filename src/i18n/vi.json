@@ -161,6 +161,7 @@
       "mdReport": "Báo cáo"
     },
     "inspectorStickers": "Quản lý tem KTV",
+    "trainerDirectives": "Chi thi dao tao hang ngay",
     "executiveReport": "Báo cáo lãnh đạo",
     "qualityBlog": "Blog chất lượng",
     "qaActivityBoard": "Bảng hoạt động QA",
@@ -3488,7 +3489,8 @@
       "failCount": "Số không đạt",
       "openCAs": "CA chưa hoàn thành",
       "factoryChart": "Đạt/Không đạt theo nhà máy",
-      "weeklyTrend": "Xu hướng tỷ lệ đạt hàng tuần"
+      "weeklyTrend": "Xu hướng tỷ lệ đạt hàng tuần",
+      "inspectorPerformance": "Hiệu suất người kiểm tra"
     },
     "input": {
       "title": "Nhập kiểm tra máy dò kim loại",
@@ -3497,12 +3499,15 @@
       "step1Desc": "Chọn nhà máy và dây chuyền cần kiểm tra",
       "step2Title": "Thông tin kiểm tra",
       "step2Desc": "Nhập ngày kiểm tra, người kiểm tra và thông tin sản phẩm",
-      "step3Title": "Giá trị độ nhạy",
-      "step3Desc": "Nhập giá trị độ nhạy máy dò kim loại (mm)",
-      "step4Title": "Kết quả & Xác nhận",
-      "step4Desc": "Chọn kết quả kiểm tra và xác nhận",
+      "step3Title": "Kết quả & Xác nhận",
+      "step3Desc": "Chọn kết quả kiểm tra và xác nhận",
       "date": "Ngày kiểm tra",
       "inspector": "Người kiểm tra",
+      "inspectorId": "Mã người kiểm tra",
+      "inspectorSearch": "Tìm theo mã hoặc tên...",
+      "selectInspector": "Chọn người kiểm tra",
+      "selectedInspector": "Người kiểm tra đã chọn",
+      "inspectorNameFallback": "Nhập tên người kiểm tra",
       "productName": "Tên sản phẩm",
       "resultLabel": "Kết quả kiểm tra",
       "remarks": "Ghi chú",
@@ -3578,7 +3583,7 @@
       "detailedTitle": "Nhập chi tiết",
       "todayCount": "Hôm nay: {{count}}",
       "saved": "Đã lưu",
-      "tip": "Nhập nhanh: Nhà máy/Ngày/Người kiểm tra/Độ nhạy được giữ lại sau khi lưu. Chỉ cần thay đổi Line và Mã thiết bị."
+      "tip": "Nhập nhanh: Nhà máy/Ngày/Người kiểm tra được giữ lại sau khi lưu. Chỉ cần thay đổi Line và Mã thiết bị."
     },
     "weeklyReport": {
       "kpiSummary": "Tóm tắt KPI",

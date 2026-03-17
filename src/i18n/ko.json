@@ -161,6 +161,7 @@
       "mdReport": "보고서"
     },
     "inspectorStickers": "검사원 스티커 관리",
+    "trainerDirectives": "트레이너 업무 지시",
     "executiveReport": "경영진 리포트",
     "qualityBlog": "품질 블로그",
     "qaActivityBoard": "QA 활동 게시판",
@@ -3488,7 +3489,8 @@
       "failCount": "불합격 건",
       "openCAs": "미완료 CA",
       "factoryChart": "공장별 합격/불합격",
-      "weeklyTrend": "주차별 합격률 추세"
+      "weeklyTrend": "주차별 합격률 추세",
+      "inspectorPerformance": "검사자별 실적"
     },
     "input": {
       "title": "금속탐지기 점검 입력",
@@ -3497,12 +3499,15 @@
       "step1Desc": "점검할 공장과 라인을 선택하세요",
       "step2Title": "점검 정보",
       "step2Desc": "점검 날짜, 검사자, 제품 정보를 입력하세요",
-      "step3Title": "감도 측정값",
-      "step3Desc": "금속탐지기 감도 측정값을 입력하세요 (mm)",
-      "step4Title": "결과 및 확인",
-      "step4Desc": "점검 결과를 선택하고 확인하세요",
+      "step3Title": "결과 및 확인",
+      "step3Desc": "점검 결과를 선택하고 확인하세요",
       "date": "점검 날짜",
       "inspector": "검사자",
+      "inspectorId": "검사자 ID",
+      "inspectorSearch": "ID 또는 이름으로 검색...",
+      "selectInspector": "검사자를 선택하세요",
+      "selectedInspector": "선택된 검사자",
+      "inspectorNameFallback": "검사자 이름 입력",
       "productName": "제품명",
       "resultLabel": "점검 결과",
       "remarks": "비고",
@@ -3578,7 +3583,7 @@
       "detailedTitle": "상세 입력",
       "todayCount": "오늘 {{count}}건",
       "saved": "저장 완료",
-      "tip": "빠른 입력: 저장 후 공장/날짜/검사자/감도가 유지됩니다. 라인과 장비 ID만 변경하세요."
+      "tip": "빠른 입력: 저장 후 공장/날짜/검사자가 유지됩니다. 라인과 장비 ID만 변경하세요."
     },
     "weeklyReport": {
       "kpiSummary": "KPI 요약",

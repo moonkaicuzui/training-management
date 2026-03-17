@@ -24,6 +24,11 @@ import { generateAiBriefing } from "./services/aiService";
 import { analyzeCAPARootCause } from "./services/capaAiService";
 import { generateExecutiveReport } from "./services/executiveReportService";
 import { runWeeklyAqlAnalysisAndEnroll } from "./services/aqlAnalysisService";
+import {
+  generateDailyTrainerDirective,
+  checkDirectiveEscalation,
+  trackTrainingEffectiveness,
+} from "./services/trainerDirectiveService";
 import type {
   RecommendationThreshold,
   DefectTrainingMapping,
@@ -1036,6 +1041,93 @@ export const weeklyAqlInspectionEnrollment = onSchedule(
       }
     } catch (error) {
       logger.error("Error during weekly AQL inspection enrollment:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 5c. dailyTrainerDirective
+//     Scheduled: Every day at 7:30 AM Asia/Ho_Chi_Minh
+//     Generates daily work directive for trainers based on 5PRS data,
+//     training session statuses, and AI-generated recommendations.
+//     Multi-channel: Email + In-app notification
+// =============================================================================
+
+export const dailyTrainerDirective = onSchedule(
+  {
+    schedule: "30 7 * * *",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    secrets: [
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "GEMINI_API_KEY",
+      "GEMINI_BACKUP_KEY",
+      "GROQ_API_KEY",
+      "OPENROUTER_API_KEY",
+    ],
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async () => {
+    logger.info("Running daily trainer directive generation...");
+    try {
+      await generateDailyTrainerDirective();
+      logger.info("Daily trainer directive generation complete.");
+    } catch (error) {
+      logger.error("Error during daily trainer directive:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 5d. dailyDirectiveEscalation
+//     Scheduled: Every day at 7:00 AM Asia/Ho_Chi_Minh
+//     Checks for unacknowledged directives (>24h) and escalates to manager.
+// =============================================================================
+
+export const dailyDirectiveEscalation = onSchedule(
+  {
+    schedule: "0 7 * * *",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"],
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async () => {
+    logger.info("Running directive escalation check...");
+    try {
+      await checkDirectiveEscalation();
+      logger.info("Directive escalation check complete.");
+    } catch (error) {
+      logger.error("Error during directive escalation:", error);
+    }
+  }
+);
+
+// =============================================================================
+// 5e. weeklyTrainingEffectiveness
+//     Scheduled: Every Friday at 18:00 Asia/Ho_Chi_Minh
+//     Tracks pre/post training reject rate improvements.
+//     Stores in training_effectiveness and unified_quality_metrics.
+// =============================================================================
+
+export const weeklyTrainingEffectiveness = onSchedule(
+  {
+    schedule: "0 18 * * 5",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async () => {
+    logger.info("Running weekly training effectiveness tracking...");
+    try {
+      await trackTrainingEffectiveness();
+      logger.info("Weekly training effectiveness tracking complete.");
+    } catch (error) {
+      logger.error("Error during training effectiveness tracking:", error);
     }
   }
 );

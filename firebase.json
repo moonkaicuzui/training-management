@@ -29,6 +29,10 @@
         }
       },
       {
+        "source": "/m/metal-check",
+        "destination": "/m/metal-check.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

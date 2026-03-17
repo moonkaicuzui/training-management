@@ -94,6 +94,7 @@ const trainingOpsItems: NavItem[] = [
   { titleKey: 'nav.results', href: '/results', icon: ClipboardCheck },
   { titleKey: 'nav.progress', href: '/progress', icon: Grid3X3 },
   { titleKey: 'nav.inspection.enrollments', href: '/inspection/enrollments', icon: ClipboardList },
+  { titleKey: 'nav.trainerDirectives', href: '/trainer-directives', icon: FileBarChart },
 ];
 
 // 3. Follow-up Management

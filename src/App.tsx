@@ -98,6 +98,9 @@ const TechReviewGuidelines = lazy(() => import('./pages/tech/TechReviewGuideline
 // 검사원 스티커 관리
 const InspectorStickers = lazy(() => import('./pages/InspectorStickers'));
 
+// 트레이너 일일 업무 지시
+const TrainerDirectives = lazy(() => import('./pages/TrainerDirectives'));
+
 // 시스템 피드백 (이슈 등록 / 개선 요청)
 const SystemFeedback = lazy(() => import('./pages/SystemFeedback'));
 
@@ -584,6 +587,15 @@ function App() {
                       </Suspense>
                     </PageErrorBoundary>
                   </DevProtectedRoute>
+                } />
+
+                {/* 트레이너 일일 업무 지시 */}
+                <Route path="trainer-directives" element={
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <TrainerDirectives />
+                    </Suspense>
+                  </PageErrorBoundary>
                 } />
 
                 {/* HR V2 직원 데이터 동기화 (관리자 전용) */}

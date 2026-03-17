@@ -200,9 +200,7 @@ export default function MDHistory() {
                     <TableHead>{t('metalDetector.line')}</TableHead>
                     <TableHead>{t('metalDetector.machineId')}</TableHead>
                     <TableHead>{t('metalDetector.input.resultLabel')}</TableHead>
-                    <TableHead>{t('metalDetector.sensitivity.fe')}</TableHead>
-                    <TableHead>{t('metalDetector.sensitivity.sus')}</TableHead>
-                    <TableHead>{t('metalDetector.sensitivity.nonFe')}</TableHead>
+                    <TableHead>{t('metalDetector.input.inspectorId')}</TableHead>
                     <TableHead>{t('metalDetector.input.inspector')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -231,9 +229,7 @@ export default function MDHistory() {
                           {t(`metalDetector.result.${inspection.result.toLowerCase()}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{inspection.sensitivity.fe}</TableCell>
-                      <TableCell>{inspection.sensitivity.sus}</TableCell>
-                      <TableCell>{inspection.sensitivity.nonFe}</TableCell>
+                      <TableCell className="font-mono text-xs">{inspection.inspectorId || '-'}</TableCell>
                       <TableCell>{inspection.inspectorName}</TableCell>
                     </TableRow>
                   ))}
@@ -269,12 +265,8 @@ export default function MDHistory() {
                     {t(`metalDetector.result.${selectedInspection.result.toLowerCase()}`)}
                   </Badge>
                 </span>
-                <span className="text-muted-foreground">{t('metalDetector.sensitivity.fe')}:</span>
-                <span>{selectedInspection.sensitivity.fe} mm</span>
-                <span className="text-muted-foreground">{t('metalDetector.sensitivity.sus')}:</span>
-                <span>{selectedInspection.sensitivity.sus} mm</span>
-                <span className="text-muted-foreground">{t('metalDetector.sensitivity.nonFe')}:</span>
-                <span>{selectedInspection.sensitivity.nonFe} mm</span>
+                <span className="text-muted-foreground">{t('metalDetector.input.inspectorId')}:</span>
+                <span className="font-mono">{selectedInspection.inspectorId || '-'}</span>
                 <span className="text-muted-foreground">{t('metalDetector.input.inspector')}:</span>
                 <span>{selectedInspection.inspectorName}</span>
                 {selectedInspection.productName && (

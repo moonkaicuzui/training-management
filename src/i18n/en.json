@@ -161,6 +161,7 @@
       "mdReport": "Report"
     },
     "inspectorStickers": "Inspector Stickers",
+    "trainerDirectives": "Trainer Directives",
     "executiveReport": "Executive Report",
     "qualityBlog": "Quality Blog",
     "qaActivityBoard": "QA Activity Board",
@@ -3488,7 +3489,8 @@
       "failCount": "Fail Count",
       "openCAs": "Open CAs",
       "factoryChart": "Pass/Fail by Factory",
-      "weeklyTrend": "Weekly Pass Rate Trend"
+      "weeklyTrend": "Weekly Pass Rate Trend",
+      "inspectorPerformance": "Inspector Performance"
     },
     "input": {
       "title": "Metal Detector Inspection Input",
@@ -3497,12 +3499,15 @@
       "step1Desc": "Select the factory and line to inspect",
       "step2Title": "Inspection Info",
       "step2Desc": "Enter inspection date, inspector, and product info",
-      "step3Title": "Sensitivity Values",
-      "step3Desc": "Enter metal detector sensitivity values (mm)",
-      "step4Title": "Result & Confirmation",
-      "step4Desc": "Select the inspection result and confirm",
+      "step3Title": "Result & Confirmation",
+      "step3Desc": "Select the inspection result and confirm",
       "date": "Inspection Date",
       "inspector": "Inspector",
+      "inspectorId": "Inspector ID",
+      "inspectorSearch": "Search by ID or name...",
+      "selectInspector": "Select inspector",
+      "selectedInspector": "Selected inspector",
+      "inspectorNameFallback": "Enter inspector name",
       "productName": "Product Name",
       "resultLabel": "Inspection Result",
       "remarks": "Remarks",
@@ -3578,7 +3583,7 @@
       "detailedTitle": "Detailed Entry",
       "todayCount": "Today: {{count}}",
       "saved": "Saved",
-      "tip": "Quick Entry: Factory/Date/Inspector/Sensitivity are retained after save. Just change Line and Machine ID."
+      "tip": "Quick Entry: Factory/Date/Inspector are retained after save. Just change Line and Machine ID."
     },
     "weeklyReport": {
       "kpiSummary": "KPI Summary",

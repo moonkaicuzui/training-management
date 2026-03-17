@@ -23,11 +23,11 @@ export interface MDInspection {
   year: number;
   result: InspectionResult;
   inspectorName: string;
-  inspectorId?: string;
-  sensitivity: {
-    fe: number;    // mm (철 감도)
-    sus: number;   // mm (스테인리스 감도)
-    nonFe: number; // mm (비철 감도)
+  inspectorId?: string;      // HR V2 employee_id
+  sensitivity?: {
+    fe: number;    // mm (철 감도) - deprecated
+    sus: number;   // mm (스테인리스 감도) - deprecated
+    nonFe: number; // mm (비철 감도) - deprecated
   };
   productName?: string;
   remarks?: string;

@@ -83,16 +83,14 @@ export async function generateMDWeeklyReport(
       i.inspectionDate,
       i.line,
       i.result,
-      `${i.sensitivity.fe}`,
-      `${i.sensitivity.sus}`,
-      `${i.sensitivity.nonFe}`,
+      i.inspectorId || '-',
       i.inspectorName,
       i.productName || '-',
     ]);
 
     autoTable(doc, {
       startY: 38,
-      head: [['Date', 'Line', 'Result', 'Fe(mm)', 'SUS(mm)', 'Non-Fe(mm)', 'Inspector', 'Product']],
+      head: [['Date', 'Line', 'Result', 'Inspector ID', 'Inspector', 'Product']],
       body: tableData,
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [59, 130, 246] },
