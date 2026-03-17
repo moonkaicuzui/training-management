@@ -51,6 +51,7 @@
     "creating": "Creating...",
     "unknown": "Unknown",
     "comingSoon": "Coming soon",
+    "noResults": "No results found",
     "confirmDeleteTitle": "Confirm Delete",
     "confirmDeleteDescription": "Are you sure you want to delete this item? This action cannot be undone.",
     "aria": {

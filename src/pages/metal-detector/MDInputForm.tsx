@@ -383,6 +383,7 @@ export default function MDInputForm() {
               }
             }}
             onFocus={() => setInspectorDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setInspectorDropdownOpen(false), 200)}
           />
           {formData.inspectorId && (
             <button
@@ -525,6 +526,7 @@ export default function MDInputForm() {
                         if (formData.line) updateField('line', '');
                       }}
                       onFocus={() => setLineDropdownOpen(true)}
+                      onBlur={() => setTimeout(() => setLineDropdownOpen(false), 200)}
                     />
                     {formData.line && (
                       <button
@@ -705,6 +707,7 @@ export default function MDInputForm() {
                           if (formData.line) updateField('line', '');
                         }}
                         onFocus={() => setLineDropdownOpen(true)}
+                        onBlur={() => setTimeout(() => setLineDropdownOpen(false), 200)}
                       />
                       {formData.line && (
                         <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => { updateField('line', ''); setLineSearch(''); setLineDropdownOpen(true); }}>
