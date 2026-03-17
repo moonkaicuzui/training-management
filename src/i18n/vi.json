@@ -3579,6 +3579,9 @@
       "update": "Cập nhật"
     },
     "machineId": "Mã thiết bị",
+    "checklist": {
+      "title": "Danh sách kiểm tra"
+    },
     "quickEntry": {
       "title": "Nhập nhanh",
       "detailedTitle": "Nhập chi tiết",

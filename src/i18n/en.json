@@ -3579,6 +3579,9 @@
       "update": "Update"
     },
     "machineId": "Machine ID",
+    "checklist": {
+      "title": "Inspection Checklist"
+    },
     "quickEntry": {
       "title": "Quick Entry",
       "detailedTitle": "Detailed Entry",

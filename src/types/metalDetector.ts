@@ -12,23 +12,34 @@ export type InspectionResult = 'PASS' | 'FAIL';
 // CA 상태
 export type CAStatus = 'pending' | 'in_progress' | 'completed' | 'overdue';
 
+// 모바일 체크리스트 (일일 점검 5항목)
+export interface MDChecklist {
+  power: 'ON' | 'OFF' | '';
+  sensitivity: 'PASS' | 'FAIL' | '';
+  testPiece: 'PASS' | 'FAIL' | '';
+  belt: 'OK' | 'NG' | '';
+  exterior: 'OK' | 'NG' | '';
+}
+
 // 금속 탐지기 일일 점검 레코드
 export interface MDInspection {
   id: string;
   factory: FactoryCode;
-  line: string;              // e.g. "A-1", "B-3"
+  line: string;              // e.g. "L1-1", "L5-2"
   machineId?: string;        // 장비 고유 ID (e.g. "D210103")
   inspectionDate: string;    // YYYY-MM-DD
   weekNumber: number;        // ISO week number
   year: number;
   result: InspectionResult;
   inspectorName: string;
-  inspectorId?: string;      // HR V2 employee_id
+  inspectorId?: string;      // employee_id (Q-TRAIN employees)
   sensitivity?: {
     fe: number;    // mm (철 감도) - deprecated
     sus: number;   // mm (스테인리스 감도) - deprecated
     nonFe: number; // mm (비철 감도) - deprecated
   };
+  checklist?: MDChecklist;   // 모바일 체크리스트 (5항목)
+  hasPhoto?: boolean;        // 모바일 사진 촬영 여부
   productName?: string;
   remarks?: string;
   createdAt: string;

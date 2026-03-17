@@ -82,6 +82,8 @@ function docToInspection(docId: string, data: Record<string, unknown>): MDInspec
       sus: sensitivity.sus ?? 0,
       nonFe: sensitivity.nonFe ?? 0,
     } : undefined,
+    checklist: (data.checklist as MDInspection['checklist']) || undefined,
+    hasPhoto: (data.hasPhoto as boolean) || undefined,
     productName: (data.productName as string) || undefined,
     remarks: (data.remarks as string) || undefined,
     createdAt: convertTimestamp(data.createdAt as Timestamp | string),

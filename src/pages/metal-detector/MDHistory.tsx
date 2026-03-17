@@ -283,6 +283,21 @@ export default function MDHistory() {
                 )}
               </div>
 
+              {/* Checklist (모바일 입력 데이터) */}
+              {selectedInspection.checklist && (
+                <div className="pt-3 border-t">
+                  <h4 className="font-medium text-sm mb-2">{t('metalDetector.checklist.title')}</h4>
+                  <div className="grid grid-cols-2 gap-1 text-sm">
+                    {Object.entries(selectedInspection.checklist).map(([key, val]) => (
+                      <div key={key} className="flex justify-between px-2 py-1 rounded bg-muted/30">
+                        <span className="text-muted-foreground">{key}</span>
+                        <span className={val === 'PASS' || val === 'ON' || val === 'OK' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* CA Tracking */}
               {relatedFailures.length > 0 && (
                 <div className="space-y-3 pt-4 border-t">

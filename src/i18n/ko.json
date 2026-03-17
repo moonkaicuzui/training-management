@@ -3579,6 +3579,9 @@
       "update": "업데이트"
     },
     "machineId": "장비 ID",
+    "checklist": {
+      "title": "점검 체크리스트"
+    },
     "quickEntry": {
       "title": "빠른 입력",
       "detailedTitle": "상세 입력",
