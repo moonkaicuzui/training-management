@@ -35,7 +35,7 @@ import type { FactoryCode, MDInspection } from '@/types/metalDetector';
  * Factory C: Line 1~5 (총 18~20건)
  * Factory D: Line 1~7 (총 24~25건)
  */
-const FACTORY_LINES: Record<FactoryCode, string[]> = {
+const FACTORY_LINES: Partial<Record<FactoryCode, string[]>> = {
   A: ['1', '2', '3', '4', '5', '6', '7'],
   B: ['1', '2', '3', '4'],
   C: ['1', '2', '3', '4', '5'],
@@ -198,7 +198,7 @@ function generateWeekRecords(
   const records: SeedRecord[] = [];
 
   for (const cfg of configs) {
-    const lines = FACTORY_LINES[cfg.factory];
+    const lines = FACTORY_LINES[cfg.factory] || [];
     const failSet = new Set<string>();
     const failMachineMap = new Map<string, { line: string; seq: number }>();
 

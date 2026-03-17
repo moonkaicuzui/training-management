@@ -3,8 +3,8 @@
  * 금속 탐지기 일일 점검 관련 타입 정의
  */
 
-// 공장 코드
-export type FactoryCode = 'A' | 'B' | 'C' | 'D';
+// 점검 구역 코드
+export type FactoryCode = 'A' | 'B' | 'B3' | 'C' | 'D' | 'FGWH' | 'SCANPACK_AB' | 'SCANPACK_C' | 'SCANPACK_D';
 
 // 점검 결과
 export type InspectionResult = 'PASS' | 'FAIL';

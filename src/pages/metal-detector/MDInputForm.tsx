@@ -27,9 +27,35 @@ import type { Employee } from '@/types';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 import { logger } from '@/utils/logger';
 
-const FACTORIES: FactoryCode[] = ['A', 'B', 'C', 'D'];
+const FACTORIES: { code: FactoryCode; label: string }[] = [
+  { code: 'A', label: 'A' },
+  { code: 'B', label: 'B' },
+  { code: 'B3', label: 'B3' },
+  { code: 'C', label: 'C' },
+  { code: 'D', label: 'D' },
+  { code: 'FGWH', label: 'FGWH' },
+  { code: 'SCANPACK_AB', label: 'SP-AB' },
+  { code: 'SCANPACK_C', label: 'SP-C' },
+  { code: 'SCANPACK_D', label: 'SP-D' },
+];
 const STEPS = ['factory', 'info', 'result'] as const;
 const SESSION_KEY = 'md_quick_entry_session';
+
+const simpleLine = (n: number) => Array.from({ length: n }, (_, i) => `${i + 1}`);
+const dualLine = (n: number) => Array.from({ length: n }, (_, i) => [`${i + 1}-1`, `${i + 1}-2`]).flat();
+
+/** 구역별 라인 목록 */
+const FACTORY_LINES: Record<FactoryCode, string[]> = {
+  A: dualLine(11),
+  B: dualLine(7),
+  B3: simpleLine(8),
+  C: dualLine(11),
+  D: dualLine(11),
+  FGWH: simpleLine(8),
+  SCANPACK_AB: simpleLine(8),
+  SCANPACK_C: simpleLine(8),
+  SCANPACK_D: simpleLine(8),
+};
 
 interface FormData {
   factory: FactoryCode | '';
@@ -152,14 +178,20 @@ export default function MDInputForm() {
     return Array.from(ids).sort();
   }, [inspections]);
 
-  // 해당 공장의 최근 라인 목록
-  const recentLines = useMemo(() => {
-    const lines = new Set<string>();
-    inspections
-      .filter((i) => i.factory === formData.factory)
-      .forEach((i) => lines.add(i.line));
-    return Array.from(lines).sort();
-  }, [inspections, formData.factory]);
+  // 라인 검색 필터
+  const [lineSearch, setLineSearch] = useState('');
+  const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
+
+  // 공장별 라인 목록
+  const availableLines = useMemo(() => {
+    if (!formData.factory) return [];
+    return FACTORY_LINES[formData.factory as FactoryCode] || [];
+  }, [formData.factory]);
+
+  const filteredLines = useMemo(() => {
+    if (!lineSearch.trim()) return availableLines;
+    return availableLines.filter((l) => l.includes(lineSearch));
+  }, [availableLines, lineSearch]);
 
   // 오늘 입력 건수 계산
   useEffect(() => {
@@ -421,20 +453,20 @@ export default function MDInputForm() {
         <TabsContent value="quick" className="space-y-4 mt-4">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              {/* Row 1: 공장 + 날짜 */}
+              {/* Row 1: 구역 + 날짜 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('metalDetector.factory.label')}</Label>
-                  <div className="grid grid-cols-4 gap-1">
+                  <div className="grid grid-cols-5 gap-1">
                     {FACTORIES.map((f) => (
                       <Button
-                        key={f}
-                        variant={formData.factory === f ? 'default' : 'outline'}
+                        key={f.code}
+                        variant={formData.factory === f.code ? 'default' : 'outline'}
                         size="sm"
-                        className="w-full"
-                        onClick={() => updateField('factory', f)}
+                        className="w-full text-xs px-1"
+                        onClick={() => { updateField('factory', f.code); updateField('line', ''); setLineSearch(''); }}
                       >
-                        {f}
+                        {f.label}
                       </Button>
                     ))}
                   </div>
@@ -451,19 +483,52 @@ export default function MDInputForm() {
 
               {/* Row 2: 라인 + 장비 ID */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label>{t('metalDetector.line')}</Label>
-                  <Input
-                    placeholder={formData.factory ? `${formData.factory}-1` : 'A-1'}
-                    value={formData.line}
-                    onChange={(e) => updateField('line', e.target.value)}
-                    list="recent-lines"
-                  />
-                  {recentLines.length > 0 && (
-                    <datalist id="recent-lines">
-                      {recentLines.map((l) => <option key={l} value={l} />)}
-                    </datalist>
-                  )}
+                  <div className="relative">
+                    <Input
+                      placeholder={formData.factory ? `${formData.factory}-1` : '1-1'}
+                      value={formData.line || lineSearch}
+                      onChange={(e) => {
+                        setLineSearch(e.target.value);
+                        setLineDropdownOpen(true);
+                        if (formData.line) updateField('line', '');
+                      }}
+                      onFocus={() => setLineDropdownOpen(true)}
+                    />
+                    {formData.line && (
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        onClick={() => { updateField('line', ''); setLineSearch(''); setLineDropdownOpen(true); }}
+                      >
+                        <span className="text-xs">✕</span>
+                      </button>
+                    )}
+                    {lineDropdownOpen && !formData.line && formData.factory && (
+                      <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover shadow-md">
+                        {filteredLines.length > 0 ? (
+                          filteredLines.map((line) => (
+                            <button
+                              key={line}
+                              type="button"
+                              className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                updateField('line', line);
+                                setLineSearch('');
+                                setLineDropdownOpen(false);
+                              }}
+                            >
+                              {line}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-1.5 text-sm text-muted-foreground">{t('common.noResults')}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>{t('metalDetector.machineId')}</Label>
@@ -590,18 +655,44 @@ export default function MDInputForm() {
                 <>
                   <div className="space-y-2">
                     <Label>{t('metalDetector.factory.label')}</Label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-5 gap-2">
                       {FACTORIES.map((f) => (
-                        <Button key={f} variant={formData.factory === f ? 'default' : 'outline'} className="w-full" onClick={() => updateField('factory', f)}>
-                          Factory {f}
+                        <Button key={f.code} variant={formData.factory === f.code ? 'default' : 'outline'} className="w-full text-xs" onClick={() => { updateField('factory', f.code); updateField('line', ''); setLineSearch(''); }}>
+                          {f.label}
                         </Button>
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label>{t('metalDetector.line')}</Label>
-                    <Input placeholder={`e.g. ${formData.factory || 'A'}-1`} value={formData.line} onChange={(e) => updateField('line', e.target.value)} list="recent-lines-d" />
-                    {recentLines.length > 0 && <datalist id="recent-lines-d">{recentLines.map((l) => <option key={l} value={l} />)}</datalist>}
+                    <div className="relative">
+                      <Input
+                        placeholder={formData.factory ? `e.g. 1-1` : 'e.g. 1-1'}
+                        value={formData.line || lineSearch}
+                        onChange={(e) => {
+                          setLineSearch(e.target.value);
+                          setLineDropdownOpen(true);
+                          if (formData.line) updateField('line', '');
+                        }}
+                        onFocus={() => setLineDropdownOpen(true)}
+                      />
+                      {formData.line && (
+                        <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => { updateField('line', ''); setLineSearch(''); setLineDropdownOpen(true); }}>
+                          <span className="text-xs">✕</span>
+                        </button>
+                      )}
+                      {lineDropdownOpen && !formData.line && formData.factory && (
+                        <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover shadow-md">
+                          {filteredLines.length > 0 ? filteredLines.map((line) => (
+                            <button key={line} type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent cursor-pointer" onMouseDown={(e) => { e.preventDefault(); updateField('line', line); setLineSearch(''); setLineDropdownOpen(false); }}>
+                              {line}
+                            </button>
+                          )) : (
+                            <div className="px-3 py-1.5 text-sm text-muted-foreground">{t('common.noResults')}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('metalDetector.machineId')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
