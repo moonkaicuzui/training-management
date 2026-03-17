@@ -199,7 +199,9 @@ export default function MDInputForm() {
 
   const canSubmitQuick = () => {
     if (!formData.factory || !formData.line.trim() || !formData.result) return false;
-    if (!formData.inspectorId) return false;
+    // HR 데이터 있으면 inspectorId 필수, 없으면 inspectorName으로 폴백
+    if (hrEmployees.length > 0 && !formData.inspectorId) return false;
+    if (hrEmployees.length === 0 && !formData.inspectorName.trim()) return false;
     if (formData.result === 'FAIL' && (!formData.failureType || !formData.failureDescription.trim())) return false;
     return true;
   };
@@ -285,7 +287,9 @@ export default function MDInputForm() {
       case 0:
         return formData.factory !== '' && formData.line.trim() !== '';
       case 1:
-        return formData.inspectionDate !== '' && formData.inspectorId !== '';
+        if (formData.inspectionDate === '') return false;
+        if (hrEmployees.length > 0) return formData.inspectorId !== '';
+        return formData.inspectorName.trim() !== '';
       case 2:
         if (formData.result === '') return false;
         if (formData.result === 'FAIL') {
