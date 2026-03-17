@@ -20,6 +20,18 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/m/metal-check{,/**}",
+        "destination": "/equipment/metal-detector/input",
+        "type": 301
+      },
+      {
+        "source": "/m/metal-check.html",
+        "destination": "/equipment/metal-detector/input",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "/api/**",
@@ -27,10 +39,6 @@
           "functionId": "api",
           "region": "asia-southeast1"
         }
-      },
-      {
-        "source": "/m/metal-check",
-        "destination": "/m/metal-check.html"
       },
       {
         "source": "**",
