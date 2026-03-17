@@ -26,6 +26,7 @@ import { getEmployees } from '@/services/api/employeeApi';
 import type { Employee } from '@/types';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 import { logger } from '@/utils/logger';
+import { getFactoryLines, extractMDFactoryLines } from '@/services/factoryLineService';
 
 const FACTORIES: { code: FactoryCode; label: string }[] = [
   { code: 'A', label: 'A' },
@@ -41,20 +42,32 @@ const FACTORIES: { code: FactoryCode; label: string }[] = [
 const STEPS = ['factory', 'info', 'result'] as const;
 const SESSION_KEY = 'md_quick_entry_session';
 
-const simpleLine = (n: number) => Array.from({ length: n }, (_, i) => `${i + 1}`);
-const dualLine = (n: number) => Array.from({ length: n }, (_, i) => [`${i + 1}-1`, `${i + 1}-2`]).flat();
-
-/** 구역별 라인 목록 */
-const FACTORY_LINES: Record<FactoryCode, string[]> = {
-  A: dualLine(11),
-  B: dualLine(7),
-  B3: simpleLine(8),
-  C: dualLine(11),
-  D: dualLine(11),
-  FGWH: simpleLine(8),
-  SCANPACK_AB: simpleLine(8),
-  SCANPACK_C: simpleLine(8),
-  SCANPACK_D: simpleLine(8),
+/** 구역별 라인 목록 (로컬 폴백 - Quality OS에서 동적 로드 실패 시 사용) */
+const LOCAL_FACTORY_LINES: Record<FactoryCode, string[]> = {
+  A: [
+    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
+    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
+    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
+  ],
+  B: [
+    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2',
+    'L4-1','L4-2','L5-1','L5-2','L6-1','L6-2',
+  ],
+  B3: ['L1','L2','L3','L4'],
+  C: [
+    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
+    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
+    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
+  ],
+  D: [
+    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
+    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
+    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
+  ],
+  FGWH: ['1','2','3','4','5','6','7','8'],
+  SCANPACK_AB: ['1','2','3','4','5','6','7','8'],
+  SCANPACK_C: ['1','2','3','4','5','6','7','8'],
+  SCANPACK_D: ['1','2','3','4','5','6','7','8'],
 };
 
 interface FormData {
@@ -118,6 +131,9 @@ export default function MDInputForm() {
   const [lastSubmitted, setLastSubmitted] = useState<{ line: string; machineId: string; result: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Dynamic factory lines from Quality OS (fallback to local constants)
+  const [factoryLines, setFactoryLines] = useState<Record<FactoryCode, string[]>>(LOCAL_FACTORY_LINES);
+
   // 직원 목록 (Q-TRAIN employees 컬렉션)
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeesLoading, setEmployeesLoading] = useState(false);
@@ -138,6 +154,20 @@ export default function MDInputForm() {
     failureType: '',
     failureDescription: '',
   });
+
+  // Quality OS에서 공장/라인 동적 로드
+  useEffect(() => {
+    getFactoryLines().then((data) => {
+      if (data) {
+        const extracted = extractMDFactoryLines(data);
+        if (extracted) {
+          setFactoryLines((prev) => ({ ...prev, ...extracted }));
+        }
+      }
+    }).catch((e) => {
+      logger.warn('[MDInputForm] Dynamic factory lines skipped:', e);
+    });
+  }, []);
 
   // 직원 데이터 로드 (Q-TRAIN employees 컬렉션)
   useEffect(() => {
@@ -185,8 +215,8 @@ export default function MDInputForm() {
   // 공장별 라인 목록
   const availableLines = useMemo(() => {
     if (!formData.factory) return [];
-    return FACTORY_LINES[formData.factory as FactoryCode] || [];
-  }, [formData.factory]);
+    return factoryLines[formData.factory as FactoryCode] || [];
+  }, [formData.factory, factoryLines]);
 
   const filteredLines = useMemo(() => {
     if (!lineSearch.trim()) return availableLines;
