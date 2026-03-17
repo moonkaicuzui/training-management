@@ -297,8 +297,10 @@ export default function MDInputForm() {
 
   // ============ 검사자 선택 UI ============
 
-  const renderInspectorSelector = (id: string) => (
-    <div className="space-y-2">
+  const [inspectorDropdownOpen, setInspectorDropdownOpen] = useState(false);
+
+  const renderInspectorSelector = () => (
+    <div className="space-y-1">
       <Label>{t('metalDetector.input.inspectorId')}</Label>
       {employeesLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -306,39 +308,60 @@ export default function MDInputForm() {
           {t('common.loading')}
         </div>
       ) : employees.length > 0 ? (
-        <>
+        <div className="relative">
           <Input
             placeholder={t('metalDetector.input.inspectorSearch')}
-            value={inspectorSearch}
-            onChange={(e) => setInspectorSearch(e.target.value)}
-            className="mb-1"
+            value={formData.inspectorId ? `${formData.inspectorId} - ${formData.inspectorName}` : inspectorSearch}
+            onChange={(e) => {
+              setInspectorSearch(e.target.value);
+              setInspectorDropdownOpen(true);
+              // 직접 입력 시 선택 초기화
+              if (formData.inspectorId) {
+                setFormData((prev) => ({ ...prev, inspectorId: '', inspectorName: '' }));
+              }
+            }}
+            onFocus={() => setInspectorDropdownOpen(true)}
           />
-          <Select
-            value={formData.inspectorId}
-            onValueChange={handleInspectorSelect}
-          >
-            <SelectTrigger id={id}>
-              <SelectValue placeholder={t('metalDetector.input.selectInspector')} />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredEmployees.map((emp) => (
-                <SelectItem key={emp.employee_id} value={emp.employee_id}>
-                  {emp.employee_id} - {emp.employee_name} ({emp.department})
-                </SelectItem>
-              ))}
-              {filteredEmployees.length === 0 && (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                  {t('common.noResults')}
-                </div>
-              )}
-            </SelectContent>
-          </Select>
           {formData.inspectorId && (
-            <p className="text-xs text-muted-foreground">
-              {t('metalDetector.input.selectedInspector')}: {formData.inspectorId} - {formData.inspectorName}
-            </p>
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setFormData((prev) => ({ ...prev, inspectorId: '', inspectorName: '' }));
+                setInspectorSearch('');
+                setInspectorDropdownOpen(true);
+              }}
+            >
+              <span className="text-xs">✕</span>
+            </button>
           )}
-        </>
+          {inspectorDropdownOpen && !formData.inspectorId && (
+            <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-popover shadow-md">
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((emp) => (
+                  <button
+                    key={emp.employee_id}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleInspectorSelect(emp.employee_id);
+                      setInspectorSearch('');
+                      setInspectorDropdownOpen(false);
+                    }}
+                  >
+                    <span className="font-mono font-medium">{emp.employee_id}</span>
+                    <span className="mx-1">-</span>
+                    <span>{emp.employee_name}</span>
+                    <span className="text-muted-foreground ml-1">({emp.department})</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-sm text-muted-foreground">{t('common.noResults')}</div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <Input
           value={formData.inspectorName}
@@ -459,7 +482,7 @@ export default function MDInputForm() {
               </div>
 
               {/* Row 3: 검사자 ID (HR V2 연동) */}
-              {renderInspectorSelector('quick-inspector')}
+              {renderInspectorSelector()}
 
               {/* Row 4: 결과 (크게) + 제출 */}
               <div className="flex items-end gap-3">
@@ -595,7 +618,7 @@ export default function MDInputForm() {
                     <Label>{t('metalDetector.input.date')}</Label>
                     <Input type="date" value={formData.inspectionDate} onChange={(e) => updateField('inspectionDate', e.target.value)} />
                   </div>
-                  {renderInspectorSelector('detailed-inspector')}
+                  {renderInspectorSelector()}
                   <div className="space-y-2">
                     <Label>{t('metalDetector.input.productName')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
                     <Input value={formData.productName} onChange={(e) => updateField('productName', e.target.value)} />
