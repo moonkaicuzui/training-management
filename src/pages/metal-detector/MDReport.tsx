@@ -13,8 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Loader2, FileDown, CalendarDays } from 'lucide-react';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { generateMDWeeklyReport } from '@/utils/mdPdfExport';
-import type { FactoryCode } from '@/types/metalDetector';
-
 function getISOWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
@@ -219,7 +217,7 @@ export default function MDReport() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4">
-                {(['A', 'B', 'C', 'D'] as FactoryCode[]).map((factory) => {
+                {[...new Set(weekInspections.map(i => i.factory))].sort().map((factory) => {
                   const factoryItems = weekInspections.filter(
                     (i) => i.factory === factory
                   );

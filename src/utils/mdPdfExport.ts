@@ -52,8 +52,8 @@ export async function generateMDWeeklyReport(
     align: 'center',
   });
 
-  // ========== Factory Pages ==========
-  const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+  // ========== Factory Pages (동적 — 데이터에 있는 구역만) ==========
+  const factories = [...new Set(data.inspections.map((i) => i.factory))].sort() as FactoryCode[];
 
   factories.forEach((factory) => {
     const factoryInspections = data.inspections.filter((i) => i.factory === factory);

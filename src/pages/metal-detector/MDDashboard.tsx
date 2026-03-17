@@ -292,14 +292,14 @@ export default function MDDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(['A', 'B', 'C', 'D'] as FactoryCode[]).map((f) => {
-                const fc = comp?.factoryComparison[f];
+              {comp && Object.keys(comp.factoryComparison).map((f) => {
+                const fc = comp.factoryComparison[f as FactoryCode];
                 const status = fc?.improvement ?? 'no_change';
                 const config = IMPROVEMENT_CONFIG[status];
                 const Icon = config.icon;
                 return (
                   <TableRow key={f}>
-                    <TableCell className="font-medium">Factory {f}</TableCell>
+                    <TableCell className="font-medium">{f}</TableCell>
                     <TableCell className="text-center">{fc?.failedLastWeek ?? 0}</TableCell>
                     <TableCell className="text-center">{fc?.failedThisWeek ?? 0}</TableCell>
                     <TableCell className="text-center">
@@ -389,12 +389,12 @@ export default function MDDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(['A', 'B', 'C', 'D'] as FactoryCode[]).map((f) => {
-                const lw = comp?.lastWeek.byFactory[f];
-                const tw = comp?.thisWeek.byFactory[f];
+              {comp && Object.keys(comp.thisWeek.byFactory).map((f) => {
+                const lw = comp.lastWeek.byFactory[f as FactoryCode];
+                const tw = comp.thisWeek.byFactory[f as FactoryCode];
                 return (
                   <TableRow key={f}>
-                    <TableCell className="font-medium">Factory {f}</TableCell>
+                    <TableCell className="font-medium">{f}</TableCell>
                     <TableCell className="text-center">
                       {lw ? `${lw.passRate.toFixed(0)}%` : '-'}
                     </TableCell>
@@ -489,10 +489,10 @@ export default function MDDashboard() {
             <LazyBarChart
               data={
                 comp
-                  ? (['A', 'B', 'C', 'D'] as FactoryCode[]).map((f) => ({
-                      name: `Factory ${f}`,
-                      pass: comp.thisWeek.byFactory[f].pass,
-                      fail: comp.thisWeek.byFactory[f].fail,
+                  ? Object.entries(comp.thisWeek.byFactory).map(([f, stats]) => ({
+                      name: f,
+                      pass: stats.pass,
+                      fail: stats.fail,
                     }))
                   : []
               }

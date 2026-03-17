@@ -313,7 +313,7 @@ export async function getDashboardKPIs(
       docToInspection(d.id, d.data() as Record<string, unknown>)
     );
 
-    const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+    const factories: FactoryCode[] = ['A', 'B', 'B3', 'C', 'D', 'FGWH', 'SCANPACK_AB', 'SCANPACK_C', 'SCANPACK_D'];
     const byFactory = {} as MDDashboardKPI['byFactory'];
 
     factories.forEach((f) => {
@@ -410,7 +410,7 @@ export async function getWeeklyTrend(
 
 /** 공장별 통계 계산 헬퍼 */
 function calcFactoryStats(inspections: MDInspection[]): Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }> {
-  const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+  const factories: FactoryCode[] = ['A', 'B', 'B3', 'C', 'D', 'FGWH', 'SCANPACK_AB', 'SCANPACK_C', 'SCANPACK_D'];
   const result = {} as Record<FactoryCode, { total: number; pass: number; fail: number; passRate: number }>;
   factories.forEach((f) => {
     const items = inspections.filter((i) => i.factory === f);
@@ -465,7 +465,7 @@ export async function getWeeklyComparison(
     const lastWeekPassCount = lastWeekInspections.filter((i) => i.result === 'PASS').length;
 
     // 공장별 비교
-    const factories: FactoryCode[] = ['A', 'B', 'C', 'D'];
+    const factories: FactoryCode[] = ['A', 'B', 'B3', 'C', 'D', 'FGWH', 'SCANPACK_AB', 'SCANPACK_C', 'SCANPACK_D'];
     const factoryComparison = {} as MDWeeklyComparison['factoryComparison'];
     factories.forEach((f) => {
       const lw = lastWeekByFactory[f].fail;
@@ -590,8 +590,15 @@ export async function getRepeatedIssues(
       if (lastWeekFailKeys.has(key) && !seen.has(key)) {
         seen.add(key);
 
-        // 관련 failure 정보에서 key issue 추출
-        const keyIssue = 'Failed to detect metal test piece';
+        // 체크리스트/remarks에서 keyIssue 동적 추출
+        let keyIssue = i.remarks || '';
+        if (!keyIssue && i.checklist) {
+          const failed = Object.entries(i.checklist)
+            .filter(([, v]) => v === 'FAIL' || v === 'OFF' || v === 'NG')
+            .map(([k]) => k);
+          keyIssue = failed.length > 0 ? `Checklist fail: ${failed.join(', ')}` : 'Inspection failed';
+        }
+        if (!keyIssue) keyIssue = 'Inspection failed';
 
         repeatedMachines.push({
           machineId: i.machineId || `${i.factory}-${i.line}`,
