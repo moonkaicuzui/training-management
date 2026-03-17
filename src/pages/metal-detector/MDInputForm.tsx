@@ -22,8 +22,8 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap, Cli
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useAuthStore } from '@/stores/authStore';
-import { fetchHREmployees } from '@/services/hrIntegrationService';
-import type { HREmployeeRecord } from '@/services/hrIntegrationService';
+import { getEmployees } from '@/services/api/employeeApi';
+import type { Employee } from '@/types';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 import { logger } from '@/utils/logger';
 
@@ -92,9 +92,9 @@ export default function MDInputForm() {
   const [lastSubmitted, setLastSubmitted] = useState<{ line: string; machineId: string; result: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // HR V2 직원 목록
-  const [hrEmployees, setHrEmployees] = useState<HREmployeeRecord[]>([]);
-  const [hrLoading, setHrLoading] = useState(false);
+  // 직원 목록 (Q-TRAIN employees 컬렉션)
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
 
   // 세션 복원
   const session = useMemo(() => loadSession(), []);
@@ -113,41 +113,35 @@ export default function MDInputForm() {
     failureDescription: '',
   });
 
-  // HR V2 직원 데이터 로드
+  // 직원 데이터 로드 (Q-TRAIN employees 컬렉션)
   useEffect(() => {
-    const loadHREmployees = async () => {
-      setHrLoading(true);
+    const loadEmployees = async () => {
+      setEmployeesLoading(true);
       try {
-        const now = new Date();
-        const monthNames = [
-          'january', 'february', 'march', 'april', 'may', 'june',
-          'july', 'august', 'september', 'october', 'november', 'december',
-        ];
-        const employees = await fetchHREmployees(monthNames[now.getMonth()], now.getFullYear());
-        // 재직 중인 직원만 필터
-        setHrEmployees(employees.filter((e) => e.is_active));
+        const result = await getEmployees({ status: 'ACTIVE' as Employee['status'] });
+        setEmployees(result);
       } catch (err) {
-        logger.warn('[MDInputForm] HR 직원 데이터 로드 실패:', err);
+        logger.warn('[MDInputForm] 직원 데이터 로드 실패:', err);
       } finally {
-        setHrLoading(false);
+        setEmployeesLoading(false);
       }
     };
-    loadHREmployees();
+    loadEmployees();
   }, []);
 
   // 검사자 검색 필터
   const [inspectorSearch, setInspectorSearch] = useState('');
 
   const filteredEmployees = useMemo(() => {
-    if (!inspectorSearch.trim()) return hrEmployees.slice(0, 50); // 초기 50명
+    if (!inspectorSearch.trim()) return employees.slice(0, 50);
     const query = inspectorSearch.toLowerCase();
-    return hrEmployees.filter(
+    return employees.filter(
       (e) =>
         e.employee_id.toLowerCase().includes(query) ||
         e.employee_name.toLowerCase().includes(query) ||
-        e.team.toLowerCase().includes(query)
+        e.department.toLowerCase().includes(query)
     ).slice(0, 50);
-  }, [hrEmployees, inspectorSearch]);
+  }, [employees, inspectorSearch]);
 
   // 최근 장비 ID 목록 (자동완성용)
   const recentMachineIds = useMemo(() => {
@@ -185,7 +179,7 @@ export default function MDInputForm() {
 
   // 검사자 선택 핸들러
   const handleInspectorSelect = useCallback((employeeId: string) => {
-    const employee = hrEmployees.find((e) => e.employee_id === employeeId);
+    const employee = employees.find((e) => e.employee_id === employeeId);
     if (employee) {
       setFormData((prev) => ({
         ...prev,
@@ -193,15 +187,15 @@ export default function MDInputForm() {
         inspectorName: employee.employee_name,
       }));
     }
-  }, [hrEmployees]);
+  }, [employees]);
 
   // ============ 제출 로직 ============
 
   const canSubmitQuick = () => {
     if (!formData.factory || !formData.line.trim() || !formData.result) return false;
     // HR 데이터 있으면 inspectorId 필수, 없으면 inspectorName으로 폴백
-    if (hrEmployees.length > 0 && !formData.inspectorId) return false;
-    if (hrEmployees.length === 0 && !formData.inspectorName.trim()) return false;
+    if (employees.length > 0 && !formData.inspectorId) return false;
+    if (employees.length === 0 && !formData.inspectorName.trim()) return false;
     if (formData.result === 'FAIL' && (!formData.failureType || !formData.failureDescription.trim())) return false;
     return true;
   };
@@ -288,7 +282,7 @@ export default function MDInputForm() {
         return formData.factory !== '' && formData.line.trim() !== '';
       case 1:
         if (formData.inspectionDate === '') return false;
-        if (hrEmployees.length > 0) return formData.inspectorId !== '';
+        if (employees.length > 0) return formData.inspectorId !== '';
         return formData.inspectorName.trim() !== '';
       case 2:
         if (formData.result === '') return false;
@@ -306,12 +300,12 @@ export default function MDInputForm() {
   const renderInspectorSelector = (id: string) => (
     <div className="space-y-2">
       <Label>{t('metalDetector.input.inspectorId')}</Label>
-      {hrLoading ? (
+      {employeesLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           {t('common.loading')}
         </div>
-      ) : hrEmployees.length > 0 ? (
+      ) : employees.length > 0 ? (
         <>
           <Input
             placeholder={t('metalDetector.input.inspectorSearch')}
@@ -329,7 +323,7 @@ export default function MDInputForm() {
             <SelectContent>
               {filteredEmployees.map((emp) => (
                 <SelectItem key={emp.employee_id} value={emp.employee_id}>
-                  {emp.employee_id} - {emp.employee_name} ({emp.team})
+                  {emp.employee_id} - {emp.employee_name} ({emp.department})
                 </SelectItem>
               ))}
               {filteredEmployees.length === 0 && (
