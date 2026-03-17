@@ -436,6 +436,14 @@
       ]
     },
     {
+      "collectionGroup": "md_inspections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "inspectionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "md_failures",
       "queryScope": "COLLECTION",
       "fields": [
