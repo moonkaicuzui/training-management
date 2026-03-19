@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { parseMetalShoeExcel } from '../../utils/metalShoeExcelParser';
+import { syncCaseToReturnDashboard } from '../../services/metalShoeSyncService';
 import { Loader2, Upload, Plus, AlertTriangle, CheckCircle, FileSpreadsheet, ArrowLeft } from 'lucide-react';
 import type { MetalShoeCase, MetalShoeComponent, MetalShoeSide, XraySentStatus, MetalConfirm } from '../../types/metalShoe';
 
@@ -73,10 +74,11 @@ export default function MetalShoeRegister() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ count: number } | null>(null);
 
-  const { createCase, createBulkCases, fetchSuppliers, suppliers } = useMetalShoeStore(
+  const { createCase, createBulkCases, updateCase, fetchSuppliers, suppliers } = useMetalShoeStore(
     useShallow((state) => ({
       createCase: state.createCase,
       createBulkCases: state.createBulkCases,
+      updateCase: state.updateCase,
       fetchSuppliers: state.fetchSuppliers,
       suppliers: state.suppliers,
     }))
@@ -104,10 +106,18 @@ export default function MetalShoeRegister() {
     setError(null);
     setSuccess(false);
     try {
-      await createCase(
+      const newCase = await createCase(
         { ...form, year: 0, month: 0, week: '', weekNumber: 0, status: 'registered', createdBy: { uid: user.id, email: user.email, displayName: user.name } },
         { uid: user.id, email: user.email, displayName: user.name }
       );
+      // Return Dashboard 동기화 (비동기, 실패해도 무시)
+      syncCaseToReturnDashboard(newCase, { uid: user.id, email: user.email, displayName: user.name })
+        .then((rdId) => {
+          if (rdId) {
+            updateCase(newCase.year, newCase.id, { returnDashboardIssueId: rdId });
+          }
+        })
+        .catch(() => { /* 동기화 실패는 무시 - 메인 케이스는 이미 저장됨 */ });
       setSuccess(true);
       setForm(INITIAL_FORM);
       setTimeout(() => setSuccess(false), 5000);

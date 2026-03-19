@@ -159,7 +159,11 @@
       "mdDashboard": "금속탐지기 대시보드",
       "mdInput": "점검 입력",
       "mdHistory": "점검 이력",
-      "mdReport": "보고서"
+      "mdReport": "보고서",
+      "msDashboard": "금속 신발 대시보드",
+      "msRegister": "케이스 등록",
+      "msTracking": "케이스 추적",
+      "msReport": "리포트"
     },
     "inspectorStickers": "검사원 스티커 관리",
     "trainerDirectives": "트레이너 업무 지시",
@@ -3685,6 +3689,9 @@
     },
     "caseDetail": "케이스 상세",
     "changeStatus": "상태 변경",
+    "actionPlan": "액션플랜",
+    "noActionPlan": "아직 액션플랜이 없습니다",
+    "syncAction": "액션 동기화",
     "report": {
       "title": "보고서",
       "subtitle": "Excel, PDF, PPTX 보고서 생성",

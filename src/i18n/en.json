@@ -159,7 +159,11 @@
       "mdDashboard": "Metal Detector Dashboard",
       "mdInput": "Inspection Input",
       "mdHistory": "Inspection History",
-      "mdReport": "Report"
+      "mdReport": "Report",
+      "msDashboard": "Metal Shoe Dashboard",
+      "msRegister": "Case Register",
+      "msTracking": "Case Tracking",
+      "msReport": "Report"
     },
     "inspectorStickers": "Inspector Stickers",
     "trainerDirectives": "Trainer Directives",
@@ -3685,6 +3689,9 @@
     },
     "caseDetail": "Case Detail",
     "changeStatus": "Change Status",
+    "actionPlan": "Action Plan",
+    "noActionPlan": "No action plan yet",
+    "syncAction": "Sync Actions",
     "report": {
       "title": "Reports",
       "subtitle": "Generate Excel, PDF, and PPTX reports",

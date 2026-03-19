@@ -58,6 +58,10 @@ const routeLabelMap: Record<string, string> = {
   'metal-detector': 'nav.equipment.mdDashboard',
   input: 'nav.equipment.mdInput',
   report: 'nav.equipment.mdReport',
+  // Metal Shoes
+  'metal-shoes': 'metalShoe.dashboard.title',
+  register: 'metalShoe.register',
+  tracking: 'metalShoe.tracking.title',
   // Quality Blog
   'quality-blog': 'nav.qualityBlog',
   // Executive Report

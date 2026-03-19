@@ -21,6 +21,7 @@ import {
   Timestamp,
 } from '@/services/firebase';
 import { logger } from '@/utils/logger';
+import { createAuditLog } from './auditLogService';
 import type {
   MetalShoeCase,
   MetalShoeActionTracking,
@@ -190,6 +191,16 @@ export async function createCase(
     const docRef = await addDoc(collection(db, collPath), docData);
     logger.info('[MetalShoeService] Created case', { id: docRef.id });
 
+    // 감사 로그 기록 (실패해도 케이스 생성에 영향 없음)
+    createAuditLog({
+      log_id: `METAL-SHOE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      action: 'CREATE',
+      entity_type: 'METAL_SHOE_CASE',
+      entity_id: docRef.id,
+      changed_by: user.email || user.uid,
+      after_data: docData as unknown as Record<string, unknown>,
+    }).catch(() => {});
+
     // Ensure year document exists
     const yearDocRef = doc(db, CASES_BASE, String(year));
     const yearSnap = await getDoc(yearDocRef);
@@ -214,13 +225,46 @@ export async function createCase(
   }
 }
 
+// ─── Status Transition Validation ────────────────────────────
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  registered: ['xray_sent', 'confirmed', 'closed'],
+  xray_sent: ['confirmed', 'closed'],
+  confirmed: ['action_requested', 'closed'],
+  action_requested: ['action_received', 'closed'],
+  action_received: ['closed'],
+  closed: [],
+};
+
 /** 케이스 수정 */
 export async function updateCase(year: number, id: string, data: Partial<MetalShoeCase>): Promise<void> {
   try {
+    // 상태 전환 검증 (상태 변경 시)
+    if (data.status) {
+      const docRef = doc(db, getCasesCollection(year), id);
+      const existing = await getDoc(docRef);
+      if (existing.exists()) {
+        const currentStatus = existing.data().status as string;
+        const allowed = VALID_STATUS_TRANSITIONS[currentStatus] || [];
+        if (currentStatus !== data.status && !allowed.includes(data.status)) {
+          throw new Error(`Invalid status transition: ${currentStatus} → ${data.status}`);
+        }
+      }
+    }
+
     const docRef = doc(db, getCasesCollection(year), id);
     const { id: _, createdAt, createdBy, ...updateData } = data;
     await updateDoc(docRef, { ...updateData, updatedAt: serverTimestamp() });
     logger.info('[MetalShoeService] Updated case', { id });
+
+    // 감사 로그 기록 (실패해도 케이스 수정에 영향 없음)
+    createAuditLog({
+      log_id: `METAL-SHOE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      action: 'UPDATE',
+      entity_type: 'METAL_SHOE_CASE',
+      entity_id: id,
+      changed_by: '',
+      after_data: updateData as unknown as Record<string, unknown>,
+    }).catch(() => {});
   } catch (error) {
     logger.error('[MetalShoeService] updateCase failed', error);
     throw error;

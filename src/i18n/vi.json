@@ -159,7 +159,11 @@
       "mdDashboard": "Bảng điều khiển máy dò kim loại",
       "mdInput": "Nhập kiểm tra",
       "mdHistory": "Lịch sử kiểm tra",
-      "mdReport": "Báo cáo"
+      "mdReport": "Báo cáo",
+      "msDashboard": "Bảng điều khiển giày kim loại",
+      "msRegister": "Đăng ký trường hợp",
+      "msTracking": "Theo dõi trường hợp",
+      "msReport": "Báo cáo"
     },
     "inspectorStickers": "Quản lý tem KTV",
     "trainerDirectives": "Chi thi dao tao hang ngay",
@@ -3685,6 +3689,9 @@
     },
     "caseDetail": "Chi tiết ca",
     "changeStatus": "Đổi trạng thái",
+    "actionPlan": "Kế hoạch hành động",
+    "noActionPlan": "Chưa có kế hoạch hành động",
+    "syncAction": "Đồng bộ hành động",
     "report": {
       "title": "Báo cáo",
       "subtitle": "Tạo báo cáo Excel, PDF và PPTX",

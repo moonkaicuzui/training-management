@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
-import { Loader2, AlertTriangle, Search, Eye, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, Search, Eye, RefreshCw, ExternalLink } from 'lucide-react';
+import { syncActionFromReturnDashboard } from '../../services/metalShoeSyncService';
 import type { MetalShoeCase, MetalShoeStatus } from '../../types/metalShoe';
 
 const STATUS_COLORS: Record<MetalShoeStatus, string> = {
@@ -311,10 +312,82 @@ export default function MetalShoeTracking() {
               </div>
             </div>
 
-            {/* Return Dashboard Link */}
+            {/* Action Plan */}
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-medium text-gray-600">
+                  {t('metalShoe.actionPlan', 'Action Plan')}
+                </label>
+                {detailCase.actionPlanStatus && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    detailCase.actionPlanStatus === 'submitted' ? 'bg-green-100 text-green-700' :
+                    detailCase.actionPlanStatus === 'overdue' ? 'bg-red-100 text-red-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {detailCase.actionPlanStatus}
+                  </span>
+                )}
+              </div>
+
+              {detailCase.actionPlanActions && detailCase.actionPlanActions.length > 0 ? (
+                <div className="space-y-1.5">
+                  {detailCase.actionPlanActions.map((action, idx) => (
+                    <div key={idx} className="rounded-lg bg-gray-50 px-3 py-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">{action.supplierName}</span>
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                          action.actionStatus === 'DONE' ? 'bg-green-100 text-green-700' :
+                          action.actionStatus === 'OVERDUE' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {action.actionStatus}
+                        </span>
+                      </div>
+                      {action.remark && <p className="mt-1 text-gray-500">{action.remark}</p>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">{t('metalShoe.noActionPlan', 'No action plan yet')}</p>
+              )}
+
+              {detailCase.actionPlanLastSyncedAt && (
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Last synced: {new Date(detailCase.actionPlanLastSyncedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            {/* Return Dashboard Link + Sync */}
             {detailCase.returnDashboardIssueId && (
-              <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-                Return Dashboard Issue: <span className="font-mono">{detailCase.returnDashboardIssueId}</span>
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-xs text-blue-700">
+                  <ExternalLink className="h-3 w-3" />
+                  <span>Return Dashboard: <span className="font-mono">{detailCase.returnDashboardIssueId.slice(0, 12)}...</span></span>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await syncActionFromReturnDashboard(detailCase.returnDashboardIssueId!);
+                      if (result) {
+                        await updateCase(detailCase.year, detailCase.id, {
+                          actionPlanActions: result.actions as MetalShoeCase['actionPlanActions'],
+                          actionPlanStatus: result.status === 'resolved' ? 'submitted' : 'pending',
+                          actionPlanLastSyncedAt: new Date().toISOString(),
+                        });
+                        setDetailCase({
+                          ...detailCase,
+                          actionPlanActions: result.actions as MetalShoeCase['actionPlanActions'],
+                          actionPlanStatus: result.status === 'resolved' ? 'submitted' : 'pending',
+                          actionPlanLastSyncedAt: new Date().toISOString(),
+                        });
+                      }
+                    } catch { /* ignore sync errors */ }
+                  }}
+                  className="rounded bg-blue-100 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-200"
+                >
+                  {t('metalShoe.syncAction', 'Sync Actions')}
+                </button>
               </div>
             )}
           </div>

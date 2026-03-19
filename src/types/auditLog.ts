@@ -6,7 +6,7 @@
 import type { ChangeAction } from './index';
 
 export type AuditAction = ChangeAction | 'LOGIN' | 'LOGOUT' | 'VIEW' | 'EXPORT';
-export type AuditEntityType = 'PROGRAM' | 'RESULT' | 'SESSION' | 'EMPLOYEE' | 'USER';
+export type AuditEntityType = 'PROGRAM' | 'RESULT' | 'SESSION' | 'EMPLOYEE' | 'USER' | 'METAL_SHOE_CASE';
 
 export interface AuditLogEntry {
   log_id: string;

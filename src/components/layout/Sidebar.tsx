@@ -31,6 +31,7 @@ import {
   FileWarning,
   RefreshCcw,
   Search,
+  Footprints,
   BookOpenCheck,
   Microscope,
   ClipboardList,
@@ -152,6 +153,10 @@ const equipmentComplianceItems: NavItem[] = [
   { titleKey: 'nav.equipment.mdInput', href: '/equipment/metal-detector/input', icon: ClipboardList },
   { titleKey: 'nav.equipment.mdHistory', href: '/equipment/metal-detector/history', icon: History },
   { titleKey: 'nav.equipment.mdReport', href: '/equipment/metal-detector/report', icon: FileBarChart },
+  { titleKey: 'nav.equipment.msDashboard', href: '/equipment/metal-shoes', icon: Footprints },
+  { titleKey: 'nav.equipment.msRegister', href: '/equipment/metal-shoes/register', icon: ClipboardList },
+  { titleKey: 'nav.equipment.msTracking', href: '/equipment/metal-shoes/tracking', icon: Search },
+  { titleKey: 'nav.equipment.msReport', href: '/equipment/metal-shoes/report', icon: FileBarChart },
 ];
 
 // 9. TECH / NEW MODEL
