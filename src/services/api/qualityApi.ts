@@ -5,6 +5,7 @@
 
 import * as inspectionService from '../inspectionService';
 import * as mdInspectionService from '../mdInspectionService';
+import * as metalShoeService from '../metalShoeService';
 
 import type {
   InspectionResultDetail,
@@ -25,6 +26,13 @@ import type {
   MDRepeatedIssueSummary,
   MDEmailRecipient,
 } from '@/types/metalDetector';
+
+import type {
+  MetalShoeCase,
+  MetalShoeActionTracking,
+  MetalShoeDashboardKPI,
+  MetalShoeFilters,
+} from '@/types/metalShoe';
 
 import {
   invalidateResultCache,
@@ -156,4 +164,37 @@ export const mdInspection = {
     mdInspectionService.removeEmailRecipient(id),
   getRecipientsForNotification: (type: 'weeklyReport' | 'failAlert' | 'caOverdue'): Promise<MDEmailRecipient[]> =>
     mdInspectionService.getRecipientsForNotification(type),
+};
+
+// ========== Metal Shoe Case ==========
+
+export const metalShoe = {
+  getCases: (filters: MetalShoeFilters): Promise<MetalShoeCase[]> =>
+    metalShoeService.getCases(filters),
+  getCaseById: (year: number, id: string): Promise<MetalShoeCase | null> =>
+    metalShoeService.getCaseById(year, id),
+  createCase: (
+    data: Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>,
+    user: { uid: string; email: string; displayName: string }
+  ): Promise<MetalShoeCase> =>
+    metalShoeService.createCase(data, user),
+  updateCase: (year: number, id: string, data: Partial<MetalShoeCase>): Promise<void> =>
+    metalShoeService.updateCase(year, id, data),
+  createBulkCases: (
+    cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
+    user: { uid: string; email: string; displayName: string }
+  ): Promise<number> =>
+    metalShoeService.createBulkCases(cases, user),
+  getActionTrackings: (year?: number): Promise<MetalShoeActionTracking[]> =>
+    metalShoeService.getActionTrackings(year),
+  createActionTracking: (
+    data: Omit<MetalShoeActionTracking, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<string> =>
+    metalShoeService.createActionTracking(data),
+  updateActionTracking: (id: string, data: Partial<MetalShoeActionTracking>): Promise<void> =>
+    metalShoeService.updateActionTracking(id, data),
+  getDashboardKPIs: (year: number, weekNumber?: number): Promise<MetalShoeDashboardKPI> =>
+    metalShoeService.getDashboardKPIs(year, weekNumber),
+  getSupplierList: () =>
+    metalShoeService.getSupplierList(),
 };

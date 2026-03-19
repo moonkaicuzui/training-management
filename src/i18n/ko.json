@@ -3637,6 +3637,72 @@
       "noRecipients": "수신자가 없습니다. 먼저 수신자를 추가하세요."
     }
   },
+  "metalShoe": {
+    "dashboard": {
+      "title": "금속 발견 신발",
+      "subtitle": "금속 발견 신발 케이스 추적 및 분석"
+    },
+    "register": "케이스 등록",
+    "manualEntry": "수동 입력",
+    "excelImport": "엑셀 임포트",
+    "caseCreated": "케이스가 등록되었습니다",
+    "importSuccess": "{{count}}건 임포트 완료",
+    "importDesc": "기존 금속 발견 신발 엑셀 파일을 업로드하세요. 업체명이 표준 ID로 자동 매칭됩니다.",
+    "dropExcel": "엑셀 파일 업로드 (.xlsx)",
+    "casesFound": "건 발견",
+    "errors": "개 오류",
+    "unmatchedSuppliers": "미매칭 업체",
+    "unmatchedWarning": "다음 업체명이 매칭되지 않았습니다:",
+    "moreRows": "외 {{count}}건",
+    "importCases": "{{count}}건 임포트",
+    "registerCase": "케이스 등록",
+    "detectionDate": "발견일",
+    "model": "모델",
+    "destination": "목적지",
+    "orderQty": "주문 수량",
+    "size": "사이즈",
+    "supplier": "업체",
+    "component": "부품",
+    "side": "좌우",
+    "piecesQty": "수량 (PCS)",
+    "allWeeks": "전체 주차",
+    "allStatuses": "전체 상태",
+    "allSuppliers": "전체 업체",
+    "showingCases": "{{count}}건",
+    "topSuppliers": "주요 업체",
+    "weeklyTrend": "주간 추이",
+    "byFactory": "공장별",
+    "kpi": {
+      "totalCases": "총 케이스",
+      "bottomCases": "바텀",
+      "upperCases": "어퍼",
+      "xrayPending": "X-Ray 대기",
+      "actionPending": "액션 대기",
+      "closed": "종결"
+    },
+    "tracking": {
+      "title": "케이스 추적"
+    },
+    "caseDetail": "케이스 상세",
+    "changeStatus": "상태 변경",
+    "report": {
+      "title": "보고서",
+      "subtitle": "Excel, PDF, PPTX 보고서 생성",
+      "excelTitle": "년간 엑셀 보고서",
+      "excelDesc": "선택한 연도의 전체 데이터 다운로드",
+      "excelContent": "DATA 시트 + 업체 추적 + 액션 추적 + 요약",
+      "downloadExcel": "엑셀 다운로드",
+      "pdfTitle": "주간 PDF 보고서",
+      "pdfDesc": "선택한 주차의 PDF 보고서 생성",
+      "pdfContent": "표지 + 케이스 상세 + 업체 요약 + 액션 상태",
+      "downloadPdf": "PDF 다운로드 (W{{week}})",
+      "selectWeek": "주차를 선택하세요",
+      "pptxTitle": "업체 통보서",
+      "pptxDesc": "업체 알림 PPTX 생성",
+      "pptxContent": "표지 + 케이스 요약 + 액션 요청 + 추적 현황",
+      "downloadPptx": "PPTX 다운로드"
+    }
+  },
   "inspectorStickers": {
     "title": "검사원 스티커 관리",
     "description": "제품 검사원의 정품 인증 스티커 ID를 등록하고 관리합니다. 불량 제품의 스티커로 담당 검사원을 추적할 수 있습니다.",

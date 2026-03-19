@@ -531,6 +531,25 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && hasAllowedDomain();
     }
 
+    // ========== 금속 신발 케이스 (Metal Shoe Cases - year subcollections) ==========
+    match /metal_shoe_cases/{year} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow write: if isAdmin() || isTrainer();
+
+      match /cases/{caseId} {
+        allow read: if isAuthenticated() && hasAllowedDomain();
+        allow create: if isAdmin() || isTrainer();
+        allow update: if isAdmin() || isTrainer();
+      }
+    }
+
+    // ========== 금속 신발 액션 추적 (Metal Shoe Action Tracking) ==========
+    match /metal_shoe_action_tracking/{trackingId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAdmin() || isTrainer();
+      allow update: if isAdmin() || isTrainer();
+    }
+
     // ========== 검사원 스티커 (inspector_stickers) ==========
     match /inspector_stickers/{docId} {
       allow read: if isAuthenticated() && hasAllowedDomain();

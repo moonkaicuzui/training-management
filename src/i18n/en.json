@@ -3637,6 +3637,72 @@
       "noRecipients": "No recipients. Add recipients first."
     }
   },
+  "metalShoe": {
+    "dashboard": {
+      "title": "Metal Found in Shoes",
+      "subtitle": "Metal detection case tracking and analysis"
+    },
+    "register": "Register Case",
+    "manualEntry": "Manual Entry",
+    "excelImport": "Excel Import",
+    "caseCreated": "Case registered successfully",
+    "importSuccess": "{{count}} cases imported successfully",
+    "importDesc": "Upload the existing Metal Found Shoe Excel file. The system will match supplier names to standard IDs.",
+    "dropExcel": "Click to upload Excel file (.xlsx)",
+    "casesFound": "cases found",
+    "errors": "errors",
+    "unmatchedSuppliers": "unmatched suppliers",
+    "unmatchedWarning": "These supplier names could not be matched:",
+    "moreRows": "and {{count}} more",
+    "importCases": "Import {{count}} Cases",
+    "registerCase": "Register Case",
+    "detectionDate": "Detection Date",
+    "model": "Model",
+    "destination": "Destination",
+    "orderQty": "Order Qty",
+    "size": "Size",
+    "supplier": "Supplier",
+    "component": "Component",
+    "side": "Side",
+    "piecesQty": "Pieces Qty",
+    "allWeeks": "All Weeks",
+    "allStatuses": "All Statuses",
+    "allSuppliers": "All Suppliers",
+    "showingCases": "{{count}} cases",
+    "topSuppliers": "Top Suppliers",
+    "weeklyTrend": "Weekly Trend",
+    "byFactory": "By Factory",
+    "kpi": {
+      "totalCases": "Total Cases",
+      "bottomCases": "Bottom",
+      "upperCases": "Upper",
+      "xrayPending": "X-Ray Pending",
+      "actionPending": "Action Pending",
+      "closed": "Closed"
+    },
+    "tracking": {
+      "title": "Case Tracking"
+    },
+    "caseDetail": "Case Detail",
+    "changeStatus": "Change Status",
+    "report": {
+      "title": "Reports",
+      "subtitle": "Generate Excel, PDF, and PPTX reports",
+      "excelTitle": "Annual Excel Report",
+      "excelDesc": "Download all cases for the selected year",
+      "excelContent": "DATA sheet + Supplier Tracking + Action Tracking + Summary",
+      "downloadExcel": "Download Excel",
+      "pdfTitle": "Weekly PDF Report",
+      "pdfDesc": "Generate PDF for the selected week",
+      "pdfContent": "Cover + Case details + Supplier summary + Action status",
+      "downloadPdf": "Download PDF (W{{week}})",
+      "selectWeek": "Select a week first",
+      "pptxTitle": "Supplier Notice",
+      "pptxDesc": "Generate supplier notification PPTX",
+      "pptxContent": "Cover + Case summary + Action request + Tracking status",
+      "downloadPptx": "Download PPTX"
+    }
+  },
   "inspectorStickers": {
     "title": "Inspector Sticker Management",
     "description": "Register and manage product inspector authentication sticker IDs. Track responsible inspectors from stickers on defective products.",

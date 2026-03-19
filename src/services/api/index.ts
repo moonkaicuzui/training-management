@@ -86,7 +86,7 @@ export {
   checkAndCreateExpiryNotifications,
 } from './trainingApi';
 
-// Quality API (inspection, metal detector)
+// Quality API (inspection, metal detector, metal shoe)
 export {
   getInspectionResults,
   getInspectionResultsByEmployee,
@@ -99,6 +99,7 @@ export {
   getInspectionConsecutiveFailures,
   autoEnrollInspectionFromLogs,
   mdInspection,
+  metalShoe,
 } from './qualityApi';
 
 // CAPA API

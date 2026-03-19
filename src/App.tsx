@@ -91,6 +91,12 @@ const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
 const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
 const MDSeedData = lazy(() => import('./pages/metal-detector/MDSeedData'));
 
+// Metal Shoe Cases (금속 발견 신발)
+const MetalShoeDashboard = lazy(() => import('./pages/metal-shoes/MetalShoeDashboard'));
+const MetalShoeRegister = lazy(() => import('./pages/metal-shoes/MetalShoeRegister'));
+const MetalShoeTracking = lazy(() => import('./pages/metal-shoes/MetalShoeTracking'));
+const MetalShoeReport = lazy(() => import('./pages/metal-shoes/MetalShoeReport'));
+
 // TECH / NEW MODEL 페이지
 const TechModelList = lazy(() => import('./pages/tech/TechModelList'));
 const TechReviewGuidelines = lazy(() => import('./pages/tech/TechReviewGuidelines'));
@@ -562,6 +568,30 @@ function App() {
                       </Suspense>
                     } />
                   )}
+                </Route>
+
+                {/* Metal Shoe Cases (금속 발견 신발) */}
+                <Route path="equipment/metal-shoes" element={<ModuleErrorBoundary />}>
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MetalShoeDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="register" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MetalShoeRegister />
+                    </Suspense>
+                  } />
+                  <Route path="tracking" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MetalShoeTracking />
+                    </Suspense>
+                  } />
+                  <Route path="report" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <MetalShoeReport />
+                    </Suspense>
+                  } />
                 </Route>
 
                 {/* TECH / NEW MODEL */}

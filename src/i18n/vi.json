@@ -3637,6 +3637,72 @@
       "noRecipients": "Chưa có người nhận. Thêm người nhận trước."
     }
   },
+  "metalShoe": {
+    "dashboard": {
+      "title": "Phát hiện kim loại trong giày",
+      "subtitle": "Theo dõi và phân tích các trường hợp phát hiện kim loại"
+    },
+    "register": "Đăng ký ca",
+    "manualEntry": "Nhập thủ công",
+    "excelImport": "Nhập từ Excel",
+    "caseCreated": "Đã đăng ký ca thành công",
+    "importSuccess": "Đã nhập thành công {{count}} ca",
+    "importDesc": "Tải lên file Excel kim loại trong giày hiện có. Hệ thống sẽ tự động khớp tên nhà cung cấp.",
+    "dropExcel": "Nhấp để tải lên file Excel (.xlsx)",
+    "casesFound": "ca được tìm thấy",
+    "errors": "lỗi",
+    "unmatchedSuppliers": "NCC chưa khớp",
+    "unmatchedWarning": "Các tên NCC này không thể khớp:",
+    "moreRows": "và {{count}} ca nữa",
+    "importCases": "Nhập {{count}} ca",
+    "registerCase": "Đăng ký ca",
+    "detectionDate": "Ngày phát hiện",
+    "model": "Mẫu",
+    "destination": "Đích đến",
+    "orderQty": "SL đặt hàng",
+    "size": "Kích cỡ",
+    "supplier": "Nhà cung cấp",
+    "component": "Bộ phận",
+    "side": "Bên",
+    "piecesQty": "SL (PCS)",
+    "allWeeks": "Tất cả tuần",
+    "allStatuses": "Tất cả trạng thái",
+    "allSuppliers": "Tất cả NCC",
+    "showingCases": "{{count}} ca",
+    "topSuppliers": "NCC hàng đầu",
+    "weeklyTrend": "Xu hướng tuần",
+    "byFactory": "Theo nhà máy",
+    "kpi": {
+      "totalCases": "Tổng số ca",
+      "bottomCases": "Bottom",
+      "upperCases": "Upper",
+      "xrayPending": "Chờ X-Ray",
+      "actionPending": "Chờ hành động",
+      "closed": "Đã đóng"
+    },
+    "tracking": {
+      "title": "Theo dõi ca"
+    },
+    "caseDetail": "Chi tiết ca",
+    "changeStatus": "Đổi trạng thái",
+    "report": {
+      "title": "Báo cáo",
+      "subtitle": "Tạo báo cáo Excel, PDF và PPTX",
+      "excelTitle": "Báo cáo Excel năm",
+      "excelDesc": "Tải xuống tất cả ca trong năm đã chọn",
+      "excelContent": "Sheet DATA + Theo dõi NCC + Theo dõi hành động + Tóm tắt",
+      "downloadExcel": "Tải Excel",
+      "pdfTitle": "Báo cáo PDF tuần",
+      "pdfDesc": "Tạo PDF cho tuần đã chọn",
+      "pdfContent": "Bìa + Chi tiết ca + Tóm tắt NCC + Trạng thái hành động",
+      "downloadPdf": "Tải PDF (W{{week}})",
+      "selectWeek": "Chọn tuần trước",
+      "pptxTitle": "Thông báo NCC",
+      "pptxDesc": "Tạo PPTX thông báo cho NCC",
+      "pptxContent": "Bìa + Tóm tắt ca + Yêu cầu hành động + Trạng thái theo dõi",
+      "downloadPptx": "Tải PPTX"
+    }
+  },
   "inspectorStickers": {
     "title": "Quản lý tem kiểm tra viên",
     "description": "Đăng ký và quản lý ID tem xác thực sản phẩm chính hãng của kiểm tra viên. Theo dõi kiểm tra viên phụ trách từ tem trên sản phẩm lỗi.",
