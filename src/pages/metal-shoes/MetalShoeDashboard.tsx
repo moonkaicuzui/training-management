@@ -4,15 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useNavigate } from 'react-router-dom';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
 import { Loader2, AlertTriangle, Package, Shield, Send, CheckCircle, TrendingUp, Factory } from 'lucide-react';
-
-// Dynamic chart imports — set to null if unavailable
-let LazyBarChart: React.ComponentType<any> | null = null;
-let LazyLineChart: React.ComponentType<any> | null = null;
-try {
-  const mod = await import('../../components/charts/LazyCharts');
-  LazyBarChart = mod.LazyBarChart;
-  LazyLineChart = mod.LazyLineChart;
-} catch { /* charts unavailable */ }
+import { LazyBarChart, LazyLineChart } from '../../components/charts/LazyCharts';
 
 export default function MetalShoeDashboard() {
   const { t } = useTranslation();
@@ -171,20 +163,14 @@ export default function MetalShoeDashboard() {
                   {t('metalShoe.topSuppliers', 'Top Suppliers')}
                 </h3>
                 <div className="h-64">
-                  {LazyBarChart ? (
-                    <LazyBarChart
-                      data={supplierChartData}
-                      xAxisKey="name"
-                      bars={[
-                        { dataKey: 'bottom', fill: '#f59e0b', name: 'Bottom' },
-                        { dataKey: 'upper', fill: '#8b5cf6', name: 'Upper' },
-                      ]}
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                      {t('common.chartUnavailable', 'Chart unavailable')}
-                    </div>
-                  )}
+                  <LazyBarChart
+                    data={supplierChartData}
+                    xAxisKey="name"
+                    bars={[
+                      { dataKey: 'bottom', fill: '#f59e0b', name: 'Bottom' },
+                      { dataKey: 'upper', fill: '#8b5cf6', name: 'Upper' },
+                    ]}
+                  />
                 </div>
               </div>
             )}
@@ -196,21 +182,15 @@ export default function MetalShoeDashboard() {
                   {t('metalShoe.weeklyTrend', 'Weekly Trend')}
                 </h3>
                 <div className="h-64">
-                  {LazyLineChart ? (
-                    <LazyLineChart
-                      data={weeklyChartData}
-                      xAxisKey="name"
-                      lines={[
-                        { dataKey: 'total', stroke: '#3b82f6', name: 'Total' },
-                        { dataKey: 'bottom', stroke: '#f59e0b', name: 'Bottom' },
-                        { dataKey: 'upper', stroke: '#8b5cf6', name: 'Upper' },
-                      ]}
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                      {t('common.chartUnavailable', 'Chart unavailable')}
-                    </div>
-                  )}
+                  <LazyLineChart
+                    data={weeklyChartData}
+                    xAxisKey="name"
+                    lines={[
+                      { dataKey: 'total', stroke: '#3b82f6', name: 'Total' },
+                      { dataKey: 'bottom', stroke: '#f59e0b', name: 'Bottom' },
+                      { dataKey: 'upper', stroke: '#8b5cf6', name: 'Upper' },
+                    ]}
+                  />
                 </div>
               </div>
             )}
