@@ -263,7 +263,64 @@ Daily check per factory/line
 
 ---
 
-## Domain 7: Training Program System
+## Domain 7: Metal Shoe Case — 금속 발견 신발 보고서 (2026-03-19 신규)
+
+### Workflow
+```
+케이스 등록 (수동 또는 엑셀 임포트)
+  → 업체명 → 표준 ID 자동 매칭 (SUPPLIER_ALIAS_MAP + fuzzyMatch)
+  → Firestore: metal_shoe_cases/{year}/cases/{docId}
+  → 상태 머신: registered → xray_sent → confirmed → action_requested → action_received → closed
+  → X-Ray: NOT_SENT → OK, Metal Confirm: NOT_YET → YES/NO
+  → Return Dashboard 연동: syncCaseToReturnDashboard() → qualityIssues 자동 생성
+  → 보고서: Excel(4시트), PDF(주간), PPTX(업체 통보서)
+  → Quality OS: metalShoeCollector → daily_metrics
+```
+
+### Key Files
+- `src/types/metalShoe.ts` — MetalShoeCase, MetalShoeAction, MetalShoeDashboardKPI, MetalShoeFilters
+- `src/services/metalShoeService.ts` — CRUD + getDashboardKPIs + getSupplierList
+- `src/services/metalShoeSyncService.ts` — Return Dashboard 크로스 프로젝트 연동
+- `src/stores/metalShoeStore.ts` — Zustand + devtools + immer
+- `src/pages/metal-shoes/` — 4 pages (Dashboard, Register, Tracking, Report)
+- `src/utils/metalShoeExcelParser.ts` — 엑셀 파싱 + 업체명→표준ID 매칭
+- `src/utils/metalShoeExcelExport.ts` — 연간 Excel 보고서 (DATA, SUPPLIER TRACKING, SUMMARY)
+- `src/utils/metalShoePdfExport.ts` — 주간 PDF 보고서 (jsPDF + autoTable)
+- `src/utils/metalShoeSupplierNotice.ts` — 업체 통보서 PPTX (pptxgenjs, 16:9)
+
+### Key Collections
+```
+metal_shoe_cases/{year}/cases/{docId}  ← 년도별 서브컬렉션 (NO DELETE)
+metal_shoe_action_tracking/{docId}     ← 업체별 액션 추적
+config/suppliers                       ← Quality OS에서 동기화된 업체 마스터
+```
+
+### Business Rules
+1. 업체 표준 ID: Quality OS 업체 마스터 (24개) 기준 통일
+2. 엑셀 임포트: SUPPLIER_ALIAS_MAP으로 별칭 매칭 + fuzzyMatch 폴백
+3. Return Dashboard: metalFound는 Q-TRAIN 전용 (수동 등록 차단)
+4. 날짜: UTC 파싱 필수 (시간대 밀림 방지)
+
+### Cross-Project Integration
+```
+Q-TRAIN → Return Dashboard: syncCaseToReturnDashboard()
+  - qualityIssues 컬렉션에 _sourceSystem: 'q-train' 문서 생성
+  - defectType: 'metalFound', issueCategory: 'SPEC_QC'
+
+Return Dashboard → Q-TRAIN: syncActionFromReturnDashboard()
+  - 액션플랜 상태 역방향 동기화 (수동 트리거)
+
+Quality OS → 전체: pushSupplierSettings()
+  - config/suppliers → 8개 프로젝트 동기화
+
+Quality OS ← Q-TRAIN: metalShoeCollector
+  - 최근 변경 케이스 수집 → quality_os/data/metal_shoe_cases
+  - daily_metrics/metal_shoe/{date} 집계
+```
+
+---
+
+## Domain 8: Training Program System
 
 ### 67 Programs (2026 Curriculum)
 ```
@@ -315,6 +372,18 @@ Training completed → track quality metrics before/after → measure effectiven
 ### CAPA → Training
 ```
 CAPA corrective action → relatedTrainingPrograms → targeted training
+```
+
+### Metal Shoe → Return Dashboard
+```
+Q-TRAIN metal_shoe_cases → syncCaseToReturnDashboard() → Return Dashboard qualityIssues (metalFound)
+Return Dashboard actions → syncActionFromReturnDashboard() → Q-TRAIN actionPlanActions
+```
+
+### Metal Shoe → Quality OS
+```
+Q-TRAIN metal_shoe_cases → metalShoeCollector → Quality OS daily_metrics/metal_shoe
+Quality OS config/suppliers → pushSupplierSettings() → Q-TRAIN config/suppliers (업체 마스터)
 ```
 
 ---

@@ -574,6 +574,8 @@ interface XxxStore {
 | `capa_root_cause_kb` | CAPA 근본원인 지식 베이스 | CRUD |
 | `md_inspections` | factory, line, result(PASS/FAIL), sensitivity(Fe/SUS/NonFe), iso_week | CRUD |
 | `md_failures` | caStatus(pending/in_progress/completed), caDescription | CRUD |
+| `metal_shoe_cases/{year}/cases` | supplierId, factory, model, component(BOTTOM/UPPER), status(6단계), xray, metalConfirm | **NO DELETE** |
+| `metal_shoe_action_tracking` | batchWeek, supplierActions[], actionStatus | CRUD |
 | `projects` | members[], tasks[] | CRUD |
 | `project_tasks` | status, dependencies[], auto-status | CRUD |
 | `project_messages` | read_by{} (userId→timestamp) | CRUD |
@@ -721,6 +723,48 @@ Stage 5: Closure (종결) 또는 Rejection
 7. 대시보드: 공장별 KPI, 12주 트렌드, Open CA 수
 ```
 
+### 6.8 금속 발견 신발 보고서 (Metal Shoe Case) — 2026-03-19 신규
+```
+1. QA 직원 수작업 엑셀(144건/년) → 시스템 자동화
+2. 케이스 등록: 수동 입력 또는 엑셀 임포트 (업체명→표준ID 자동 매칭)
+3. 업체 표준 ID: Quality OS 업체 마스터와 통일 (24개 업체, 3개 카테고리)
+4. X-Ray 추적: NOT_SENT → OK → 금속 확인 (YES/NO/NOT_YET)
+5. 상태 머신: registered → xray_sent → confirmed → action_requested → action_received → closed
+6. Return Dashboard 연동: Q-TRAIN에서 등록 → Return Dashboard qualityIssues 자동 생성
+7. Return Dashboard에서 metalFound 수동 등록 차단 (→ Q-TRAIN 안내)
+8. 보고서: 연간 Excel (4시트), 주간 PDF (jsPDF), 업체 통보서 PPTX (16:9)
+9. Quality OS 수집: metalShoeCollector → daily_metrics 집계
+```
+
+**Firestore 구조**:
+```
+metal_shoe_cases/{year}/cases/{docId}  ← 년도별 서브컬렉션 (NO DELETE)
+metal_shoe_action_tracking/{docId}     ← 업체별 액션 추적
+```
+
+**파일 구조**:
+```
+src/types/metalShoe.ts                    ← 8개 타입/인터페이스
+src/services/metalShoeService.ts          ← CRUD + KPI 집계
+src/services/metalShoeSyncService.ts      ← Return Dashboard 연동
+src/stores/metalShoeStore.ts              ← Zustand + devtools + immer
+src/pages/metal-shoes/                    ← Dashboard, Register, Tracking, Report
+src/utils/metalShoeExcelParser.ts         ← 엑셀 파싱 + 업체명 매칭
+src/utils/metalShoeExcel/Pdf/Pptx Export  ← 3종 보고서 생성
+```
+
+**크로스 프로젝트 연동**:
+```
+Q-TRAIN (케이스 등록)
+  ↓ syncCaseToReturnDashboard()
+Return Dashboard (qualityIssues 자동 생성, metalFound 수동 차단)
+  ↓ syncActionFromReturnDashboard()
+Q-TRAIN (액션플랜 역동기화)
+
+Quality OS (업체 마스터 config/suppliers → 8개 프로젝트 동기화)
+Quality OS (metalShoeCollector → daily_metrics 수집)
+```
+
 ---
 
 ## 7. 외부 연동
@@ -861,6 +905,7 @@ JOB_CHANGE, ABSENCE, ACCIDENT, OTHER
 /inspection/*                 검사 교육 (4 routes)
 /capa/*                       CAPA (3 routes)
 /equipment/metal-detector/*   금속 탐지기 (4 routes)
+/equipment/metal-shoes/*      금속 발견 신발 (4 routes: Dashboard, Register, Tracking, Report)
 /projects/*                   프로젝트 (5 routes)
 /tech/*                       기술 모델 (2 routes, 관리자)
 ```
@@ -1201,6 +1246,20 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 
 ---
 
+### Phase 11: 금속 발견 신발 보고서 시스템 (2026-03-19, commits `6b57c9e`~`a66b15e`)
+| # | 카테고리 | 변경 내용 |
+|---|----------|----------|
+| 1 | Phase 0 | Quality OS 업체 마스터 표준화 (24개 업체, CRUD, SuppliersTab, pushSupplierSettings) |
+| 2 | Phase 1 | Q-TRAIN 금속 신발 케이스 CRUD (types, service, store, 4 pages, Excel parser, Firestore rules) |
+| 3 | Phase 2 | Return Dashboard 연동 (metalShoeSyncService, metalFound 수동 등록 차단, disabledDefects) |
+| 4 | Phase 3 | 보고서 자동 생성 (연간 Excel 4시트, 주간 PDF jsPDF, 업체 통보서 PPTX 16:9) |
+| 5 | Phase 4 | Quality OS 데이터 수집기 (metalShoeCollector, daily_metrics 집계, scheduledDataCollection 등록) |
+| 6 | 버그 수정 | top-level await 제거 (MetalShoeDashboard), 날짜 UTC 변환 밀림 수정 (service + parser) |
+| 7 | 배포 | Q-TRAIN Hosting + Firestore Rules, Quality OS Hosting + Functions, Return Dashboard Hosting |
+| 8 | 검증 | 8건 엑셀 데이터 등록, 엑셀 원본 대비 전수 정합성 확인 (날짜/업체/공장/모델 100% 일치) |
+
+---
+
 ## 20. Agent Team System v3.0 (Claude Code Agent Teams)
 
 > **활성화**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (글로벌 설정 완료)
@@ -1214,7 +1273,7 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 | 1 | ARCH | Team Lead | Core | 아키텍처, 작업 분해, 코드 리뷰, 빌드 검증 |
 | 2 | DATA | 데이터 엔지니어 | Core | Firebase, Firestore, 서비스, 타입, 보안규칙 |
 | 3 | UI | 프론트엔드 | Core | React 컴포넌트, 페이지, Shadcn, 반응형 |
-| 4 | DOMAIN | 도메인 전문가 | Core | AQL/5PRS/CAPA/검사/TQC/MD 비즈니스 로직 |
+| 4 | DOMAIN | 도메인 전문가 | Core | AQL/5PRS/CAPA/검사/TQC/MD/금속신발 비즈니스 로직 |
 | 5 | STATE | 상태관리 | Core | Zustand 스토어, 커스텀 훅, 성능 최적화 |
 | 6 | I18N | 국제화 | Core | i18n (ko/en/vi), RBAC 권한, WCAG 접근성 |
 | 7 | TEST | QA | Core | Vitest 테스트, Playwright E2E, 빌드 검증 |
