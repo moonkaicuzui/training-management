@@ -114,9 +114,20 @@ export function parseMetalShoeExcel(file: ArrayBuffer): ParseResult {
       let detectionDate: string;
       const rawDate = row['DATE'] || row['Detection Date'] || row['날짜'];
       if (rawDate instanceof Date) {
-        detectionDate = rawDate.toISOString().split('T')[0];
+        // UTC로 변환하여 시간대에 의한 날짜 밀림 방지
+        const y = rawDate.getFullYear();
+        const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+        const d = String(rawDate.getDate()).padStart(2, '0');
+        detectionDate = `${y}-${m}-${d}`;
       } else if (typeof rawDate === 'string' && rawDate) {
-        detectionDate = rawDate;
+        // MM/DD/YYYY → YYYY-MM-DD 변환
+        const parts = rawDate.match(/(\d+)\/(\d+)\/(\d+)/);
+        if (parts) {
+          const yr = parseInt(parts[3]) < 100 ? 2000 + parseInt(parts[3]) : parseInt(parts[3]);
+          detectionDate = `${yr}-${String(parseInt(parts[1])).padStart(2, '0')}-${String(parseInt(parts[2])).padStart(2, '0')}`;
+        } else {
+          detectionDate = rawDate;
+        }
       } else {
         errors.push({ row: rowNum, message: 'Missing detection date' });
         continue;

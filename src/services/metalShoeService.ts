@@ -166,11 +166,14 @@ export async function createCase(
   user: { uid: string; email: string; displayName: string }
 ): Promise<MetalShoeCase> {
   try {
-    const detectionDate = new Date(data.detectionDate);
-    const year = detectionDate.getFullYear();
-    const month = detectionDate.getMonth() + 1;
+    // UTC로 파싱하여 시간대 변환에 의한 날짜 밀림 방지
+    const [yy, mm, dd] = data.detectionDate.split('-').map(Number);
+    const detectionDate = new Date(Date.UTC(yy, mm - 1, dd));
+    const year = detectionDate.getUTCFullYear();
+    const month = detectionDate.getUTCMonth() + 1;
     const weekNumber = getISOWeekNumber(detectionDate);
-    const weekStr = `W${String(weekNumber).padStart(2, '0')}_${detectionDate.toLocaleString('en', { month: 'short' }).toUpperCase()}`;
+    const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const weekStr = `W${String(weekNumber).padStart(2, '0')}_${monthNames[month - 1]}`;
 
     const docData = {
       ...data,
