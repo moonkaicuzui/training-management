@@ -46,6 +46,7 @@ export interface MetalShoeCase {
   // Return Dashboard 연동
   returnDashboardIssueId?: string;
   // 액션플랜
+  actionPlanDeadline?: string;   // ISO date (등록일 + 7일)
   actionPlanStatus?: 'pending' | 'submitted' | 'overdue';
   actionPlanActions?: MetalShoeAction[];
   actionPlanLastSyncedAt?: string;
@@ -65,6 +66,10 @@ export interface MetalShoeAction {
   timeTarget: string;
   actionStatus: ActionStatus;
   remark?: string;
+  // 액션플랜 증거
+  actionContent?: string;        // 액션 내용 (RCA, corrective, preventive)
+  evidencePhotos?: string[];     // Firebase Storage URL 배열
+  submittedBy?: string;          // 액션 제출자
 }
 
 export interface MetalShoeActionTracking {

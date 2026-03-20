@@ -195,6 +195,7 @@ export const metalShoe = {
     metalShoeService.updateActionTracking(id, data),
   getDashboardKPIs: (year: number, weekNumber?: number): Promise<MetalShoeDashboardKPI> =>
     metalShoeService.getDashboardKPIs(year, weekNumber),
+  addActionEvidence: metalShoeService.addActionEvidence,
   getSupplierList: () =>
     metalShoeService.getSupplierList(),
 };

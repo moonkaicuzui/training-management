@@ -51,6 +51,7 @@ interface MetalShoeState {
     data: Omit<MetalShoeActionTracking, 'id' | 'createdAt' | 'updatedAt'>
   ) => Promise<string>;
   updateActionTracking: (id: string, data: Partial<MetalShoeActionTracking>) => Promise<void>;
+  addActionEvidence: (year: number, caseId: string, evidence: { actionContent: string; evidencePhotos: string[]; submittedBy: string }) => Promise<void>;
   clearError: () => void;
 }
 
@@ -239,6 +240,20 @@ export const useMetalShoeStore = create<MetalShoeState>()(
           });
         } catch (error) {
           logger.error('[MetalShoeStore] updateActionTracking failed', error);
+          throw error;
+        }
+      },
+
+      addActionEvidence: async (year, caseId, evidence) => {
+        set((state) => { state.error = null; });
+        try {
+          await api.metalShoe.addActionEvidence(year, caseId, evidence);
+          // 케이스 목록 갱신
+          const f = get().filters;
+          const refreshed = await api.metalShoe.getCases(f);
+          set((state) => { state.cases = refreshed; });
+        } catch (error) {
+          logger.error('[MetalShoeStore] addActionEvidence error:', error);
           throw error;
         }
       },

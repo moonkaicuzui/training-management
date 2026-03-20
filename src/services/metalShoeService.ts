@@ -92,6 +92,7 @@ function docToCase(docId: string, data: Record<string, unknown>): MetalShoeCase 
     remark: (data.remark as string) || undefined,
     isInternalOperation: (data.isInternalOperation as boolean) ?? false,
     returnDashboardIssueId: (data.returnDashboardIssueId as string) || undefined,
+    actionPlanDeadline: (data.actionPlanDeadline as string) || undefined,
     actionPlanStatus: (data.actionPlanStatus as MetalShoeCase['actionPlanStatus']) || undefined,
     actionPlanActions: (data.actionPlanActions as MetalShoeCase['actionPlanActions']) || undefined,
     actionPlanLastSyncedAt: (data.actionPlanLastSyncedAt as string) || undefined,
@@ -176,12 +177,18 @@ export async function createCase(
     const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     const weekStr = `W${String(weekNumber).padStart(2, '0')}_${monthNames[month - 1]}`;
 
+    // 액션플랜 기한 자동 설정 (발견일 + 7일)
+    const deadline = new Date(Date.UTC(yy, mm - 1, dd + 7));
+    const actionPlanDeadline = deadline.toISOString().split('T')[0];
+
     const docData = {
       ...data,
       year,
       month,
       week: weekStr,
       weekNumber,
+      actionPlanDeadline,
+      actionPlanStatus: 'pending',
       createdBy: user,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -215,6 +222,8 @@ export async function createCase(
       month,
       week: weekStr,
       weekNumber,
+      actionPlanDeadline,
+      actionPlanStatus: 'pending' as const,
       createdBy: user,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -227,8 +236,8 @@ export async function createCase(
 
 // ─── Status Transition Validation ────────────────────────────
 const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
-  registered: ['xray_sent', 'confirmed', 'closed'],
-  xray_sent: ['confirmed', 'closed'],
+  registered: ['xray_sent', 'confirmed', 'action_requested', 'closed'],
+  xray_sent: ['confirmed', 'action_requested', 'closed'],
   confirmed: ['action_requested', 'closed'],
   action_requested: ['action_received', 'closed'],
   action_received: ['closed'],
@@ -401,6 +410,53 @@ export async function getDashboardKPIs(year: number, weekNumber?: number): Promi
     return kpi;
   } catch (error) {
     logger.error('[MetalShoeService] getDashboardKPIs failed', error);
+    throw error;
+  }
+}
+
+// ============================================================
+// Action Evidence
+// ============================================================
+
+/**
+ * 액션플랜 증거 사진 URL을 케이스에 추가
+ */
+export async function addActionEvidence(
+  year: number,
+  caseId: string,
+  evidence: { actionContent: string; evidencePhotos: string[]; submittedBy: string }
+): Promise<void> {
+  try {
+    const docRef = doc(db, getCasesCollection(year), caseId);
+    const existing = await getDoc(docRef);
+    if (!existing.exists()) throw new Error('Case not found');
+
+    const data = existing.data();
+    const actions = (data.actionPlanActions as MetalShoeCase['actionPlanActions']) || [];
+
+    // 새 액션 추가
+    actions.push({
+      supplierId: (data.supplierId as string) ?? '',
+      supplierName: (data.supplierName as string) ?? '',
+      category: (data.component as string) === 'BOTTOM' ? 'bottom' : 'upper',
+      dateSent: new Date().toISOString().split('T')[0],
+      timeTarget: (data.actionPlanDeadline as string) || '',
+      actionStatus: 'DONE',
+      actionContent: evidence.actionContent,
+      evidencePhotos: evidence.evidencePhotos,
+      submittedBy: evidence.submittedBy,
+      actionSubmittedDate: new Date().toISOString().split('T')[0],
+    });
+
+    await updateDoc(docRef, {
+      actionPlanActions: actions,
+      actionPlanStatus: 'submitted',
+      updatedAt: serverTimestamp(),
+    });
+
+    logger.info('[MetalShoeService] Action evidence added', { caseId });
+  } catch (error) {
+    logger.error('[MetalShoeService] addActionEvidence failed', error);
     throw error;
   }
 }

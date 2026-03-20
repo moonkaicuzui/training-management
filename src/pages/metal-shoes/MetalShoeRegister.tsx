@@ -110,14 +110,17 @@ export default function MetalShoeRegister() {
         { ...form, year: 0, month: 0, week: '', weekNumber: 0, status: 'registered', createdBy: { uid: user.id, email: user.email, displayName: user.name } },
         { uid: user.id, email: user.email, displayName: user.name }
       );
-      // Return Dashboard 동기화 (비동기, 실패해도 무시)
-      syncCaseToReturnDashboard(newCase, { uid: user.id, email: user.email, displayName: user.name })
-        .then((rdId) => {
-          if (rdId) {
-            updateCase(newCase.year, newCase.id, { returnDashboardIssueId: rdId });
-          }
-        })
-        .catch(() => { /* 동기화 실패는 무시 - 메인 케이스는 이미 저장됨 */ });
+      // Bottom(창) 업체만 Return Dashboard 자동 연동
+      const BOTTOM_SUPPLIER_IDS = ['TAESUNG_RG_OUTSOLE', 'TAESUNG_RG_STOCKFIT', 'TAESUNG_CC', 'EZ', 'HVC', 'SOC_TRANG', 'MTL_WH_MIDSOLE', 'MTL_WH_OUTSOLE', 'BOTTOM_B3', 'BOTTOM_B3_STOCKFIT', 'TSRG_OUTSOLE_OUTBOUND', 'TSRG_STOCKFIT_OUTBOUND'];
+      if (BOTTOM_SUPPLIER_IDS.includes(form.supplierId)) {
+        syncCaseToReturnDashboard(newCase, { uid: user.id, email: user.email, displayName: user.name })
+          .then((rdId) => {
+            if (rdId) {
+              updateCase(newCase.year, newCase.id, { returnDashboardIssueId: rdId });
+            }
+          })
+          .catch(() => { /* 동기화 실패는 무시 */ });
+      }
       setSuccess(true);
       setForm(INITIAL_FORM);
       setTimeout(() => setSuccess(false), 5000);

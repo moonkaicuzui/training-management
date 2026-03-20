@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
-import { Loader2, AlertTriangle, Search, Eye, RefreshCw, ExternalLink } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
+import { Loader2, AlertTriangle, Search, Eye, RefreshCw, ExternalLink, Download, Camera } from 'lucide-react';
 import { syncActionFromReturnDashboard } from '../../services/metalShoeSyncService';
 import type { MetalShoeCase, MetalShoeStatus } from '../../types/metalShoe';
 
@@ -32,8 +33,12 @@ export default function MetalShoeTracking() {
   const [statusFilter, setStatusFilter] = useState<MetalShoeStatus | ''>('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [detailCase, setDetailCase] = useState<MetalShoeCase | null>(null);
+  const [showActionForm, setShowActionForm] = useState(false);
+  const [actionContent, setActionContent] = useState('');
+  const [actionPhotos, setActionPhotos] = useState<File[]>([]);
+  const [submittingAction, setSubmittingAction] = useState(false);
 
-  const { cases, isLoading, error, fetchCases, fetchSuppliers, suppliers, updateCase } = useMetalShoeStore(
+  const { cases, isLoading, error, fetchCases, fetchSuppliers, suppliers, updateCase, addActionEvidence } = useMetalShoeStore(
     useShallow((state) => ({
       cases: state.cases,
       isLoading: state.isLoading,
@@ -42,8 +47,10 @@ export default function MetalShoeTracking() {
       fetchSuppliers: state.fetchSuppliers,
       suppliers: state.suppliers,
       updateCase: state.updateCase,
+      addActionEvidence: state.addActionEvidence,
     }))
   );
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     fetchCases({ year: selectedYear });
@@ -75,6 +82,92 @@ export default function MetalShoeTracking() {
       // error is handled by store
     }
   };
+
+  // Bottom 업체 판별
+  function isBottomSupplier(supplierId: string): boolean {
+    const bottomIds = [
+      'TAESUNG_RG_OUTSOLE', 'TAESUNG_RG_STOCKFIT', 'TAESUNG_CC',
+      'EZ', 'HVC', 'SOC_TRANG',
+      'MTL_WH_MIDSOLE', 'MTL_WH_OUTSOLE',
+      'BOTTOM_B3', 'BOTTOM_B3_STOCKFIT',
+      'TSRG_OUTSOLE_OUTBOUND', 'TSRG_STOCKFIT_OUTBOUND',
+    ];
+    return bottomIds.includes(supplierId);
+  }
+
+  // PPTX 다운로드
+  async function handleDownloadNotice() {
+    if (!detailCase) return;
+    const { generateSupplierNotice } = await import('../../utils/metalShoeSupplierNotice');
+    await generateSupplierNotice(
+      [detailCase],
+      detailCase.supplierName,
+      detailCase.year,
+      detailCase.weekNumber
+    );
+  }
+
+  // 내부 액션플랜 제출
+  async function handleSubmitAction() {
+    if (!detailCase || !actionContent.trim()) return;
+    setSubmittingAction(true);
+    try {
+      // 사진 업로드 (Firebase Storage)
+      const photoUrls: string[] = [];
+      if (actionPhotos.length > 0) {
+        const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+        const { storage } = await import('../../services/firebase');
+        for (const photo of actionPhotos) {
+          const storageRef = ref(storage, `metal-shoe-actions/${detailCase.id}/${Date.now()}_${photo.name}`);
+          const snap = await uploadBytes(storageRef, photo);
+          const url = await getDownloadURL(snap.ref);
+          photoUrls.push(url);
+        }
+      }
+
+      await addActionEvidence(detailCase.year, detailCase.id, {
+        actionContent,
+        evidencePhotos: photoUrls,
+        submittedBy: user?.email || '',
+      });
+
+      setShowActionForm(false);
+      setActionContent('');
+      setActionPhotos([]);
+      // 케이스 갱신
+      await fetchCases({ year: detailCase.year });
+    } catch (err) {
+      console.error('Action submit failed:', err);
+    } finally {
+      setSubmittingAction(false);
+    }
+  }
+
+  // 동기화된 액션 목록 렌더링
+  function renderActionList() {
+    if (!detailCase?.actionPlanActions || detailCase.actionPlanActions.length === 0) {
+      return <p className="text-xs text-gray-400">{t('metalShoe.noActionPlan', 'No action plan yet')}</p>;
+    }
+    return (
+      <div className="space-y-1.5">
+        {detailCase.actionPlanActions.map((action, idx) => (
+          <div key={idx} className="rounded-lg bg-gray-50 px-3 py-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-700">{action.supplierName}</span>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                action.actionStatus === 'DONE' ? 'bg-green-100 text-green-700' :
+                action.actionStatus === 'OVERDUE' ? 'bg-red-100 text-red-700' :
+                'bg-yellow-100 text-yellow-700'
+              }`}>
+                {action.actionStatus}
+              </span>
+            </div>
+            {action.remark && <p className="mt-1 text-gray-500">{action.remark}</p>}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const uniqueSuppliers = useMemo(() => {
     const ids = new Set(cases.map((c) => c.supplierId));
