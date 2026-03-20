@@ -3694,6 +3694,11 @@
     "actionPlan": "액션플랜",
     "noActionPlan": "아직 액션플랜이 없습니다",
     "syncAction": "액션 동기화",
+    "downloadActionRequest": "액션 요청서 다운로드 (PPTX)",
+    "registerAction": "액션플랜 등록",
+    "actionContentPlaceholder": "조치 내용을 입력하세요 (근본원인, 시정조치, 예방조치)...",
+    "evidencePhotos": "증거 사진",
+    "submitAction": "제출",
     "report": {
       "title": "보고서",
       "subtitle": "Excel, PDF, PPTX 보고서 생성",

@@ -3694,6 +3694,11 @@
     "actionPlan": "Kế hoạch hành động",
     "noActionPlan": "Chưa có kế hoạch hành động",
     "syncAction": "Đồng bộ hành động",
+    "downloadActionRequest": "Tải yêu cầu hành động (PPTX)",
+    "registerAction": "Đăng ký kế hoạch hành động",
+    "actionContentPlaceholder": "Mô tả hành động đã thực hiện (nguyên nhân gốc, hành động khắc phục, hành động phòng ngừa)...",
+    "evidencePhotos": "Ảnh bằng chứng",
+    "submitAction": "Gửi",
     "report": {
       "title": "Báo cáo",
       "subtitle": "Tạo báo cáo Excel, PDF và PPTX",

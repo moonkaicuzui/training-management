@@ -3694,6 +3694,11 @@
     "actionPlan": "Action Plan",
     "noActionPlan": "No action plan yet",
     "syncAction": "Sync Actions",
+    "downloadActionRequest": "Download Action Request (PPTX)",
+    "registerAction": "Register Action Plan",
+    "actionContentPlaceholder": "Describe the action taken (root cause, corrective action, preventive action)...",
+    "evidencePhotos": "Evidence Photos",
+    "submitAction": "Submit",
     "report": {
       "title": "Reports",
       "subtitle": "Generate Excel, PDF, and PPTX reports",
