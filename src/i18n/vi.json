@@ -156,11 +156,13 @@
       "history": "Lịch sử kiểm tra"
     },
     "equipment": {
-      "mdDashboard": "Bảng điều khiển máy dò kim loại",
+      "metalDetector": "Máy dò kim loại",
+      "mdDashboard": "Bảng điều khiển",
       "mdInput": "Nhập kiểm tra",
       "mdHistory": "Lịch sử kiểm tra",
       "mdReport": "Báo cáo",
-      "msDashboard": "Bảng điều khiển giày kim loại",
+      "metalShoe": "Giày kim loại",
+      "msDashboard": "Bảng điều khiển",
       "msRegister": "Đăng ký trường hợp",
       "msTracking": "Theo dõi trường hợp",
       "msReport": "Báo cáo"

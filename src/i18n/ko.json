@@ -156,11 +156,13 @@
       "history": "이력 조회"
     },
     "equipment": {
-      "mdDashboard": "금속탐지기 대시보드",
+      "metalDetector": "금속 탐지기",
+      "mdDashboard": "대시보드",
       "mdInput": "점검 입력",
       "mdHistory": "점검 이력",
       "mdReport": "보고서",
-      "msDashboard": "금속 신발 대시보드",
+      "metalShoe": "금속 신발",
+      "msDashboard": "대시보드",
       "msRegister": "케이스 등록",
       "msTracking": "케이스 추적",
       "msReport": "리포트"

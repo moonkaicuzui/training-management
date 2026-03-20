@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, memo } from 'react';
+import { useState, useCallback, useMemo, useEffect, memo, Fragment } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -60,6 +60,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
+  subGroupLabel?: string; // 서브그룹 소제목 (이 항목 앞에 표시)
 }
 
 interface NavSection {
@@ -147,13 +148,13 @@ const inspectionItems: NavItem[] = [
   { titleKey: 'nav.inspectorStickers', href: '/inspector-stickers', icon: Sticker },
 ];
 
-// 8. Equipment Compliance (금속 탐지기 등)
+// 8. Equipment Compliance (3단계 레이어: Compliance > Metal Detector / Metal Shoe > 세부)
 const equipmentComplianceItems: NavItem[] = [
-  { titleKey: 'nav.equipment.mdDashboard', href: '/equipment/metal-detector', icon: Gauge },
+  { titleKey: 'nav.equipment.mdDashboard', href: '/equipment/metal-detector', icon: Gauge, subGroupLabel: 'nav.equipment.metalDetector' },
   { titleKey: 'nav.equipment.mdInput', href: '/equipment/metal-detector/input', icon: ClipboardList },
   { titleKey: 'nav.equipment.mdHistory', href: '/equipment/metal-detector/history', icon: History },
   { titleKey: 'nav.equipment.mdReport', href: '/equipment/metal-detector/report', icon: FileBarChart },
-  { titleKey: 'nav.equipment.msDashboard', href: '/equipment/metal-shoes', icon: Footprints },
+  { titleKey: 'nav.equipment.msDashboard', href: '/equipment/metal-shoes', icon: Footprints, subGroupLabel: 'nav.equipment.metalShoe' },
   { titleKey: 'nav.equipment.msRegister', href: '/equipment/metal-shoes/register', icon: ClipboardList },
   { titleKey: 'nav.equipment.msTracking', href: '/equipment/metal-shoes/tracking', icon: Search },
   { titleKey: 'nav.equipment.msReport', href: '/equipment/metal-shoes/report', icon: FileBarChart },
@@ -404,8 +405,13 @@ export const Sidebar = memo(function Sidebar() {
                     {isOpen && (
                       <nav className="space-y-0.5 px-3 pb-1 border-l-2 border-blue-400 dark:border-blue-500 ml-4 mr-1">
                         {section.items.map((item) => (
+                          <Fragment key={item.href}>
+                          {item.subGroupLabel && (
+                            <div className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400 dark:text-blue-500">
+                              {t(item.subGroupLabel)}
+                            </div>
+                          )}
                           <NavLink
-                            key={item.href}
                             to={item.href}
                             end={item.href === '/'}
                             onClick={() => handleNavClick(section.titleKey)}
@@ -427,6 +433,7 @@ export const Sidebar = memo(function Sidebar() {
                               </span>
                             )}
                           </NavLink>
+                          </Fragment>
                         ))}
                       </nav>
                     )}

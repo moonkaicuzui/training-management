@@ -156,11 +156,13 @@
       "history": "Inspection History"
     },
     "equipment": {
-      "mdDashboard": "Metal Detector Dashboard",
+      "metalDetector": "Metal Detector",
+      "mdDashboard": "Dashboard",
       "mdInput": "Inspection Input",
       "mdHistory": "Inspection History",
       "mdReport": "Report",
-      "msDashboard": "Metal Shoe Dashboard",
+      "metalShoe": "Metal Shoe",
+      "msDashboard": "Dashboard",
       "msRegister": "Case Register",
       "msTracking": "Case Tracking",
       "msReport": "Report"
