@@ -31,6 +31,15 @@ export default function MetalShoeDashboard() {
 
   const kpi = dashboardKPIs;
 
+  // Fallback supplier short names (config/suppliers 미동기화 시 사용)
+  const SUPPLIER_SHORT: Record<string, string> = {
+    TAESUNG_RG_OUTSOLE: 'TSRG', TAESUNG_RG_STOCKFIT: 'TSRG-SF', TAESUNG_CC: 'TSCC',
+    EZ: 'EZ', HVC: 'HVC', SOC_TRANG: 'ST', MTL_WH_MIDSOLE: 'MTL-MS', MTL_WH_OUTSOLE: 'MTL-OS',
+    BOTTOM_B3: 'B3', BOTTOM_B3_STOCKFIT: 'B3-SF', HWK_RG_A: 'RG A', HWK_RG_C: 'RG C',
+    HWK_RG_D: 'RG D', HWK_RG_E: 'RG E', HWK_CUTTING_D: 'CUT-D',
+    S_TECH: 'S-TECH', INHOUSE: 'IH', SUNPRINT: 'SP',
+  };
+
   const supplierChartData = useMemo(() => {
     if (!kpi) return [];
     return Object.entries(kpi.bySupplier)
@@ -38,7 +47,7 @@ export default function MetalShoeDashboard() {
       .slice(0, 10)
       .map(([id, data]) => {
         const supplier = suppliers.find((s) => s.id === id);
-        return { name: supplier?.shortName || id, ...data };
+        return { name: supplier?.shortName || SUPPLIER_SHORT[id] || id, ...data };
       });
   }, [kpi, suppliers]);
 
