@@ -409,6 +409,7 @@
     "hr": {
       "title": "Tình hình nhân sự",
       "noData": "Không thể tải dữ liệu nhân sự",
+      "notSynced": "Dữ liệu HR chưa được đồng bộ",
       "sync": "Đồng bộ",
       "syncTooltip": "Đồng bộ dữ liệu mới nhất từ HR V2",
       "lastSync": "Lần đồng bộ cuối",

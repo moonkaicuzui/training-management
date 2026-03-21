@@ -11,7 +11,6 @@ import {
   UserPlus,
   Clock,
   RefreshCw,
-  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,21 +56,21 @@ export const HRSummaryCards = memo(function HRSummaryCards({
 
   if (!hrData) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="flex items-center justify-center py-6 gap-3">
-          <AlertCircle className="h-5 w-5 text-muted-foreground" />
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="flex items-center justify-center py-4 gap-3">
+          <RefreshCw className="h-4 w-4 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            {t('dashboard.hr.noData')}
+            {t('dashboard.hr.notSynced')}
           </p>
           {onSync && (
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={onSync}
               disabled={isSyncing}
             >
               <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
-              {t('dashboard.hr.sync')}
+              {t('dashboard.hr.syncNow')}
             </Button>
           )}
         </CardContent>

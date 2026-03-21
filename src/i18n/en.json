@@ -409,6 +409,7 @@
     "hr": {
       "title": "HR Status",
       "noData": "Unable to load HR data",
+      "notSynced": "HR data not synced yet",
       "sync": "Sync",
       "syncTooltip": "Sync latest data from HR V2",
       "lastSync": "Last sync",

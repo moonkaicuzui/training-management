@@ -89,8 +89,8 @@ const BarChartRenderer = lazy(async () => {
       xAxisFormatter,
     }: LazyBarChartProps) {
       return (
-        <div style={{ height, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={1} debounce={50}>
+        <div style={{ height, minWidth: 100, width: '100%', display: 'flex', flexDirection: 'column', minHeight: typeof height === 'number' ? height : 200 }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={100}>
             <BarChart data={data} style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
@@ -154,8 +154,8 @@ const PieChartRenderer = lazy(async () => {
       colors = {},
     }: LazyPieChartProps) {
       return (
-        <div style={{ height, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={1} debounce={50}>
+        <div style={{ height, minWidth: 100, width: '100%', display: 'flex', flexDirection: 'column', minHeight: typeof height === 'number' ? height : 200 }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={100}>
             <PieChart>
               <Pie
                 data={data}
@@ -259,8 +259,8 @@ const AreaChartRenderer = lazy(async () => {
       showLegend,
     }: LazyAreaChartProps) {
       return (
-        <div style={{ height, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={1} debounce={50}>
+        <div style={{ height, minWidth: 100, width: '100%', display: 'flex', flexDirection: 'column', minHeight: typeof height === 'number' ? height : 200 }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={100}>
             <AreaChart data={data} style={{ cursor: 'pointer' }}>
               {showGrid && (
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -348,8 +348,8 @@ const LineChartRenderer = lazy(async () => {
       xAxisFormatter,
     }: LazyLineChartProps) {
       return (
-        <div style={{ height, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={1} debounce={50}>
+        <div style={{ height, minWidth: 100, width: '100%', display: 'flex', flexDirection: 'column', minHeight: typeof height === 'number' ? height : 200 }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={100}>
             <LineChart data={data} style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
