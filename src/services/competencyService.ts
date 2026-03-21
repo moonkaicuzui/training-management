@@ -112,8 +112,8 @@ export async function createCompetency(
       ...data,
       competency_id: docRef.id,
       is_active: data.is_active !== false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error('[competencyService] createCompetency error:', error);
@@ -262,8 +262,8 @@ export async function createLearningPath(
       ...data,
       path_id: docRef.id,
       is_active: data.is_active !== false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error('[competencyService] createLearningPath error:', error);
@@ -401,8 +401,8 @@ export async function createDevelopmentPlan(
     return {
       ...data,
       plan_id: docRef.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error('[competencyService] createDevelopmentPlan error:', error);

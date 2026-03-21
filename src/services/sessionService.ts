@@ -148,7 +148,7 @@ export const createSession = async (
     return {
       ...data,
       session_id: sessionId,
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error('[sessionService] createSession failed:', error);

@@ -9,16 +9,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap, ClipboardList } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Zap, ClipboardList } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,88 +23,10 @@ import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 import { logger } from '@/utils/logger';
 import { getFactoryLines, extractMDFactoryLines } from '@/services/factoryLineService';
 
-const FACTORIES: { code: FactoryCode; label: string }[] = [
-  { code: 'A', label: 'A' },
-  { code: 'B', label: 'B' },
-  { code: 'B3', label: 'B3' },
-  { code: 'C', label: 'C' },
-  { code: 'D', label: 'D' },
-  { code: 'FGWH', label: 'FGWH' },
-  { code: 'SCANPACK_AB', label: 'SP-AB' },
-  { code: 'SCANPACK_C', label: 'SP-C' },
-  { code: 'SCANPACK_D', label: 'SP-D' },
-];
-const STEPS = ['factory', 'info', 'result'] as const;
-const SESSION_KEY = 'md_quick_entry_session';
-
-/** 구역별 라인 목록 (로컬 폴백 - Quality OS에서 동적 로드 실패 시 사용) */
-const LOCAL_FACTORY_LINES: Record<FactoryCode, string[]> = {
-  A: [
-    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
-    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
-    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
-  ],
-  B: [
-    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2',
-    'L4-1','L4-2','L5-1','L5-2','L6-1','L6-2',
-  ],
-  B3: ['L1','L2','L3','L4'],
-  C: [
-    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
-    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
-    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
-  ],
-  D: [
-    'L1-1','L1-2','L2-1','L2-2','L3-1','L3-2','L4-1','L4-2',
-    'L5-1','L5-2','L6-1','L6-2','L7-1','L7-2','L8-1','L8-2',
-    'L9-1','L9-2','L10-1','L10-2','L11-1','L11-2','L12-1','L12-2',
-  ],
-  FGWH: ['1','2','3','4','5','6','7','8'],
-  SCANPACK_AB: ['1','2','3','4','5','6','7','8'],
-  SCANPACK_C: ['1','2','3','4','5','6','7','8'],
-  SCANPACK_D: ['1','2','3','4','5','6','7','8'],
-};
-
-interface FormData {
-  factory: FactoryCode | '';
-  line: string;
-  machineId: string;
-  inspectionDate: string;
-  inspectorId: string;
-  inspectorName: string;
-  productName: string;
-  result: InspectionResult | '';
-  remarks: string;
-  failureType: string;
-  failureDescription: string;
-}
-
-/** localStorage에서 세션 데이터 복원 (공장, 날짜, 검사자) */
-function loadSession(): Partial<FormData> {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return {};
-    const data = JSON.parse(raw);
-    // 날짜가 오늘인 경우만 복원
-    if (data.inspectionDate === new Date().toISOString().split('T')[0]) {
-      return data;
-    }
-    return {};
-  } catch {
-    return {};
-  }
-}
-
-function saveSession(data: Partial<FormData>) {
-  try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      factory: data.factory,
-      inspectionDate: data.inspectionDate,
-      inspectorId: data.inspectorId,
-      inspectorName: data.inspectorName,
-    }));
-  } catch { /* ignore */ }
-}
+import { LOCAL_FACTORY_LINES, loadSession, saveSession } from '@/components/metal-detector/md-input-constants';
+import type { MDFormData } from '@/components/metal-detector/md-input-constants';
+import MDQuickEntryForm from '@/components/metal-detector/MDQuickEntryForm';
+import MDDetailedWizard from '@/components/metal-detector/MDDetailedWizard';
 
 export default function MDInputForm() {
   const { t } = useTranslation();
@@ -141,7 +58,7 @@ export default function MDInputForm() {
   // 세션 복원
   const session = useMemo(() => loadSession(), []);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<MDFormData>({
     factory: (session.factory as FactoryCode) || '',
     line: '',
     machineId: '',
@@ -149,7 +66,7 @@ export default function MDInputForm() {
     inspectorId: session.inspectorId || '',
     inspectorName: session.inspectorName || user?.name || '',
     productName: '',
-    result: 'PASS', // 빠른 입력 기본값: PASS
+    result: 'PASS',
     remarks: '',
     failureType: '',
     failureDescription: '',
@@ -169,9 +86,9 @@ export default function MDInputForm() {
     });
   }, []);
 
-  // 직원 데이터 로드 (Q-TRAIN employees 컬렉션)
+  // 직원 데이터 로드
   useEffect(() => {
-    const loadEmployees = async () => {
+    const loadEmployeesData = async () => {
       setEmployeesLoading(true);
       try {
         const result = await getEmployees({ status: 'ACTIVE' as Employee['status'] });
@@ -182,22 +99,14 @@ export default function MDInputForm() {
         setEmployeesLoading(false);
       }
     };
-    loadEmployees();
+    loadEmployeesData();
   }, []);
 
-  // 검사자 검색 필터
-  const [inspectorSearch, setInspectorSearch] = useState('');
-
-  const filteredEmployees = useMemo(() => {
-    if (!inspectorSearch.trim()) return employees.slice(0, 50);
-    const query = inspectorSearch.toLowerCase();
-    return employees.filter(
-      (e) =>
-        e.employee_id.toLowerCase().includes(query) ||
-        e.employee_name.toLowerCase().includes(query) ||
-        e.department.toLowerCase().includes(query)
-    ).slice(0, 50);
-  }, [employees, inspectorSearch]);
+  // 공장별 라인 목록
+  const availableLines = useMemo(() => {
+    if (!formData.factory) return [];
+    return factoryLines[formData.factory as FactoryCode] || [];
+  }, [formData.factory, factoryLines]);
 
   // 최근 장비 ID 목록 (자동완성용)
   const recentMachineIds = useMemo(() => {
@@ -207,21 +116,6 @@ export default function MDInputForm() {
     });
     return Array.from(ids).sort();
   }, [inspections]);
-
-  // 라인 검색 필터
-  const [lineSearch, setLineSearch] = useState('');
-  const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
-
-  // 공장별 라인 목록
-  const availableLines = useMemo(() => {
-    if (!formData.factory) return [];
-    return factoryLines[formData.factory as FactoryCode] || [];
-  }, [formData.factory, factoryLines]);
-
-  const filteredLines = useMemo(() => {
-    if (!lineSearch.trim()) return availableLines;
-    return availableLines.filter((l) => l.includes(lineSearch));
-  }, [availableLines, lineSearch]);
 
   // 오늘 입력 건수 계산
   useEffect(() => {
@@ -235,33 +129,20 @@ export default function MDInputForm() {
     fetchInspections({ year: new Date().getFullYear() });
   }, [fetchInspections]);
 
-  const updateField = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
+  const updateField = useCallback(<K extends keyof MDFormData>(key: K, value: MDFormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // 검사자 선택 핸들러
-  const handleInspectorSelect = useCallback((employeeId: string) => {
-    const employee = employees.find((e) => e.employee_id === employeeId);
-    if (employee) {
-      setFormData((prev) => ({
-        ...prev,
-        inspectorId: employee.employee_id,
-        inspectorName: employee.employee_name,
-      }));
-    }
-  }, [employees]);
-
-  // ============ 제출 로직 ============
-
+  // ─── 제출 검증 ───
   const canSubmitQuick = () => {
     if (!formData.factory || !formData.line.trim() || !formData.result) return false;
-    // HR 데이터 있으면 inspectorId 필수, 없으면 inspectorName으로 폴백
     if (employees.length > 0 && !formData.inspectorId) return false;
     if (employees.length === 0 && !formData.inspectorName.trim()) return false;
     if (formData.result === 'FAIL' && (!formData.failureType || !formData.failureDescription.trim())) return false;
     return true;
   };
 
+  // ─── 제출 로직 ───
   const handleSubmit = async () => {
     if (!formData.factory || !formData.result || isSubmitting) return;
 
@@ -291,42 +172,15 @@ export default function MDInputForm() {
         });
       }
 
-      // 세션 저장 (공장, 날짜, 검사자 유지)
       saveSession(formData);
-
-      // 결과 표시
-      setLastSubmitted({
-        line: formData.line,
-        machineId: formData.machineId,
-        result: formData.result as string,
-      });
+      setLastSubmitted({ line: formData.line, machineId: formData.machineId, result: formData.result as string });
       setTodayCount((c) => c + 1);
 
       if (mode === 'quick') {
-        // 빠른 입력: 장비별 필드만 초기화, 공장/날짜/검사자 유지
-        setFormData((prev) => ({
-          ...prev,
-          line: '',
-          machineId: '',
-          result: 'PASS',
-          remarks: '',
-          failureType: '',
-          failureDescription: '',
-        }));
-
-        // 3초 후 성공 메시지 숨기기
+        setFormData((prev) => ({ ...prev, line: '', machineId: '', result: 'PASS', remarks: '', failureType: '', failureDescription: '' }));
         setTimeout(() => setLastSubmitted(null), 3000);
       } else {
-        // 상세 입력: 기존 동작
-        setFormData((prev) => ({
-          ...prev,
-          line: '',
-          machineId: '',
-          result: '',
-          remarks: '',
-          failureType: '',
-          failureDescription: '',
-        }));
+        setFormData((prev) => ({ ...prev, line: '', machineId: '', result: '', remarks: '', failureType: '', failureDescription: '' }));
         setCurrentStep(0);
       }
     } catch {
@@ -336,107 +190,7 @@ export default function MDInputForm() {
     }
   };
 
-  // ============ 상세 입력 네비게이션 ============
-
-  const canGoNext = () => {
-    switch (currentStep) {
-      case 0:
-        return formData.factory !== '' && formData.line.trim() !== '';
-      case 1:
-        if (formData.inspectionDate === '') return false;
-        if (employees.length > 0) return formData.inspectorId !== '';
-        return formData.inspectorName.trim() !== '';
-      case 2:
-        if (formData.result === '') return false;
-        if (formData.result === 'FAIL') {
-          return formData.failureType.trim() !== '' && formData.failureDescription.trim() !== '';
-        }
-        return true;
-      default:
-        return false;
-    }
-  };
-
-  // ============ 검사자 선택 UI ============
-
-  const [inspectorDropdownOpen, setInspectorDropdownOpen] = useState(false);
-
-  const renderInspectorSelector = () => (
-    <div className="space-y-1">
-      <Label>{t('metalDetector.input.inspectorId')}</Label>
-      {employeesLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {t('common.loading')}
-        </div>
-      ) : employees.length > 0 ? (
-        <div className="relative">
-          <Input
-            placeholder={t('metalDetector.input.inspectorSearch')}
-            value={formData.inspectorId ? `${formData.inspectorId} - ${formData.inspectorName}` : inspectorSearch}
-            onChange={(e) => {
-              setInspectorSearch(e.target.value);
-              setInspectorDropdownOpen(true);
-              // 직접 입력 시 선택 초기화
-              if (formData.inspectorId) {
-                setFormData((prev) => ({ ...prev, inspectorId: '', inspectorName: '' }));
-              }
-            }}
-            onFocus={() => setInspectorDropdownOpen(true)}
-            onBlur={() => setTimeout(() => setInspectorDropdownOpen(false), 200)}
-          />
-          {formData.inspectorId && (
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setFormData((prev) => ({ ...prev, inspectorId: '', inspectorName: '' }));
-                setInspectorSearch('');
-                setInspectorDropdownOpen(true);
-              }}
-            >
-              <span className="text-xs">✕</span>
-            </button>
-          )}
-          {inspectorDropdownOpen && !formData.inspectorId && (
-            <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-popover shadow-md">
-              {filteredEmployees.length > 0 ? (
-                filteredEmployees.map((emp) => (
-                  <button
-                    key={emp.employee_id}
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleInspectorSelect(emp.employee_id);
-                      setInspectorSearch('');
-                      setInspectorDropdownOpen(false);
-                    }}
-                  >
-                    <span className="font-mono font-medium">{emp.employee_id}</span>
-                    <span className="mx-1">-</span>
-                    <span>{emp.employee_name}</span>
-                    <span className="text-muted-foreground ml-1">({emp.department})</span>
-                  </button>
-                ))
-              ) : (
-                <div className="px-3 py-2 text-sm text-muted-foreground">{t('common.noResults')}</div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <Input
-          value={formData.inspectorName}
-          onChange={(e) => updateField('inspectorName', e.target.value)}
-          placeholder={t('metalDetector.input.inspectorNameFallback')}
-        />
-      )}
-    </div>
-  );
-
-  // ============ 렌더링 ============
-
+  // ─── 렌더링 ───
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       {/* Header + 오늘 입력 카운터 */}
@@ -480,338 +234,35 @@ export default function MDInputForm() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ===== 빠른 입력 모드 ===== */}
-        <TabsContent value="quick" className="space-y-4 mt-4">
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              {/* Row 1: 구역 + 날짜 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.factory.label')}</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {FACTORIES.map((f) => (
-                      <Button
-                        key={f.code}
-                        variant={formData.factory === f.code ? 'default' : 'outline'}
-                        size="sm"
-                        className="text-xs px-2"
-                        onClick={() => { updateField('factory', f.code); updateField('line', ''); setLineSearch(''); }}
-                      >
-                        {f.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.input.date')}</Label>
-                  <Input
-                    type="date"
-                    value={formData.inspectionDate}
-                    onChange={(e) => updateField('inspectionDate', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: 라인 + 장비 ID */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>{t('metalDetector.line')}</Label>
-                  <div className="relative">
-                    <Input
-                      placeholder={formData.factory ? `${formData.factory}-1` : '1-1'}
-                      value={formData.line || lineSearch}
-                      onChange={(e) => {
-                        setLineSearch(e.target.value);
-                        setLineDropdownOpen(true);
-                        if (formData.line) updateField('line', '');
-                      }}
-                      onFocus={() => setLineDropdownOpen(true)}
-                      onBlur={() => setTimeout(() => setLineDropdownOpen(false), 200)}
-                    />
-                    {formData.line && (
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => { updateField('line', ''); setLineSearch(''); setLineDropdownOpen(true); }}
-                      >
-                        <span className="text-xs">✕</span>
-                      </button>
-                    )}
-                    {lineDropdownOpen && !formData.line && formData.factory && (
-                      <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover shadow-md">
-                        {filteredLines.length > 0 ? (
-                          filteredLines.map((line) => (
-                            <button
-                              key={line}
-                              type="button"
-                              className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                updateField('line', line);
-                                setLineSearch('');
-                                setLineDropdownOpen(false);
-                              }}
-                            >
-                              {line}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-3 py-1.5 text-sm text-muted-foreground">{t('common.noResults')}</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('metalDetector.machineId')}</Label>
-                  <Input
-                    placeholder="D210103"
-                    value={formData.machineId}
-                    onChange={(e) => updateField('machineId', e.target.value)}
-                    list="recent-machines"
-                  />
-                  {recentMachineIds.length > 0 && (
-                    <datalist id="recent-machines">
-                      {recentMachineIds.map((id) => <option key={id} value={id} />)}
-                    </datalist>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 3: 검사자 ID (HR V2 연동) */}
-              {renderInspectorSelector()}
-
-              {/* Row 4: 결과 (크게) + 제출 */}
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <Label className="mb-2 block">{t('metalDetector.input.resultLabel')}</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant={formData.result === 'PASS' ? 'default' : 'outline'}
-                      className={formData.result === 'PASS' ? 'bg-green-600 hover:bg-green-700 h-12 text-lg' : 'h-12 text-lg'}
-                      onClick={() => updateField('result', 'PASS')}
-                    >
-                      PASS
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={formData.result === 'FAIL' ? 'default' : 'outline'}
-                      className={formData.result === 'FAIL' ? 'bg-red-600 hover:bg-red-700 h-12 text-lg' : 'h-12 text-lg'}
-                      onClick={() => updateField('result', 'FAIL')}
-                    >
-                      FAIL
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  className="h-12 px-8 text-lg"
-                  disabled={!canSubmitQuick() || isLoading || isSubmitting}
-                  onClick={handleSubmit}
-                >
-                  {(isLoading || isSubmitting) ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    t('common.save')
-                  )}
-                </Button>
-              </div>
-
-              {/* FAIL 상세 (빠른 입력에서도) */}
-              {formData.result === 'FAIL' && (
-                <div className="space-y-3 p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
-                  <h4 className="font-medium text-red-700 dark:text-red-400 text-sm">
-                    {t('metalDetector.input.failureDetails')}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t('metalDetector.input.failureType')}</Label>
-                      <Select value={formData.failureType} onValueChange={(v) => updateField('failureType', v)}>
-                        <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sensitivity_drift">{t('metalDetector.failureTypes.sensitivityDrift')}</SelectItem>
-                          <SelectItem value="equipment_malfunction">{t('metalDetector.failureTypes.equipmentMalfunction')}</SelectItem>
-                          <SelectItem value="calibration_error">{t('metalDetector.failureTypes.calibrationError')}</SelectItem>
-                          <SelectItem value="foreign_object">{t('metalDetector.failureTypes.foreignObject')}</SelectItem>
-                          <SelectItem value="other">{t('metalDetector.failureTypes.other')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t('metalDetector.input.failureDesc')}</Label>
-                      <Textarea
-                        value={formData.failureDescription}
-                        onChange={(e) => updateField('failureDescription', e.target.value)}
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 빠른 입력 팁 */}
-          <p className="text-xs text-muted-foreground text-center">
-            {t('metalDetector.quickEntry.tip')}
-          </p>
+        <TabsContent value="quick" className="mt-4">
+          <MDQuickEntryForm
+            formData={formData}
+            updateField={updateField}
+            availableLines={availableLines}
+            employees={employees}
+            employeesLoading={employeesLoading}
+            recentMachineIds={recentMachineIds}
+            isLoading={isLoading}
+            isSubmitting={isSubmitting}
+            canSubmit={canSubmitQuick()}
+            onSubmit={handleSubmit}
+          />
         </TabsContent>
 
-        {/* ===== 상세 입력 모드 (3단계 마법사) ===== */}
-        <TabsContent value="detailed" className="space-y-4 mt-4">
-          {/* Step Indicator */}
-          <div className="flex items-center gap-2">
-            {STEPS.map((step, idx) => (
-              <div key={step} className="flex items-center">
-                <div className={`flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium ${
-                  idx === currentStep ? 'bg-primary text-primary-foreground'
-                    : idx < currentStep ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {idx < currentStep ? '\u2713' : idx + 1}
-                </div>
-                {idx < STEPS.length - 1 && (
-                  <div className={`h-0.5 w-8 mx-1 ${idx < currentStep ? 'bg-green-500' : 'bg-muted'}`} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t(`metalDetector.input.step${currentStep + 1}Title`)}</CardTitle>
-              <CardDescription>{t(`metalDetector.input.step${currentStep + 1}Desc`)}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Step 1: Factory & Line */}
-              {currentStep === 0 && (
-                <>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.factory.label')}</Label>
-                    <div className="grid grid-cols-5 gap-2">
-                      {FACTORIES.map((f) => (
-                        <Button key={f.code} variant={formData.factory === f.code ? 'default' : 'outline'} className="w-full text-xs" onClick={() => { updateField('factory', f.code); updateField('line', ''); setLineSearch(''); }}>
-                          {f.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>{t('metalDetector.line')}</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder={formData.factory ? `e.g. 1-1` : 'e.g. 1-1'}
-                        value={formData.line || lineSearch}
-                        onChange={(e) => {
-                          setLineSearch(e.target.value);
-                          setLineDropdownOpen(true);
-                          if (formData.line) updateField('line', '');
-                        }}
-                        onFocus={() => setLineDropdownOpen(true)}
-                        onBlur={() => setTimeout(() => setLineDropdownOpen(false), 200)}
-                      />
-                      {formData.line && (
-                        <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => { updateField('line', ''); setLineSearch(''); setLineDropdownOpen(true); }}>
-                          <span className="text-xs">✕</span>
-                        </button>
-                      )}
-                      {lineDropdownOpen && !formData.line && formData.factory && (
-                        <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover shadow-md">
-                          {filteredLines.length > 0 ? filteredLines.map((line) => (
-                            <button key={line} type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent cursor-pointer" onMouseDown={(e) => { e.preventDefault(); updateField('line', line); setLineSearch(''); setLineDropdownOpen(false); }}>
-                              {line}
-                            </button>
-                          )) : (
-                            <div className="px-3 py-1.5 text-sm text-muted-foreground">{t('common.noResults')}</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.machineId')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
-                    <Input placeholder="e.g. D210103" value={formData.machineId} onChange={(e) => updateField('machineId', e.target.value)} list="recent-machines-d" />
-                    {recentMachineIds.length > 0 && <datalist id="recent-machines-d">{recentMachineIds.map((id) => <option key={id} value={id} />)}</datalist>}
-                  </div>
-                </>
-              )}
-
-              {/* Step 2: Inspection Info */}
-              {currentStep === 1 && (
-                <>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.input.date')}</Label>
-                    <Input type="date" value={formData.inspectionDate} onChange={(e) => updateField('inspectionDate', e.target.value)} />
-                  </div>
-                  {renderInspectorSelector()}
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.input.productName')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
-                    <Input value={formData.productName} onChange={(e) => updateField('productName', e.target.value)} />
-                  </div>
-                </>
-              )}
-
-              {/* Step 3: Result */}
-              {currentStep === 2 && (
-                <>
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.input.resultLabel')}</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button variant={formData.result === 'PASS' ? 'default' : 'outline'} className={formData.result === 'PASS' ? 'bg-green-600 hover:bg-green-700' : ''} size="lg" onClick={() => updateField('result', 'PASS')}>
-                        {t('metalDetector.result.pass')}
-                      </Button>
-                      <Button variant={formData.result === 'FAIL' ? 'default' : 'outline'} className={formData.result === 'FAIL' ? 'bg-red-600 hover:bg-red-700' : ''} size="lg" onClick={() => updateField('result', 'FAIL')}>
-                        {t('metalDetector.result.fail')}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {formData.result === 'FAIL' && (
-                    <div className="space-y-4 p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
-                      <h4 className="font-medium text-red-700 dark:text-red-400">{t('metalDetector.input.failureDetails')}</h4>
-                      <div className="space-y-2">
-                        <Label>{t('metalDetector.input.failureType')}</Label>
-                        <Select value={formData.failureType} onValueChange={(v) => updateField('failureType', v)}>
-                          <SelectTrigger><SelectValue placeholder={t('common.select')} /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sensitivity_drift">{t('metalDetector.failureTypes.sensitivityDrift')}</SelectItem>
-                            <SelectItem value="equipment_malfunction">{t('metalDetector.failureTypes.equipmentMalfunction')}</SelectItem>
-                            <SelectItem value="calibration_error">{t('metalDetector.failureTypes.calibrationError')}</SelectItem>
-                            <SelectItem value="foreign_object">{t('metalDetector.failureTypes.foreignObject')}</SelectItem>
-                            <SelectItem value="other">{t('metalDetector.failureTypes.other')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>{t('metalDetector.input.failureDesc')}</Label>
-                        <Textarea value={formData.failureDescription} onChange={(e) => updateField('failureDescription', e.target.value)} rows={3} />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>{t('metalDetector.input.remarks')} <span className="text-muted-foreground ml-1">({t('common.optional')})</span></Label>
-                    <Textarea value={formData.remarks} onChange={(e) => updateField('remarks', e.target.value)} rows={2} />
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button variant="outline" disabled={currentStep === 0} onClick={() => setCurrentStep((s) => s - 1)}>
-              <ChevronLeft className="h-4 w-4 mr-1" />{t('common.back')}
-            </Button>
-            {currentStep < STEPS.length - 1 ? (
-              <Button disabled={!canGoNext()} onClick={() => setCurrentStep((s) => s + 1)}>
-                {t('common.next')}<ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <Button disabled={!canGoNext() || isLoading || isSubmitting} onClick={handleSubmit}>
-                {(isLoading || isSubmitting) ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('common.saving')}</> : t('common.save')}
-              </Button>
-            )}
-          </div>
+        <TabsContent value="detailed" className="mt-4">
+          <MDDetailedWizard
+            formData={formData}
+            updateField={updateField}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            availableLines={availableLines}
+            employees={employees}
+            employeesLoading={employeesLoading}
+            recentMachineIds={recentMachineIds}
+            isLoading={isLoading}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+          />
         </TabsContent>
       </Tabs>
 

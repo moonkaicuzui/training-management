@@ -154,8 +154,8 @@ export const createProgram = async (
 
     return {
       ...data,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error(`[programService] createProgram failed for ${data.program_code}:`, error);

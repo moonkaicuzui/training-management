@@ -88,8 +88,8 @@ export async function createTrainer(
     return {
       ...data,
       trainer_id: docRef.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error(`[trainerService] createTrainer failed for ${data.trainer_name}:`, error);

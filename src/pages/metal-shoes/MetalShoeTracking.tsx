@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { Loader2, AlertTriangle, Search, Eye, RefreshCw, ExternalLink, Download, Camera } from 'lucide-react';
 import { syncActionFromReturnDashboard } from '../../services/metalShoeSyncService';
 import type { MetalShoeCase, MetalShoeStatus } from '../../types/metalShoe';
+import { logger } from '@/utils/logger';
 
 const STATUS_COLORS: Record<MetalShoeStatus, string> = {
   registered: 'bg-gray-100 text-gray-700',
@@ -137,7 +138,7 @@ export default function MetalShoeTracking() {
       // 케이스 갱신
       await fetchCases({ year: detailCase.year });
     } catch (err) {
-      console.error('Action submit failed:', err);
+      logger.error('Action submit failed:', err);
     } finally {
       setSubmittingAction(false);
     }

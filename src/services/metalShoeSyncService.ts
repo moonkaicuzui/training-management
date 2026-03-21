@@ -16,6 +16,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import type { MetalShoeCase } from '../types/metalShoe';
+import { logger } from '@/utils/logger';
 
 // Return Dashboard Firebase config
 const RETURN_DASHBOARD_CONFIG = {
@@ -82,7 +83,7 @@ export async function syncCaseToReturnDashboard(
     const docRef = await addDoc(collection(db, 'qualityIssues'), issueData);
     return docRef.id;
   } catch (error) {
-    console.error('[MetalShoeSyncService] Failed to sync to Return Dashboard:', error);
+    logger.error('[MetalShoeSyncService] Failed to sync to Return Dashboard:', error);
     return null;
   }
 }
@@ -108,7 +109,7 @@ export async function syncActionFromReturnDashboard(
       status: data.status || 'monitoring',
     };
   } catch (error) {
-    console.error('[MetalShoeSyncService] Failed to sync actions:', error);
+    logger.error('[MetalShoeSyncService] Failed to sync actions:', error);
     return null;
   }
 }

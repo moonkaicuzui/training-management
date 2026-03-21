@@ -115,6 +115,6 @@ export const createAuditLog = async (
 
   return {
     ...data,
-    changed_at: new Date().toISOString(),
+    changed_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
   };
 };

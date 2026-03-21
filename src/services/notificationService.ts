@@ -150,7 +150,7 @@ export const createNotification = async (
 
     return {
       ...data,
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error(`[notificationService] createNotification failed for ${data.notification_id}:`, error);

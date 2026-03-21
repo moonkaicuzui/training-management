@@ -111,8 +111,8 @@ export const createFeedback = async (data: CreateFeedbackInput): Promise<SystemF
     id: feedbackId,
     ...feedbackData,
     status: 'SUBMITTED',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+    updatedAt: new Date(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
   };
 };
 
@@ -149,7 +149,7 @@ export const addComment = async (
   const newComment = {
     author: comment.author,
     text: comment.text,
-    createdAt: Timestamp.now(),
+    createdAt: serverTimestamp(),
   };
 
   await updateDoc(docRef, {

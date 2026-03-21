@@ -92,8 +92,8 @@ export const createTeam = async (
       factory: input.factory,
       line: input.line,
       is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
+      updated_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
     };
   } catch (error) {
     logger.error(`[tqcService] createTeam failed for ${input.team_name}:`, error);

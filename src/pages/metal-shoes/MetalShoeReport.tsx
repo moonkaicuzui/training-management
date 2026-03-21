@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
 import { Loader2, FileSpreadsheet, FileText, Presentation, Download } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 export default function MetalShoeReport() {
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ export default function MetalShoeReport() {
       const currentCases = useMetalShoeStore.getState().cases;
       await generateMetalShoeExcel(currentCases, selectedYear);
     } catch (err) {
-      console.error('Excel export failed:', err);
+      logger.error('Excel export failed:', err);
     } finally {
       setGenerating(null);
     }
@@ -42,7 +43,7 @@ export default function MetalShoeReport() {
       const kpis = useMetalShoeStore.getState().dashboardKPIs;
       await generateMetalShoePdfReport(currentCases, selectedYear, selectedWeek, kpis);
     } catch (err) {
-      console.error('PDF export failed:', err);
+      logger.error('PDF export failed:', err);
     } finally {
       setGenerating(null);
     }
@@ -65,7 +66,7 @@ export default function MetalShoeReport() {
         await generateSupplierNotice(supplierCases, supplier?.name || targetId, selectedYear, selectedWeek);
       }
     } catch (err) {
-      console.error('PPTX export failed:', err);
+      logger.error('PPTX export failed:', err);
     } finally {
       setGenerating(null);
     }

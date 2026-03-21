@@ -191,7 +191,7 @@ export const createResult = async (
     return {
       ...data,
       result_id: resultId,
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
       updated_at: null,
       updated_by: null,
     };
@@ -236,7 +236,7 @@ export const batchCreateResults = async (
         createdResults.push({
           ...item,
           result_id: resultId,
-          created_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),  // 반환 객체용 (Firestore에는 serverTimestamp 저장됨)
           updated_at: null,
           updated_by: null,
         });
