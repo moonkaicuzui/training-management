@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import * as api from '@/services/api';
@@ -74,7 +74,7 @@ interface BatchResult {
   errors: string[];
 }
 
-export default function BatchCertificateDialog({
+const BatchCertificateDialog = memo(function BatchCertificateDialog({
   open,
   onClose,
   onSuccess,
@@ -455,4 +455,5 @@ export default function BatchCertificateDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+export default BatchCertificateDialog;

@@ -23,7 +23,7 @@ import {
   markDirectiveAsRead,
   acknowledgeDirective,
   getEffectivenessReports,
-} from '@/services/trainerDirectiveService';
+} from '@/services/api';
 import { logger } from '@/utils/logger';
 import type {
   TrainerDirective,

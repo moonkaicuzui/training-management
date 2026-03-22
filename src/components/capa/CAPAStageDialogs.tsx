@@ -9,7 +9,7 @@
  * - Reject 다이얼로그
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight } from 'lucide-react';
 
@@ -66,7 +66,7 @@ interface AdvanceStageDialogProps {
   onSubmit: (stageUpdate: CAPAStageUpdate) => Promise<void>;
 }
 
-export function AdvanceStageDialog({
+export const AdvanceStageDialog = memo(function AdvanceStageDialog({
   open,
   onOpenChange,
   currentCAPA,
@@ -361,7 +361,7 @@ export function AdvanceStageDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 // ========== Reject Dialog ==========
 

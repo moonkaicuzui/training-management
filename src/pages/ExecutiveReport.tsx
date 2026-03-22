@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { generateExecutiveReport } from '@/services/executiveReportService';
+import { generateExecutiveReport } from '@/services/api';
 
 export default function ExecutiveReport() {
   const { t, i18n } = useTranslation();

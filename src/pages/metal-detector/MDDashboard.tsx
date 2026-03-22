@@ -25,8 +25,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { FactoryCode, ImprovementStatus } from '@/types/metalDetector';
-import { getCurrentHRSummary } from '@/services/hrIntegrationService';
-import type { HRSummary } from '@/services/hrIntegrationService';
+import { getCurrentHRSummary } from '@/services/api';
+import type { HRSummary } from '@/services/api';
 import { logger } from '@/utils/logger';
 
 function getISOWeekNumber(date: Date): number {

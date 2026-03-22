@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { TrainingEvaluation } from '@/services/evaluationService';
 import type { AqlEnrollmentLog } from '@/types/aql';
 import * as api from '@/services/api';
-import * as aqlService from '@/services/aqlService';
 import {
   calculateEffectiveness,
   type EffectivenessResult,
@@ -108,7 +107,7 @@ export default function Evaluation() {
     setIsLoadingEffectiveness(true);
     try {
       const [enrollmentLogs, trainingResults] = await Promise.all([
-        aqlService.getAqlEnrollmentLogs(),
+        api.getAqlEnrollmentLogs(),
         api.getResults(),
       ]);
 

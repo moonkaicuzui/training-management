@@ -2,6 +2,7 @@
  * BlogPostCard — 게시판 테이블 행 + 상세 보기 다이얼로그
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
@@ -50,7 +51,7 @@ interface BlogPostTableProps {
   onViewDetail: (post: QualityBlogPost) => void;
 }
 
-export function BlogPostTable({ posts, language, onViewDetail }: BlogPostTableProps) {
+export const BlogPostTable = memo(function BlogPostTable({ posts, language, onViewDetail }: BlogPostTableProps) {
   const { t } = useTranslation();
 
   const getLocale = () => {
@@ -166,7 +167,7 @@ export function BlogPostTable({ posts, language, onViewDetail }: BlogPostTablePr
       </table>
     </div>
   );
-}
+});
 
 // 상세 보기 다이얼로그
 interface BlogDetailDialogProps {

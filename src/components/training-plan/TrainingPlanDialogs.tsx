@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar,
@@ -42,7 +42,7 @@ import type { AnnualPlan } from '@/services/trainingPlanService';
 
 // --- PlanDetailDialog ---
 
-export function PlanDetailDialog({
+export const PlanDetailDialog = memo(function PlanDetailDialog({
   open,
   onClose,
   plan,
@@ -219,7 +219,7 @@ export function PlanDetailDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 // --- CreatePlanDialog ---
 

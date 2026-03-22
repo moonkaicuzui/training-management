@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye,
@@ -45,7 +46,7 @@ interface MaterialTableProps {
   onDeleteMaterial: (materialId: string) => void;
 }
 
-export function MaterialTable({
+export const MaterialTable = memo(function MaterialTable({
   materials,
   selectedItems,
   viewMode,
@@ -219,7 +220,7 @@ export function MaterialTable({
       })}
     </div>
   );
-}
+});
 
 // Starred/Recent/Programs tab tables
 interface MaterialSimpleTableProps {

@@ -17,7 +17,7 @@ import {
 import { useFivePrsStore } from '@/stores/fivePrsStore';
 import { MonthSelector } from '@/components/five-prs/MonthSelector';
 import { InspectionKPICards } from '@/components/five-prs/InspectionKPICards';
-import { autoEnrollFromRecommendations } from '@/services/fivePrsService';
+import { autoEnrollFromRecommendations } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,

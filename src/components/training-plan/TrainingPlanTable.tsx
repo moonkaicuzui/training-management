@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
@@ -195,7 +196,7 @@ export function ProgramQualityStatus({ programs }: { programs: ProgramQualitySta
 
 // --- QualityTabContent ---
 
-export function QualityTabContent({
+export const QualityTabContent = memo(function QualityTabContent({
   programQualityStats,
   retrainingTargets,
   expiringTrainings,
@@ -333,4 +334,4 @@ export function QualityTabContent({
       </Card>
     </>
   );
-}
+});

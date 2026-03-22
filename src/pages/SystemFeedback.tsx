@@ -18,7 +18,14 @@ import { MessageSquarePlus, Plus, AlertTriangle, Loader2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import * as feedbackService from '@/services/systemFeedbackService';
+import {
+  getAllFeedback,
+  getFeedback,
+  createFeedback,
+  updateFeedbackStatus,
+  addFeedbackComment,
+  uploadFeedbackScreenshots,
+} from '@/services/api';
 import type {
   SystemFeedback as SystemFeedbackType,
   FeedbackStatus,
@@ -62,7 +69,7 @@ export default function SystemFeedback() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await feedbackService.getAllFeedback();
+      const data = await getAllFeedback();
       setFeedbackList(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load feedback');
@@ -127,7 +134,7 @@ export default function SystemFeedback() {
     try {
       let screenshotUrls: string[] = [];
       if (formData.screenshotFiles.length > 0) {
-        screenshotUrls = await feedbackService.uploadScreenshots(
+        screenshotUrls = await uploadFeedbackScreenshots(
           formData.screenshotFiles,
           (completed, total) => {
             setUploadProgress(t('systemFeedback.form.uploadingScreenshots', { completed, total }));
@@ -144,7 +151,7 @@ export default function SystemFeedback() {
         submittedBy: user?.email || '',
       };
 
-      await feedbackService.createFeedback(input);
+      await createFeedback(input);
       setIsFormOpen(false);
       setFormData(defaultFeedbackForm);
       await fetchData();
@@ -159,10 +166,10 @@ export default function SystemFeedback() {
   // 상태 변경 (관리자만)
   const handleStatusChange = async (feedbackId: string, newStatus: FeedbackStatus) => {
     try {
-      await feedbackService.updateFeedbackStatus(feedbackId, newStatus);
+      await updateFeedbackStatus(feedbackId, newStatus);
       await fetchData();
       if (viewingFeedback?.id === feedbackId) {
-        const updated = await feedbackService.getFeedback(feedbackId);
+        const updated = await getFeedback(feedbackId);
         if (updated) setViewingFeedback(updated);
       }
     } catch {
@@ -176,12 +183,12 @@ export default function SystemFeedback() {
     setIsAddingComment(true);
 
     try {
-      await feedbackService.addComment(viewingFeedback.id, {
+      await addFeedbackComment(viewingFeedback.id, {
         author: user?.email || '',
         text: commentText.trim(),
       });
       setCommentText('');
-      const updated = await feedbackService.getFeedback(viewingFeedback.id);
+      const updated = await getFeedback(viewingFeedback.id);
       if (updated) setViewingFeedback(updated);
       await fetchData();
     } catch {

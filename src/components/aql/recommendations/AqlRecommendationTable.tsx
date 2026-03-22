@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -119,7 +119,7 @@ function getSortValue(rec: AqlTrainingRecommendation, key: SortKey): string | nu
   }
 }
 
-export function AqlRecommendationTable({
+export const AqlRecommendationTable = memo(function AqlRecommendationTable({
   filteredRecommendations,
   selectedIds,
   onSelectChange,
@@ -378,4 +378,4 @@ export function AqlRecommendationTable({
       </Table>
     </div>
   );
-}
+});

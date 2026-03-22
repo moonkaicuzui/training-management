@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -37,7 +37,7 @@ const PRIORITY_BADGE_VARIANT: Record<
   SURGE: 'warning',
 };
 
-export function RecommendationTable({
+export const RecommendationTable = memo(function RecommendationTable({
   recommendations,
   filters,
   selectedIds,
@@ -373,4 +373,4 @@ export function RecommendationTable({
       </Table>
     </div>
   );
-}
+});

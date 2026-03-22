@@ -20,13 +20,15 @@ import {
   compareQualityData,
   getDepartmentTrainingRates,
   analyzeTurnoverTrainingCorrelation,
-  type TrainingEffectivenessResult,
-  type RiskBasedRecommendation,
-  type NewHireTrainingStatus,
-  type QualitySync,
-  type DepartmentTrainingRate,
-  type TurnoverTrainingCorrelation,
-} from '@/services/hrAnalyticsService';
+} from '@/services/api';
+import type {
+  TrainingEffectivenessResult,
+  RiskBasedRecommendation,
+  NewHireTrainingStatus,
+  QualitySync,
+  DepartmentTrainingRate,
+  TurnoverTrainingCorrelation,
+} from '@/services/api';
 import { MonthYearSelector, DEFAULT_MONTH, DEFAULT_YEAR } from '@/components/hr/HRHelperComponents';
 import EffectivenessTab from '@/components/hr/EffectivenessTab';
 import RiskTab from '@/components/hr/RiskTab';

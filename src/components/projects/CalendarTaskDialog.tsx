@@ -3,6 +3,7 @@
  * Apple Calendar 스타일 일정 추가/수정 다이얼로그
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 
@@ -68,7 +69,7 @@ interface CalendarTaskDialogProps {
   onCreateCategory: () => void;
 }
 
-export function CalendarTaskDialog({
+export const CalendarTaskDialog = memo(function CalendarTaskDialog({
   isOpen,
   onOpenChange,
   formData,
@@ -472,4 +473,4 @@ export function CalendarTaskDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});

@@ -21,7 +21,7 @@ import { getEmployees } from '@/services/api/employeeApi';
 import type { Employee } from '@/types';
 import type { FactoryCode, InspectionResult } from '@/types/metalDetector';
 import { logger } from '@/utils/logger';
-import { getFactoryLines, extractMDFactoryLines } from '@/services/factoryLineService';
+import { getFactoryLines, extractMDFactoryLines } from '@/services/api';
 
 import { LOCAL_FACTORY_LINES, loadSession, saveSession } from '@/components/metal-detector/md-input-constants';
 import type { MDFormData } from '@/components/metal-detector/md-input-constants';

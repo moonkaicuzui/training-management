@@ -5,7 +5,7 @@
  * Enhanced: gap-only filter, progress bars, target vs current legend
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -59,7 +59,7 @@ const LEVEL_SHORT: Record<CompetencyLevel, string> = {
   EXPERT: '5',
 };
 
-export function SkillMatrix({
+export const SkillMatrix = memo(function SkillMatrix({
   employees,
   competencies,
   employeeCompetencies,
@@ -331,4 +331,4 @@ export function SkillMatrix({
       </div>
     </div>
   );
-}
+});

@@ -6,7 +6,7 @@
 import * as projectService from '../projectService';
 import * as roiService from '../roiService';
 
-import type { ProjectSettings } from '@/types/project';
+import type { ProjectSettings, ProjectMember } from '@/types/project';
 
 // ========== Project Settings API ==========
 
@@ -19,6 +19,20 @@ export async function updateProjectSettings(
   data: Partial<Pick<ProjectSettings, 'projectName' | 'projectDescription' | 'defaultView' | 'notifications'>>
 ): Promise<void> {
   return projectService.updateProjectSettings(projectId, data);
+}
+
+// ========== Project Member Auth API ==========
+
+export async function getProjectMemberByUid(uid: string): Promise<ProjectMember | null> {
+  return projectService.getMemberByUid(uid);
+}
+
+export async function getProjectMemberByEmail(email: string): Promise<ProjectMember | null> {
+  return projectService.getMemberByEmail(email);
+}
+
+export async function linkProjectMemberToAuth(memberId: string, uid: string): Promise<void> {
+  return projectService.linkMemberToAuth(memberId, uid);
 }
 
 // ========== ROI / Training Costs API ==========

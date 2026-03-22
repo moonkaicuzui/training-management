@@ -112,10 +112,13 @@ export {
   getAllCAPAs,
 } from './capaApi';
 
-// Project API (settings, ROI)
+// Project API (settings, ROI, member auth)
 export {
   getProjectSettings,
   updateProjectSettings,
+  getProjectMemberByUid,
+  getProjectMemberByEmail,
+  linkProjectMemberToAuth,
   getTrainingCosts,
   saveTrainingCost,
 } from './projectApi';
@@ -205,3 +208,88 @@ export {
 
 // Re-export types from adminApi
 export type { Certificate, CertificateTemplate, CertificateFilters } from './adminApi';
+
+// HR Integration API
+export {
+  getCurrentHRSummary,
+  syncCurrentHRSummary,
+  detectHRChanges,
+  syncEmployeesFromHR,
+  deactivateEmployee,
+} from './hrIntegrationApi';
+export type { HRSummary, HRChangeEvent, HRSyncResult } from './hrIntegrationApi';
+
+// Sync API
+export {
+  SYNC_COLLECTIONS,
+  triggerSync,
+  triggerSyncAll,
+} from './syncApi';
+export type { SyncDirection, SyncResult } from './syncApi';
+
+// AQL API (additional)
+export { getAqlEnrollmentLogs } from './aqlApi';
+
+// Executive Report API
+export { generateExecutiveReport } from './executiveReportApi';
+
+// HR Analytics API
+export {
+  analyzeTrainingEffectiveness,
+  getHighRiskTrainingRecommendations,
+  getNewHireTrainingStatus,
+  compareQualityData,
+  getDepartmentTrainingRates,
+  analyzeTurnoverTrainingCorrelation,
+} from './hrAnalyticsApi';
+export type {
+  TrainingEffectivenessResult,
+  RiskBasedRecommendation,
+  NewHireTrainingStatus,
+  QualitySync,
+  DepartmentTrainingRate,
+  TurnoverTrainingCorrelation,
+} from './hrAnalyticsApi';
+
+// Blog API
+export { uploadBlogImage, uploadBlogImages } from './blogApi';
+
+// Feedback API
+export {
+  getAllFeedback,
+  getFeedback,
+  createFeedback,
+  updateFeedbackStatus,
+  addFeedbackComment,
+  uploadFeedbackScreenshots,
+} from './feedbackApi';
+
+// Trainer Directive API
+export {
+  getTodayDirective,
+  getRecentDirectives,
+  markDirectiveAsRead,
+  acknowledgeDirective,
+  getEffectivenessReports,
+} from './trainerDirectiveApi';
+
+// 5PRS API (additional)
+export { autoEnrollFromRecommendations } from './fivePrsApi';
+
+// Factory Line API
+export { getFactoryLines, extractMDFactoryLines } from './factoryLineApi';
+
+// Recommendation API (5PRS training recommendations)
+export {
+  getRecommendationThresholds,
+  updateRecommendationThresholds,
+  getRecommendationMappings,
+  createRecommendationMapping,
+  updateRecommendationMapping,
+  deleteRecommendationMapping,
+  getRecommendationLinks,
+  createRecommendationLink,
+  deleteRecommendationLink,
+  getRecommendationEnrollmentLogs,
+  createRecommendationEnrollmentLog,
+} from './recommendationApi';

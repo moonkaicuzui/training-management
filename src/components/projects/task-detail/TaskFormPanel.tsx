@@ -3,7 +3,7 @@
  * assignees, dates, project, category)
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +56,7 @@ interface TaskFormPanelProps {
   onCreateCategory: (name: string, color: string, type: 'event' | 'task') => Promise<{ id: string }>;
 }
 
-export function TaskFormPanel({
+export const TaskFormPanel = memo(function TaskFormPanel({
   taskFormData,
   setTaskFormData,
   members,
@@ -394,4 +394,4 @@ export function TaskFormPanel({
       </div>
     </div>
   );
-}
+});

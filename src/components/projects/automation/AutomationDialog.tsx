@@ -2,7 +2,7 @@
  * 자동화 규칙 추가/수정 다이얼로그 컴포넌트
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +80,7 @@ function getInitialFormData(automation: Automation | null | undefined): Automati
   };
 }
 
-export default function AutomationDialog({
+const AutomationDialog = memo(function AutomationDialog({
   open,
   onOpenChange,
   automation,
@@ -477,4 +477,5 @@ export default function AutomationDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+export default AutomationDialog;

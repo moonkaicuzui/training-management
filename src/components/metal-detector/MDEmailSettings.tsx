@@ -3,7 +3,7 @@
  * 금속탐지기 이메일 수신자 설정 Dialog 컴포넌트
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -70,7 +70,7 @@ const INITIAL_FORM: NewRecipientForm = {
   caOverdue: true,
 };
 
-export default function MDEmailSettings() {
+const MDEmailSettings = memo(function MDEmailSettings() {
   const { t } = useTranslation();
   const {
     emailRecipients,
@@ -424,4 +424,5 @@ export default function MDEmailSettings() {
       </AlertDialog>
     </Dialog>
   );
-}
+});
+export default MDEmailSettings;

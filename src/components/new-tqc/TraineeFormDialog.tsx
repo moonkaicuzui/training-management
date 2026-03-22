@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ const initialFormData: NewTQCTraineeInput = {
   introducer: undefined,
 };
 
-export function TraineeFormDialog({
+export const TraineeFormDialog = memo(function TraineeFormDialog({
   open,
   onClose,
   onSubmit,
@@ -317,4 +317,4 @@ export function TraineeFormDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});

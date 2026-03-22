@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -40,7 +40,7 @@ const EMPTY_FORM: MappingFormData = {
   is_active: true,
 };
 
-export function MappingManager() {
+export const MappingManager = memo(function MappingManager() {
   const { t } = useTranslation();
   const { mappings, programs, createMapping, updateMapping, deleteMapping } =
     useRecommendationStore(useShallow((state) => ({ mappings: state.mappings, programs: state.programs, createMapping: state.createMapping, updateMapping: state.updateMapping, deleteMapping: state.deleteMapping })));
@@ -346,4 +346,4 @@ export function MappingManager() {
       </Dialog>
     </div>
   );
-}
+});

@@ -3,6 +3,7 @@
  * 월별 교육 차트, 신입 TQC 현황, 교육 성과, ROI 분석, 벤치마크 탭
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TrendingUp,
@@ -146,7 +147,7 @@ interface TrainingStatusTabProps {
   }>;
 }
 
-export function TrainingStatusTab({ kpiResult, monthlyChartData }: TrainingStatusTabProps) {
+export const TrainingStatusTab = memo(function TrainingStatusTab({ kpiResult, monthlyChartData }: TrainingStatusTabProps) {
   const { t } = useTranslation();
 
   return (
@@ -278,7 +279,7 @@ export function TrainingStatusTab({ kpiResult, monthlyChartData }: TrainingStatu
       </Card>
     </>
   );
-}
+});
 
 // ========== ROI Analysis Tab ==========
 

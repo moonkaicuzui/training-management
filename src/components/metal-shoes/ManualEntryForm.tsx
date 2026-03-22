@@ -1,6 +1,7 @@
 /**
  * 금속 발견 신발 수동 입력 폼
  */
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Plus } from 'lucide-react';
 import type { MetalShoeComponent, MetalShoeSide, XraySentStatus, MetalConfirm } from '../../types/metalShoe';
@@ -36,7 +37,7 @@ interface ManualEntryFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export default function ManualEntryForm({
+const ManualEntryForm = memo(function ManualEntryForm({
   form,
   setForm,
   suppliers,
@@ -317,4 +318,5 @@ export default function ManualEntryForm({
       </div>
     </form>
   );
-}
+});
+export default ManualEntryForm;

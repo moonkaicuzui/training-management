@@ -5,7 +5,7 @@
  * Supports adopt/reject feedback to the knowledge base.
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrainCircuit, Loader2, ThumbsUp, ThumbsDown, Sparkles, BookOpen, History } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +50,7 @@ const SOURCE_COLORS = {
   historical: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
 };
 
-export function CAPAAISuggestions({
+export const CAPAAISuggestions = memo(function CAPAAISuggestions({
   capaId,
   problemDescription,
   affectedArea,
@@ -330,4 +330,4 @@ export function CAPAAISuggestions({
       </CardContent>
     </Card>
   );
-}
+});

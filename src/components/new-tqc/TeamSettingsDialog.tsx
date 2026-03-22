@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ interface TeamSettingsDialogProps {
   onDeleteTeam: (teamId: string) => Promise<void>;
 }
 
-export function TeamSettingsDialog({
+export const TeamSettingsDialog = memo(function TeamSettingsDialog({
   open,
   onClose,
   teams,
@@ -203,7 +203,7 @@ export function TeamSettingsDialog({
       />
     </Dialog>
   );
-}
+});
 
 // Team Form Dialog (used for both create and edit)
 interface TeamFormDialogProps {

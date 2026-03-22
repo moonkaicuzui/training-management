@@ -37,9 +37,8 @@ import {
   SYNC_COLLECTIONS,
   triggerSync,
   triggerSyncAll,
-  type SyncDirection,
-  type SyncResult,
-} from '@/services/syncService';
+} from '@/services/api';
+import type { SyncDirection, SyncResult } from '@/services/api';
 
 function getSyncModeIcon(syncMode: string) {
   switch (syncMode) {

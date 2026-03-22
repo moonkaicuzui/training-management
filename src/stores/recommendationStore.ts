@@ -16,11 +16,9 @@ import type {
   FivePrsEnrollmentLog,
   RecommendationFilters,
 } from '@/types/recommendation';
-import * as recommendationService from '@/services/recommendationService';
-import * as inspectionService from '@/services/inspectionService';
+import * as api from '@/services/api';
 import { analyzeRecommendations } from '@/utils/recommendationAnalyzer';
 import { useFivePrsStore } from '@/stores/fivePrsStore';
-import * as api from '@/services/api';
 import type { Employee, TrainingProgram } from '@/types';
 
 interface RecommendationState {
@@ -98,9 +96,9 @@ export const useRecommendationStore = create<RecommendationState>()(
 
         try {
           const [thresholds, mappings, links, employees, programs] = await Promise.all([
-            recommendationService.getThresholds(),
-            recommendationService.getMappings(),
-            recommendationService.getLinks(),
+            api.getRecommendationThresholds(),
+            api.getRecommendationMappings(),
+            api.getRecommendationLinks(),
             api.getEmployees(),
             api.getPrograms(),
           ]);
@@ -123,8 +121,8 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       updateThresholds: async (updates) => {
         try {
-          await recommendationService.updateThresholds(updates);
-          const refreshed = await recommendationService.getThresholds();
+          await api.updateRecommendationThresholds(updates);
+          const refreshed = await api.getRecommendationThresholds();
           set((state) => {
             state.thresholds = refreshed;
           });
@@ -137,7 +135,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       createMapping: async (input) => {
         try {
-          const created = await recommendationService.createMapping(input);
+          const created = await api.createRecommendationMapping(input);
           set((state) => {
             state.mappings.push(created);
           });
@@ -150,8 +148,8 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       updateMapping: async (mappingId, updates) => {
         try {
-          await recommendationService.updateMapping(mappingId, updates);
-          const refreshed = await recommendationService.getMappings();
+          await api.updateRecommendationMapping(mappingId, updates);
+          const refreshed = await api.getRecommendationMappings();
           set((state) => {
             state.mappings = refreshed;
           });
@@ -164,7 +162,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       deleteMapping: async (mappingId) => {
         try {
-          await recommendationService.deleteMapping(mappingId);
+          await api.deleteRecommendationMapping(mappingId);
           set((state) => {
             state.mappings = state.mappings.filter((m) => m.mapping_id !== mappingId);
           });
@@ -177,7 +175,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       createLink: async (input) => {
         try {
-          const created = await recommendationService.createLink(input);
+          const created = await api.createRecommendationLink(input);
           set((state) => {
             state.tqcLinks.push(created);
           });
@@ -190,7 +188,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
       deleteLink: async (linkId) => {
         try {
-          await recommendationService.deleteLink(linkId);
+          await api.deleteRecommendationLink(linkId);
           set((state) => {
             state.tqcLinks = state.tqcLinks.filter((l) => l.link_id !== linkId);
           });
@@ -260,7 +258,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
           // Check for duplicate enrollment before proceeding
           if (programCode === 'INS-001') {
-            const existing = await inspectionService.checkDuplicateEnrollment(
+            const existing = await api.checkDuplicateInspectionEnrollment(
               rec.linkedEmployee.employee_id,
               programCode,
             );
@@ -274,7 +272,7 @@ export const useRecommendationStore = create<RecommendationState>()(
           }
 
           // Create enrollment log (APPEND-ONLY)
-          const enrollmentLog = await recommendationService.createEnrollmentLog({
+          const enrollmentLog = await api.createRecommendationEnrollmentLog({
             tqc_id: rec.tqc_id,
             tqc_name: rec.tqc_name,
             employee_id: rec.linkedEmployee.employee_id,
@@ -291,7 +289,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
           // Also create inspection_enrollments record for INS-001
           if (programCode === 'INS-001') {
-            await inspectionService.createEnrollment({
+            await api.createInspectionEnrollment({
               employee_id: rec.linkedEmployee.employee_id,
               employee_name: rec.linkedEmployee.employee_name,
               program_code: 'INS-001',
@@ -334,7 +332,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
             // Check for duplicate enrollment before proceeding
             if (programCode === 'INS-001') {
-              const existing = await inspectionService.checkDuplicateEnrollment(
+              const existing = await api.checkDuplicateInspectionEnrollment(
                 rec.linkedEmployee.employee_id,
                 programCode,
               );
@@ -350,7 +348,7 @@ export const useRecommendationStore = create<RecommendationState>()(
               }
             }
 
-            const enrollmentLog = await recommendationService.createEnrollmentLog({
+            const enrollmentLog = await api.createRecommendationEnrollmentLog({
               tqc_id: rec.tqc_id,
               tqc_name: rec.tqc_name,
               employee_id: rec.linkedEmployee.employee_id,
@@ -367,7 +365,7 @@ export const useRecommendationStore = create<RecommendationState>()(
 
             // Also create inspection_enrollments record for INS-001
             if (programCode === 'INS-001') {
-              await inspectionService.createEnrollment({
+              await api.createInspectionEnrollment({
                 employee_id: rec.linkedEmployee.employee_id,
                 employee_name: rec.linkedEmployee.employee_name,
                 program_code: 'INS-001',
@@ -407,7 +405,7 @@ export const useRecommendationStore = create<RecommendationState>()(
         });
 
         try {
-          const logs = await recommendationService.getEnrollmentLogs();
+          const logs = await api.getRecommendationEnrollmentLogs();
           set((state) => {
             state.enrollmentLogs = logs;
             state.isLoadingLogs = false;

@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { TaskStatus } from '@/types/project';
 import { useAuthStore } from '@/stores/authStore';
-import * as projectService from '@/services/projectService';
+import * as api from '@/services/api';
 import { logger } from '@/utils/logger';
 import type { ProjectStore } from './project/types';
 import {
@@ -90,16 +90,16 @@ export const useProjectStore = create<ProjectStore>()(
             if (!user?.email) return;
 
             // 먼저 uid로 검색
-            let member = await projectService.getMemberByUid(user.id);
+            let member = await api.getProjectMemberByUid(user.id);
             if (member) {
               set({ currentUserMember: member });
               return;
             }
 
             // 이메일로 검색 후 uid 연결
-            member = await projectService.getMemberByEmail(user.email);
+            member = await api.getProjectMemberByEmail(user.email);
             if (member) {
-              await projectService.linkMemberToAuth(member.id, user.id);
+              await api.linkProjectMemberToAuth(member.id, user.id);
               set({
                 currentUserMember: { ...member, uid: user.id },
                 members: get().members.map((m) =>

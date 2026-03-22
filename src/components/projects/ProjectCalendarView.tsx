@@ -3,7 +3,7 @@
  * react-big-calendar 렌더링 + 범례 필터 + 커스텀 툴바
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { View, SlotInfo } from 'react-big-calendar';
@@ -240,7 +240,7 @@ interface ProjectCalendarViewProps {
   onSelectEvent: (event: CalendarEventItem) => void;
 }
 
-export function ProjectCalendarView({
+export const ProjectCalendarView = memo(function ProjectCalendarView({
   calendarEvents,
   currentDate,
   currentView,
@@ -348,4 +348,4 @@ export function ProjectCalendarView({
       </CardContent>
     </Card>
   );
-}
+});

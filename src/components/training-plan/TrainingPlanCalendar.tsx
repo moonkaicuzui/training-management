@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar,
@@ -144,7 +145,7 @@ export function DepartmentTrainingStatus({ departments }: { departments: Departm
 
 // --- OverviewTabContent ---
 
-export function OverviewTabContent({
+export const OverviewTabContent = memo(function OverviewTabContent({
   currentYearPlan,
   stats,
   filteredPlans,
@@ -337,7 +338,7 @@ export function OverviewTabContent({
       </Card>
     </>
   );
-}
+});
 
 // --- DepartmentsTabContent ---
 

@@ -22,8 +22,8 @@ import { useKPIAnomalies } from '@/hooks/useKPIAnomalies';
 import { useNormalizedTrainingStore } from '@/stores';
 import { checkAndCreateExpiryNotifications } from '@/services/api';
 import { PageLoading } from '@/components/common/LoadingSpinner';
-import { getCurrentHRSummary, syncCurrentHRSummary } from '@/services/hrIntegrationService';
-import type { HRSummary } from '@/services/hrIntegrationService';
+import { getCurrentHRSummary, syncCurrentHRSummary } from '@/services/api';
+import type { HRSummary } from '@/services/api';
 
 export default function Dashboard() {
   const { t } = useTranslation();

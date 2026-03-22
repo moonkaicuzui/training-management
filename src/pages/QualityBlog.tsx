@@ -28,7 +28,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useQualityBlogStore } from '@/stores/qualityBlogStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import * as blogService from '@/services/qualityBlogService';
+import { uploadBlogImage, uploadBlogImages } from '@/services/api';
 import type { QualityBlogPost, BlogCategory, CreateBlogPostInput } from '@/types/qualityBlog';
 import { BLOG_CATEGORY_LABELS } from '@/types/qualityBlog';
 
@@ -169,12 +169,12 @@ export default function QualityBlog() {
 
       if (formData.coverImageFile) {
         setUploadProgress(t('blog.form.uploadingCover'));
-        coverImage = await blogService.uploadImage(formData.coverImageFile);
+        coverImage = await uploadBlogImage(formData.coverImageFile);
       }
 
       let newImageUrls: string[] = [];
       if (formData.imageFiles.length > 0) {
-        newImageUrls = await blogService.uploadImages(
+        newImageUrls = await uploadBlogImages(
           formData.imageFiles,
           (completed, total) => {
             setUploadProgress(t('blog.form.uploadingImages', { completed, total }));

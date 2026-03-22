@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ interface TraineeFiltersProps {
   onClear: () => void;
 }
 
-export function TraineeFilters({
+export const TraineeFilters = memo(function TraineeFilters({
   filters,
   teams,
   trainers,
@@ -202,7 +203,7 @@ export function TraineeFilters({
       )}
     </div>
   );
-}
+});
 
 // Meeting Filters
 interface MeetingFiltersProps {

@@ -11,6 +11,7 @@
  * - 사이드바 상태 카드
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
@@ -163,7 +164,7 @@ interface ActionCardProps {
   currentCAPA: CAPA;
 }
 
-export function ActionCard({ currentCAPA }: ActionCardProps) {
+export const ActionCard = memo(function ActionCard({ currentCAPA }: ActionCardProps) {
   const { t } = useTranslation();
 
   if (!currentCAPA.action) return null;
@@ -232,7 +233,7 @@ export function ActionCard({ currentCAPA }: ActionCardProps) {
       </CardContent>
     </Card>
   );
-}
+});
 
 function ActionStatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();

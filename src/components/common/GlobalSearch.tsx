@@ -7,7 +7,7 @@
  * Navigates to the selected result using react-router-dom.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Command } from 'cmdk';
@@ -111,7 +111,7 @@ interface GlobalSearchProps {
 // Component
 // ============================================================
 
-export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
+export const GlobalSearch = memo(function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -318,4 +318,4 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});

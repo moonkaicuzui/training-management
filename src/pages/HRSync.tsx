@@ -42,12 +42,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import type { HRChangeEvent, HRSyncResult } from '@/services/hrIntegrationService';
+import type { HRChangeEvent, HRSyncResult } from '@/services/api';
 import {
   detectHRChanges,
   syncEmployeesFromHR,
   deactivateEmployee,
-} from '@/services/hrIntegrationService';
+} from '@/services/api';
 
 // ─── 상수 ─────────────────────────────────────────────
 

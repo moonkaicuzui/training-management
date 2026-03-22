@@ -4,6 +4,7 @@
  * 프로젝트 생성, 완료 현황, 지연 과제, 프로젝트 목록 모달
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -177,7 +178,7 @@ interface DelayedDetailDialogProps {
   statusLabels: Record<TaskStatus, string>;
 }
 
-export function DelayedDetailDialog({
+export const DelayedDetailDialog = memo(function DelayedDetailDialog({
   open,
   onOpenChange,
   tasks,
@@ -288,7 +289,7 @@ export function DelayedDetailDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 interface ProjectListDialogProps {
   open: boolean;

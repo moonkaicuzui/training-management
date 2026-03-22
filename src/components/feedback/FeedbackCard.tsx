@@ -2,7 +2,7 @@
  * FeedbackCard — 개별 피드백 카드 + 상세 보기 다이얼로그
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
@@ -79,7 +79,7 @@ interface FeedbackCardItemProps {
   onViewDetail: (feedback: SystemFeedbackType) => void;
 }
 
-export function FeedbackCardItem({ feedback, language, onViewDetail }: FeedbackCardItemProps) {
+export const FeedbackCardItem = memo(function FeedbackCardItem({ feedback, language, onViewDetail }: FeedbackCardItemProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -192,7 +192,7 @@ export function FeedbackCardItem({ feedback, language, onViewDetail }: FeedbackC
       </CardContent>
     </Card>
   );
-}
+});
 
 // --- 상세 보기 다이얼로그 ---
 
