@@ -109,7 +109,7 @@ export default function Retraining() {
   }
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('retraining.title')}>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -181,6 +181,7 @@ export default function Retraining() {
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label={t('retraining.searchPlaceholder')}
               />
             </div>
             <Select value={buildingFilter} onValueChange={setBuildingFilter}>
@@ -487,6 +488,6 @@ export default function Retraining() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </main>
   );
 }

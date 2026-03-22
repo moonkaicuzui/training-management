@@ -2,7 +2,7 @@
  * 자동화 규칙 목록 컴포넌트
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +43,7 @@ interface AutomationListProps {
   isLoading?: boolean;
 }
 
-export default function AutomationList({
+const AutomationList = memo(function AutomationList({
   automations,
   onToggle,
   onEdit,
@@ -297,4 +297,5 @@ export default function AutomationList({
       </div>
     </ScrollArea>
   );
-}
+});
+export default AutomationList;

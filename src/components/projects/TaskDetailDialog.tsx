@@ -3,7 +3,7 @@
  * Parent shell with tabs that renders TaskFormPanel and TaskMessagesPanel
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +75,7 @@ interface TaskDetailDialogProps {
   onCreateCategory: (name: string, color: string, type: 'event' | 'task') => Promise<{ id: string }>;
 }
 
-export function TaskDetailDialog({
+export const TaskDetailDialog = memo(function TaskDetailDialog({
   isOpen,
   onOpenChange,
   selectedTask,
@@ -314,4 +314,4 @@ export function TaskDetailDialog({
       </AlertDialog>
     </Dialog>
   );
-}
+});

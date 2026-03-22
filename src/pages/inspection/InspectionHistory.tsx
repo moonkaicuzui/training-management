@@ -75,11 +75,11 @@ export default function InspectionHistory() {
   });
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('inspection.history.title')}>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <History className="h-6 w-6" />
+          <History className="h-6 w-6" aria-hidden="true" />
           {t('inspection.history.title')}
         </h1>
       </div>
@@ -108,6 +108,7 @@ export default function InspectionHistory() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            aria-label={t('inspection.history.searchEmployee')}
           />
         </div>
         <div>
@@ -190,7 +191,7 @@ export default function InspectionHistory() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </main>
   );
 }
 

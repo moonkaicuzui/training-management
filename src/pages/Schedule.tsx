@@ -242,7 +242,7 @@ export default function Schedule() {
   const selectedDateSessions = selectedDate ? getSessionsForDate(selectedDate) : [];
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('session.title')}>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -322,7 +322,7 @@ export default function Schedule() {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label={t('common.actions')}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -494,6 +494,6 @@ export default function Schedule() {
         programs={programs}
         locale={locale}
       />
-    </div>
+    </main>
   );
 }

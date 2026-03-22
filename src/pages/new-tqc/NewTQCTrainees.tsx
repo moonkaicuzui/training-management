@@ -186,7 +186,7 @@ export default function NewTQCTrainees() {
   }
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('newTQCModule.trainees.title')}>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -330,7 +330,7 @@ export default function NewTQCTrainees() {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" aria-label={t('common.actions')}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -471,6 +471,6 @@ export default function NewTQCTrainees() {
         teams={teams}
         initialData={prefillData}
       />
-    </div>
+    </main>
   );
 }

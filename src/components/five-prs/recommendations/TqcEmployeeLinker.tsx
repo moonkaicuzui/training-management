@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -17,7 +17,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useRecommendationStore } from '@/stores/recommendationStore';
 import type { Employee } from '@/types';
 
-export function TqcEmployeeLinker() {
+export const TqcEmployeeLinker = memo(function TqcEmployeeLinker() {
   const { t } = useTranslation();
   const {
     recommendations,
@@ -297,4 +297,4 @@ export function TqcEmployeeLinker() {
       </Card>
     </div>
   );
-}
+});

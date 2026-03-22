@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TrainingEvaluation } from '@/services/evaluationService';
 import { Button } from '@/components/ui/button';
@@ -109,7 +110,7 @@ interface EvaluationDetailDialogProps {
   evaluation: TrainingEvaluation | null;
 }
 
-export function EvaluationDetailDialog({
+export const EvaluationDetailDialog = memo(function EvaluationDetailDialog({
   open,
   onOpenChange,
   evaluation,
@@ -197,7 +198,7 @@ export function EvaluationDetailDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 // ─── New Evaluation Dialog ──────────────────────────────────
 
@@ -218,7 +219,7 @@ interface NewEvaluationDialogProps {
   isCreating: boolean;
 }
 
-export function NewEvaluationDialog({
+export const NewEvaluationDialog = memo(function NewEvaluationDialog({
   open,
   onOpenChange,
   form,
@@ -305,4 +306,4 @@ export function NewEvaluationDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});

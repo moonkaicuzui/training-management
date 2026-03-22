@@ -2,7 +2,7 @@
  * LearningPathSection - Learning paths tab with CRUD dialog
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ interface LearningPathSectionProps {
   onDataChanged: () => void;
 }
 
-export function LearningPathSection({
+export const LearningPathSection = memo(function LearningPathSection({
   learningPaths,
   onDataChanged,
 }: LearningPathSectionProps) {
@@ -316,4 +316,4 @@ export function LearningPathSection({
       </Dialog>
     </>
   );
-}
+});

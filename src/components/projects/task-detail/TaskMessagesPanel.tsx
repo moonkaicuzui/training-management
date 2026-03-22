@@ -2,7 +2,7 @@
  * TaskMessagesPanel - The messages/communication tab with message list and compose area
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ interface TaskMessagesPanelProps {
   taskId: string;
 }
 
-export function TaskMessagesPanel({
+export const TaskMessagesPanel = memo(function TaskMessagesPanel({
   messages,
   members,
   isMessagesLoading,
@@ -310,4 +310,4 @@ export function TaskMessagesPanel({
       </div>
     </div>
   );
-}
+});

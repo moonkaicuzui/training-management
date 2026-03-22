@@ -278,11 +278,11 @@ export default function AttendancePage() {
 
   // Session selected - attendance check UI
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('attendance.title')}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/attendance')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/attendance')} aria-label={t('common.back')}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -327,6 +327,6 @@ export default function AttendancePage() {
         onSelectAll={handleSelectAll}
         onSelectEmployee={handleSelectEmployee}
       />
-    </div>
+    </main>
   );
 }

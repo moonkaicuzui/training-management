@@ -148,11 +148,11 @@ export default function InspectionEnrollments() {
   };
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('inspection.enrollments.title')}>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <UserCheck className="h-6 w-6" />
+          <UserCheck className="h-6 w-6" aria-hidden="true" />
           {t('inspection.enrollments.title')}
         </h1>
         <div className="flex gap-2">
@@ -289,6 +289,7 @@ export default function InspectionEnrollments() {
           className="rounded-md border px-3 py-2 text-sm bg-background"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+          aria-label={t('inspection.enrollments.allStatuses')}
         >
           <option value="">{t('inspection.enrollments.allStatuses')}</option>
           {['PENDING', 'SCHEDULED', 'COMPLETED', 'CANCELLED', 'REASSIGNMENT_REQUIRED'].map((s) => (
@@ -301,6 +302,7 @@ export default function InspectionEnrollments() {
           className="rounded-md border px-3 py-2 text-sm bg-background"
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value)}
+          aria-label={t('inspection.enrollments.allSources')}
         >
           <option value="">{t('inspection.enrollments.allSources')}</option>
           {['FIVE_PRS_RECOMMENDATION', 'AQL_RECOMMENDATION', 'MANUAL'].map((s) => (
@@ -406,6 +408,6 @@ export default function InspectionEnrollments() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </main>
   );
 }

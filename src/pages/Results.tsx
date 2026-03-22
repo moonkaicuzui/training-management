@@ -261,7 +261,7 @@ export default function Results() {
   const plannedSessions = sessions.filter(s => s.status === 'PLANNED' && s.attendees.length > 0);
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6" aria-label={t('results.pageTitle')}>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -408,6 +408,6 @@ export default function Results() {
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmWithDuplicates}
       />
-    </div>
+    </main>
   );
 }

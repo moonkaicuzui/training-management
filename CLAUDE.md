@@ -1316,7 +1316,10 @@ SYS (System Architect) → 요청 분석 → 에이전트 배정 → 병렬/순�
 
 1. 코드 변경 순서: `types/ → services/ → stores/ → components/ → pages/`
 2. APPEND-ONLY: training_results, auditLogs, enrollment_logs → UPDATE/DELETE 금지
-3. API 레이어: Pages → `api.*` 호출만 (서비스 직접 호출 금지)
+3. **API 레이어 규칙**:
+   - Pages → `api.*` 호출만 (서비스 직접 호출 금지)
+   - Stores → 서비스 직접 호출 허용 (스토어는 상태관리와 데이터 페칭이 밀접하므로)
+   - Components → `api.*` 호출 또는 props 수신만 (서비스 직접 호출 금지)
 4. i18n: `t('key')` 사용, 새 키는 ko/en/vi 3파일 동기화
 5. Firestore: snake_case, `serverTimestamp()`, rules ↔ 서비스 일치
 6. Zustand: `useShallow` 사용 (여러 속성 구독 시)
