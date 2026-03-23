@@ -209,16 +209,20 @@ function analyzeInspectors(
       .slice(0, 5)
       .map(([type, count]) => ({ type, count: Math.round(count) }));
 
-    // Match employee via explicit link or direct ID match
+    // Match employee: direct match first (EMPLOYEE NO = TQC/RQC 사번)
+    // employees 배열은 이미 ACTIVE만 포함 (line 283 where 필터)
     let linkedEmployee: AqlRecommendation["linked_employee"];
-    const link = aqlLinks.find((l) => l.aql_employee_no === record.employee_no);
-    if (link) {
-      const emp = employees.find((e) => e.employee_id === link.employee_id);
-      if (emp) linkedEmployee = { employee_id: emp.employee_id, employee_name: emp.employee_name };
+    const direct = employees.find((e) => e.employee_id === record.employee_no);
+    if (direct) {
+      linkedEmployee = { employee_id: direct.employee_id, employee_name: direct.employee_name };
     }
+    // Fallback: legacy AQL link (deprecated)
     if (!linkedEmployee) {
-      const direct = employees.find((e) => e.employee_id === record.employee_no);
-      if (direct) linkedEmployee = { employee_id: direct.employee_id, employee_name: direct.employee_name };
+      const link = aqlLinks.find((l) => l.aql_employee_no === record.employee_no);
+      if (link) {
+        const emp = employees.find((e) => e.employee_id === link.employee_id);
+        if (emp) linkedEmployee = { employee_id: emp.employee_id, employee_name: emp.employee_name };
+      }
     }
 
     recommendations.push({
@@ -241,6 +245,13 @@ function analyzeInspectors(
 
 // ========== Main Function ==========
 
+export interface ResignedEmployeeInfo {
+  employee_no: string;
+  employee_name: string;
+  fail_rate: number;
+  priority: string;
+}
+
 export interface WeeklyAqlResult {
   yearMonth: string;
   totalInspectors: number;
@@ -250,6 +261,8 @@ export interface WeeklyAqlResult {
   autoEnrolled: number;
   skippedAlreadyEnrolled: number;
   skippedNoLink: number;
+  skippedResigned: number;
+  resignedEmployees: ResignedEmployeeInfo[];
 }
 
 export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> {
@@ -273,15 +286,26 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
       autoEnrolled: 0,
       skippedAlreadyEnrolled: 0,
       skippedNoLink: 0,
+      skippedResigned: 0,
+      resignedEmployees: [],
     };
   }
 
   // 3. Load config from Firestore (needed for employee name resolution)
   const db = getDb();
-  const [aqlLinksSnap, employeesSnap] = await Promise.all([
+  const [aqlLinksSnap, activeEmployeesSnap, allEmployeesSnap] = await Promise.all([
     db.collection("aql_employee_links").get(),
     db.collection("employees").where("status", "in", ["active", "ACTIVE"]).get(),
+    db.collection("employees").where("status", "in", ["inactive", "INACTIVE"]).get(),
   ]);
+
+  // 퇴사자(INACTIVE) 맵 — 보고서에 포함용
+  const resignedMap = new Map<string, string>();
+  allEmployeesSnap.docs.forEach((doc) => {
+    const d = doc.data();
+    resignedMap.set(d.employee_id || doc.id, d.employee_name || "");
+  });
+  const employeesSnap = activeEmployeesSnap;
 
   const aqlLinks: AqlEmployeeLink[] = aqlLinksSnap.docs.map((doc) => {
     const d = doc.data();
@@ -434,11 +458,27 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
   ).length;
   skippedNoLink += noLinkCount;
 
+  // 퇴사자 감지: AQL 데이터에 있지만 ACTIVE 직원에 없고, INACTIVE 직원에 있는 경우
+  const resignedEmployees: ResignedEmployeeInfo[] = [];
+  for (const rec of recommendations) {
+    if (rec.linked_employee) continue; // 이미 매칭된 ACTIVE 직원
+    const resignedName = resignedMap.get(rec.aql_employee_no);
+    if (resignedName !== undefined) {
+      resignedEmployees.push({
+        employee_no: rec.aql_employee_no,
+        employee_name: resignedName || rec.aql_employee_name,
+        fail_rate: rec.fail_rate,
+        priority: rec.priority,
+      });
+    }
+  }
+
   logger.info(
     `[AQL Analysis] Auto-enrolled: ${autoEnrolled}, ` +
     `Skipped (already enrolled): ${skippedAlreadyEnrolled}, ` +
     `Skipped (non-inspector position): ${skippedNonInspector}, ` +
-    `Skipped (no link): ${skippedNoLink}`
+    `Skipped (no link): ${skippedNoLink}, ` +
+    `Skipped (resigned): ${resignedEmployees.length}`
   );
 
   return {
@@ -450,5 +490,7 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
     autoEnrolled,
     skippedAlreadyEnrolled,
     skippedNoLink,
+    skippedResigned: resignedEmployees.length,
+    resignedEmployees,
   };
 }

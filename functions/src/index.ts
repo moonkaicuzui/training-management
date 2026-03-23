@@ -1005,10 +1005,28 @@ export const weeklyAqlInspectionEnrollment = onSchedule(
       const emailPass = process.env.GMAIL_APP_PASSWORD;
 
       if (emailUser && emailPass) {
+        // 퇴사자 테이블 HTML
+        let resignedHtml = "";
+        if (result.resignedEmployees && result.resignedEmployees.length > 0) {
+          resignedHtml = [
+            `<br/>`,
+            `<h3 style="color:#dc2626;">⚠ Resigned Employees Excluded from Training (퇴사자 교육 제외)</h3>`,
+            `<p>The following employees appeared in AQL data but are no longer active. They have been excluded from training enrollment.</p>`,
+            `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">`,
+            `  <tr style="background:#fef2f2;">`,
+            `    <th>Employee No (사번)</th><th>Name (이름)</th><th>Fail Rate (불합격률)</th><th>Priority</th><th>Status</th>`,
+            `  </tr>`,
+            ...result.resignedEmployees.map((e) =>
+              `  <tr><td>${e.employee_no}</td><td>${e.employee_name}</td><td style="text-align:center;">${e.fail_rate}%</td><td>${e.priority}</td><td style="color:#dc2626;font-weight:bold;">RESIGNED — 교육 제외</td></tr>`
+            ),
+            `</table>`,
+          ].join("\n");
+        }
+
         const summaryHtml = [
           `<h2>[Q-TRAIN] Weekly AQL Inspection Enrollment Report</h2>`,
           `<p><strong>Analysis Period:</strong> ${result.yearMonth}</p>`,
-          `<p><strong>Total Inspectors Analyzed:</strong> ${result.totalInspectors}</p>`,
+          `<p><strong>Total TQC/RQC Analyzed:</strong> ${result.totalInspectors}</p>`,
           `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">`,
           `  <tr style="background:#f0f0f0;">`,
           `    <th>Priority</th><th>Count</th>`,
@@ -1020,7 +1038,9 @@ export const weeklyAqlInspectionEnrollment = onSchedule(
           `<br/>`,
           `<p><strong>Auto-Enrolled (INS-001):</strong> ${result.autoEnrolled}</p>`,
           `<p><strong>Skipped (Already Enrolled):</strong> ${result.skippedAlreadyEnrolled}</p>`,
-          `<p><strong>Skipped (No Employee Link):</strong> ${result.skippedNoLink}</p>`,
+          `<p><strong>Skipped (No Employee Match):</strong> ${result.skippedNoLink}</p>`,
+          `<p><strong>Skipped (Resigned/INACTIVE):</strong> ${result.skippedResigned}</p>`,
+          resignedHtml,
           `<br/>`,
           `<p style="color:#666;font-size:12px;">This is an automated report from Q-TRAIN AQL Analysis System.</p>`,
         ].join("\n");
