@@ -88,7 +88,18 @@ interface TqcTrend {
 const IMMEDIATE_THRESHOLD = 5; // reject rate % that triggers immediate action
 const PREVENTIVE_THRESHOLD = 3; // reject rate % that triggers preventive action
 const ESCALATION_HOURS = 24;
-const MANAGER_EMAIL = "ksmoon@hsvina.com";
+const DEFAULT_MANAGER_EMAIL = "ksmoon@hsvina.com";
+
+/** Read manager email from Firestore config (synced with QOS) */
+async function getManagerEmail(): Promise<string> {
+  try {
+    const snap = await admin.firestore().doc("config/email").get();
+    const data = snap.exists ? snap.data() : null;
+    return (data?.managerEmail as string) || (data?.groups?.adminRecipients as string[])?.[0] || DEFAULT_MANAGER_EMAIL;
+  } catch {
+    return DEFAULT_MANAGER_EMAIL;
+  }
+}
 
 // ========== Core Logic ==========
 
@@ -830,17 +841,39 @@ export async function generateDailyTrainerDirective(): Promise<void> {
         language: (doc.data().language as "ko" | "en" | "vi") || "en",
       }));
     } catch {
-      // Default recipients
-      trainerConfigs = [
-        { email: "ksmoon@hsvina.com", name: "K.S. Moon", language: "en" },
-        { email: "hwk_qa@hsvina.com", name: "QA Team", language: "en" },
-      ];
+      // Fallback: read from config/email (synced with QOS)
+      try {
+        const emailConfigSnap = await db.doc("config/email").get();
+        const emailConfig = emailConfigSnap.exists ? emailConfigSnap.data() : null;
+        const fallbackRecipients = (emailConfig?.groups?.recipients as string[]) || ["ksmoon@hsvina.com"];
+        trainerConfigs = fallbackRecipients.map((email) => ({
+          email,
+          name: email.split("@")[0],
+          language: "en" as "ko" | "en" | "vi",
+        }));
+      } catch {
+        trainerConfigs = [
+          { email: "ksmoon@hsvina.com", name: "K.S. Moon", language: "en" },
+        ];
+      }
     }
 
     if (trainerConfigs.length === 0) {
-      trainerConfigs = [
-        { email: "ksmoon@hsvina.com", name: "K.S. Moon", language: "en" },
-      ];
+      // Fallback: read from config/email (synced with QOS)
+      try {
+        const emailConfigSnap = await db.doc("config/email").get();
+        const emailConfig = emailConfigSnap.exists ? emailConfigSnap.data() : null;
+        const fallbackRecipients = (emailConfig?.groups?.recipients as string[]) || ["ksmoon@hsvina.com"];
+        trainerConfigs = fallbackRecipients.map((email) => ({
+          email,
+          name: email.split("@")[0],
+          language: "en" as "ko" | "en" | "vi",
+        }));
+      } catch {
+        trainerConfigs = [
+          { email: "ksmoon@hsvina.com", name: "K.S. Moon", language: "en" },
+        ];
+      }
     }
 
     for (const config of trainerConfigs) {
@@ -924,7 +957,7 @@ export async function checkDirectiveEscalation(): Promise<void> {
 
       await sendEmail(
         {
-          to: MANAGER_EMAIL,
+          to: await getManagerEmail(),
           subject: `[Q-TRAIN] ESCALATION: Unacknowledged Directive - ${directiveDate}`,
           html: `
             <h2>Unacknowledged Trainer Directive</h2>

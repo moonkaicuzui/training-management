@@ -942,9 +942,14 @@ export const weeklyTrainingRecommendation = onSchedule(
           `<p style="color:#666;font-size:12px;">This is an automated report from Q-TRAIN Weekly Recommendation System.</p>`,
         ].join("\n");
 
+        // Read recipients from Firestore config (synced with QOS)
+        const recConfigSnap = await admin.firestore().doc("config/email").get();
+        const recConfig = recConfigSnap.exists ? recConfigSnap.data() : null;
+        const recRecipients = (recConfig?.groups?.recipients as string[]) || ["ksmoon@hsvina.com"];
+
         await sendTemplatedEmail(
           {
-            to: ["ksmoon@hsvina.com", "hwk_qa@hsvina.com"],
+            to: recRecipients,
             templateType: "general" as TemplateType,
             data: {
               title: "Weekly Training Recommendation Report",
@@ -1020,9 +1025,14 @@ export const weeklyAqlInspectionEnrollment = onSchedule(
           `<p style="color:#666;font-size:12px;">This is an automated report from Q-TRAIN AQL Analysis System.</p>`,
         ].join("\n");
 
+        // Read recipients from Firestore config (synced with QOS)
+        const aqlConfigSnap = await admin.firestore().doc("config/email").get();
+        const aqlConfig = aqlConfigSnap.exists ? aqlConfigSnap.data() : null;
+        const aqlRecipients = (aqlConfig?.groups?.recipients as string[]) || ["ksmoon@hsvina.com"];
+
         await sendTemplatedEmail(
           {
-            to: ["ksmoon@hsvina.com", "hwk_qa@hsvina.com"],
+            to: aqlRecipients,
             templateType: "general" as TemplateType,
             data: {
               title: "Weekly AQL Inspection Enrollment Report",

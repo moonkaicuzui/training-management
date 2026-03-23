@@ -89,7 +89,7 @@ const MDDashboard = lazy(() => import('./pages/metal-detector/MDDashboard'));
 const MDInputForm = lazy(() => import('./pages/metal-detector/MDInputForm'));
 const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
 const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
-const MDSeedData = lazy(() => import('./pages/metal-detector/MDSeedData'));
+
 
 // Metal Shoe Cases (금속 발견 신발)
 const MetalShoeDashboard = lazy(() => import('./pages/metal-shoes/MetalShoeDashboard'));
@@ -561,13 +561,6 @@ function App() {
                       <MDReport />
                     </Suspense>
                   } />
-                  {import.meta.env.DEV && (
-                    <Route path="seed" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <MDSeedData />
-                      </Suspense>
-                    } />
-                  )}
                 </Route>
 
                 {/* Metal Shoe Cases (금속 발견 신발) */}
