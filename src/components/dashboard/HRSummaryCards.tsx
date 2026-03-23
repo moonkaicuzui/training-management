@@ -70,7 +70,7 @@ export const HRSummaryCards = memo(function HRSummaryCards({
               disabled={isSyncing}
             >
               <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
-              {t('dashboard.hr.syncNow')}
+              {t('dashboard.hr.sync')}
             </Button>
           )}
         </CardContent>
