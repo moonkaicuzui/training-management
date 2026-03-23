@@ -2,11 +2,15 @@
  * AQL Service
  *
  * Firestore CRUD operations for AQL training recommendation collections:
- * - aql_employee_links
+ * - aql_employee_links (deprecated — EMPLOYEE NO = TQC/RQC 사번으로 직접 매칭 가능)
  * - aql_supervisor_links
  * - aql_enrollment_logs (APPEND-ONLY)
  *
  * Also handles AQL data fetching via Cloud Functions proxy.
+ *
+ * 핵심 개념:
+ *   EMPLOYEE NO = TQC/RQC 검사원 사번 (Q-TRAIN employee_id와 직접 매칭 가능, 교육 대상)
+ *   OFFICIAL INSPECTOR = CFA 검사관 (AQL 검사 수행자, 참고용)
  */
 
 import {
@@ -136,8 +140,12 @@ export async function fetchActiveType3Employees(): Promise<ManpowerApiRow[]> {
 
 // ============================================================
 // AQL Employee Links
+// @deprecated EMPLOYEE NO는 TQC/RQC 검사원 사번으로 Q-TRAIN employee_id와 직접 매칭 가능.
+// 별도 매핑 테이블 없이 employees 컬렉션에서 직접 조회할 수 있음.
+// 기존 데이터 호환을 위해 함수들을 유지하며, 신규 구현에서는 직접 매칭 우선.
 // ============================================================
 
+/** @deprecated 직접 매칭 우선 사용. 기존 링크 데이터 조회용으로 유지. */
 export async function getAqlEmployeeLinks(): Promise<AqlEmployeeLink[]> {
   const q = query(
     collection(db, COLLECTIONS.AQL_LINKS),
@@ -158,6 +166,7 @@ export async function getAqlEmployeeLinks(): Promise<AqlEmployeeLink[]> {
   });
 }
 
+/** @deprecated 직접 매칭 우선 사용. 레거시 호환용으로 유지. */
 export async function createAqlEmployeeLink(
   input: Omit<AqlEmployeeLink, 'link_id' | 'created_at'>
 ): Promise<AqlEmployeeLink> {
@@ -182,6 +191,7 @@ export async function createAqlEmployeeLink(
   }
 }
 
+/** @deprecated 직접 매칭 우선 사용. 레거시 호환용으로 유지. */
 export async function deleteAqlEmployeeLink(linkId: string): Promise<void> {
   try {
     const docRef = doc(db, COLLECTIONS.AQL_LINKS, linkId);

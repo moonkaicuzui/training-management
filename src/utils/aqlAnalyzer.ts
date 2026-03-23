@@ -1,8 +1,13 @@
 /**
  * AQL Training Recommendation Analyzer
  *
- * Analyzes AQL inspection data to identify inspectors with FAIL results
- * and generates training recommendations for both inspectors and their supervisors.
+ * AQL 검사 데이터에서 EMPLOYEE NO(TQC/RQC 검사원) 기준 FAIL 결과를 분석하여
+ * 교육 추천을 생성합니다. TQC/RQC 검사원과 그 상사에 대한 교육 등록을 처리합니다.
+ *
+ * 핵심 개념:
+ *   EMPLOYEE NO = TQC/RQC 검사원 (제화라인에서 제품을 정품 등록한 사람, 교육 대상)
+ *   OFFICIAL INSPECTOR = CFA 검사관 (AQL 검사 수행자, 참고용)
+ *
  * Reuses defect_training_mappings from 5PRS system.
  */
 
@@ -94,12 +99,27 @@ function matchPrograms(
 
 // ========== Employee Matching ==========
 
+/**
+ * EMPLOYEE NO(TQC/RQC 검사원 사번)를 Q-TRAIN 직원과 매칭합니다.
+ *
+ * EMPLOYEE NO는 Q-TRAIN employee_id와 동일한 사번 체계이므로
+ * 직접 매칭이 우선입니다. aql_employee_links는 레거시 호환용으로 유지됩니다.
+ */
 function matchEmployee(
   employeeNo: string,
   aqlLinks: AqlEmployeeLink[],
   employees: Employee[]
 ): AqlTrainingRecommendation['linked_employee'] | undefined {
-  // 1. Check explicit AQL link first
+  // 1. Direct match by employee_id (EMPLOYEE NO = TQC/RQC 사번 = Q-TRAIN employee_id)
+  const directMatch = employees.find((e) => e.employee_id === employeeNo);
+  if (directMatch) {
+    return {
+      employee_id: directMatch.employee_id,
+      employee_name: directMatch.employee_name,
+    };
+  }
+
+  // 2. Fallback: check explicit AQL link (legacy mapping, deprecated)
   const link = aqlLinks.find((l) => l.aql_employee_no === employeeNo);
   if (link) {
     const employee = employees.find((e) => e.employee_id === link.employee_id);
@@ -109,15 +129,6 @@ function matchEmployee(
         employee_name: employee.employee_name,
       };
     }
-  }
-
-  // 2. Fallback: direct match by employee_id (same numbering system)
-  const directMatch = employees.find((e) => e.employee_id === employeeNo);
-  if (directMatch) {
-    return {
-      employee_id: directMatch.employee_id,
-      employee_name: directMatch.employee_name,
-    };
   }
 
   return undefined;
@@ -159,7 +170,7 @@ export function analyzeAqlRecommendations(
   const recommendations: AqlTrainingRecommendation[] = [];
 
   for (const record of processedData.inspectorRecords) {
-    // Only recommend for inspectors with failures
+    // Only recommend for TQC/RQC employees with failures
     if (record.fail_count === 0) continue;
 
     const priority = classifyPriority(record.fail_rate);
@@ -177,7 +188,7 @@ export function analyzeAqlRecommendations(
     const linkedEmployee = matchEmployee(record.employee_no, aqlLinks, employees);
     const supervisor = matchSupervisor(record.employee_no, supervisorLinks, aqlLinks, employees);
 
-    // Inspector recommendation
+    // TQC/RQC employee recommendation (EMPLOYEE NO = 교육 대상)
     recommendations.push({
       aql_employee_no: record.employee_no,
       aql_employee_name: record.employee_name,
@@ -195,9 +206,9 @@ export function analyzeAqlRecommendations(
       enrollment_reason: 'INSPECTOR_FAIL',
     });
 
-    // Supervisor escalation recommendation (same programs, lower priority score)
+    // Supervisor escalation recommendation (TQC/RQC 검사원의 상사, same programs, lower priority score)
     if (supervisor) {
-      // Find supervisor's own AQL employee link
+      // Find supervisor's own Q-TRAIN employee record
       const supLinkedEmployee = supervisor.linked_employee_id
         ? employees.find((e) => e.employee_id === supervisor.linked_employee_id)
         : undefined;
@@ -232,8 +243,8 @@ export function analyzeAqlRecommendations(
 
 /**
  * Deduplicate supervisor escalation entries.
- * If the same person appears as both inspector and supervisor escalation,
- * keep the inspector entry (higher relevance).
+ * If the same person appears as both TQC/RQC employee (INSPECTOR_FAIL) and
+ * supervisor escalation, keep the employee entry (higher relevance).
  * If the same supervisor appears from multiple subordinates,
  * keep the one with highest priority score.
  */
@@ -253,8 +264,8 @@ function deduplicateRecommendations(
     }
   }
 
-  // If someone is both INSPECTOR_FAIL and SUPERVISOR_ESCALATION,
-  // keep the inspector entry and remove the escalation
+  // If someone is both INSPECTOR_FAIL (TQC/RQC employee) and SUPERVISOR_ESCALATION,
+  // keep the employee entry and remove the escalation
   const inspectorNos = new Set(
     Array.from(seen.values())
       .filter((r) => r.enrollment_reason === 'INSPECTOR_FAIL')
@@ -263,7 +274,7 @@ function deduplicateRecommendations(
 
   return Array.from(seen.values()).filter((r) => {
     if (r.enrollment_reason === 'SUPERVISOR_ESCALATION' && inspectorNos.has(r.aql_employee_no)) {
-      return false; // Remove supervisor entry if they already have inspector entry
+      return false; // Remove supervisor entry if they already have TQC/RQC employee entry
     }
     return true;
   });

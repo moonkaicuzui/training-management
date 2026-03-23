@@ -299,6 +299,7 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
     return {
       employee_id: d.employee_id || doc.id,
       employee_name: d.employee_name || "",
+      position: (d.position as string) || "",
     };
   });
 
@@ -324,6 +325,12 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
   );
 
   // 6. Auto-enroll CRITICAL and HIGH priority inspectors into INS-001
+  // Position allowlist: only actual inspectors should be auto-enrolled
+  const INSPECTOR_POSITIONS = new Set([
+    "QIP_TQC", "QIP_RQC", "QIP_QA", "QIP_LINE_LEADER",
+    "Worker",
+  ]);
+
   const autoEnrollTargets = recommendations.filter(
     (r) => (r.priority === "CRITICAL" || r.priority === "HIGH") && r.linked_employee
   );
@@ -342,6 +349,7 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
   let autoEnrolled = 0;
   let skippedAlreadyEnrolled = 0;
   let skippedNoLink = 0;
+  let skippedNonInspector = 0;
   const batch = db.batch();
   let batchCount = 0;
 
@@ -355,6 +363,16 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
       skippedAlreadyEnrolled++;
       logger.info(
         `[AQL Analysis] Skipping ${rec.linked_employee.employee_id} - already enrolled in INS-001`
+      );
+      continue;
+    }
+
+    // Check position - only enroll actual inspectors, not CFA/supervisors/managers
+    const emp = employees.find((e) => e.employee_id === rec.linked_employee!.employee_id);
+    if (emp && !INSPECTOR_POSITIONS.has(emp.position)) {
+      skippedNonInspector++;
+      logger.info(
+        `[AQL Analysis] Skipping enrollment for ${emp.employee_name} (${emp.employee_id}) - position "${emp.position}" is not an inspector role`
       );
       continue;
     }
@@ -419,6 +437,7 @@ export async function runWeeklyAqlAnalysisAndEnroll(): Promise<WeeklyAqlResult> 
   logger.info(
     `[AQL Analysis] Auto-enrolled: ${autoEnrolled}, ` +
     `Skipped (already enrolled): ${skippedAlreadyEnrolled}, ` +
+    `Skipped (non-inspector position): ${skippedNonInspector}, ` +
     `Skipped (no link): ${skippedNoLink}`
   );
 

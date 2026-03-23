@@ -1,8 +1,10 @@
 /**
  * AQL Training Recommendations Page
  *
- * Analyzes AQL data to recommend training for inspectors with FAIL results
- * and their supervisors. Handles enrollment, mapping management, and supervisor import.
+ * AQL 데이터를 분석하여 EMPLOYEE NO(TQC/RQC 검사원) 기준 FAIL 결과를 기반으로
+ * 교육 추천을 생성하고, 검사원 및 상사의 교육 등록을 관리합니다.
+ *
+ * EMPLOYEE NO = TQC/RQC 검사원 (교육 대상), OFFICIAL INSPECTOR = CFA 검사관 (참고용)
  */
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -158,7 +160,7 @@ export default function AqlTrainingRecommendations() {
     return Array.from(set).sort();
   }, [recommendations]);
 
-  // Get unique inspector names for linker
+  // Get unique TQC/RQC employee names for linker
   const inspectorNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const r of recommendations) {
@@ -222,7 +224,7 @@ export default function AqlTrainingRecommendations() {
             {t('aql.recommendations.title', 'AQL Training Recommendations')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t('aql.recommendations.description', 'Analyze AQL fail data and enroll inspectors + supervisors for training')}
+            {t('aql.recommendations.description', 'Analyze AQL fail data and enroll TQC/RQC inspectors + supervisors for training')}
           </p>
         </div>
         <div className="flex items-center gap-2">

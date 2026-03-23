@@ -209,7 +209,7 @@ export const AqlRecommendationTable = memo(function AqlRecommendationTable({
             />
             <SortableHeader
               columnKey="aql_inspector"
-              label={t('aql.recommendations.aqlInspector', 'AQL Inspector')}
+              label={t('aql.recommendations.aqlInspector', 'TQC/RQC Inspector')}
               sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort}
             />
             <SortableHeader
@@ -323,7 +323,7 @@ export const AqlRecommendationTable = memo(function AqlRecommendationTable({
                     className={REASON_COLORS[rec.enrollment_reason]}
                   >
                     {rec.enrollment_reason === 'INSPECTOR_FAIL'
-                      ? t('aql.recommendations.inspectorFail', 'Inspector Fail')
+                      ? t('aql.recommendations.inspectorFail', 'TQC/RQC Inspector Fail')
                       : t('aql.recommendations.supervisorEscalation', 'Supervisor Escalation')}
                   </Badge>
                 </TableCell>

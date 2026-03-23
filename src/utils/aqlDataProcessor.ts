@@ -2,7 +2,11 @@
  * AQL Data Processor
  *
  * Processes raw AQL API data into aggregated records for analysis.
- * Groups by EMPLOYEE NO and calculates fail rates, defect distributions.
+ * Groups by EMPLOYEE NO (TQC/RQC 검사원 사번, 교육 대상) and calculates fail rates, defect distributions.
+ *
+ * 핵심 개념:
+ *   EMPLOYEE NO = TQC/RQC 검사원 (제화라인에서 제품을 정품 등록한 사람, 교육 대상)
+ *   OFFICIAL INSPECTOR = CFA 검사관 (AQL 검사 수행자, 참고용)
  */
 
 import type {
@@ -66,7 +70,7 @@ function parseDefectCounts(description: string): Record<string, number> {
 /**
  * @param rows Raw AQL data rows
  * @param employeeMap Optional map of employee_id → employee_name from HR data.
- *   Used to resolve inspector names from EMPLOYEE NO instead of OFFICIAL INSPECTOR.
+ *   Used to resolve TQC/RQC 검사원 names from EMPLOYEE NO.
  */
 export function processAqlRawData(
   rows: AqlRawRow[],
@@ -81,7 +85,7 @@ export function processAqlRawData(
     };
   }
 
-  // Group by EMPLOYEE NO
+  // Group by EMPLOYEE NO (TQC/RQC 검사원 사번)
   const inspectorMap: Record<string, {
     employee_no: string;
     employee_name: string;
@@ -116,10 +120,10 @@ export function processAqlRawData(
     if (isPass) totalPass++;
     if (isFail) totalFail++;
 
-    // Inspector aggregation
+    // TQC/RQC employee aggregation (EMPLOYEE NO = 교육 대상)
     if (!inspectorMap[employeeNo]) {
       const tqcNum = (row['TQC NUM'] || '').trim();
-      const officialInspector = (row['OFFICIAL INSPECTOR'] || '').trim();
+      const officialInspector = (row['OFFICIAL INSPECTOR'] || '').trim(); // CFA 검사관 (참고용)
       // Resolve name: HR employee data → TQC NUM → EMPLOYEE NO fallback
       const resolvedName = employeeMap?.get(employeeNo) || tqcNum || employeeNo;
 

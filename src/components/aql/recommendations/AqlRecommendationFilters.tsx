@@ -50,7 +50,7 @@ export function AqlRecommendationFilters({
       placeholder: t('aql.recommendations.filterReason', 'Reason'),
       allLabel: t('aql.recommendations.allReasons', 'All Reasons'),
       options: [
-        { value: 'INSPECTOR_FAIL', label: t('aql.recommendations.inspectorFail', 'Inspector Fail') },
+        { value: 'INSPECTOR_FAIL', label: t('aql.recommendations.inspectorFail', 'TQC/RQC Inspector Fail') },
         { value: 'SUPERVISOR_ESCALATION', label: t('aql.recommendations.supervisorEscalation', 'Supervisor Escalation') },
       ],
       onChange: (value) =>

@@ -1,3 +1,9 @@
+/**
+ * AQL 분석 슬라이스.
+ *
+ * processedData의 inspectorRecords를 분석하여 교육 추천을 생성.
+ * EMPLOYEE NO = TQC/RQC 검사원 (교육 대상), OFFICIAL INSPECTOR = CFA 검사관 (참고용).
+ */
 import { analyzeAqlRecommendations } from '@/utils/aqlAnalyzer';
 import type { StoreSet, StoreGet } from './types';
 

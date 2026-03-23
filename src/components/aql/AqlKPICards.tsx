@@ -59,7 +59,7 @@ export function AqlKPICards({ stats, isLoading }: Props) {
             : 'bg-green-50',
     },
     {
-      title: t('aql.dashboard.failingInspectors', 'Failing Inspectors'),
+      title: t('aql.dashboard.failingInspectors', 'Failing TQC/RQC Inspectors'),
       value: String(stats.failing_inspectors),
       icon: Users,
       color: stats.failing_inspectors > 0 ? 'text-red-600' : 'text-green-600',

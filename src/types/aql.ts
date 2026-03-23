@@ -2,15 +2,20 @@
  * AQL Training Recommendation Types
  *
  * Types for AQL (Acceptable Quality Level) fail-based training enrollment system.
- * AQL Reject PO inspector → training candidate + supervisor escalation.
+ *
+ * 핵심 개념:
+ *   EMPLOYEE NO = TQC/RQC 검사원 (제화라인에서 제품을 정품 등록한 사람, 교육 대상)
+ *   OFFICIAL INSPECTOR = CFA 검사관 (AQL 검사를 수행한 사람, 참고용)
+ *
+ * AQL Reject PO의 EMPLOYEE NO(TQC/RQC) → 교육 대상 + 상사 연쇄 등록.
  */
 
 // ========== Raw API Data ==========
 
 /** Raw row from AQL Report GAS API */
 export interface AqlRawRow {
-  'EMPLOYEE NO': string;
-  'OFFICIAL INSPECTOR': string;
+  'EMPLOYEE NO': string;           // TQC/RQC 검사원 사번 (제품을 정품 등록한 사람, 교육 대상)
+  'OFFICIAL INSPECTOR': string;    // CFA 검사관 (AQL 검사 수행자, 참고용)
   'RESULT': string;          // 'PASS' | 'FAIL'
   'PO NO 1.': string;
   'BUILDING': string;
@@ -45,12 +50,16 @@ export interface AqlDataResponse {
 
 // ========== Processed Data ==========
 
-/** Per-inspector aggregated record */
+/**
+ * Per-employee aggregated record.
+ * "Inspector" in the type name is a legacy term — the actual subject is:
+ *   TQC/RQC 검사원 (EMPLOYEE NO = 제화라인에서 제품을 정품 등록한 사람, 교육 대상)
+ */
 export interface AqlInspectorRecord {
-  employee_no: string;
+  employee_no: string;            // TQC/RQC 검사원 사번 (교육 대상)
   employee_name: string;          // Resolved from HR employees (by EMPLOYEE NO)
   tqc_num: string;                // TQC NUM from AQL data
-  official_inspector: string;     // OFFICIAL INSPECTOR (auditor, for reference)
+  official_inspector: string;     // CFA 검사관 (AQL 검사 수행자, 참고용)
   buildings: string[];
   total_inspections: number;
   pass_count: number;
@@ -97,7 +106,13 @@ export interface AqlSupervisorLink {
   source_file: string;
 }
 
-/** AQL EMPLOYEE NO ↔ Q-TRAIN Employee link */
+/**
+ * AQL EMPLOYEE NO ↔ Q-TRAIN Employee link.
+ *
+ * @deprecated EMPLOYEE NO는 TQC/RQC 검사원 사번으로 Q-TRAIN employee_id와 직접 매칭 가능.
+ * 별도 매핑 테이블 없이 employees 컬렉션에서 직접 조회할 수 있음.
+ * 기존 데이터 호환을 위해 유지하되, 신규 구현에서는 직접 매칭을 우선 사용할 것.
+ */
 export interface AqlEmployeeLink {
   link_id: string;
   aql_employee_no: string;
@@ -107,7 +122,11 @@ export interface AqlEmployeeLink {
   created_at: string;
 }
 
-/** Enrollment reason */
+/**
+ * Enrollment reason.
+ * 'INSPECTOR_FAIL' = TQC/RQC 검사원 불합격 (EMPLOYEE NO 기준, 교육 대상)
+ * 'SUPERVISOR_ESCALATION' = 상사 연쇄 등록 (검사원의 직속 상사)
+ */
 export type AqlEnrollmentReason = 'INSPECTOR_FAIL' | 'SUPERVISOR_ESCALATION';
 
 /** Enrollment audit log (APPEND-ONLY) */

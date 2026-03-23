@@ -1,3 +1,8 @@
+/**
+ * @deprecated EMPLOYEE NO는 TQC/RQC 검사원 사번으로 Q-TRAIN employee_id와 직접 매칭 가능.
+ * 별도 매핑 테이블(aql_employee_links) 없이 employees 컬렉션에서 직접 조회 가능.
+ * 기존 데이터 호환을 위해 유지하되, 신규 구현에서는 직접 매칭을 우선 사용할 것.
+ */
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -201,7 +206,7 @@ export function AqlEmployeeLinker({
                   ))}
                   {unlinkedInspectors.length === 0 && (
                     <SelectItem value="__none__" disabled>
-                      {t('aql.recommendations.allLinked', 'All inspectors are linked')}
+                      {t('aql.recommendations.allLinked', 'All TQC/RQC inspectors are linked')}
                     </SelectItem>
                   )}
                 </SelectContent>

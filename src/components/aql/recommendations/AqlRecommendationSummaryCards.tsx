@@ -29,7 +29,7 @@ export function AqlRecommendationSummaryCards({ recommendations }: Props) {
       bgColor: 'bg-blue-50',
     },
     {
-      title: t('aql.recommendations.inspectorFail', 'Inspector Fail'),
+      title: t('aql.recommendations.inspectorFail', 'TQC/RQC Inspector Fail'),
       value: inspectorFailCount,
       icon: XCircle,
       color: 'text-red-600',

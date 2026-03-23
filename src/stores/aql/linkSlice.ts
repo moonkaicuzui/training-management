@@ -1,3 +1,11 @@
+/**
+ * AQL Employee Link & Supervisor Link 관리 슬라이스.
+ *
+ * @deprecated createAqlLink / deleteAqlLink:
+ *   EMPLOYEE NO는 TQC/RQC 검사원 사번으로 Q-TRAIN employee_id와 직접 매칭 가능.
+ *   별도 매핑 테이블(aql_employee_links) 없이 employees 컬렉션에서 직접 조회 가능.
+ *   기존 데이터 호환을 위해 유지.
+ */
 import type { AqlSupervisorLink } from '@/types/aql';
 import * as aqlService from '@/services/aqlService';
 import { parseManpowerCsv } from '@/utils/manpowerCsvParser';

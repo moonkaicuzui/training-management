@@ -1,3 +1,10 @@
+/**
+ * AQL Store 타입 정의.
+ *
+ * EMPLOYEE NO = TQC/RQC 검사원 (교육 대상)
+ * aqlLinks: EMPLOYEE NO ↔ Q-TRAIN employee_id 매핑 (@deprecated - 직접 매칭 가능)
+ * supervisorLinks: 감독자 조직 구조 (Manpower CSV 가져오기)
+ */
 import type {
   AqlMonthOption,
   AqlRawRow,

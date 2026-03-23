@@ -68,7 +68,7 @@ export function AqlInspectorTable({ records, isLoading }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base">
-          {t('aql.dashboard.inspectorStats', 'Inspector Statistics')}
+          {t('aql.dashboard.inspectorStats', 'TQC/RQC Inspector Statistics')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

@@ -2,7 +2,9 @@
  * AQL Dashboard Page
  *
  * Displays AQL inspection statistics: month selection, KPI cards,
- * inspector table, and building analysis.
+ * TQC/RQC employee table, and building analysis.
+ *
+ * EMPLOYEE NO = TQC/RQC 검사원 (교육 대상), OFFICIAL INSPECTOR = CFA 검사관 (참고용)
  */
 
 import { useEffect } from 'react';
@@ -67,7 +69,7 @@ export default function AqlDashboard() {
             {t('aql.dashboard.title', 'AQL Dashboard')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t('aql.dashboard.description', 'AQL inspection results and inspector analysis')}
+            {t('aql.dashboard.description', 'AQL inspection results and TQC/RQC inspector analysis')}
           </p>
         </div>
         <AqlMonthSelector
