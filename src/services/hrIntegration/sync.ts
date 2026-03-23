@@ -11,7 +11,7 @@ import { getHRFirestore, getPreviousMonth } from './firebase';
 
 export async function fetchHREmployees(month: string, year: number): Promise<HREmployeeRecord[]> {
   try {
-    const hrDb = getHRFirestore();
+    const hrDb = await getHRFirestore();
     const monthYear = `${month}_${year}`;
     const docRef = doc(hrDb, 'hr_employees', monthYear, 'all_data', 'data');
     const snapshot = await getDoc(docRef);

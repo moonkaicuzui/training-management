@@ -1,9 +1,14 @@
 /**
  * HR V2 Firebase 앱 초기화 + 유틸리티
+ * Q-TRAIN Firebase Auth 토큰은 HR V2 Firestore에 접근 불가 (다른 프로젝트)
+ * → HR V2 Firebase Auth에 별도 로그인하여 인증
  */
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import type { Auth } from 'firebase/auth';
+import { logger } from '@/utils/logger';
 import type { HRSummary } from './types';
 
 const HR_FIREBASE_CONFIG = {
@@ -28,7 +33,27 @@ function getHRApp() {
   return initializeApp(HR_FIREBASE_CONFIG, HR_APP_NAME);
 }
 
-export function getHRFirestore() {
+let hrAuth: Auth | null = null;
+let hrAuthInitialized = false;
+
+async function ensureHRAuth(): Promise<void> {
+  if (hrAuthInitialized) return;
+  try {
+    hrAuth = getAuth(getHRApp());
+    if (!hrAuth.currentUser) {
+      const email = import.meta.env.VITE_HR_AUTH_EMAIL || 'ksmoon@hsvina.com';
+      const password = import.meta.env.VITE_HR_AUTH_PASSWORD || 'ksmoon1!';
+      await signInWithEmailAndPassword(hrAuth, email, password);
+      logger.info('[HRIntegration] HR V2 Firebase Auth 로그인 성공');
+    }
+    hrAuthInitialized = true;
+  } catch (error) {
+    logger.warn('[HRIntegration] HR V2 Auth 로그인 실패:', error);
+  }
+}
+
+export async function getHRFirestore() {
+  await ensureHRAuth();
   return getFirestore(getHRApp());
 }
 

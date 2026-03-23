@@ -10,7 +10,7 @@ import { getHRFirestore, getCurrentMonthYear, mapFirestoreToHRSummary } from './
 
 async function fetchFromHRV2(month: string, year: number): Promise<HRSummary | null> {
   try {
-    const hrDb = getHRFirestore();
+    const hrDb = await getHRFirestore();
     const docId = `${month}_${year}`;
     const docRef = doc(hrDb, 'hr_dashboard_summary', docId);
     const snapshot = await getDoc(docRef);
