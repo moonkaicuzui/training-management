@@ -111,7 +111,8 @@ function matchEmployee(
   employees: Employee[]
 ): AqlTrainingRecommendation['linked_employee'] | undefined {
   // 1. Direct match by employee_id (EMPLOYEE NO = TQC/RQC 사번 = Q-TRAIN employee_id)
-  const directMatch = employees.find((e) => e.employee_id === employeeNo);
+  // 퇴사자(INACTIVE)는 교육 대상에서 제외
+  const directMatch = employees.find((e) => e.employee_id === employeeNo && e.status === 'ACTIVE');
   if (directMatch) {
     return {
       employee_id: directMatch.employee_id,
@@ -122,7 +123,7 @@ function matchEmployee(
   // 2. Fallback: check explicit AQL link (legacy mapping, deprecated)
   const link = aqlLinks.find((l) => l.aql_employee_no === employeeNo);
   if (link) {
-    const employee = employees.find((e) => e.employee_id === link.employee_id);
+    const employee = employees.find((e) => e.employee_id === link.employee_id && e.status === 'ACTIVE');
     if (employee) {
       return {
         employee_id: employee.employee_id,

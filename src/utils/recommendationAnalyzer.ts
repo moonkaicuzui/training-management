@@ -264,7 +264,8 @@ function matchEmployee(
   const link = links.find((l) => l.tqc_id === tqcId);
   if (!link) return undefined;
 
-  const employee = employees.find((e) => e.employee_id === link.employee_id);
+  // 퇴사자(INACTIVE)는 교육 대상에서 제외
+  const employee = employees.find((e) => e.employee_id === link.employee_id && e.status === 'ACTIVE');
   if (!employee) return undefined;
 
   return {
