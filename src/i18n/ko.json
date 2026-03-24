@@ -3671,6 +3671,12 @@
     "orderQty": "주문 수량",
     "size": "사이즈",
     "supplier": "업체",
+    "supplierSource": "업체 / 출처",
+    "supplierCategory": {
+      "bottom": "── Bottom (창)",
+      "upper": "── Upper (갑피)",
+      "internal": "── HWK Internal (자체)"
+    },
     "component": "부품",
     "side": "좌우",
     "piecesQty": "수량 (PCS)",

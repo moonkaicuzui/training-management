@@ -31,7 +31,7 @@ export interface ManualFormData {
 interface ManualEntryFormProps {
   form: ManualFormData;
   setForm: React.Dispatch<React.SetStateAction<ManualFormData>>;
-  suppliers: Array<{ id: string; name: string }>;
+  suppliers: Array<{ id: string; name: string; shortName: string; category: string }>;
   saving: boolean;
   onSupplierChange: (supplierId: string) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -177,7 +177,7 @@ const ManualEntryForm = memo(function ManualEntryForm({
         {/* Supplier */}
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-600">
-            {t('metalShoe.supplier', 'Supplier')} *
+            {t('metalShoe.supplierSource', 'Supplier / Source')} *
           </label>
           <select
             value={form.supplierId}
@@ -186,9 +186,30 @@ const ManualEntryForm = memo(function ManualEntryForm({
             className={inputClass}
           >
             <option value="">{t('common.select', 'Select...')}</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} ({s.id})</option>
-            ))}
+            {/* Bottom Suppliers */}
+            {suppliers.some(s => s.category === 'bottom') && (
+              <optgroup label={t('metalShoe.supplierCategory.bottom', '── Bottom (창)')}>
+                {suppliers.filter(s => s.category === 'bottom').map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </optgroup>
+            )}
+            {/* Upper Suppliers */}
+            {suppliers.some(s => s.category === 'upper') && (
+              <optgroup label={t('metalShoe.supplierCategory.upper', '── Upper (갑피)')}>
+                {suppliers.filter(s => s.category === 'upper').map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </optgroup>
+            )}
+            {/* HWK Internal */}
+            {suppliers.some(s => s.category === 'hwk_internal') && (
+              <optgroup label={t('metalShoe.supplierCategory.internal', '── HWK Internal (자체)')}>
+                {suppliers.filter(s => s.category === 'hwk_internal').map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 

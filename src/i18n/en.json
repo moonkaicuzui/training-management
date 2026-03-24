@@ -3671,6 +3671,12 @@
     "orderQty": "Order Qty",
     "size": "Size",
     "supplier": "Supplier",
+    "supplierSource": "Supplier / Source",
+    "supplierCategory": {
+      "bottom": "── Bottom Suppliers",
+      "upper": "── Upper Suppliers",
+      "internal": "── HWK Internal"
+    },
     "component": "Component",
     "side": "Side",
     "piecesQty": "Pieces Qty",

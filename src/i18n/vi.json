@@ -3671,6 +3671,12 @@
     "orderQty": "SL đặt hàng",
     "size": "Kích cỡ",
     "supplier": "Nhà cung cấp",
+    "supplierSource": "Nhà cung cấp / Nguồn",
+    "supplierCategory": {
+      "bottom": "── Đế (Bottom)",
+      "upper": "── Thân (Upper)",
+      "internal": "── Nội bộ HWK"
+    },
     "component": "Bộ phận",
     "side": "Bên",
     "piecesQty": "SL (PCS)",
