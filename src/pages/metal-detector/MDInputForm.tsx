@@ -31,11 +31,10 @@ import MDDetailedWizard from '@/components/metal-detector/MDDetailedWizard';
 export default function MDInputForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { inspections, createInspection, createFailure, isLoading, error, fetchInspections } =
+  const { inspections, createInspectionWithFailure, isLoading, error, fetchInspections } =
     useMDInspectionStore(useShallow((state) => ({
       inspections: state.inspections,
-      createInspection: state.createInspection,
-      createFailure: state.createFailure,
+      createInspectionWithFailure: state.createInspectionWithFailure,
       isLoading: state.isLoading,
       error: state.error,
       fetchInspections: state.fetchInspections,
@@ -148,29 +147,32 @@ export default function MDInputForm() {
 
     setIsSubmitting(true);
     try {
-      const inspection = await createInspection({
-        factory: formData.factory as FactoryCode,
-        line: formData.line,
-        machineId: formData.machineId.trim() || undefined,
-        inspectionDate: formData.inspectionDate,
-        result: formData.result as InspectionResult,
-        inspectorName: formData.inspectorName,
-        inspectorId: formData.inspectorId || user?.id,
-        productName: formData.productName || undefined,
-        remarks: formData.remarks || undefined,
-      });
+      // Atomic write: inspection + failure 를 writeBatch 로 한 번에 저장
+      const failureInput = formData.result === 'FAIL'
+        ? {
+            factory: formData.factory as FactoryCode,
+            line: formData.line,
+            failureDate: formData.inspectionDate,
+            failureType: formData.failureType,
+            description: formData.failureDescription,
+            caStatus: 'pending' as const,
+          }
+        : undefined;
 
-      if (formData.result === 'FAIL') {
-        await createFailure({
-          inspectionId: inspection.id,
+      await createInspectionWithFailure(
+        {
           factory: formData.factory as FactoryCode,
           line: formData.line,
-          failureDate: formData.inspectionDate,
-          failureType: formData.failureType,
-          description: formData.failureDescription,
-          caStatus: 'pending',
-        });
-      }
+          machineId: formData.machineId.trim() || undefined,
+          inspectionDate: formData.inspectionDate,
+          result: formData.result as InspectionResult,
+          inspectorName: formData.inspectorName,
+          inspectorId: formData.inspectorId || user?.id,
+          productName: formData.productName || undefined,
+          remarks: formData.remarks || undefined,
+        },
+        failureInput,
+      );
 
       saveSession(formData);
       setLastSubmitted({ line: formData.line, machineId: formData.machineId, result: formData.result as string });

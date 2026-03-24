@@ -46,7 +46,7 @@ interface MetalShoeState {
   createBulkCases: (
     cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
     user: { uid: string; email: string; displayName: string }
-  ) => Promise<number>;
+  ) => Promise<{ success: number; failed: string[] }>;
   createActionTracking: (
     data: Omit<MetalShoeActionTracking, 'id' | 'createdAt' | 'updatedAt'>
   ) => Promise<string>;
@@ -196,15 +196,18 @@ export const useMetalShoeStore = create<MetalShoeState>()(
           state.error = null;
         });
         try {
-          const count = await api.metalShoe.createBulkCases(cases, user);
+          const result = await api.metalShoe.createBulkCases(cases, user);
           // Refresh cases after bulk import
           const f = get().filters;
           const refreshed = await api.metalShoe.getCases(f);
           set((state) => {
             state.cases = refreshed;
             state.isLoading = false;
+            if (result.failed.length > 0) {
+              state.error = `${result.failed.length}건 실패: ${result.failed.join(', ')}`;
+            }
           });
-          return count;
+          return result;
         } catch (error) {
           logger.error('[MetalShoeStore] createBulkCases failed', error);
           set((state) => {

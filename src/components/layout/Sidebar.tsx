@@ -47,6 +47,7 @@ import {
   Sticker,
   MessageSquarePlus,
   UserCog,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -176,6 +177,7 @@ const systemAdminItems: NavItem[] = [
   { titleKey: 'nav.hrSync', href: '/hr-sync', icon: UserCog },
   { titleKey: 'nav.hrAnalytics', href: '/hr-analytics', icon: BarChart3 },
   { titleKey: 'nav.systemFeedback', href: '/system-feedback', icon: MessageSquarePlus },
+  { titleKey: 'nav.emailSettings', href: '/admin/email-settings', icon: Mail },
 ];
 
 // ─── Categories (역할별 상위 그룹) ────────────────────

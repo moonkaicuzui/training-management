@@ -19,6 +19,7 @@ import {
   getDocs,
   serverTimestamp,
   Timestamp,
+  writeBatch,
 } from '@/services/firebase';
 import { logger } from '@/utils/logger';
 import { createAuditLog } from './auditLogService';
@@ -280,22 +281,76 @@ export async function updateCase(year: number, id: string, data: Partial<MetalSh
   }
 }
 
-/** 일괄 케이스 생성 */
+/** 일괄 케이스 생성 (writeBatch 사용, 최대 5건씩 atomic 처리) */
 export async function createBulkCases(
   cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
   user: { uid: string; email: string; displayName: string }
-): Promise<number> {
-  let count = 0;
-  for (const caseData of cases) {
+): Promise<{ success: number; failed: string[] }> {
+  const BATCH_SIZE = 5;
+  let successCount = 0;
+  const failedCases: string[] = [];
+
+  // year doc 존재 여부 캐시 (중복 쓰기 방지)
+  const ensuredYears = new Set<number>();
+
+  for (let i = 0; i < cases.length; i += BATCH_SIZE) {
+    const chunk = cases.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+
+    for (const caseData of chunk) {
+      // UTC로 파싱하여 시간대 변환에 의한 날짜 밀림 방지
+      const [yy, mm, dd] = caseData.detectionDate.split('-').map(Number);
+      const detectionDate = new Date(Date.UTC(yy, mm - 1, dd));
+      const year = detectionDate.getUTCFullYear();
+      const month = detectionDate.getUTCMonth() + 1;
+      const weekNumber = getISOWeekNumber(detectionDate);
+      const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      const weekStr = `W${String(weekNumber).padStart(2, '0')}_${monthNames[month - 1]}`;
+
+      const deadline = new Date(Date.UTC(yy, mm - 1, dd + 7));
+      const actionPlanDeadline = deadline.toISOString().split('T')[0];
+
+      const collPath = getCasesCollection(year);
+      const ref = doc(collection(db, collPath));
+      batch.set(ref, {
+        ...caseData,
+        year,
+        month,
+        week: weekStr,
+        weekNumber,
+        actionPlanDeadline,
+        actionPlanStatus: 'pending',
+        createdBy: user,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // year document 보장 (배치 내에서 한 번만)
+      if (!ensuredYears.has(year)) {
+        ensuredYears.add(year);
+        const yearDocRef = doc(db, CASES_BASE, String(year));
+        batch.set(yearDocRef, { year, createdAt: serverTimestamp() }, { merge: true });
+      }
+    }
+
     try {
-      await createCase(caseData, user);
-      count++;
+      await batch.commit();
+      successCount += chunk.length;
     } catch (error) {
-      logger.error('[MetalShoeService] Bulk create error for case:', error);
+      logger.error(`[MetalShoeService] Bulk batch ${i / BATCH_SIZE + 1} failed:`, error);
+      failedCases.push(
+        ...chunk.map((c, idx) => c.poNumber || c.model || `batch-${i + idx + 1}`)
+      );
     }
   }
-  logger.info('[MetalShoeService] Bulk created cases', { total: cases.length, success: count });
-  return count;
+
+  logger.info('[MetalShoeService] Bulk created cases', {
+    total: cases.length,
+    success: successCount,
+    failed: failedCases.length,
+  });
+
+  return { success: successCount, failed: failedCases };
 }
 
 // ============================================================

@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { syncCaseToReturnDashboard } from '../../services/metalShoeSyncService';
-import { AlertTriangle, CheckCircle, Plus, FileSpreadsheet, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, FileSpreadsheet, ArrowLeft, Info } from 'lucide-react';
+
 import ManualEntryForm from '../../components/metal-shoes/ManualEntryForm';
 import ExcelImportPanel from '../../components/metal-shoes/ExcelImportPanel';
 import type { ManualFormData } from '../../components/metal-shoes/ManualEntryForm';
@@ -50,6 +51,7 @@ export default function MetalShoeRegister() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<{ count: number } | null>(null);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
   const { createCase, createBulkCases, updateCase, fetchSuppliers, suppliers } = useMetalShoeStore(
     useShallow((state) => ({
@@ -89,13 +91,15 @@ export default function MetalShoeRegister() {
         userInfo
       );
       if (BOTTOM_SUPPLIER_IDS.includes(form.supplierId)) {
-        syncCaseToReturnDashboard(newCase, userInfo)
-          .then((rdId) => {
-            if (rdId) {
-              updateCase(newCase.year, newCase.id, { returnDashboardIssueId: rdId });
-            }
-          })
-          .catch(() => { /* 동기화 실패는 무시 */ });
+        try {
+          const rdId = await syncCaseToReturnDashboard(newCase, userInfo);
+          if (rdId) {
+            updateCase(newCase.year, newCase.id, { returnDashboardIssueId: rdId });
+          }
+        } catch {
+          setSyncWarning('Return Dashboard 동기화 실패 — QOS 자동 수집으로 15분 내 반영됩니다.');
+          setTimeout(() => setSyncWarning(null), 8000);
+        }
       }
       setSuccess(true);
       setForm(INITIAL_FORM);
@@ -156,6 +160,12 @@ export default function MetalShoeRegister() {
           {error}
         </div>
       )}
+      {syncWarning && (
+        <div className="flex items-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-700">
+          <Info className="h-4 w-4" />
+          {syncWarning}
+        </div>
+      )}
       {importResult && (
         <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
           <CheckCircle className="h-4 w-4" />
@@ -183,9 +193,13 @@ export default function MetalShoeRegister() {
           userName={user.name}
           createBulkCases={createBulkCases}
           onError={(msg) => setError(msg)}
-          onImportSuccess={(count) => {
+          onImportSuccess={(count, failed) => {
             setImportResult({ count });
-            setError(null);
+            if (failed && failed.length > 0) {
+              setError(`${failed.length}건 실패: ${failed.join(', ')}`);
+            } else {
+              setError(null);
+            }
           }}
         />
       )}

@@ -180,6 +180,7 @@
       "reviewGuidelines": "모델 리뷰지침"
     },
     "systemFeedback": "시스템 피드백",
+    "emailSettings": "이메일 설정",
     "hrSync": "HR 직원 동기화",
     "hrAnalytics": "HR 분석"
   },
@@ -3762,6 +3763,15 @@
       "deactivated": "스티커가 비활성화되었습니다."
     },
     "duplicateId": "스티커 ID '{{id}}'는 이미 등록되어 있습니다."
+  },
+  "emailSettings": {
+    "title": "이메일 설정",
+    "description": "전체 모듈의 자동 이메일 알림을 관리합니다",
+    "schedule": "스케줄",
+    "subjectTemplate": "제목 템플릿",
+    "emailPlaceholder": "이메일 주소 입력",
+    "invalidEmail": "올바른 이메일 형식이 아닙니다",
+    "duplicateEmail": "이미 등록된 이메일입니다"
   },
   "systemFeedback": {
     "title": "시스템 피드백",

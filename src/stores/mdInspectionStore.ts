@@ -47,10 +47,15 @@ interface MDInspectionState {
     id: string,
     data: Partial<Omit<MDInspection, 'id' | 'createdAt'>>
   ) => Promise<void>;
+  deleteInspection: (id: string) => Promise<void>;
   fetchFailures: (inspectionId?: string) => Promise<void>;
   createFailure: (
     data: Omit<MDFailure, 'id' | 'createdAt' | 'updatedAt'>
   ) => Promise<MDFailure>;
+  createInspectionWithFailure: (
+    inspectionData: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>,
+    failureData?: Omit<MDFailure, 'id' | 'inspectionId' | 'createdAt' | 'updatedAt'>,
+  ) => Promise<{ inspection: MDInspection; failure?: MDFailure }>;
   updateFailureCA: (
     id: string,
     data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>
@@ -156,6 +161,28 @@ export const useMDInspectionStore = create<MDInspectionState>()(
         }
       },
 
+      deleteInspection: async (id) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          await api.mdInspection.deleteInspection(id);
+          set((state) => {
+            state.inspections = state.inspections.filter((i) => i.id !== id);
+            state.failures = state.failures.filter((f) => f.inspectionId !== id);
+            state.isLoading = false;
+          });
+        } catch (error) {
+          logger.error('[MDStore] deleteInspection failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.deleteInspectionFailed', 'Failed to delete inspection');
+            state.isLoading = false;
+          });
+          throw error;
+        }
+      },
+
       fetchFailures: async (inspectionId) => {
         set((state) => {
           state.isLoading = true;
@@ -192,6 +219,31 @@ export const useMDInspectionStore = create<MDInspectionState>()(
           logger.error('[MDStore] createFailure failed', error);
           set((state) => {
             state.error = i18n.t('errors.metalDetector.createFailureFailed');
+            state.isLoading = false;
+          });
+          throw error;
+        }
+      },
+
+      createInspectionWithFailure: async (inspectionData, failureData) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const result = await api.mdInspection.createInspectionWithFailure(inspectionData, failureData);
+          set((state) => {
+            state.inspections.unshift(result.inspection);
+            if (result.failure) {
+              state.failures.unshift(result.failure);
+            }
+            state.isLoading = false;
+          });
+          return result;
+        } catch (error) {
+          logger.error('[MDStore] createInspectionWithFailure failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalDetector.createInspectionFailed');
             state.isLoading = false;
           });
           throw error;

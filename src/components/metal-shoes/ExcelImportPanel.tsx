@@ -22,9 +22,9 @@ interface ExcelImportPanelProps {
   createBulkCases: (
     cases: Array<ParsedCase & { status: 'registered'; createdBy: { uid: string; email: string; displayName: string } }>,
     user: { uid: string; email: string; displayName: string }
-  ) => Promise<number>;
+  ) => Promise<{ success: number; failed: string[] }>;
   onError: (msg: string) => void;
-  onImportSuccess: (count: number) => void;
+  onImportSuccess: (count: number, failed?: string[]) => void;
 }
 
 export default function ExcelImportPanel({
@@ -58,11 +58,11 @@ export default function ExcelImportPanel({
     setImporting(true);
     try {
       const userInfo = { uid: userId, email: userEmail, displayName: userName };
-      const count = await createBulkCases(
+      const result = await createBulkCases(
         importPreview.cases.map((c) => ({ ...c, status: 'registered' as const, createdBy: userInfo })),
         userInfo
       );
-      onImportSuccess(count);
+      onImportSuccess(result.success, result.failed.length > 0 ? result.failed : undefined);
       setImportPreview(null);
       setImportFile(null);
     } catch (err) {

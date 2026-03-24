@@ -180,6 +180,7 @@
       "reviewGuidelines": "Hướng dẫn đánh giá"
     },
     "systemFeedback": "Phản hồi hệ thống",
+    "emailSettings": "Cài đặt Email",
     "hrSync": "Đồng bộ nhân viên HR",
     "hrAnalytics": "Phân tích HR"
   },
@@ -3762,6 +3763,15 @@
       "deactivated": "Tem đã bị vô hiệu hóa."
     },
     "duplicateId": "Mã tem '{{id}}' đã được đăng ký."
+  },
+  "emailSettings": {
+    "title": "Cài đặt Email",
+    "description": "Quản lý thông báo email tự động cho tất cả các mô-đun",
+    "schedule": "Lịch trình",
+    "subjectTemplate": "Mẫu tiêu đề",
+    "emailPlaceholder": "Nhập địa chỉ email",
+    "invalidEmail": "Định dạng email không hợp lệ",
+    "duplicateEmail": "Email đã được thêm"
   },
   "systemFeedback": {
     "title": "Phản hồi hệ thống",

@@ -26,7 +26,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, X, ClipboardList } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, X, ClipboardList, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import type { FactoryCode, InspectionResult, MDInspection, MDFailure, CAStatus } from '@/types/metalDetector';
@@ -50,11 +60,13 @@ export default function MDHistory() {
     fetchInspections,
     fetchFailures,
     updateFailureCA,
+    deleteInspection,
   } = useMDInspectionStore();
 
   const [selectedInspection, setSelectedInspection] = useState<MDInspection | null>(null);
   const [relatedFailures, setRelatedFailures] = useState<MDFailure[]>([]);
   const [caUpdate, setCAUpdate] = useState({ status: '' as CAStatus | '', description: '' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInspections(filters);
@@ -88,6 +100,18 @@ export default function MDHistory() {
     // Re-fetch failures for updated data
     if (selectedInspection) {
       await fetchFailures(selectedInspection.id);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteInspection(id);
+      setDeleteConfirmId(null);
+      if (selectedInspection?.id === id) {
+        setSelectedInspection(null);
+      }
+    } catch {
+      // error is handled in the store
     }
   };
 
@@ -202,6 +226,7 @@ export default function MDHistory() {
                     <TableHead>{t('metalDetector.input.resultLabel')}</TableHead>
                     <TableHead>{t('metalDetector.input.inspectorId')}</TableHead>
                     <TableHead>{t('metalDetector.input.inspector')}</TableHead>
+                    <TableHead className="w-[60px]">{t('metalDetector.history.actions', 'Actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -231,6 +256,19 @@ export default function MDHistory() {
                       </TableCell>
                       <TableCell className="font-mono text-xs">{inspection.inspectorId || '-'}</TableCell>
                       <TableCell>{inspection.inspectorName}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(inspection.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -252,6 +290,18 @@ export default function MDHistory() {
 
           {selectedInspection && (
             <div className="space-y-4">
+              {/* Delete button in detail modal */}
+              <div className="flex justify-end">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteConfirmId(selectedInspection.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {t('metalDetector.history.deleteButton', 'Delete')}
+                </Button>
+              </div>
+
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-muted-foreground">{t('metalDetector.input.date')}:</span>
                 <span>{selectedInspection.inspectionDate}</span>
@@ -371,6 +421,35 @@ export default function MDHistory() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteConfirmId}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('metalDetector.history.deleteConfirmTitle', 'Delete Inspection')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'metalDetector.history.deleteConfirm',
+                'Are you sure you want to delete this inspection record? This will also delete related failure records. This action cannot be undone.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+            >
+              {t('metalDetector.history.deleteButton', 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

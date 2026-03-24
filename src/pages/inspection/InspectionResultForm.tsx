@@ -123,6 +123,7 @@ export default function InspectionResultForm() {
   // Step 4: Result preview
   const [strikeInfo, setStrikeInfo] = useState<{ consecutive_failures: number; requires_reassignment: boolean } | null>(null);
   const [showReassignmentDialog, setShowReassignmentDialog] = useState(false);
+  const [strikeCheckWarning, setStrikeCheckWarning] = useState(false);
 
   const matchedCount = useMemo(() => pairs.filter((p) => p.is_match).length, [pairs]);
   const matchRate = Math.round((matchedCount / TOTAL_PAIRS) * 100);
@@ -161,7 +162,7 @@ export default function InspectionResultForm() {
     clearError();
 
     try {
-      await submitResult(
+      const submitRes = await submitResult(
         {
           employee_id: employeeId,
           program_code: 'INS-001',
@@ -178,7 +179,13 @@ export default function InspectionResultForm() {
         },
         user.id
       );
-      navigate('/inspection/dashboard');
+      if ((submitRes as Record<string, unknown>)?._strikeCheckFailed) {
+        setStrikeCheckWarning(true);
+        // 3초 후 대시보드로 이동 (경고를 볼 시간 확보)
+        setTimeout(() => navigate('/inspection/dashboard'), 3000);
+      } else {
+        navigate('/inspection/dashboard');
+      }
     } catch {
       // Error is set in store
     }
@@ -249,7 +256,7 @@ export default function InspectionResultForm() {
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-semibold">{employeeName}</span>
                   <span className="text-sm text-muted-foreground">({employeeId})</span>
-                  <Button variant="ghost" size="sm" className="ml-auto h-6 w-6 p-0" onClick={clearEmployee} aria-label={t('common.aria.clearEmployee')}>
+                  <Button variant="ghost" size="sm" className="ml-auto h-9 w-9 p-0" onClick={clearEmployee} aria-label={t('common.aria.clearEmployee')}>
                     <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
@@ -287,7 +294,7 @@ export default function InspectionResultForm() {
                         employeeResults.map((emp) => (
                           <button
                             key={emp.employee_id}
-                            className="w-full text-left px-3 py-2 hover:bg-muted/50 flex items-center gap-2 border-b last:border-b-0"
+                            className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-2 border-b last:border-b-0"
                             onClick={() => selectEmployee(emp)}
                             role="option"
                           >
@@ -459,6 +466,19 @@ export default function InspectionResultForm() {
                 >
                   {t('inspection.strike.reassignmentDialog.confirm')}
                 </Button>
+              </div>
+            )}
+
+            {/* Strike Check Warning */}
+            {strikeCheckWarning && (
+              <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-300">
+                <h3 className="font-bold text-yellow-800 flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-5 w-5" />
+                  3-Strike 검증 실패
+                </h3>
+                <p className="text-sm text-yellow-700">
+                  3-Strike 검증에 실패했습니다. 관리자에게 확인을 요청하세요.
+                </p>
               </div>
             )}
 

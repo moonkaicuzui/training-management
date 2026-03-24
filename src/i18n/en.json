@@ -180,6 +180,7 @@
       "reviewGuidelines": "Review Guidelines"
     },
     "systemFeedback": "System Feedback",
+    "emailSettings": "Email Settings",
     "hrSync": "HR Employee Sync",
     "hrAnalytics": "HR Analytics"
   },
@@ -3762,6 +3763,15 @@
       "deactivated": "Sticker deactivated."
     },
     "duplicateId": "Sticker ID '{{id}}' is already registered."
+  },
+  "emailSettings": {
+    "title": "Email Settings",
+    "description": "Manage automated email notifications across all modules",
+    "schedule": "Schedule",
+    "subjectTemplate": "Subject Template",
+    "emailPlaceholder": "Enter email address",
+    "invalidEmail": "Invalid email format",
+    "duplicateEmail": "Email already added"
   },
   "systemFeedback": {
     "title": "System Feedback",

@@ -71,8 +71,9 @@ service cloud.firestore {
     }
 
     // ========== 직원 ==========
+    // read: 인증된 사용자면 허용 (cross-project anonymous auth 포함 — AQL Workflow 연동)
     match /employees/{employeeId} {
-      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && hasAllowedDomain()
         && isValidString(request.resource.data.name)
         && isValidString(request.resource.data.department)
@@ -513,6 +514,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && hasAllowedDomain()
         && isValidString(request.resource.data.factory)
         && isOneOf(request.resource.data.result, ['PASS', 'FAIL']);
+      allow delete: if isAdmin();
     }
 
     // ========== TECH / NEW MODEL (신규 모델) ==========
@@ -529,6 +531,7 @@ service cloud.firestore {
     match /md_failures/{docId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
     }
 
     // ========== 금속 신발 케이스 (Metal Shoe Cases - year subcollections) ==========
@@ -574,6 +577,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'read_at', 'acknowledged_at']);
       allow delete: if isAdmin();
+    }
+
+    // ========== 시스템 설정 (config) ==========
+    match /config/{configId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow write: if isAdmin();
     }
 
     // ========== 트레이너 설정 (trainer_config) ==========

@@ -2,7 +2,7 @@
  * Inspection & Failure CRUD operations
  */
 
-import { db, doc, collection, getDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDocs, serverTimestamp } from '@/services/firebase';
+import { db, doc, collection, getDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDocs, serverTimestamp, writeBatch } from '@/services/firebase';
 import { logger } from '@/utils/logger';
 import type { MDInspection, MDFailure, MDFilters, MDEmailRecipient } from '@/types/metalDetector';
 import { INSPECTIONS_COLLECTION, FAILURES_COLLECTION, EMAIL_RECIPIENTS_COLLECTION, getISOWeekNumber, docToInspection, docToFailure, docToEmailRecipient } from './helpers';
@@ -94,6 +94,81 @@ export async function createFailure(data: Omit<MDFailure, 'id' | 'createdAt' | '
   }
 }
 
+/**
+ * Atomic: inspection + failure 를 writeBatch 로 한 번에 저장
+ * FAIL 결과일 때 inspection 만 저장되고 failure 가 누락되는 문제 방지
+ */
+export async function createInspectionWithFailure(
+  inspectionInput: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>,
+  failureInput?: Omit<MDFailure, 'id' | 'inspectionId' | 'createdAt' | 'updatedAt'>,
+): Promise<{ inspection: MDInspection; failure?: MDFailure }> {
+  try {
+    const date = new Date(inspectionInput.inspectionDate);
+    const weekNumber = getISOWeekNumber(date);
+    const year = date.getFullYear();
+
+    const batch = writeBatch(db);
+
+    // Inspection document
+    const inspectionRef = doc(collection(db, INSPECTIONS_COLLECTION));
+    const inspectionData = {
+      ...inspectionInput,
+      weekNumber,
+      year,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    batch.set(inspectionRef, inspectionData);
+
+    // Failure document (only when FAIL)
+    let failureRef: ReturnType<typeof doc> | null = null;
+    let failureData: Record<string, unknown> | null = null;
+    if (failureInput) {
+      failureRef = doc(collection(db, FAILURES_COLLECTION));
+      failureData = {
+        ...failureInput,
+        inspectionId: inspectionRef.id,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      batch.set(failureRef, failureData);
+    }
+
+    await batch.commit(); // Atomic!
+
+    const now = new Date().toISOString();
+    const inspection: MDInspection = {
+      ...inspectionInput,
+      id: inspectionRef.id,
+      weekNumber,
+      year,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    let failure: MDFailure | undefined;
+    if (failureRef && failureInput) {
+      failure = {
+        ...failureInput,
+        id: failureRef.id,
+        inspectionId: inspectionRef.id,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+
+    logger.info('[MDInspectionService] Created inspection+failure atomically', {
+      inspectionId: inspectionRef.id,
+      failureId: failureRef?.id,
+    });
+
+    return { inspection, failure };
+  } catch (error) {
+    logger.error('[MDInspectionService] createInspectionWithFailure failed', error);
+    throw error;
+  }
+}
+
 export async function updateFailure(id: string, data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>): Promise<void> {
   try {
     const docRef = doc(db, FAILURES_COLLECTION, id);
@@ -101,6 +176,34 @@ export async function updateFailure(id: string, data: Partial<Omit<MDFailure, 'i
     logger.info('[MDInspectionService] Updated failure', { id });
   } catch (error) {
     logger.error('[MDInspectionService] updateFailure failed', error);
+    throw error;
+  }
+}
+
+export async function deleteInspection(id: string): Promise<void> {
+  try {
+    // 관련 failure 기록도 함께 삭제
+    const failures = await getFailures(id);
+    const batch = writeBatch(db);
+    for (const f of failures) {
+      batch.delete(doc(db, FAILURES_COLLECTION, f.id));
+    }
+    batch.delete(doc(db, INSPECTIONS_COLLECTION, id));
+    await batch.commit();
+    logger.info('[MDInspectionService] Deleted inspection and related failures', { id, failureCount: failures.length });
+  } catch (error) {
+    logger.error('[MDInspectionService] deleteInspection failed', error);
+    throw error;
+  }
+}
+
+export async function deleteFailure(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, FAILURES_COLLECTION, id);
+    await deleteDoc(docRef);
+    logger.info('[MDInspectionService] Deleted failure', { id });
+  } catch (error) {
+    logger.error('[MDInspectionService] deleteFailure failed', error);
     throw error;
   }
 }

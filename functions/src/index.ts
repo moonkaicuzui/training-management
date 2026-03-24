@@ -8,6 +8,11 @@ import { google } from "googleapis";
 import * as admin from "firebase-admin";
 import { sendEmail, sendTemplatedEmail } from "./services/emailService";
 import type { TemplateType, SupportedLanguage } from "./services/emailTemplates";
+import {
+  preflightCheck,
+  sendAutoTemplatedEmail,
+  logEmailResult,
+} from "./services/autoEmailService";
 import { fetchMonthData, fetchMonthList } from "./services/fivePrsApi";
 import { fetchAqlMonthList, fetchAqlMonthData } from "./services/aqlApi";
 import { fetchManpowerFromDrive } from "./services/driveService";
@@ -1991,6 +1996,639 @@ export const api = onRequest(
       const msg = err instanceof Error ? err.message : "Internal server error";
       logger.error(`API error [${req.method} ${path}]:`, err);
       res.status(500).json({ error: msg });
+    }
+  }
+);
+
+// =============================================================================
+// AUTO EMAIL FUNCTIONS (Firestore SMTP — QOS pushes config/smtp_settings)
+// =============================================================================
+
+// Helper: format Firestore Timestamp or Date to YYYY-MM-DD string
+function formatDate(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    return (value as admin.firestore.Timestamp).toDate().toISOString().split("T")[0];
+  }
+  if (value instanceof Date) {
+    return value.toISOString().split("T")[0];
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return "";
+}
+
+// Helper: convert Firestore Timestamp to JS Date
+function toDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    return (value as admin.firestore.Timestamp).toDate();
+  }
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return new Date(value);
+  }
+  return null;
+}
+
+// =============================================================================
+// 2a. sendTrainingNotifications
+//     Scheduled: daily at 7:00 AM Asia/Ho_Chi_Minh (ICT)
+//     Reads upcoming training sessions (next 3 days), sends notification emails
+//     to trainees. Uses Firestore SMTP config (pushed by QOS).
+// =============================================================================
+
+export const sendTrainingNotifications = onSchedule(
+  {
+    schedule: "0 7 * * *",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async () => {
+    const EMAIL_TYPE = "training_notification";
+    logger.info(`[${EMAIL_TYPE}] Starting sendTrainingNotifications...`);
+
+    // Pre-flight: check SMTP + email type enabled
+    const check = await preflightCheck(EMAIL_TYPE);
+    if (!check.ok) {
+      logger.info(`[${EMAIL_TYPE}] Skipped: ${check.skipReason}`);
+      await logEmailResult({
+        emailType: EMAIL_TYPE,
+        recipients: [],
+        subject: "",
+        result: { success: false, skipped: true, reason: check.skipReason },
+      });
+      return;
+    }
+
+    const { smtp, settings } = check;
+    const language = settings!.language || "ko";
+
+    // Query upcoming sessions (next 3 days)
+    const now = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+
+    const nowTimestamp = admin.firestore.Timestamp.fromDate(now);
+    const futureTimestamp = admin.firestore.Timestamp.fromDate(threeDaysFromNow);
+
+    try {
+      const sessionsSnapshot = await db
+        .collection("training_sessions")
+        .where("date", ">=", nowTimestamp)
+        .where("date", "<=", futureTimestamp)
+        .get();
+
+      if (sessionsSnapshot.empty) {
+        logger.info(`[${EMAIL_TYPE}] No upcoming sessions within 3 days.`);
+        return;
+      }
+
+      logger.info(`[${EMAIL_TYPE}] Found ${sessionsSnapshot.size} session(s) in the next 3 days.`);
+
+      let sentCount = 0;
+      let errorCount = 0;
+
+      for (const sessionDoc of sessionsSnapshot.docs) {
+        const session = sessionDoc.data();
+        const sessionDate = toDate(session.date);
+        const daysUntil = sessionDate
+          ? Math.ceil((sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        // Get trainees assigned to this session
+        const trainees: string[] = session.trainee_ids || session.participants || [];
+
+        // Determine recipients: from session trainees + settings recipients
+        const allRecipients = new Set<string>();
+
+        // If trainees have email addresses in their records, look them up
+        if (trainees.length > 0) {
+          // Batch lookup trainee emails from employees collection
+          const batchSize = 10;
+          for (let i = 0; i < trainees.length; i += batchSize) {
+            const batch = trainees.slice(i, i + batchSize);
+            const employeeSnap = await db
+              .collection("employees")
+              .where("employee_id", "in", batch)
+              .get();
+            for (const empDoc of employeeSnap.docs) {
+              const email = empDoc.data().email;
+              if (email) allRecipients.add(email);
+            }
+          }
+        }
+
+        // Add configured recipients from emailSettings
+        if (settings!.recipients) {
+          settings!.recipients.forEach((r) => allRecipients.add(r));
+        }
+
+        if (allRecipients.size === 0) {
+          logger.info(`[${EMAIL_TYPE}] No recipients for session ${sessionDoc.id}, skipping.`);
+          continue;
+        }
+
+        const recipientList = Array.from(allRecipients);
+
+        const result = await sendAutoTemplatedEmail({
+          to: recipientList,
+          templateType: "trainingReminder",
+          data: {
+            programName: session.program_name || session.program_code || "",
+            programCode: session.program_code || "",
+            sessionDate: formatDate(session.date),
+            sessionTime: session.time || session.start_time || "",
+            location: session.location || "",
+            trainerName: session.trainer || session.trainer_name || "",
+            daysUntilExpiry: daysUntil,
+          },
+          language,
+          cc: settings!.cc,
+          bcc: settings!.bcc,
+          smtp: smtp!,
+        });
+
+        await logEmailResult({
+          emailType: EMAIL_TYPE,
+          recipients: recipientList,
+          subject: `[Q-TRAIN] Training Reminder - ${session.program_name || session.program_code}`,
+          result,
+          metadata: {
+            sessionId: sessionDoc.id,
+            sessionDate: formatDate(session.date),
+            daysUntilSession: daysUntil,
+          },
+        });
+
+        if (result.success) sentCount++;
+        else errorCount++;
+      }
+
+      logger.info(`[${EMAIL_TYPE}] Complete. Sent: ${sentCount}, Errors: ${errorCount}`);
+    } catch (error) {
+      logger.error(`[${EMAIL_TYPE}] Fatal error:`, error);
+    }
+  }
+);
+
+// =============================================================================
+// 2b. sendCapaDeadlineAlerts
+//     Scheduled: daily at 8:00 AM Asia/Ho_Chi_Minh (ICT)
+//     Queries CAPA items with deadline within 3 days or overdue.
+//     Sends deadline warning emails to assignees.
+// =============================================================================
+
+export const sendCapaDeadlineAlerts = onSchedule(
+  {
+    schedule: "0 8 * * *",
+    timeZone: "Asia/Ho_Chi_Minh",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async () => {
+    const EMAIL_TYPE = "capa_deadline_alert";
+    logger.info(`[${EMAIL_TYPE}] Starting sendCapaDeadlineAlerts...`);
+
+    const check = await preflightCheck(EMAIL_TYPE);
+    if (!check.ok) {
+      logger.info(`[${EMAIL_TYPE}] Skipped: ${check.skipReason}`);
+      await logEmailResult({
+        emailType: EMAIL_TYPE,
+        recipients: [],
+        subject: "",
+        result: { success: false, skipped: true, reason: check.skipReason },
+      });
+      return;
+    }
+
+    const { smtp, settings } = check;
+    const language = settings!.language || "ko";
+
+    const now = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+    const futureTimestamp = admin.firestore.Timestamp.fromDate(threeDaysFromNow);
+
+    try {
+      // Query CAPAs that are NOT closed/rejected and have a dueDate <= 3 days from now
+      const capasSnapshot = await db
+        .collection("capas")
+        .where("dueDate", "<=", futureTimestamp)
+        .get();
+
+      if (capasSnapshot.empty) {
+        logger.info(`[${EMAIL_TYPE}] No CAPAs with upcoming or overdue deadlines.`);
+        return;
+      }
+
+      // Filter: only active CAPAs (not closed/rejected)
+      const activeCAPAs = capasSnapshot.docs.filter((doc) => {
+        const data = doc.data();
+        const status = data.status || data.currentStage;
+        return status !== "closed" && status !== "rejected";
+      });
+
+      if (activeCAPAs.length === 0) {
+        logger.info(`[${EMAIL_TYPE}] All matched CAPAs are closed/rejected. No alerts needed.`);
+        return;
+      }
+
+      logger.info(`[${EMAIL_TYPE}] Found ${activeCAPAs.length} active CAPA(s) with deadline alerts.`);
+
+      let sentCount = 0;
+      let errorCount = 0;
+
+      for (const capaDoc of activeCAPAs) {
+        const capa = capaDoc.data();
+        const dueDate = toDate(capa.dueDate);
+        const isOverdue = dueDate ? dueDate.getTime() < now.getTime() : false;
+        const daysUntil = dueDate
+          ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        // Determine recipients: CAPA owner + team + configured recipients
+        const allRecipients = new Set<string>();
+
+        // Look up owner email
+        if (capa.owner) {
+          // Try to find by name or email directly
+          if (capa.owner.includes("@")) {
+            allRecipients.add(capa.owner);
+          }
+        }
+        if (capa.ownerEmail) {
+          allRecipients.add(capa.ownerEmail);
+        }
+
+        // Add team members
+        if (Array.isArray(capa.team)) {
+          for (const member of capa.team) {
+            if (typeof member === "string" && member.includes("@")) {
+              allRecipients.add(member);
+            }
+          }
+        }
+
+        // Add configured recipients
+        if (settings!.recipients) {
+          settings!.recipients.forEach((r) => allRecipients.add(r));
+        }
+
+        if (allRecipients.size === 0) {
+          logger.info(`[${EMAIL_TYPE}] No recipients for CAPA ${capaDoc.id}, skipping.`);
+          continue;
+        }
+
+        const recipientList = Array.from(allRecipients);
+
+        // Build subject and body based on language
+        const statusLabel = isOverdue ? "OVERDUE" : "Due Soon";
+        const subjects: Record<string, string> = {
+          ko: `[Q-TRAIN] CAPA ${isOverdue ? "기한 초과" : "기한 임박"} - ${capa.capaNumber || capa.title}`,
+          en: `[Q-TRAIN] CAPA ${statusLabel} - ${capa.capaNumber || capa.title}`,
+          vi: `[Q-TRAIN] CAPA ${isOverdue ? "Qua han" : "Sap den han"} - ${capa.capaNumber || capa.title}`,
+        };
+
+        const bodies: Record<string, string> = {
+          ko: `<p>CAPA <strong>${capa.capaNumber || capaDoc.id}</strong>: <strong>${capa.title || ""}</strong></p>
+<p>현재 상태: ${capa.status || capa.currentStage || "N/A"}</p>
+<p>기한: ${formatDate(capa.dueDate)} (${isOverdue ? `<span style="color:red;">기한 초과 ${Math.abs(daysUntil)}일</span>` : `${daysUntil}일 남음`})</p>
+<p>담당자: ${capa.owner || "N/A"}</p>
+<p>${isOverdue ? "즉시 조치가 필요합니다." : "기한 내 완료를 위해 조치해 주시기 바랍니다."}</p>`,
+          en: `<p>CAPA <strong>${capa.capaNumber || capaDoc.id}</strong>: <strong>${capa.title || ""}</strong></p>
+<p>Current Status: ${capa.status || capa.currentStage || "N/A"}</p>
+<p>Due Date: ${formatDate(capa.dueDate)} (${isOverdue ? `<span style="color:red;">Overdue by ${Math.abs(daysUntil)} day(s)</span>` : `${daysUntil} day(s) remaining`})</p>
+<p>Owner: ${capa.owner || "N/A"}</p>
+<p>${isOverdue ? "Immediate action is required." : "Please take action to complete before the deadline."}</p>`,
+          vi: `<p>CAPA <strong>${capa.capaNumber || capaDoc.id}</strong>: <strong>${capa.title || ""}</strong></p>
+<p>Trang thai: ${capa.status || capa.currentStage || "N/A"}</p>
+<p>Han chot: ${formatDate(capa.dueDate)} (${isOverdue ? `<span style="color:red;">Qua han ${Math.abs(daysUntil)} ngay</span>` : `Con ${daysUntil} ngay`})</p>
+<p>Nguoi phu trach: ${capa.owner || "N/A"}</p>
+<p>${isOverdue ? "Can hanh dong ngay lap tuc." : "Vui long hoan thanh truoc thoi han."}</p>`,
+        };
+
+        const result = await sendAutoTemplatedEmail({
+          to: recipientList,
+          templateType: "general",
+          data: {
+            title: subjects[language] || subjects.ko,
+            body: bodies[language] || bodies.ko,
+          },
+          language,
+          subject: subjects[language] || subjects.ko,
+          cc: settings!.cc,
+          bcc: settings!.bcc,
+          smtp: smtp!,
+        });
+
+        await logEmailResult({
+          emailType: EMAIL_TYPE,
+          recipients: recipientList,
+          subject: subjects[language] || subjects.ko,
+          result,
+          metadata: {
+            capaId: capaDoc.id,
+            capaNumber: capa.capaNumber || null,
+            dueDate: formatDate(capa.dueDate),
+            isOverdue,
+            daysUntilDeadline: daysUntil,
+          },
+        });
+
+        if (result.success) sentCount++;
+        else errorCount++;
+      }
+
+      logger.info(`[${EMAIL_TYPE}] Complete. Sent: ${sentCount}, Errors: ${errorCount}`);
+    } catch (error) {
+      logger.error(`[${EMAIL_TYPE}] Fatal error:`, error);
+    }
+  }
+);
+
+// =============================================================================
+// 2c. sendTqcResultNotifications
+//     Firestore trigger: onDocumentUpdated on tqc_trainees/{traineeId}
+//     When a trainee's training_status changes (pass/fail/completed),
+//     sends result notification to trainee and supervisor.
+// =============================================================================
+
+export const sendTqcResultNotifications = onDocumentUpdated(
+  {
+    document: "tqc_trainees/{traineeId}",
+    region: REGION,
+  },
+  async (event) => {
+    const EMAIL_TYPE = "tqc_result_notification";
+    const traineeId = event.params.traineeId;
+
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+
+    if (!beforeData || !afterData) {
+      logger.warn(`[${EMAIL_TYPE}] No data in event for trainee ${traineeId}`);
+      return;
+    }
+
+    // Detect training_status change
+    const beforeStatus = beforeData.training_status;
+    const afterStatus = afterData.training_status;
+
+    if (beforeStatus === afterStatus) {
+      // No status change — skip
+      return;
+    }
+
+    // Only send for meaningful status transitions
+    const notifiableStatuses = ["passed", "failed", "completed", "pass", "fail"];
+    if (!notifiableStatuses.includes(afterStatus)) {
+      return;
+    }
+
+    logger.info(
+      `[${EMAIL_TYPE}] Trainee ${traineeId} status changed: ${beforeStatus} → ${afterStatus}`
+    );
+
+    // Pre-flight check
+    const check = await preflightCheck(EMAIL_TYPE);
+    if (!check.ok) {
+      logger.info(`[${EMAIL_TYPE}] Skipped: ${check.skipReason}`);
+      return;
+    }
+
+    const { smtp, settings } = check;
+    const language = settings!.language || "ko";
+
+    try {
+      const allRecipients = new Set<string>();
+
+      // Look up trainee's email from employees collection
+      const employeeId = afterData.employee_id;
+      if (employeeId) {
+        const empSnap = await db
+          .collection("employees")
+          .where("employee_id", "==", employeeId)
+          .limit(1)
+          .get();
+        if (!empSnap.empty) {
+          const empEmail = empSnap.docs[0].data().email;
+          if (empEmail) allRecipients.add(empEmail);
+        }
+      }
+
+      // Look up supervisor/team lead from tqc_teams
+      const teamId = afterData.team_id;
+      if (teamId) {
+        const teamSnap = await db.collection("tqc_teams").doc(teamId).get();
+        if (teamSnap.exists) {
+          const teamData = teamSnap.data();
+          if (teamData?.leader_email) allRecipients.add(teamData.leader_email);
+          if (teamData?.supervisor_email) allRecipients.add(teamData.supervisor_email);
+        }
+      }
+
+      // Add configured recipients
+      if (settings!.recipients) {
+        settings!.recipients.forEach((r) => allRecipients.add(r));
+      }
+
+      if (allRecipients.size === 0) {
+        logger.info(`[${EMAIL_TYPE}] No recipients for trainee ${traineeId}, skipping.`);
+        return;
+      }
+
+      const recipientList = Array.from(allRecipients);
+
+      // Determine result text
+      const isPassed = ["passed", "pass", "completed"].includes(afterStatus);
+      const resultText = isPassed ? "Pass" : "Fail";
+
+      const result = await sendAutoTemplatedEmail({
+        to: recipientList,
+        templateType: "trainingResult",
+        data: {
+          recipientName: afterData.employee_name || "",
+          programName: "TQC Training",
+          programCode: afterData.training_code || "",
+          result: resultText,
+          score: afterData.score || "",
+          grade: afterData.grade || "",
+          remarks: `Status: ${beforeStatus} → ${afterStatus}`,
+        },
+        language,
+        cc: settings!.cc,
+        bcc: settings!.bcc,
+        smtp: smtp!,
+      });
+
+      await logEmailResult({
+        emailType: EMAIL_TYPE,
+        recipients: recipientList,
+        subject: `[Q-TRAIN] TQC Result - ${afterData.employee_name || traineeId}`,
+        result,
+        metadata: {
+          traineeId,
+          employeeId: afterData.employee_id,
+          employeeName: afterData.employee_name,
+          beforeStatus,
+          afterStatus,
+          isPassed,
+        },
+      });
+
+      logger.info(`[${EMAIL_TYPE}] Email ${result.success ? "sent" : "failed"} for trainee ${traineeId}`);
+    } catch (error) {
+      logger.error(`[${EMAIL_TYPE}] Error for trainee ${traineeId}:`, error);
+    }
+  }
+);
+
+// =============================================================================
+// 2d. sendMetalShoeAlerts
+//     Firestore trigger: onDocumentCreated on metal_shoe_cases/{year}/cases/{caseId}
+//     When a new metal shoe case is registered, sends alert to managers.
+// =============================================================================
+
+export const sendMetalShoeAlerts = onDocumentCreated(
+  {
+    document: "metal_shoe_cases/{year}/cases/{caseId}",
+    region: REGION,
+  },
+  async (event) => {
+    const EMAIL_TYPE = "metal_shoe_alert";
+    const { year, caseId } = event.params;
+
+    const caseData = event.data?.data();
+    if (!caseData) {
+      logger.warn(`[${EMAIL_TYPE}] No data in event for case ${caseId}`);
+      return;
+    }
+
+    logger.info(`[${EMAIL_TYPE}] New metal shoe case created: ${year}/${caseId}`);
+
+    // Pre-flight check
+    const check = await preflightCheck(EMAIL_TYPE);
+    if (!check.ok) {
+      logger.info(`[${EMAIL_TYPE}] Skipped: ${check.skipReason}`);
+      return;
+    }
+
+    const { smtp, settings } = check;
+    const language = settings!.language || "ko";
+
+    try {
+      const allRecipients = new Set<string>();
+
+      // Read manager emails from md_email_recipients collection
+      const mdRecipientsSnap = await db.collection("md_email_recipients").get();
+      for (const doc of mdRecipientsSnap.docs) {
+        const data = doc.data();
+        if (data.email) allRecipients.add(data.email);
+        if (Array.isArray(data.emails)) {
+          data.emails.forEach((e: string) => allRecipients.add(e));
+        }
+      }
+
+      // Add configured recipients from emailSettings
+      if (settings!.recipients) {
+        settings!.recipients.forEach((r) => allRecipients.add(r));
+      }
+
+      if (allRecipients.size === 0) {
+        logger.info(`[${EMAIL_TYPE}] No recipients found, skipping.`);
+        return;
+      }
+
+      const recipientList = Array.from(allRecipients);
+
+      // Build multi-language alert content
+      const subjects: Record<string, string> = {
+        ko: `[Q-TRAIN] 금속 발견 신발 신규 등록 - ${caseData.case_no || caseId}`,
+        en: `[Q-TRAIN] Metal Shoe Case Registered - ${caseData.case_no || caseId}`,
+        vi: `[Q-TRAIN] Truong hop giay kim loai moi - ${caseData.case_no || caseId}`,
+      };
+
+      const bodies: Record<string, string> = {
+        ko: `<p>새로운 금속 발견 신발 사례가 등록되었습니다.</p>
+<table style="border-collapse:collapse;width:100%;margin:16px 0;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;width:30%;">사례 번호</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.case_no || caseId}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">발견일</td><td style="padding:8px;border:1px solid #e5e7eb;">${formatDate(caseData.found_date || caseData.created_at)}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">빌딩/라인</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.building || ""} / ${caseData.line || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">모델</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.model || caseData.style || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">금속 종류</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.metal_type || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">발견 위치</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.found_location || caseData.location || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">공급업체</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.supplier || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">심각도</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.severity || caseData.risk_level || ""}</td></tr>
+</table>
+<p>즉시 확인 및 조치를 부탁드립니다.</p>`,
+        en: `<p>A new metal shoe case has been registered.</p>
+<table style="border-collapse:collapse;width:100%;margin:16px 0;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;width:30%;">Case No.</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.case_no || caseId}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Found Date</td><td style="padding:8px;border:1px solid #e5e7eb;">${formatDate(caseData.found_date || caseData.created_at)}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Building/Line</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.building || ""} / ${caseData.line || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Model</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.model || caseData.style || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Metal Type</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.metal_type || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Found At</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.found_location || caseData.location || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Supplier</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.supplier || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Severity</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.severity || caseData.risk_level || ""}</td></tr>
+</table>
+<p>Please review and take immediate action.</p>`,
+        vi: `<p>Mot truong hop giay kim loai moi da duoc dang ky.</p>
+<table style="border-collapse:collapse;width:100%;margin:16px 0;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;width:30%;">Ma so</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.case_no || caseId}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Ngay phat hien</td><td style="padding:8px;border:1px solid #e5e7eb;">${formatDate(caseData.found_date || caseData.created_at)}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Toa nha/Chuyen</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.building || ""} / ${caseData.line || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Model</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.model || caseData.style || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Loai kim loai</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.metal_type || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Vi tri phat hien</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.found_location || caseData.location || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Nha cung cap</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.supplier || ""}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">Muc do</td><td style="padding:8px;border:1px solid #e5e7eb;">${caseData.severity || caseData.risk_level || ""}</td></tr>
+</table>
+<p>Vui long kiem tra va xu ly ngay.</p>`,
+      };
+
+      const subject = subjects[language] || subjects.ko;
+      const body = bodies[language] || bodies.ko;
+
+      const result = await sendAutoTemplatedEmail({
+        to: recipientList,
+        templateType: "general",
+        data: {
+          title: subject,
+          body: body,
+        },
+        language,
+        subject,
+        cc: settings!.cc,
+        bcc: settings!.bcc,
+        smtp: smtp!,
+      });
+
+      await logEmailResult({
+        emailType: EMAIL_TYPE,
+        recipients: recipientList,
+        subject,
+        result,
+        metadata: {
+          caseId,
+          year,
+          caseNo: caseData.case_no || null,
+          building: caseData.building || null,
+          line: caseData.line || null,
+          metalType: caseData.metal_type || null,
+        },
+      });
+
+      logger.info(`[${EMAIL_TYPE}] Email ${result.success ? "sent" : "failed"} for case ${caseId}`);
+    } catch (error) {
+      logger.error(`[${EMAIL_TYPE}] Error for case ${caseId}:`, error);
     }
   }
 );

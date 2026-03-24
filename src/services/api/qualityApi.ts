@@ -85,8 +85,10 @@ export async function createInspectionResult(
           input.enrollment_id
         );
       }
-    } catch {
-      // Non-blocking: 3-strike handling should not prevent result submission
+    } catch (strikeError) {
+      console.error('3-strike check failed:', strikeError);
+      // Non-blocking: flag that strike check needs manual review
+      (result as Record<string, unknown>)._strikeCheckFailed = true;
     }
   }
 
@@ -146,6 +148,14 @@ export const mdInspection = {
     mdInspectionService.createFailure(data),
   updateFailure: (id: string, data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>) =>
     mdInspectionService.updateFailure(id, data),
+  deleteInspection: (id: string): Promise<void> =>
+    mdInspectionService.deleteInspection(id),
+  deleteFailure: (id: string): Promise<void> =>
+    mdInspectionService.deleteFailure(id),
+  createInspectionWithFailure: (
+    inspectionData: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>,
+    failureData?: Omit<MDFailure, 'id' | 'inspectionId' | 'createdAt' | 'updatedAt'>,
+  ) => mdInspectionService.createInspectionWithFailure(inspectionData, failureData),
   getDashboardKPIs: (year: number, weekNumber?: number): Promise<MDDashboardKPI> =>
     mdInspectionService.getDashboardKPIs(year, weekNumber),
   getWeeklyTrend: (year: number, weekCount?: number): Promise<MDWeeklyTrend[]> =>
@@ -183,7 +193,7 @@ export const metalShoe = {
   createBulkCases: (
     cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
     user: { uid: string; email: string; displayName: string }
-  ): Promise<number> =>
+  ): Promise<{ success: number; failed: string[] }> =>
     metalShoeService.createBulkCases(cases, user),
   getActionTrackings: (year?: number): Promise<MetalShoeActionTracking[]> =>
     metalShoeService.getActionTrackings(year),

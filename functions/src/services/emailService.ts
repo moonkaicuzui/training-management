@@ -1,5 +1,6 @@
 import * as nodemailer from "nodemailer";
 import {logger} from "firebase-functions";
+import * as admin from "firebase-admin";
 import {
   generateEmailHtml,
   getDefaultSubject,
@@ -46,32 +47,94 @@ export interface SendEmailResult {
   error?: string;
 }
 
-function createGmailTransporter(
-  gmailUser: string,
-  gmailAppPassword: string
-): nodemailer.Transporter {
+// ---------------------------------------------------------------------------
+// SMTP Config from Firestore (QOS pushes config/smtp_settings)
+// ---------------------------------------------------------------------------
+
+interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+}
+
+/**
+ * Read SMTP settings from Firestore config/smtp_settings.
+ * Falls back to mail.hsvina.com:465 defaults if config not found.
+ */
+async function getSmtpConfig(
+  fallbackUser?: string,
+  fallbackPass?: string
+): Promise<SmtpConfig | null> {
+  const db = admin.firestore();
+  try {
+    const snap = await db.doc("config/smtp_settings").get();
+    if (snap.exists) {
+      const data = snap.data()!;
+      if (data.host && data.user && data.pass) {
+        return {
+          host: data.host,
+          port: data.port || 465,
+          secure: data.secure ?? true,
+          user: data.user,
+          pass: data.pass,
+        };
+      }
+      logger.warn("SMTP settings incomplete (missing host/user/pass), trying fallback.");
+    } else {
+      logger.warn("SMTP settings not found in config/smtp_settings. QOS may not have pushed yet.");
+    }
+  } catch (err) {
+    logger.error("Failed to read SMTP settings from Firestore:", err);
+  }
+
+  // Fallback: use provided credentials with mail.hsvina.com
+  if (fallbackUser && fallbackPass) {
+    return {
+      host: "mail.hsvina.com",
+      port: 465,
+      secure: true,
+      user: fallbackUser,
+      pass: fallbackPass,
+    };
+  }
+
+  return null;
+}
+
+function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
   return nodemailer.createTransport({
-    service: "gmail",
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.secure,
     auth: {
-      user: gmailUser,
-      pass: gmailAppPassword,
+      user: smtp.user,
+      pass: smtp.pass,
     },
   });
 }
 
 export async function sendEmail(
   options: SendEmailOptions,
-  gmailUser: string,
-  gmailAppPassword: string
+  gmailUser?: string,
+  gmailAppPassword?: string
 ): Promise<SendEmailResult> {
-  const transporter = createGmailTransporter(gmailUser, gmailAppPassword);
+  const smtp = await getSmtpConfig(gmailUser, gmailAppPassword);
+  if (!smtp) {
+    const msg = "SMTP config unavailable: no Firestore config and no fallback credentials.";
+    logger.error(msg);
+    return { success: false, error: msg };
+  }
+
+  const transporter = createTransporter(smtp);
 
   const recipients = Array.isArray(options.to)
     ? options.to.join(", ")
     : options.to;
 
   const mailOptions: nodemailer.SendMailOptions = {
-    from: `"Q-TRAIN System" <${gmailUser}>`,
+    from: `"Q-TRAIN System" <${smtp.user}>`,
     to: recipients,
     subject: options.subject,
     html: options.html,
@@ -114,12 +177,12 @@ export async function sendEmail(
 /**
  * Sends an email using a pre-built Q-TRAIN template.
  *
- * Generates responsive HTML from the template engine and delegates
- * to `sendEmail` for actual delivery.
+ * Reads SMTP config from Firestore config/smtp_settings (pushed by QOS).
+ * Falls back to mail.hsvina.com:465 with provided credentials if config not found.
  *
  * @param options - Templated email options (template type, data, language)
- * @param gmailUser - Gmail sender address
- * @param gmailAppPassword - Gmail app-specific password
+ * @param gmailUser - Optional fallback sender address
+ * @param gmailAppPassword - Optional fallback password
  * @returns Result with success status and optional messageId
  *
  * @example
@@ -143,8 +206,8 @@ export async function sendEmail(
  */
 export async function sendTemplatedEmail(
   options: SendTemplatedEmailOptions,
-  gmailUser: string,
-  gmailAppPassword: string
+  gmailUser?: string,
+  gmailAppPassword?: string
 ): Promise<SendEmailResult> {
   const language = options.language ?? "ko";
 

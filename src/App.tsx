@@ -116,6 +116,9 @@ const HRSync = lazy(() => import('./pages/HRSync'));
 // HR V2 연계 분석 대시보드
 const HRAnalytics = lazy(() => import('./pages/HRAnalytics'));
 
+// 이메일 설정 (전체 모듈 통합)
+const EmailSettingsPage = lazy(() => import('./pages/admin/EmailSettingsPage'));
+
 // 테스트 페이지
 const PptxTestPage = lazy(() => import('./pages/test/PptxTestPage'));
 
@@ -627,6 +630,17 @@ function App() {
                     <PageErrorBoundary>
                       <Suspense fallback={<PageLoader />}>
                         <HRSync />
+                      </Suspense>
+                    </PageErrorBoundary>
+                  </DevProtectedRoute>
+                } />
+
+                {/* 이메일 설정 (관리자 전용) */}
+                <Route path="admin/email-settings" element={
+                  <DevProtectedRoute requiredPermission="canManageUsers">
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <EmailSettingsPage />
                       </Suspense>
                     </PageErrorBoundary>
                   </DevProtectedRoute>
