@@ -27,12 +27,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useShallow } from 'zustand/react/shallow';
 import { useNewTQCStore } from '@/stores/newTqcStore';
 import { calculateGrade } from '@/data/constants';
 
 export default function NewTQCFinalResult() {
   const { t } = useTranslation();
-  const { trainees, updateTrainee } = useNewTQCStore();
+  const { trainees, updateTrainee } = useNewTQCStore(useShallow((s) => ({
+    trainees: s.trainees, updateTrainee: s.updateTrainee,
+  })));
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [editingScores, setEditingScores] = useState<Record<string, number | ''>>({});
 

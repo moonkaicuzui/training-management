@@ -12,7 +12,7 @@ export async function generateMetalShoePdfReport(
 ): Promise<void> {
   const jsPDFModule = await import('jspdf');
   const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF;
-  await import('jspdf-autotable');
+  const { default: autoTable } = await import('jspdf-autotable');
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -43,7 +43,7 @@ export async function generateMetalShoePdfReport(
       ['Closed', String(kpis.closedCases)],
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: kpiY,
       head: [['Metric', 'Value']],
       body: kpiData,
@@ -74,7 +74,7 @@ export async function generateMetalShoePdfReport(
       c.status,
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 22,
       head: [['Date', 'Factory', 'Line', 'Model', 'Supplier', 'Comp', 'Side', 'X-Ray', 'Confirm', 'Status']],
       body: tableData,
@@ -101,7 +101,7 @@ export async function generateMetalShoePdfReport(
         return [supplier?.supplierName || id, String(data.total), String(data.bottom), String(data.upper)];
       });
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 22,
       head: [['Supplier', 'Total', 'Bottom', 'Upper']],
       body: supplierData,

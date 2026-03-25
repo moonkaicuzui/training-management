@@ -21,14 +21,28 @@ export const createEnrollmentActions = (set: StoreSet, get: StoreGet) => ({
       const program = get().programs.find((p) => p.program_code === programCode);
       if (!program) throw new Error('Program not found');
 
+      // 모든 프로그램에 대해 aql_enrollment_logs 중복 검사
+      const existingLog = await aqlService.checkAqlEnrollmentDuplicate(
+        rec.linked_employee.employee_id,
+        programCode,
+      );
+      if (existingLog) {
+        set((state) => {
+          state.error = `${rec.linked_employee!.employee_name} already enrolled for ${programCode}`;
+          state.isEnrolling = false;
+        });
+        return;
+      }
+
+      // INS-001의 경우 inspection_enrollments 중복도 추가 검사
       if (programCode === 'INS-001') {
-        const existing = await inspectionService.checkDuplicateEnrollment(
+        const existingInspection = await inspectionService.checkDuplicateEnrollment(
           rec.linked_employee.employee_id,
           programCode,
         );
-        if (existing) {
+        if (existingInspection) {
           set((state) => {
-            state.error = `${rec.linked_employee!.employee_name} already has a ${existing.status} enrollment for ${programCode}`;
+            state.error = `${rec.linked_employee!.employee_name} already has a ${existingInspection.status} enrollment for ${programCode}`;
             state.isEnrolling = false;
           });
           return;
@@ -95,12 +109,31 @@ export const createEnrollmentActions = (set: StoreSet, get: StoreGet) => ({
       for (const rec of recs) {
         if (!rec.linked_employee) continue;
 
+        // 모든 프로그램에 대해 aql_enrollment_logs 중복 검사
+        const existingLog = await aqlService.checkAqlEnrollmentDuplicate(
+          rec.linked_employee.employee_id,
+          programCode,
+        );
+        if (existingLog) {
+          skippedCount++;
+          set((state) => {
+            const idx = state.recommendations.findIndex(
+              (r) => r.aql_employee_no === rec.aql_employee_no && r.enrollment_reason === rec.enrollment_reason
+            );
+            if (idx >= 0) {
+              state.recommendations[idx].enrollment_status = 'ENROLLED';
+            }
+          });
+          continue;
+        }
+
+        // INS-001의 경우 inspection_enrollments 중복도 추가 검사
         if (programCode === 'INS-001') {
-          const existing = await inspectionService.checkDuplicateEnrollment(
+          const existingInspection = await inspectionService.checkDuplicateEnrollment(
             rec.linked_employee.employee_id,
             programCode,
           );
-          if (existing) {
+          if (existingInspection) {
             skippedCount++;
             set((state) => {
               const idx = state.recommendations.findIndex(

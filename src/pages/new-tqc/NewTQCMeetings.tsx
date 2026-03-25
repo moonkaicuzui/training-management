@@ -30,6 +30,7 @@ import {
   useNewTQCLoading,
   useNewTQCActions,
 } from '@/stores/newTqcStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '@/stores/uiStore';
 import { EmptyState } from '@/components/common/EmptyState';
 import type { NewTQCMeetingFilters as FiltersType } from '@/types/newTqc';
@@ -40,7 +41,7 @@ export default function NewTQCMeetings() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { language } = useUIStore();
+  const { language } = useUIStore(useShallow((s) => ({ language: s.language })));
 
   const getLocale = () => {
     switch (language) {

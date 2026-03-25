@@ -13,6 +13,7 @@ import {
   setDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -281,6 +282,28 @@ export async function updateCase(year: number, id: string, data: Partial<MetalSh
   }
 }
 
+/** 케이스 삭제 */
+export async function deleteCase(year: number, id: string): Promise<void> {
+  try {
+    const docRef = doc(db, getCasesCollection(year), id);
+    await deleteDoc(docRef);
+    logger.info('[MetalShoeService] Deleted case', { id, year });
+
+    // 감사 로그 기록
+    createAuditLog({
+      log_id: `METAL-SHOE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      action: 'DELETE',
+      entity_type: 'METAL_SHOE_CASE',
+      entity_id: id,
+      changed_by: '',
+      after_data: { year, id },
+    }).catch(() => {});
+  } catch (error) {
+    logger.error('[MetalShoeService] deleteCase failed', error);
+    throw error;
+  }
+}
+
 /** 일괄 케이스 생성 (writeBatch 사용, 최대 5건씩 atomic 처리) */
 export async function createBulkCases(
   cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
@@ -528,7 +551,7 @@ export async function getSupplierList(): Promise<Array<{ id: string; name: strin
     if (snap.exists()) {
       const data = snap.data() as Record<string, unknown>;
       return ((data.items || []) as Array<{ id: string; name: string; shortName: string; category: string; status: string }>)
-        .filter((s) => s.status === 'active');
+        .filter((s) => s.status !== 'inactive');
     }
   } catch (error) {
     logger.error('[MetalShoeService] Failed to load suppliers:', error);

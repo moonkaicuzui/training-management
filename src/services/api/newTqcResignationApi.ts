@@ -52,11 +52,9 @@ export async function createNewTQCResignation(
       ? completedStages.sort((a, b) => b.stage_order - a.stage_order)[0].stage_name
       : undefined;
 
-  const existingResignations = await tqcService.getResignations();
-  const resignationCount = existingResignations.length + 1;
-
+  // H-3: timestamp + random으로 고유 ID 생성 (충돌 방지)
   const newResignation: NewTQCResignation = {
-    resignation_id: `RSG-${new Date().getFullYear()}-${String(resignationCount).padStart(3, '0')}`,
+    resignation_id: `RSG-${new Date().getFullYear()}-${Date.now().toString(36).slice(-4)}${Math.random().toString(36).substring(2, 5)}`,
     trainee_id: input.trainee_id,
     resign_date: input.resign_date,
     reason_category: input.reason_category,

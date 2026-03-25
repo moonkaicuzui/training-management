@@ -31,6 +31,7 @@ import { AqlBatchActionBar } from '@/components/aql/recommendations/AqlBatchActi
 import { AqlEmployeeLinker } from '@/components/aql/recommendations/AqlEmployeeLinker';
 import { SupervisorImporter } from '@/components/aql/recommendations/SupervisorImporter';
 import { MappingManager } from '@/components/five-prs/recommendations/MappingManager';
+import { logger } from '@/utils/logger';
 import type { AqlTrainingRecommendation, AqlFilters } from '@/types/aql';
 
 export default function AqlTrainingRecommendations() {
@@ -108,7 +109,7 @@ export default function AqlTrainingRecommendations() {
 
   // Load months and config on mount (cache guards prevent redundant calls)
   useEffect(() => {
-    Promise.all([fetchMonths(), fetchConfig()]).catch(() => {});
+    Promise.all([fetchMonths(), fetchConfig()]).catch((err) => { logger.error('AqlTrainingRecommendations 초기 데이터 로드 실패:', err); });
   }, [fetchMonths, fetchConfig]);
 
   // Auto-fetch data when month selected

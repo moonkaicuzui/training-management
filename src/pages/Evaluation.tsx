@@ -64,7 +64,7 @@ export default function Evaluation() {
       const data = await api.getEvaluations();
       setEvaluations(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load evaluations');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +96,7 @@ export default function Evaluation() {
       setNewEvalForm({ programCode: '', type: '', sessionId: '', deadline: '', message: '' });
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create evaluation');
+      setError(err instanceof Error ? err.message : t('common.errors.saveFailed'));
     } finally {
       setIsCreating(false);
     }
@@ -175,7 +175,7 @@ export default function Evaluation() {
 
       setEffectivenessResults(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load effectiveness data');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoadingEffectiveness(false);
     }

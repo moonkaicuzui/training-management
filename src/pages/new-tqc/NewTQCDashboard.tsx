@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,19 +62,20 @@ export default function NewTQCDashboard() {
     return <PageLoading />;
   }
 
-  // Get trainees who failed the final test and need re-training
-  const failedTrainees = trainees.filter(t => t.final_result === 'FAIL');
+  // M-21: useMemo로 비싼 계산 메모이제이션
+  const failedTrainees = useMemo(() =>
+    trainees.filter(t => t.final_result === 'FAIL'), [trainees]);
 
-  // HR TYPE-3 unregistered count
-  const hrUnregisteredCount = hrType3Employees.filter(
-    (emp) => !trainees.some((t) => t.employee_id === emp.employee_no)
-  ).length;
+  const hrUnregisteredCount = useMemo(() =>
+    hrType3Employees.filter(
+      (emp) => !trainees.some((t) => t.employee_id === emp.employee_no)
+    ).length, [hrType3Employees, trainees]);
 
-  // Get recently added trainees (last 5)
-  const recentTrainees = [...trainees]
-    .filter((t) => t.status === 'IN_TRAINING')
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+  const recentTrainees = useMemo(() =>
+    [...trainees]
+      .filter((t) => t.status === 'IN_TRAINING')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5), [trainees]);
 
   return (
     <div className="space-y-6">

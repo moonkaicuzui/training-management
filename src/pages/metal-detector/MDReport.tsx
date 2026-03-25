@@ -4,8 +4,10 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +25,7 @@ function getISOWeekNumber(date: Date): number {
 
 export default function MDReport() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const {
     inspections,
     dashboardKPIs,
@@ -31,7 +34,15 @@ export default function MDReport() {
     fetchDashboardKPIs,
     fetchFailures,
     failures,
-  } = useMDInspectionStore();
+  } = useMDInspectionStore(useShallow((s) => ({
+    inspections: s.inspections,
+    dashboardKPIs: s.dashboardKPIs,
+    isLoading: s.isLoading,
+    fetchInspections: s.fetchInspections,
+    fetchDashboardKPIs: s.fetchDashboardKPIs,
+    fetchFailures: s.fetchFailures,
+    failures: s.failures,
+  })));
 
   const currentYear = new Date().getFullYear();
   const currentWeek = getISOWeekNumber(new Date());
@@ -74,6 +85,10 @@ export default function MDReport() {
       });
     } catch (error) {
       logger.error('PDF generation failed:', error);
+      toast({
+        title: t('metalDetector.report.pdfFailed', 'PDF generation failed'),
+        variant: 'destructive',
+      });
     } finally {
       setGenerating(false);
     }

@@ -66,7 +66,7 @@ export default function ReportsPage() {
       setResults(resultsData);
     } catch (err) {
       logger.error('Failed to load report data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -246,8 +246,7 @@ export default function ReportsPage() {
     let title = '';
     let filename = '';
     let columns: Array<{ header: string; dataKey: string }> = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any[] = [];
+    let data: Record<string, unknown>[] = [];
 
     switch (reportType) {
       case 'department':
@@ -262,7 +261,7 @@ export default function ReportsPage() {
           { header: t('reports.colAvgScore'), dataKey: 'averageScore' },
           { header: t('reports.colPassRate'), dataKey: 'passRate' },
         ];
-        data = departmentReports;
+        data = departmentReports as unknown as Record<string, unknown>[];
         break;
 
       case 'program':
@@ -278,7 +277,7 @@ export default function ReportsPage() {
           { header: t('reports.colPassRate'), dataKey: 'passRate' },
           { header: t('reports.colAvgScore'), dataKey: 'averageScore' },
         ];
-        data = programReports;
+        data = programReports as unknown as Record<string, unknown>[];
         break;
 
       case 'employee':
@@ -294,7 +293,7 @@ export default function ReportsPage() {
           { header: t('reports.exportTrainingCompleted'), dataKey: 'passCount' },
           { header: t('reports.exportTotalTrainings'), dataKey: 'totalCount' },
         ];
-        data = employeeExportData;
+        data = employeeExportData as unknown as Record<string, unknown>[];
         break;
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useExport } from '@/hooks/useExport';
+import { useExport, toExportData } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Label } from '@/components/ui/label';
 import {
@@ -357,14 +357,14 @@ export default function Results() {
               resultFilter={resultFilter}
               onResultFilterChange={setResultFilter}
               onExportExcel={() =>
-                exportExcel(filteredResults as unknown as Record<string, unknown>[], {
+                exportExcel(toExportData(filteredResults), {
                   sheetName: 'Results',
                   filename: 'training-results',
                 })
               }
               onExportPDF={() =>
                 exportPDF(
-                  filteredResults as unknown as Record<string, unknown>[],
+                  toExportData(filteredResults),
                   [
                     { header: t('training.date'), dataKey: 'training_date' },
                     { header: t('employee.id'), dataKey: 'employee_id' },

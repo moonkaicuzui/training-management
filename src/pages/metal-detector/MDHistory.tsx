@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,17 @@ export default function MDHistory() {
     fetchFailures,
     updateFailureCA,
     deleteInspection,
-  } = useMDInspectionStore();
+  } = useMDInspectionStore(useShallow((s) => ({
+    inspections: s.inspections,
+    failures: s.failures,
+    isLoading: s.isLoading,
+    filters: s.filters,
+    setFilters: s.setFilters,
+    fetchInspections: s.fetchInspections,
+    fetchFailures: s.fetchFailures,
+    updateFailureCA: s.updateFailureCA,
+    deleteInspection: s.deleteInspection,
+  })));
 
   const [selectedInspection, setSelectedInspection] = useState<MDInspection | null>(null);
   const [relatedFailures, setRelatedFailures] = useState<MDFailure[]>([]);

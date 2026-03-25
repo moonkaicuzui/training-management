@@ -105,7 +105,7 @@ export default function MetalShoeRegister() {
       setForm(INITIAL_FORM);
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create case');
+      setError(err instanceof Error ? err.message : t('common.errors.saveFailed'));
     } finally {
       setSaving(false);
     }

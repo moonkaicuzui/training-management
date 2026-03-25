@@ -63,8 +63,39 @@ export const updateStage = async (
   updates: Partial<NewTQCTrainingStage>
 ): Promise<void> => {
   try {
-    const docRef = doc(db, COLLECTIONS.STAGES, stageId);
-    await updateDoc(docRef, {
+    // H-4: 단계 건너뛰기 방지 — IN_PROGRESS/COMPLETED 전환 시 이전 단계 검증
+    if (updates.status === 'IN_PROGRESS' || updates.status === 'COMPLETED') {
+      const stageSnap = await getDocs(query(
+        collection(db, COLLECTIONS.STAGES),
+        where('stage_id', '==', stageId),
+      ));
+      if (!stageSnap.empty) {
+        const stageData = stageSnap.docs[0].data();
+        const traineeId = stageData.trainee_id as string;
+        const currentOrder = stageData.stage_order as number;
+
+        if (traineeId && currentOrder > 1) {
+          const allStages = await getStagesByTrainee(traineeId);
+          const prevStages = allStages.filter(s => s.stage_order < currentOrder);
+          const allPrevCompleted = prevStages.every(s => s.status === 'COMPLETED');
+
+          if (!allPrevCompleted && updates.status === 'COMPLETED') {
+            throw new Error(`이전 단계가 완료되지 않아 stage_order=${currentOrder}를 COMPLETED로 변경할 수 없습니다.`);
+          }
+          if (!allPrevCompleted && updates.status === 'IN_PROGRESS') {
+            const prevInProgressOrCompleted = prevStages.every(
+              s => s.status === 'COMPLETED' || s.status === 'IN_PROGRESS'
+            );
+            if (!prevInProgressOrCompleted) {
+              throw new Error(`이전 단계가 시작되지 않아 stage_order=${currentOrder}를 IN_PROGRESS로 변경할 수 없습니다.`);
+            }
+          }
+        }
+      }
+    }
+
+    const stageDocRef = doc(db, COLLECTIONS.STAGES, stageId);
+    await updateDoc(stageDocRef, {
       ...updates,
       updated_at: serverTimestamp(),
     });

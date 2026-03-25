@@ -42,7 +42,11 @@ export async function getInspectionById(id: string): Promise<MDInspection | null
 
 export async function createInspection(data: Omit<MDInspection, 'id' | 'weekNumber' | 'year' | 'createdAt' | 'updatedAt'>): Promise<MDInspection> {
   try {
-    const date = new Date(data.inspectionDate);
+    // UTC 안전 파싱: YYYY-MM-DD 형식일 경우 로컬 타임존으로 해석하여 날짜 밀림 방지
+    const dateStr = data.inspectionDate;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+      ? new Date(dateStr + 'T00:00:00')
+      : new Date(dateStr);
     const weekNumber = getISOWeekNumber(date);
     const year = date.getFullYear();
     const docData = { ...data, weekNumber, year, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
@@ -103,7 +107,11 @@ export async function createInspectionWithFailure(
   failureInput?: Omit<MDFailure, 'id' | 'inspectionId' | 'createdAt' | 'updatedAt'>,
 ): Promise<{ inspection: MDInspection; failure?: MDFailure }> {
   try {
-    const date = new Date(inspectionInput.inspectionDate);
+    // UTC 안전 파싱: YYYY-MM-DD 형식일 경우 로컬 타임존으로 해석하여 날짜 밀림 방지
+    const dateStr = inspectionInput.inspectionDate;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+      ? new Date(dateStr + 'T00:00:00')
+      : new Date(dateStr);
     const weekNumber = getISOWeekNumber(date);
     const year = date.getFullYear();
 
@@ -169,9 +177,32 @@ export async function createInspectionWithFailure(
   }
 }
 
+// M-7: MD CA 상태 전환 유효성 맵
+const VALID_CA_TRANSITIONS: Record<string, string[]> = {
+  'pending': ['in_progress'],
+  'in_progress': ['completed', 'overdue'],
+  'overdue': ['in_progress', 'completed'],
+  'completed': [],
+};
+
 export async function updateFailure(id: string, data: Partial<Omit<MDFailure, 'id' | 'createdAt'>>): Promise<void> {
   try {
     const docRef = doc(db, FAILURES_COLLECTION, id);
+
+    // M-7: CA 상태 전환 검증
+    if (data.caStatus) {
+      const existingSnap = await getDoc(docRef);
+      if (existingSnap.exists()) {
+        const currentStatus = existingSnap.data().caStatus as string;
+        const allowed = VALID_CA_TRANSITIONS[currentStatus];
+        if (allowed && !allowed.includes(data.caStatus)) {
+          throw new Error(
+            `Invalid CA status transition: ${currentStatus} → ${data.caStatus}. Allowed: [${allowed.join(', ') || 'none'}]`
+          );
+        }
+      }
+    }
+
     await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
     logger.info('[MDInspectionService] Updated failure', { id });
   } catch (error) {

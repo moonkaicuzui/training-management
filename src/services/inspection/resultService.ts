@@ -15,6 +15,7 @@ import type {
 } from '@/types/inspection';
 import { logger } from '@/utils/logger';
 import { calculateInspectionGrade } from '@/utils/gradeCalculator';
+import { getConsecutiveFailures, handleThreeStrikeOut } from './strikeService';
 import {
   RESULTS_COLLECTION,
   ENROLLMENTS_COLLECTION,
@@ -119,6 +120,25 @@ export const createInspectionResult = async (
     }
 
     await batch.commit();
+
+    // H-6: FAIL 결과 시 3진 아웃 자동 체크
+    if (result === 'FAIL') {
+      try {
+        const strikeInfo = await getConsecutiveFailures(input.employee_id);
+        if (strikeInfo.requires_reassignment) {
+          await handleThreeStrikeOut(
+            input.employee_id,
+            input.inspector_name || input.employee_id,
+            resultId,
+            input.enrollment_id
+          );
+          return { resultId, inspectionId, matchRate, _strikeCheckFailed: false, _requiresReassignment: true } as { resultId: string; inspectionId: string; matchRate: number; _strikeCheckFailed?: boolean; _requiresReassignment?: boolean };
+        }
+      } catch (strikeError) {
+        logger.error('[inspectionService] 3진 아웃 자동 체크 실패:', strikeError);
+        // 3진 아웃 체크 실패가 결과 저장을 방해하지 않도록 에러 전파 안함
+      }
+    }
 
     return { resultId, inspectionId, matchRate };
   } catch (error) {

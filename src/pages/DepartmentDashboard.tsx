@@ -51,7 +51,7 @@ export default function DepartmentDashboard() {
         setPrograms(progs);
         setResults(res);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load data');
+        setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
       } finally {
         setLoading(false);
       }

@@ -8,6 +8,16 @@ import type { MetalShoeCase, MetalShoeStatus } from '../../types/metalShoe';
 import TrackingFilters from '../../components/metal-shoes/TrackingFilters';
 import TrackingTable from '../../components/metal-shoes/TrackingTable';
 import CaseDetailDialog from '../../components/metal-shoes/CaseDetailDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function MetalShoeTracking() {
   const { t } = useTranslation();
@@ -17,8 +27,9 @@ export default function MetalShoeTracking() {
   const [statusFilter, setStatusFilter] = useState<MetalShoeStatus | ''>('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [detailCase, setDetailCase] = useState<MetalShoeCase | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MetalShoeCase | null>(null);
 
-  const { cases, isLoading, error, fetchCases, fetchSuppliers, suppliers, updateCase, addActionEvidence } = useMetalShoeStore(
+  const { cases, isLoading, error, fetchCases, fetchSuppliers, suppliers, updateCase, deleteCase, addActionEvidence } = useMetalShoeStore(
     useShallow((state) => ({
       cases: state.cases,
       isLoading: state.isLoading,
@@ -27,6 +38,7 @@ export default function MetalShoeTracking() {
       fetchSuppliers: state.fetchSuppliers,
       suppliers: state.suppliers,
       updateCase: state.updateCase,
+      deleteCase: state.deleteCase,
       addActionEvidence: state.addActionEvidence,
     }))
   );
@@ -58,6 +70,16 @@ export default function MetalShoeTracking() {
   const handleStatusChange = async (c: MetalShoeCase, newStatus: MetalShoeStatus) => {
     try {
       await updateCase(c.year, c.id, { status: newStatus });
+    } catch {
+      // error is handled by store
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteCase(deleteTarget.year, deleteTarget.id);
+      setDeleteTarget(null);
     } catch {
       // error is handled by store
     }
@@ -132,7 +154,7 @@ export default function MetalShoeTracking() {
           {t('common.noData', 'No data available')}
         </div>
       ) : (
-        <TrackingTable cases={filtered} onViewDetail={setDetailCase} />
+        <TrackingTable cases={filtered} onViewDetail={setDetailCase} onDelete={setDeleteTarget} />
       )}
 
       {/* Detail Modal */}
@@ -147,6 +169,40 @@ export default function MetalShoeTracking() {
           onRefresh={(year) => fetchCases({ year })}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('metalShoe.tracking.deleteConfirmTitle', 'Delete Case')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'metalShoe.tracking.deleteConfirm',
+                'Are you sure you want to delete this metal shoe case? This action cannot be undone.'
+              )}
+              {deleteTarget && (
+                <span className="mt-2 block font-medium text-foreground">
+                  {deleteTarget.model} — {deleteTarget.supplierName} ({deleteTarget.detectionDate})
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+            >
+              {t('common.delete', 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

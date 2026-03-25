@@ -32,6 +32,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { PageLoading } from '@/components/common/LoadingSpinner';
 import { buildings, departments, categories } from '@/data/constants';
+import { logger } from '@/utils/logger';
 import { format } from 'date-fns';
 
 export default function Retraining() {
@@ -65,7 +66,7 @@ export default function Retraining() {
       fetchRetrainingTargets(),
       fetchExpiringTrainings(30),
       fetchExpiredTrainings(),
-    ]).catch(() => {});
+    ]).catch((err) => { logger.error('Retraining 초기 데이터 로드 실패:', err); });
   }, []);
 
   // Filter retraining targets

@@ -291,5 +291,6 @@ export {
   createRecommendationLink,
   deleteRecommendationLink,
   getRecommendationEnrollmentLogs,
+  checkRecommendationEnrollmentDuplicate,
   createRecommendationEnrollmentLog,
 } from './recommendationApi';

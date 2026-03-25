@@ -21,6 +21,7 @@ import {
   orderBy,
   serverTimestamp,
   limit,
+  where,
   Timestamp,
 } from '@/services/firebase';
 import type {
@@ -277,6 +278,38 @@ export const getEnrollmentLogs = async (): Promise<FivePrsEnrollmentLog[]> => {
       year_month: data.year_month || '',
     };
   });
+};
+
+export const checkEnrollmentDuplicate = async (
+  employeeId: string,
+  programCode: string,
+): Promise<FivePrsEnrollmentLog | null> => {
+  const q = query(
+    collection(db, COLLECTIONS.ENROLLMENT_LOGS),
+    where('employee_id', '==', employeeId),
+    where('program_code', '==', programCode),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const data = snapshot.docs[0].data();
+  return {
+    log_id: snapshot.docs[0].id,
+    tqc_id: data.tqc_id || '',
+    tqc_name: data.tqc_name || '',
+    employee_id: data.employee_id || '',
+    employee_name: data.employee_name || '',
+    program_code: data.program_code || '',
+    program_name: data.program_name || '',
+    session_id: data.session_id,
+    priority: data.priority || 'IMMEDIATE',
+    priority_score: data.priority_score || 0,
+    defect_types: data.defect_types || [],
+    reject_rate: data.reject_rate || 0,
+    enrolled_by: data.enrolled_by || '',
+    enrolled_at: convertTimestamp(data.enrolled_at),
+    year_month: data.year_month || '',
+  };
 };
 
 export const createEnrollmentLog = async (

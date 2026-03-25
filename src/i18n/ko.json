@@ -84,6 +84,14 @@
       "paginationNav": "페이지 내비게이션",
       "sortColumn": "{{column}} 열 정렬",
       "clickableRow": "{{name}} 상세 보기 클릭"
+    },
+    "errors": {
+      "loadFailed": "데이터를 불러오지 못했습니다",
+      "saveFailed": "저장에 실패했습니다",
+      "deleteFailed": "삭제에 실패했습니다",
+      "uploadFailed": "업로드에 실패했습니다",
+      "exportFailed": "내보내기에 실패했습니다",
+      "updateFailed": "업데이트에 실패했습니다"
     }
   },
   "header": {
@@ -2396,6 +2404,8 @@
     "stageUpdatedDesc": "CAPA 단계가 성공적으로 업데이트되었습니다.",
     "capaRejected": "CAPA가 반려되었습니다",
     "capaRejectedDesc": "CAPA가 반려 처리되었습니다.",
+    "stageUpdateError": "단계 업데이트 오류",
+    "stageUpdateErrorDesc": "단계 업데이트에 실패했습니다",
     "confirmReject": "반려 확인",
     "confirmRejectDesc": "이 CAPA를 반려하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "investigatedBy": "조사자",
@@ -2435,6 +2445,23 @@
       "effectivenessScoreLabel": "효과성 점수 (0-100)",
       "effectivenessScorePlaceholder": "0~100 사이 점수를 입력하세요",
       "immediateActionsPlaceholder": "문제 발견 후 즉시 취한 조치"
+    },
+    "qualityContext": {
+      "title": "품질 이슈 컨텍스트",
+      "description": "품질 문제의 상세 배경 정보를 입력합니다 (선택사항)",
+      "model": "모델명",
+      "modelPlaceholder": "예: GEL-KAYANO 31",
+      "supplierName": "업체명",
+      "supplierPlaceholder": "업체명을 입력하세요",
+      "defectLabel": "불량 유형",
+      "defectPlaceholder": "예: 접착 불량, 봉제 불량",
+      "process": "공정",
+      "selectProcess": "공정 선택",
+      "building": "건물",
+      "selectBuilding": "건물 선택",
+      "responsibleProcess": "귀책 공정",
+      "discoveryProcess": "발견 공정",
+      "linkedSystems": "연동 시스템"
     },
     "validation": {
       "titleRequired": "제목은 필수 항목입니다.",
@@ -3777,7 +3804,23 @@
     "subjectTemplate": "제목 템플릿",
     "emailPlaceholder": "이메일 주소 입력",
     "invalidEmail": "올바른 이메일 형식이 아닙니다",
-    "duplicateEmail": "이미 등록된 이메일입니다"
+    "duplicateEmail": "이미 등록된 이메일입니다",
+    "notSet": "(미설정)",
+    "activeCount": "{{enabled}}/{{total}} 활성",
+    "category": {
+      "training": "교육 운영",
+      "trainingEn": "Training Operations",
+      "newTqc": "신입 TQC",
+      "newTqcEn": "New TQC",
+      "equipment": "설비 점검",
+      "equipmentEn": "Equipment Compliance",
+      "inspection": "검사 교육",
+      "inspectionEn": "Inspection Training",
+      "capa": "CAPA",
+      "capaEn": "CAPA",
+      "executive": "경영진",
+      "executiveEn": "Executive"
+    }
   },
   "systemFeedback": {
     "title": "시스템 피드백",
@@ -3830,7 +3873,11 @@
       "screenshotsHint": "관련 스크린샷을 첨부하세요 (선택사항)",
       "uploadingScreenshots": "스크린샷 업로드 중... ({{completed}}/{{total}})",
       "submitting": "등록 중...",
-      "submit": "등록"
+      "submit": "등록",
+      "uploadFailed": "스크린샷 업로드 실패",
+      "uploadFailedDesc": "스크린샷 업로드에 실패했습니다. 다시 시도하거나 이미지 없이 등록해주세요.",
+      "submitFailed": "등록 실패",
+      "submitFailedDesc": "피드백 등록에 실패했습니다. 다시 시도해주세요."
     }
   },
   "errors": {

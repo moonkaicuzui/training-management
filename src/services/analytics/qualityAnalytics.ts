@@ -11,6 +11,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
 } from '@/services/firebase';
 import { logger } from '@/utils/logger';
 import type { TrainingResultRecord } from '@/types';
@@ -56,7 +57,7 @@ export const calculateCompetencyGaps = async (
     // Fetch competencies, employee competencies, and employees in parallel
     const [competenciesSnap, empCompSnap, employeesSnap] = await Promise.all([
       getDocs(query(collection(db, COMPETENCIES), where('is_active', '==', true))),
-      getDocs(collection(db, EMPLOYEE_COMPETENCIES)),
+      getDocs(query(collection(db, EMPLOYEE_COMPETENCIES), limit(2000))),
       department
         ? getDocs(query(collection(db, EMPLOYEES), where('status', '==', 'ACTIVE'), where('department', '==', department)))
         : getDocs(query(collection(db, EMPLOYEES), where('status', '==', 'ACTIVE'))),

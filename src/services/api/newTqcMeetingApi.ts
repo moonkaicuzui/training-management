@@ -14,11 +14,10 @@ export async function getNewTQCMeetings(filters?: NewTQCMeetingFilters): Promise
 
 export async function createNewTQCMeeting(input: NewTQCMeetingInput): Promise<NewTQCMeeting> {
   const now = new Date().toISOString();
-  const existingMeetings = await tqcService.getMeetings();
-  const meetingCount = existingMeetings.length + 1;
-
-  const newMeeting: NewTQCMeeting = {
-    meeting_id: `MTG-${String(meetingCount).padStart(3, '0')}-${input.meeting_type}`,
+  // H-3: timestamp + random으로 고유 ID 생성 (충돌 방지)
+  // Firestore 쓰기용 데이터 (created_at/updated_at는 tqcService에서 serverTimestamp() 적용)
+  const meetingData: NewTQCMeeting = {
+    meeting_id: `MTG-${Date.now().toString(36).slice(-4)}${Math.random().toString(36).substring(2, 5)}-${input.meeting_type}`,
     trainee_id: input.trainee_id,
     meeting_type: input.meeting_type,
     scheduled_date: input.scheduled_date,
@@ -29,24 +28,22 @@ export async function createNewTQCMeeting(input: NewTQCMeetingInput): Promise<Ne
     updated_at: now,
   };
 
-  await tqcService.createMeeting(newMeeting);
-  return newMeeting;
+  await tqcService.createMeeting(meetingData);
+  // 반환 객체에는 클라이언트 시간 유지 (Firestore에는 serverTimestamp() 적용됨)
+  return meetingData;
 }
 
 export async function updateNewTQCMeeting(
   input: NewTQCMeetingUpdate
 ): Promise<NewTQCMeeting | null> {
-  const now = new Date().toISOString();
-  await tqcService.updateMeeting(input.meeting_id, {
-    ...input,
-    updated_at: now,
-  });
+  // updated_at는 tqcService.updateMeeting/updateTrainee 내부에서 serverTimestamp() 적용
+  await tqcService.updateMeeting(input.meeting_id, input);
 
   if (input.status === 'COMPLETED' && input.completed_date) {
     const meetings = await tqcService.getMeetings();
     const meeting = meetings.find(m => m.meeting_id === input.meeting_id);
     if (meeting) {
-      const traineeUpdates: Partial<NewTQCTrainee> = { updated_at: now };
+      const traineeUpdates: Partial<NewTQCTrainee> = {};
       if (meeting.meeting_type === '1WEEK') {
         traineeUpdates.meeting_1week_date = input.completed_date;
       } else if (meeting.meeting_type === '1MONTH') {

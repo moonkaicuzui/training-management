@@ -11,6 +11,58 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+// ========== Quality Issue Context ==========
+
+/**
+ * 품질 이슈 확장 컨텍스트
+ * QOS 생태계 표준 필드 (모델, 불량코드, 업체, 공정 등)
+ */
+export interface QualityIssueContext {
+  model?: string;                   // 모델명 (QOS master_orders 표준)
+  defectCode?: string;              // 불량 코드 (QOS defectStandards key)
+  defectLabel?: string;             // 불량 라벨 (한국어)
+  supplierId?: string;              // 업체 ID (QOS suppliers)
+  supplierName?: string;            // 업체명
+  process?: string;                 // 공정 (NOSEW, HF, PRINTING 등)
+  building?: string;                // 건물 (A2동 등)
+  line?: string;                    // 라인
+  responsibleProcess?: string;      // 귀책 공정
+  discoveryProcess?: string;        // 발견 공정
+  linkedSystems?: string[];         // 연동 시스템 ['OSC', 'AQL', 'RETURN']
+  actionFrameId?: string;           // 선택된 관리 프레임 ID
+}
+
+// ========== Communication History ==========
+
+/**
+ * CAPA 커뮤니케이션 이력
+ */
+export interface CAPACommunication {
+  id: string;
+  to: string;                       // 수신자
+  sentAt: string;                   // ISO 날짜
+  channel: 'email' | 'chat' | 'verbal' | 'phone';
+  content: string;
+  createdBy?: string;
+}
+
+// ========== Field Investigation ==========
+
+/**
+ * 현장 조사 결과
+ */
+export interface FieldInvestigation {
+  id: string;
+  actionItemId: string;             // 관련 ActionItem ID
+  investigator: string;             // 조사자
+  investigatedAt: string;           // ISO 날짜
+  findings: string;                 // 조사 결과
+  quantity?: number;                // 검사/불량 수량
+  defectRate?: number;              // 불량률
+  photos?: string[];                // 사진 URL
+  notes?: string;
+}
+
 // ========== CAPA Status Types ==========
 
 export type CAPAStatus =
@@ -85,6 +137,11 @@ export interface ActionItem {
   status: 'pending' | 'in_progress' | 'completed' | 'delayed';
   completedAt?: Date | Timestamp;
   notes?: string;
+  area?: string;              // Sewing / Lasting / Repacking
+  section?: string;           // Sewing Prep / Sewing Line
+  zone?: string;              // Bldg A · 2F
+  currentStatus?: string;     // 현재 현황 설명
+  followUp?: string;          // 후속 조치
 }
 
 /**
@@ -134,6 +191,11 @@ export interface CAPA {
   verification?: VerificationData;
   closure?: ClosureData;
 
+  // 품질 이슈 확장
+  qualityContext?: QualityIssueContext;
+  communications?: CAPACommunication[];
+  fieldInvestigations?: FieldInvestigation[];
+
   // 관련 정보
   relatedCAPAs?: string[];
   relatedTrainingPrograms?: string[];
@@ -159,6 +221,7 @@ export interface CAPAInput {
   priority: CAPAPriority;
   source: CAPASource;
   discovery: Omit<DiscoveryData, 'discoveredAt'>;
+  qualityContext?: QualityIssueContext;
   dueDate?: Date;
   owner: string;
   team?: string[];
@@ -181,6 +244,7 @@ export interface CAPAStageUpdate {
   action?: Omit<ActionData, 'plannedAt'>;
   verification?: Omit<VerificationData, 'verifiedAt'>;
   closure?: Omit<ClosureData, 'closedAt'>;
+  rejectionReason?: string;
 }
 
 // ========== CAPA Filter & Search Types ==========

@@ -256,7 +256,20 @@ export const useRecommendationStore = create<RecommendationState>()(
           const program = get().programs.find((p) => p.program_code === programCode);
           if (!program) throw new Error('Program not found');
 
-          // Check for duplicate enrollment before proceeding
+          // 모든 프로그램에 대해 five_prs_enrollment_logs 중복 검사
+          const existingLog = await api.checkRecommendationEnrollmentDuplicate(
+            rec.linkedEmployee.employee_id,
+            programCode,
+          );
+          if (existingLog) {
+            set((state) => {
+              state.error = `${rec.linkedEmployee!.employee_name} already enrolled for ${programCode}`;
+              state.isEnrolling = false;
+            });
+            return;
+          }
+
+          // INS-001의 경우 inspection_enrollments 중복도 추가 검사
           if (programCode === 'INS-001') {
             const existing = await api.checkDuplicateInspectionEnrollment(
               rec.linkedEmployee.employee_id,
@@ -330,7 +343,23 @@ export const useRecommendationStore = create<RecommendationState>()(
           for (const rec of recs) {
             if (!rec.linkedEmployee) continue;
 
-            // Check for duplicate enrollment before proceeding
+            // 모든 프로그램에 대해 five_prs_enrollment_logs 중복 검사
+            const existingLog = await api.checkRecommendationEnrollmentDuplicate(
+              rec.linkedEmployee.employee_id,
+              programCode,
+            );
+            if (existingLog) {
+              skippedCount++;
+              set((state) => {
+                const idx = state.recommendations.findIndex((r) => r.tqc_id === rec.tqc_id);
+                if (idx >= 0) {
+                  state.recommendations[idx].enrollmentStatus = 'ENROLLED';
+                }
+              });
+              continue;
+            }
+
+            // INS-001의 경우 inspection_enrollments 중복도 추가 검사
             if (programCode === 'INS-001') {
               const existing = await api.checkDuplicateInspectionEnrollment(
                 rec.linkedEmployee.employee_id,

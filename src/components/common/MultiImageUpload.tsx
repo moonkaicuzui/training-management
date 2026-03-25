@@ -146,7 +146,7 @@ export function MultiImageUpload({
           {/* 기존 이미지 (URL) */}
           {existingImages.map((url, i) => (
             <div key={`existing-${i}`} className="relative group aspect-square rounded-lg overflow-hidden border">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img src={url} alt={`Uploaded image ${i + 1}`} className="w-full h-full object-cover" />
               {onRemoveExisting && (
                 <Button
                   variant="destructive"
@@ -165,7 +165,7 @@ export function MultiImageUpload({
             <div key={`new-${i}`} className="relative group aspect-square rounded-lg overflow-hidden border">
               <img
                 src={URL.createObjectURL(file)}
-                alt=""
+                alt={file.name || `New image ${i + 1}`}
                 className="w-full h-full object-cover"
                 onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
               />

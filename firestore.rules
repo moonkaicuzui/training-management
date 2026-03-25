@@ -176,7 +176,8 @@ service cloud.firestore {
     // ========== 사용자 역할 정보 ==========
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId
+        && request.resource.data.role in ['VIEWER', 'TRAINER'];
       allow update: if isAdmin();
       allow delete: if false;
     }
@@ -514,7 +515,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && hasAllowedDomain()
         && isValidString(request.resource.data.factory)
         && isOneOf(request.resource.data.result, ['PASS', 'FAIL']);
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isTrainer();
     }
 
     // ========== TECH / NEW MODEL (신규 모델) ==========
@@ -531,7 +532,7 @@ service cloud.firestore {
     match /md_failures/{docId} {
       allow read: if isAuthenticated() && hasAllowedDomain();
       allow create, update: if isAuthenticated() && hasAllowedDomain();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isTrainer();
     }
 
     // ========== 금속 신발 케이스 (Metal Shoe Cases - year subcollections) ==========
@@ -543,6 +544,7 @@ service cloud.firestore {
         allow read: if isAuthenticated() && hasAllowedDomain();
         allow create: if isAdmin() || isTrainer();
         allow update: if isAdmin() || isTrainer();
+        allow delete: if isAdmin() || isTrainer();
       }
     }
 
@@ -605,6 +607,83 @@ service cloud.firestore {
       allow create: if false; // Cloud Function only
       allow update: if false; // Cloud Function only
       allow delete: if isAdmin();
+    }
+
+    // ========== MD 이메일 수신자 (md_email_recipients) ==========
+    match /md_email_recipients/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 리포트 템플릿 (report_templates) ==========
+    match /report_templates/{templateId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 동기화 로그 (sync_logs) ==========
+    match /sync_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;
+    }
+
+    // ========== 동기화 메타데이터 (sync_metadata) ==========
+    match /sync_metadata/{metaId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 워크플로우 규칙 (workflow_rules) ==========
+    match /workflow_rules/{ruleId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 워크플로우 실행 로그 (workflow_execution_logs) ==========
+    match /workflow_execution_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;
+    }
+
+    // ========== 웹훅 (webhooks) ==========
+    match /webhooks/{webhookId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ========== 웹훅 로그 (webhook_logs) ==========
+    match /webhook_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;
+    }
+
+    // ========== 외부 연동 (integrations) ==========
+    match /integrations/{integrationId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ========== HR 동기화 로그 (hr_sync_logs) ==========
+    match /hr_sync_logs/{logId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create: if isAuthenticated() && hasAllowedDomain();
+      allow update, delete: if false;
+    }
+
+    // ========== HR 동기화 요약 (hr_sync_summary) ==========
+    match /hr_sync_summary/{summaryId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if false;
     }
   }
 }

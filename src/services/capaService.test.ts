@@ -173,6 +173,11 @@ describe('capaService', () => {
   // ----------------------------------------------------------
 
   describe('createCAPA', () => {
+    beforeEach(() => {
+      // L-6: generateUniqueCAPANumber에서 getDocs로 중복 체크하므로 모킹 필요
+      vi.mocked(getDocs).mockResolvedValue({ empty: true, docs: [], size: 0 } as never);
+    });
+
     it('CAPA를 생성하고 document ID를 반환한다', async () => {
       vi.mocked(addDoc).mockResolvedValue({ id: 'new-capa-id' } as never);
 

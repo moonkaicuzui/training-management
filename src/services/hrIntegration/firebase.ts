@@ -41,8 +41,14 @@ async function ensureHRAuth(): Promise<void> {
   try {
     hrAuth = getAuth(getHRApp());
     if (!hrAuth.currentUser) {
-      const email = import.meta.env.VITE_HR_AUTH_EMAIL || 'ksmoon@hsvina.com';
-      const password = import.meta.env.VITE_HR_AUTH_PASSWORD || 'ksmoon1!';
+      const email = import.meta.env.VITE_HR_AUTH_EMAIL;
+      const password = import.meta.env.VITE_HR_AUTH_PASSWORD;
+      if (!email) {
+        throw new Error('VITE_HR_AUTH_EMAIL environment variable is required');
+      }
+      if (!password) {
+        throw new Error('VITE_HR_AUTH_PASSWORD environment variable is required');
+      }
       await signInWithEmailAndPassword(hrAuth, email, password);
       logger.info('[HRIntegration] HR V2 Firebase Auth 로그인 성공');
     }

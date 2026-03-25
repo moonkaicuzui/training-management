@@ -177,6 +177,16 @@ export const createResult = async (
   >
 ): Promise<TrainingResultRecord> => {
   try {
+    // M-9: training_date 형식 검증 (YYYY-MM-DD)
+    if (data.training_date && !/^\d{4}-\d{2}-\d{2}/.test(data.training_date)) {
+      // 비-ISO 형식이면 정규화 시도
+      const parsed = new Date(data.training_date);
+      if (isNaN(parsed.getTime())) {
+        throw new Error(`Invalid training_date format: ${data.training_date}. Expected YYYY-MM-DD.`);
+      }
+      data = { ...data, training_date: parsed.toISOString().split('T')[0] };
+    }
+
     const resultId = `RES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const docRef = doc(db, COLLECTION, resultId);
 

@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useShallow } from 'zustand/react/shallow';
 
+import { logger } from '@/utils/logger';
 import { useCAPAStore } from '@/stores/capaStore';
 import type { CAPAStatus } from '@/types/capa';
 
@@ -78,7 +79,7 @@ export default function CAPADashboard() {
 
   // Fetch data on mount
   useEffect(() => {
-    Promise.all([fetchCAPAs(), fetchDashboardStats()]).catch(() => {});
+    Promise.all([fetchCAPAs(), fetchDashboardStats()]).catch((err) => { logger.error('CAPADashboard 초기 데이터 로드 실패:', err); });
   }, [fetchCAPAs, fetchDashboardStats]);
 
   // Filter CAPAs based on local state

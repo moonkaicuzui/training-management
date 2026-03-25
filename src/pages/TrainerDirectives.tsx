@@ -25,6 +25,7 @@ import {
   getEffectivenessReports,
 } from '@/services/api';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 import type {
   TrainerDirective,
   TrainingEffectiveness,
@@ -35,6 +36,7 @@ import EffectivenessTab from '@/components/trainer/EffectivenessTab';
 
 export default function TrainerDirectives() {
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const [todayDirective, setTodayDirective] =
     useState<TrainerDirective | null>(null);
@@ -94,6 +96,10 @@ export default function TrainerDirectives() {
       });
     } catch (error) {
       logger.error('Failed to acknowledge directive:', error);
+      toast({
+        title: t('trainerDirectives.acknowledgeFailed', 'Failed to acknowledge directive'),
+        variant: 'destructive',
+      });
     } finally {
       setAcknowledging(false);
     }

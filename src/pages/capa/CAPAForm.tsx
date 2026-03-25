@@ -35,7 +35,37 @@ import {
   type CAPAPriority,
   type CAPASource,
   type CAPAInput,
+  type QualityIssueContext,
 } from '@/types/capa';
+
+// ========== Quality Context Constants ==========
+
+const PROCESS_OPTIONS = [
+  'NOSEW', 'HF', 'PRINTING', 'STITCHING', 'ASSEMBLY', 'BOTTOM', 'CUTTING', 'REPACKING',
+] as const;
+
+const BUILDING_OPTIONS = [
+  'A1', 'A2', 'B1', 'B2', 'B3', 'C', 'D', 'E1', 'E2',
+] as const;
+
+const LINKED_SYSTEM_OPTIONS = [
+  { value: 'OSC', label: 'OSC' },
+  { value: 'AQL', label: 'AQL' },
+  { value: 'RETURN', label: 'Return Dashboard' },
+] as const;
+
+// ========== Form Data Types ==========
+
+interface QualityContextFormData {
+  model: string;
+  supplierName: string;
+  process: string;
+  building: string;
+  defectLabel: string;
+  responsibleProcess: string;
+  discoveryProcess: string;
+  linkedSystems: string[];
+}
 
 interface FormData {
   title: string;
@@ -48,7 +78,19 @@ interface FormData {
   affectedArea: string;
   immediateActions: string;
   dueDate: string;
+  qualityContext: QualityContextFormData;
 }
+
+const initialQualityContext: QualityContextFormData = {
+  model: '',
+  supplierName: '',
+  process: '',
+  building: '',
+  defectLabel: '',
+  responsibleProcess: '',
+  discoveryProcess: '',
+  linkedSystems: [],
+};
 
 const initialFormData: FormData = {
   title: '',
@@ -61,6 +103,7 @@ const initialFormData: FormData = {
   affectedArea: '',
   immediateActions: '',
   dueDate: '',
+  qualityContext: { ...initialQualityContext },
 };
 
 export default function CAPAForm() {
@@ -93,6 +136,7 @@ export default function CAPAForm() {
   // Populate form when editing
   useEffect(() => {
     if (currentCAPA && isEditing) {
+      const qc = currentCAPA.qualityContext;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 편집 모드 초기화
       setFormData({
         title: currentCAPA.title,
@@ -109,6 +153,16 @@ export default function CAPAForm() {
               ? currentCAPA.dueDate.toISOString().split('T')[0]
               : new Date((currentCAPA.dueDate as { toDate: () => Date }).toDate()).toISOString().split('T')[0])
           : '',
+        qualityContext: {
+          model: qc?.model || '',
+          supplierName: qc?.supplierName || '',
+          process: qc?.process || '',
+          building: qc?.building || '',
+          defectLabel: qc?.defectLabel || '',
+          responsibleProcess: qc?.responsibleProcess || '',
+          discoveryProcess: qc?.discoveryProcess || '',
+          linkedSystems: qc?.linkedSystems || [],
+        },
       });
     }
   }, [currentCAPA, isEditing]);
@@ -155,6 +209,19 @@ export default function CAPAForm() {
 
     setIsSubmitting(true);
     try {
+      // qualityContext: 빈 값은 제거하여 깔끔한 Firestore 데이터 유지
+      const qcForm = formData.qualityContext;
+      const qualityContext: QualityIssueContext = {};
+      if (qcForm.model.trim()) qualityContext.model = qcForm.model.trim();
+      if (qcForm.supplierName.trim()) qualityContext.supplierName = qcForm.supplierName.trim();
+      if (qcForm.process) qualityContext.process = qcForm.process;
+      if (qcForm.building) qualityContext.building = qcForm.building;
+      if (qcForm.defectLabel.trim()) qualityContext.defectLabel = qcForm.defectLabel.trim();
+      if (qcForm.responsibleProcess) qualityContext.responsibleProcess = qcForm.responsibleProcess;
+      if (qcForm.discoveryProcess) qualityContext.discoveryProcess = qcForm.discoveryProcess;
+      if (qcForm.linkedSystems.length > 0) qualityContext.linkedSystems = qcForm.linkedSystems;
+      const hasQualityContext = Object.keys(qualityContext).length > 0;
+
       const capaInput: CAPAInput = {
         title: formData.title,
         description: formData.description,
@@ -169,6 +236,7 @@ export default function CAPAForm() {
           affectedArea: formData.affectedArea,
           immediateActions: formData.immediateActions || undefined,
         },
+        qualityContext: hasQualityContext ? qualityContext : undefined,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
         owner: user?.email || 'unknown',
       };
@@ -442,6 +510,186 @@ export default function CAPAForm() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quality Issue Context */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('capa.qualityContext.title')}</CardTitle>
+          <CardDescription>{t('capa.qualityContext.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* 모델명 */}
+            <div className="space-y-2">
+              <Label htmlFor="qc-model">{t('capa.qualityContext.model')}</Label>
+              <Input
+                id="qc-model"
+                value={formData.qualityContext.model}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, model: e.target.value },
+                  })
+                }
+                placeholder={t('capa.qualityContext.modelPlaceholder')}
+              />
+            </div>
+
+            {/* 업체 */}
+            <div className="space-y-2">
+              <Label htmlFor="qc-supplier">{t('capa.qualityContext.supplierName')}</Label>
+              <Input
+                id="qc-supplier"
+                value={formData.qualityContext.supplierName}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, supplierName: e.target.value },
+                  })
+                }
+                placeholder={t('capa.qualityContext.supplierPlaceholder')}
+              />
+            </div>
+
+            {/* 불량 유형 */}
+            <div className="space-y-2">
+              <Label htmlFor="qc-defect">{t('capa.qualityContext.defectLabel')}</Label>
+              <Input
+                id="qc-defect"
+                value={formData.qualityContext.defectLabel}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, defectLabel: e.target.value },
+                  })
+                }
+                placeholder={t('capa.qualityContext.defectPlaceholder')}
+              />
+            </div>
+
+            {/* 공정 */}
+            <div className="space-y-2">
+              <Label>{t('capa.qualityContext.process')}</Label>
+              <Select
+                value={formData.qualityContext.process}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, process: value },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('capa.qualityContext.selectProcess')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROCESS_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 건물 */}
+            <div className="space-y-2">
+              <Label>{t('capa.qualityContext.building')}</Label>
+              <Select
+                value={formData.qualityContext.building}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, building: value },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('capa.qualityContext.selectBuilding')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {BUILDING_OPTIONS.map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 귀책 공정 */}
+            <div className="space-y-2">
+              <Label>{t('capa.qualityContext.responsibleProcess')}</Label>
+              <Select
+                value={formData.qualityContext.responsibleProcess}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, responsibleProcess: value },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('capa.qualityContext.selectProcess')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROCESS_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 발견 공정 */}
+            <div className="space-y-2">
+              <Label>{t('capa.qualityContext.discoveryProcess')}</Label>
+              <Select
+                value={formData.qualityContext.discoveryProcess}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    qualityContext: { ...formData.qualityContext, discoveryProcess: value },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('capa.qualityContext.selectProcess')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROCESS_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* 연동 시스템 체크박스 */}
+          <div className="space-y-2">
+            <Label>{t('capa.qualityContext.linkedSystems')}</Label>
+            <div className="flex flex-wrap gap-3">
+              {LINKED_SYSTEM_OPTIONS.map((system) => {
+                const isChecked = formData.qualityContext.linkedSystems.includes(system.value);
+                return (
+                  <label key={system.value} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        const updated = isChecked
+                          ? formData.qualityContext.linkedSystems.filter((s) => s !== system.value)
+                          : [...formData.qualityContext.linkedSystems, system.value];
+                        setFormData({
+                          ...formData,
+                          qualityContext: { ...formData.qualityContext, linkedSystems: updated },
+                        });
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm">{system.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Actions */}
       <div className="flex justify-end gap-4">

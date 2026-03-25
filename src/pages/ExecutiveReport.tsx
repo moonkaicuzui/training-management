@@ -4,7 +4,7 @@
  * AI-powered monthly quality & training report generation.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Loader2,
@@ -51,6 +51,13 @@ export default function ExecutiveReport() {
   const [report, setReport] = useState('');
   const [provider, setProvider] = useState('');
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -84,7 +91,8 @@ export default function ExecutiveReport() {
     if (!report) return;
     await navigator.clipboard.writeText(report);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handlePrint = () => {

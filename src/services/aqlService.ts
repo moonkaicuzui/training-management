@@ -24,6 +24,7 @@ import {
   orderBy,
   serverTimestamp,
   limit,
+  where,
   Timestamp,
   writeBatch,
 } from '@/services/firebase';
@@ -314,6 +315,39 @@ export async function getAqlEnrollmentLogs(): Promise<AqlEnrollmentLog[]> {
       year_month: data.year_month || '',
     };
   });
+}
+
+export async function checkAqlEnrollmentDuplicate(
+  employeeId: string,
+  programCode: string,
+): Promise<AqlEnrollmentLog | null> {
+  const q = query(
+    collection(db, COLLECTIONS.ENROLLMENT_LOGS),
+    where('employee_id', '==', employeeId),
+    where('program_code', '==', programCode),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const data = snapshot.docs[0].data();
+  return {
+    log_id: snapshot.docs[0].id,
+    aql_employee_no: data.aql_employee_no || '',
+    aql_employee_name: data.aql_employee_name || '',
+    employee_id: data.employee_id || '',
+    employee_name: data.employee_name || '',
+    program_code: data.program_code || '',
+    program_name: data.program_name || '',
+    reason: data.reason || 'INSPECTOR_FAIL',
+    defect_types: data.defect_types || [],
+    fail_rate: data.fail_rate || 0,
+    fail_po_numbers: data.fail_po_numbers || [],
+    supervisor_no: data.supervisor_no,
+    supervisor_name: data.supervisor_name,
+    enrolled_by: data.enrolled_by || '',
+    enrolled_at: convertTimestamp(data.enrolled_at),
+    year_month: data.year_month || '',
+  };
 }
 
 export async function createAqlEnrollmentLog(

@@ -192,6 +192,23 @@ function generateCAPANumber(): string {
   return `CAPA-${year}-${timestamp}-${random}`;
 }
 
+/**
+ * CAPA 번호 유니크 보장: 생성 후 Firestore에서 중복 체크, 중복 시 재생성 (최대 5회)
+ */
+async function generateUniqueCAPANumber(): Promise<string> {
+  const MAX_ATTEMPTS = 5;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    const capaNumber = generateCAPANumber();
+    const q = query(collection(db, COLLECTION), where('capaNumber', '==', capaNumber));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return capaNumber;
+    }
+    logger.warn(`[capaService] CAPA number collision: ${capaNumber}, retrying...`);
+  }
+  throw new Error('Failed to generate unique CAPA number after maximum attempts');
+}
+
 // ============================================================
 // Read Operations
 // ============================================================
@@ -254,8 +271,9 @@ export async function getCAPA(id: string): Promise<CAPA | null> {
 export async function createCAPA(input: CAPAInput): Promise<string> {
   try {
     validateCAPAInput(input);
+    const capaNumber = await generateUniqueCAPANumber();
     const capaData = {
-      capaNumber: generateCAPANumber(),
+      capaNumber,
       title: input.title,
       description: input.description,
       type: input.type,
@@ -267,6 +285,7 @@ export async function createCAPA(input: CAPAInput): Promise<string> {
         ...input.discovery,
         discoveredAt: serverTimestamp(),
       },
+      qualityContext: input.qualityContext || null,
       owner: input.owner,
       team: input.team || [],
       relatedTrainingPrograms: input.relatedTrainingPrograms || [],
@@ -322,13 +341,16 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
       validateStageTransitionData(currentStatus, stageUpdate, existingData);
     }
 
+    const existingDoc = snapshot.data() as Record<string, unknown>;
     const updateData: Record<string, unknown> = {
       status: stageUpdate.status,
       updatedAt: serverTimestamp(),
     };
 
+    // H-5: 기존 단계 데이터와 merge하여 데이터 손실 방지
     if (stageUpdate.investigation) {
       updateData.investigation = {
+        ...(existingDoc.investigation as Record<string, unknown> || {}),
         ...stageUpdate.investigation,
         investigatedAt: serverTimestamp(),
       };
@@ -336,6 +358,7 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
 
     if (stageUpdate.action) {
       updateData.action = {
+        ...(existingDoc.action as Record<string, unknown> || {}),
         ...stageUpdate.action,
         plannedAt: serverTimestamp(),
       };
@@ -343,6 +366,7 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
 
     if (stageUpdate.verification) {
       updateData.verification = {
+        ...(existingDoc.verification as Record<string, unknown> || {}),
         ...stageUpdate.verification,
         verifiedAt: serverTimestamp(),
       };
@@ -350,9 +374,16 @@ export async function updateCAPAStage(id: string, stageUpdate: CAPAStageUpdate):
 
     if (stageUpdate.closure) {
       updateData.closure = {
+        ...(existingDoc.closure as Record<string, unknown> || {}),
         ...stageUpdate.closure,
         closedAt: serverTimestamp(),
       };
+    }
+
+    // M-3: rejection 사유 저장
+    if (stageUpdate.status === 'rejected' && stageUpdate.rejectionReason) {
+      updateData.rejectionReason = stageUpdate.rejectionReason;
+      updateData.rejectedAt = serverTimestamp();
     }
 
     await updateDoc(docRef, updateData);

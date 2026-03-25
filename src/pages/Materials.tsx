@@ -45,7 +45,7 @@ export default function Materials() {
       setFolders(foldersData);
       setMaterials(materialsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ export default function Materials() {
       await api.updateMaterial(materialId, { isStarred: !material.isStarred });
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle star');
+      setError(err instanceof Error ? err.message : t('common.errors.updateFailed'));
     }
   };
 
@@ -129,7 +129,7 @@ export default function Materials() {
       setSelectedItems([]);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete materials');
+      setError(err instanceof Error ? err.message : t('common.errors.deleteFailed'));
     }
   };
 
@@ -138,7 +138,7 @@ export default function Materials() {
       await api.deleteMaterial(materialId);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete material');
+      setError(err instanceof Error ? err.message : t('common.errors.deleteFailed'));
     }
   };
 
@@ -156,7 +156,7 @@ export default function Materials() {
       setNewFolderParentId(null);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create folder');
+      setError(err instanceof Error ? err.message : t('common.errors.saveFailed'));
     }
   };
 

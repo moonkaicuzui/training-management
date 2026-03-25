@@ -84,6 +84,14 @@
       "paginationNav": "Điều hướng phân trang",
       "sortColumn": "Sắp xếp theo {{column}}",
       "clickableRow": "Nhấp để xem chi tiết {{name}}"
+    },
+    "errors": {
+      "loadFailed": "Không thể tải dữ liệu",
+      "saveFailed": "Lưu thất bại",
+      "deleteFailed": "Xóa thất bại",
+      "uploadFailed": "Tải lên thất bại",
+      "exportFailed": "Xuất thất bại",
+      "updateFailed": "Cập nhật thất bại"
     }
   },
   "header": {
@@ -2396,6 +2404,8 @@
     "stageUpdatedDesc": "Giai đoạn CAPA đã được cập nhật thành công.",
     "capaRejected": "CAPA đã bị từ chối",
     "capaRejectedDesc": "CAPA đã bị từ chối.",
+    "stageUpdateError": "Lỗi cập nhật giai đoạn",
+    "stageUpdateErrorDesc": "Không thể cập nhật giai đoạn",
     "confirmReject": "Xác nhận từ chối",
     "confirmRejectDesc": "Bạn có chắc chắn muốn từ chối CAPA này? Hành động này không thể hoàn tác.",
     "investigatedBy": "Người điều tra",
@@ -2435,6 +2445,23 @@
       "effectivenessScoreLabel": "Điểm hiệu quả (0-100)",
       "effectivenessScorePlaceholder": "Nhập điểm từ 0 đến 100",
       "immediateActionsPlaceholder": "Hành động được thực hiện ngay sau khi phát hiện vấn đề"
+    },
+    "qualityContext": {
+      "title": "Bối cảnh vấn đề chất lượng",
+      "description": "Nhập thông tin chi tiết về vấn đề chất lượng (tùy chọn)",
+      "model": "Model",
+      "modelPlaceholder": "Ví dụ: GEL-KAYANO 31",
+      "supplierName": "Nhà cung cấp",
+      "supplierPlaceholder": "Nhập tên nhà cung cấp",
+      "defectLabel": "Loại lỗi",
+      "defectPlaceholder": "Ví dụ: Lỗi dán, Lỗi may",
+      "process": "Quy trình",
+      "selectProcess": "Chọn quy trình",
+      "building": "Tòa nhà",
+      "selectBuilding": "Chọn tòa nhà",
+      "responsibleProcess": "Quy trình chịu trách nhiệm",
+      "discoveryProcess": "Quy trình phát hiện",
+      "linkedSystems": "Hệ thống liên kết"
     },
     "validation": {
       "titleRequired": "Tiêu đề là bắt buộc.",
@@ -3777,7 +3804,23 @@
     "subjectTemplate": "Mẫu tiêu đề",
     "emailPlaceholder": "Nhập địa chỉ email",
     "invalidEmail": "Định dạng email không hợp lệ",
-    "duplicateEmail": "Email đã được thêm"
+    "duplicateEmail": "Email đã được thêm",
+    "notSet": "(Chưa đặt)",
+    "activeCount": "{{enabled}}/{{total}} Hoạt động",
+    "category": {
+      "training": "Vận hành đào tạo",
+      "trainingEn": "Training Operations",
+      "newTqc": "TQC mới",
+      "newTqcEn": "New TQC",
+      "equipment": "Kiểm tra thiết bị",
+      "equipmentEn": "Equipment Compliance",
+      "inspection": "Đào tạo kiểm tra",
+      "inspectionEn": "Inspection Training",
+      "capa": "CAPA",
+      "capaEn": "CAPA",
+      "executive": "Ban lãnh đạo",
+      "executiveEn": "Executive"
+    }
   },
   "systemFeedback": {
     "title": "Phản hồi hệ thống",
@@ -3830,7 +3873,11 @@
       "screenshotsHint": "Đính kèm ảnh chụp liên quan (tùy chọn)",
       "uploadingScreenshots": "Đang tải ảnh... ({{completed}}/{{total}})",
       "submitting": "Đang gửi...",
-      "submit": "Gửi"
+      "submit": "Gửi",
+      "uploadFailed": "Tải ảnh thất bại",
+      "uploadFailedDesc": "Không thể tải ảnh chụp màn hình. Vui lòng thử lại hoặc gửi không có ảnh.",
+      "submitFailed": "Gửi thất bại",
+      "submitFailedDesc": "Không thể gửi phản hồi. Vui lòng thử lại."
     }
   },
   "errors": {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import * as api from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -24,6 +25,7 @@ import type {
 
 export default function CertificatesPage() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const user = useAuthStore((state) => state.user);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +42,7 @@ export default function CertificatesPage() {
   const [issuedSearchQuery, setIssuedSearchQuery] = useState('');
   const [showRevokeDialog, setShowRevokeDialog] = useState<string | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
+  const [, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -76,6 +79,7 @@ export default function CertificatesPage() {
       })));
     } catch (err) {
       logger.error('Failed to load data:', err);
+      setError(t('certificates.loadError', 'Failed to load certificate data'));
     } finally {
       setIsLoading(false);
     }
@@ -88,13 +92,14 @@ export default function CertificatesPage() {
       setIssuedCertificates(data);
     } catch (err) {
       logger.error('Failed to load issued certificates:', err);
+      setError(t('certificates.loadIssuedError', 'Failed to load issued certificates'));
     } finally {
       setIsLoadingIssued(false);
     }
   }, []);
 
   useEffect(() => {
-    Promise.all([loadData(), loadIssuedCertificates()]).catch(() => {});
+    Promise.all([loadData(), loadIssuedCertificates()]).catch((err) => { logger.error('Certificates 초기 데이터 로드 실패:', err); });
   }, [loadData, loadIssuedCertificates]);
 
   // Eligible results (already filtered to PASS only)
@@ -161,6 +166,11 @@ export default function CertificatesPage() {
       await loadIssuedCertificates();
     } catch (err) {
       logger.error('Failed to revoke certificate:', err);
+      setError(t('certificates.revokeError', 'Failed to revoke certificate'));
+      toast({
+        title: t('certificates.revokeError', 'Failed to revoke certificate'),
+        variant: 'destructive',
+      });
     }
   };
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
@@ -37,7 +38,15 @@ export default function Dashboard() {
     fetchGradeDistribution,
     fetchRetrainingTargets,
     fetchExpiringTrainings,
-  } = useNormalizedTrainingStore();
+  } = useNormalizedTrainingStore(useShallow((s) => ({
+    derived: s.derived,
+    loading: s.loading,
+    fetchDashboardStats: s.fetchDashboardStats,
+    fetchMonthlyData: s.fetchMonthlyData,
+    fetchGradeDistribution: s.fetchGradeDistribution,
+    fetchRetrainingTargets: s.fetchRetrainingTargets,
+    fetchExpiringTrainings: s.fetchExpiringTrainings,
+  })));
 
   const dashboardStats = derived.dashboard.stats;
   const monthlyData = derived.dashboard.monthlyData;

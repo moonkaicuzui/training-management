@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useShallow } from 'zustand/react/shallow';
 import { useInspectionStore } from '@/stores/inspectionStore';
+import { logger } from '@/utils/logger';
 import { LazyBarChart } from '@/components/charts/LazyCharts';
 import { InspectionStrikeIndicator } from '@/components/inspection/InspectionStrikeIndicator';
 
@@ -44,7 +45,7 @@ export default function InspectionDashboard() {
   })));
 
   useEffect(() => {
-    Promise.all([fetchResults(), fetchEnrollments()]).catch(() => {});
+    Promise.all([fetchResults(), fetchEnrollments()]).catch((err) => { logger.error('InspectionDashboard 초기 데이터 로드 실패:', err); });
   }, [fetchResults, fetchEnrollments]);
 
   const totalInspections = results.length;

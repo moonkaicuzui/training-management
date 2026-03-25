@@ -25,13 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useShallow } from 'zustand/react/shallow';
 import { useNewTQCStore } from '@/stores/newTqcStore';
 import { useUIStore } from '@/stores/uiStore';
 
 export default function NewTQCCertificates() {
   const { t } = useTranslation();
-  const { trainees, updateTrainee } = useNewTQCStore();
-  const { addToast } = useUIStore();
+  const { trainees, updateTrainee } = useNewTQCStore(useShallow((s) => ({
+    trainees: s.trainees, updateTrainee: s.updateTrainee,
+  })));
+  const { addToast } = useUIStore(useShallow((s) => ({ addToast: s.addToast })));
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   // Only trainees who passed final result are eligible

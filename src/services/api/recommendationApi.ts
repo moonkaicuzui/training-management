@@ -69,6 +69,13 @@ export async function getRecommendationEnrollmentLogs(): Promise<FivePrsEnrollme
   return recommendationService.getEnrollmentLogs();
 }
 
+export async function checkRecommendationEnrollmentDuplicate(
+  employeeId: string,
+  programCode: string,
+): Promise<FivePrsEnrollmentLog | null> {
+  return recommendationService.checkEnrollmentDuplicate(employeeId, programCode);
+}
+
 export async function createRecommendationEnrollmentLog(
   input: Omit<FivePrsEnrollmentLog, 'log_id' | 'enrolled_at'>
 ): Promise<FivePrsEnrollmentLog> {

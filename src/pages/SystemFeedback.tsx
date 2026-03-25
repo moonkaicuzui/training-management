@@ -18,6 +18,7 @@ import { MessageSquarePlus, Plus, AlertTriangle, Loader2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useToast } from '@/hooks/use-toast';
 import {
   getAllFeedback,
   getFeedback,
@@ -39,6 +40,7 @@ import { FeedbackFormDialog, defaultFeedbackForm, type FeedbackFormData } from '
 
 export default function SystemFeedback() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const language = useUIStore((s) => s.language);
   const { user, hasPermission } = useAuthStore(
     useShallow((s) => ({ user: s.user, hasPermission: s.hasPermission }))
@@ -72,7 +74,7 @@ export default function SystemFeedback() {
       const data = await getAllFeedback();
       setFeedbackList(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load feedback');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -134,12 +136,21 @@ export default function SystemFeedback() {
     try {
       let screenshotUrls: string[] = [];
       if (formData.screenshotFiles.length > 0) {
-        screenshotUrls = await uploadFeedbackScreenshots(
-          formData.screenshotFiles,
-          (completed, total) => {
-            setUploadProgress(t('systemFeedback.form.uploadingScreenshots', { completed, total }));
-          }
-        );
+        try {
+          screenshotUrls = await uploadFeedbackScreenshots(
+            formData.screenshotFiles,
+            (completed, total) => {
+              setUploadProgress(t('systemFeedback.form.uploadingScreenshots', { completed, total }));
+            }
+          );
+        } catch {
+          toast({
+            title: t('systemFeedback.form.uploadFailed'),
+            description: t('systemFeedback.form.uploadFailedDesc'),
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       const input: CreateFeedbackInput = {
@@ -156,7 +167,11 @@ export default function SystemFeedback() {
       setFormData(defaultFeedbackForm);
       await fetchData();
     } catch {
-      // error handled
+      toast({
+        title: t('systemFeedback.form.submitFailed'),
+        description: t('systemFeedback.form.submitFailedDesc'),
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
       setUploadProgress('');
@@ -173,7 +188,10 @@ export default function SystemFeedback() {
         if (updated) setViewingFeedback(updated);
       }
     } catch {
-      // error handled
+      toast({
+        title: t('systemFeedback.statusChangeFailed', 'Failed to change status'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -192,7 +210,10 @@ export default function SystemFeedback() {
       if (updated) setViewingFeedback(updated);
       await fetchData();
     } catch {
-      // error handled
+      toast({
+        title: t('systemFeedback.commentFailed', 'Failed to add comment'),
+        variant: 'destructive',
+      });
     } finally {
       setIsAddingComment(false);
     }

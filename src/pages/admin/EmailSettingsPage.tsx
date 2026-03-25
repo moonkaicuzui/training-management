@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/utils/logger';
 import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { Card, CardContent } from '@/components/ui/card';
@@ -191,13 +192,13 @@ const DEFAULT_EMAIL_TYPES: Record<string, EmailTypeConfig> = {
   },
 };
 
-const CATEGORY_LABELS: Record<string, { name: string; nameEn: string }> = {
-  training: { name: '교육 운영', nameEn: 'Training Operations' },
-  'new-tqc': { name: '신입 TQC', nameEn: 'New TQC' },
-  equipment: { name: '설비 점검', nameEn: 'Equipment Compliance' },
-  inspection: { name: '검사 교육', nameEn: 'Inspection Training' },
-  capa: { name: 'CAPA', nameEn: 'CAPA' },
-  executive: { name: '경영진', nameEn: 'Executive' },
+const CATEGORY_LABELS: Record<string, { nameKey: string; nameEnKey: string }> = {
+  training: { nameKey: 'emailSettings.category.training', nameEnKey: 'emailSettings.category.trainingEn' },
+  'new-tqc': { nameKey: 'emailSettings.category.newTqc', nameEnKey: 'emailSettings.category.newTqcEn' },
+  equipment: { nameKey: 'emailSettings.category.equipment', nameEnKey: 'emailSettings.category.equipmentEn' },
+  inspection: { nameKey: 'emailSettings.category.inspection', nameEnKey: 'emailSettings.category.inspectionEn' },
+  capa: { nameKey: 'emailSettings.category.capa', nameEnKey: 'emailSettings.category.capaEn' },
+  executive: { nameKey: 'emailSettings.category.executive', nameEnKey: 'emailSettings.category.executiveEn' },
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -320,7 +321,7 @@ function EmailTypeCard({
                   className="px-3 py-2 rounded-md border bg-muted/30 text-sm cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => { setSubjectDraft(emailType.subjectTemplate || ''); setEditingSubject(true); }}
                 >
-                  {emailType.subjectTemplate || '(Not set)'}
+                  {emailType.subjectTemplate || t('emailSettings.notSet')}
                 </div>
               )}
             </div>
@@ -456,14 +457,14 @@ export default function EmailSettingsPage() {
               updatedAt: serverTimestamp(),
             });
           } catch (err) {
-            console.warn('[EmailSettings] Could not create default config:', err);
+            logger.warn('[EmailSettings] Could not create default config:', err);
             setEmailTypes(DEFAULT_EMAIL_TYPES);
           }
         }
         setLoading(false);
       },
       (error) => {
-        console.error('[EmailSettings] Snapshot error:', error);
+        logger.error('[EmailSettings] Snapshot error:', error);
         setEmailTypes(DEFAULT_EMAIL_TYPES);
         setLoading(false);
       }
@@ -487,7 +488,7 @@ export default function EmailSettingsPage() {
           { merge: true }
         );
       } catch (error) {
-        console.error('[EmailSettings] Update error:', error);
+        logger.error('[EmailSettings] Update error:', error);
       } finally {
         setSaving(false);
       }
@@ -530,7 +531,7 @@ export default function EmailSettingsPage() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
           <Settings className="h-4 w-4" />
           <Badge variant="outline">
-            {enabledCount}/{typeList.length} Active
+            {t('emailSettings.activeCount', { enabled: enabledCount, total: typeList.length })}
           </Badge>
           {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         </div>
@@ -543,9 +544,9 @@ export default function EmailSettingsPage() {
           <div key={category} className="space-y-3">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                {catLabel?.name || category}
+                {catLabel ? t(catLabel.nameKey) : category}
               </h2>
-              <span className="text-xs text-muted-foreground">({catLabel?.nameEn})</span>
+              <span className="text-xs text-muted-foreground">({catLabel ? t(catLabel.nameEnKey) : ''})</span>
             </div>
             {types.map((emailType) => (
               <EmailTypeCard

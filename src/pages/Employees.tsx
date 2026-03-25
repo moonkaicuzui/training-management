@@ -9,7 +9,7 @@ import { EmployeeFilters } from '@/components/employee/EmployeeFilters';
 import { EmployeeTableCard } from '@/components/employee/EmployeeTableCard';
 import { EmployeeImportDialog } from '@/components/employee/EmployeeImportDialog';
 import { EmployeeCreateDialog } from '@/components/employee/EmployeeCreateDialog';
-import { useExport } from '@/hooks/useExport';
+import { useExport, toExportData } from '@/hooks/useExport';
 import { useEmployeesData, useNormalizedTrainingStore } from '@/stores/normalizedStore';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -95,14 +95,14 @@ export default function Employees() {
         <div className="flex flex-wrap gap-2">
           <ExportDropdown
             onExportExcel={() =>
-              exportExcel(employees as unknown as Record<string, unknown>[], {
+              exportExcel(toExportData(employees), {
                 sheetName: 'Employees',
                 filename: 'employees',
               })
             }
             onExportPDF={() =>
               exportPDF(
-                employees as unknown as Record<string, unknown>[],
+                toExportData(employees),
                 [
                   { header: t('employee.id'), dataKey: 'employee_id' },
                   { header: t('employee.name'), dataKey: 'employee_name' },

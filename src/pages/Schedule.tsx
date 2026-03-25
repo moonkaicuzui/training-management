@@ -55,6 +55,7 @@ import {
   subDays,
 } from 'date-fns';
 import { ko, vi, enUS } from 'date-fns/locale';
+import { logger } from '@/utils/logger';
 import type { SessionStatus, TrainingLevel, TrainingType } from '@/types';
 
 import ScheduleCalendar from '@/components/schedule/ScheduleCalendar';
@@ -129,7 +130,7 @@ export default function Schedule() {
         status: statusFilter !== 'all' ? statusFilter as SessionStatus : undefined,
       }),
       fetchPrograms({}),
-    ]).catch(() => {});
+    ]).catch((err) => { logger.error('Schedule 초기 데이터 로드 실패:', err); });
   }, [statusFilter]);
 
   // Navigation handlers

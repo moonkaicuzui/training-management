@@ -66,7 +66,7 @@ export default function AuditCompliance() {
       setFindings(findingsData);
       setCorrectiveActions(actionsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit data');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }

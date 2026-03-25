@@ -23,11 +23,20 @@ import type { Employee, TrainingProgram } from '@/types';
 
 // ========== Date Helpers ==========
 
+/**
+ * GAS 데이터의 날짜를 파싱합니다.
+ * GAS에서 전달되는 형식은 MM/DD/YYYY (미국식)이며,
+ * 폴백으로 YYYY/MM/DD 형식도 지원합니다.
+ * new Date(dateValue)가 먼저 시도되며, 실패 시 수동 파싱합니다.
+ */
 function parseDate(dateValue: string): Date | null {
   if (!dateValue) return null;
   const standardDate = new Date(dateValue);
   if (!isNaN(standardDate.getTime())) return standardDate;
 
+  // 수동 파싱: YYYY/MM/DD 또는 MM/DD/YYYY 형식 지원
+  // GAS 데이터는 MM/DD/YYYY 형식이므로 parts[0]이 4자리가 아닌 경우
+  // parts[0]=MM, parts[1]=DD, parts[2]=YYYY로 해석
   const parts = dateValue.match(/(\d+)/g);
   if (parts && parts.length === 3) {
     let y = parts[0].length === 4 ? parts[0] : parts[2];

@@ -10,6 +10,7 @@ import type {
   Position,
   DashboardStats,
 } from '@/types';
+import { getExpiryDate } from '@/utils/certificationUtils';
 
 // ========== Types ==========
 
@@ -56,37 +57,21 @@ export function isTrainingValid(
   if (result.result !== 'PASS') return false;
   if (!program.validity_months) return true; // No expiration
 
-  const trainingDate = new Date(result.training_date);
-  const expirationDate = new Date(trainingDate);
-  const day = expirationDate.getDate();
-  expirationDate.setMonth(expirationDate.getMonth() + program.validity_months);
-  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
-  if (expirationDate.getDate() !== day) {
-    expirationDate.setDate(0);
-  }
+  const expirationDate = getExpiryDate(result, program);
+  if (!expirationDate) return true;
 
   return expirationDate > referenceDate;
 }
 
 /**
  * Get the expiration date for a training result
+ * certificationUtils.getExpiryDate에 위임 (중복 로직 제거)
  */
 export function getExpirationDate(
   result: TrainingResultRecord,
   program: TrainingProgram
 ): Date | null {
-  if (!program.validity_months) return null;
-
-  const trainingDate = new Date(result.training_date);
-  const expirationDate = new Date(trainingDate);
-  const day = expirationDate.getDate();
-  expirationDate.setMonth(expirationDate.getMonth() + program.validity_months);
-  // Clamp to end-of-month on overflow (e.g., Jan 31 + 1 month = Feb 28)
-  if (expirationDate.getDate() !== day) {
-    expirationDate.setDate(0);
-  }
-
-  return expirationDate;
+  return getExpiryDate(result, program);
 }
 
 /**

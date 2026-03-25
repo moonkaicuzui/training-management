@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { Loader2, AlertCircle, BrainCircuit, Clipboard, Printer, Users, Package, UserPlus } from 'lucide-react';
@@ -32,6 +32,7 @@ export default function FivePrsAiInstructions() {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isAutoEnrolling, setIsAutoEnrolling] = useState(false);
   const [enrollResult, setEnrollResult] = useState<{
     enrolled: number;
@@ -62,6 +63,12 @@ export default function FivePrsAiInstructions() {
   const clearError = useFivePrsStore((s) => s.clearError);
 
   useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     fetchMonths();
   }, [fetchMonths]);
 
@@ -79,7 +86,8 @@ export default function FivePrsAiInstructions() {
     if (!aiBriefing) return;
     await navigator.clipboard.writeText(aiBriefing);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handlePrint = () => {

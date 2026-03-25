@@ -84,6 +84,14 @@
       "paginationNav": "Pagination navigation",
       "sortColumn": "Sort by {{column}}",
       "clickableRow": "Click to view {{name}} details"
+    },
+    "errors": {
+      "loadFailed": "Failed to load data",
+      "saveFailed": "Failed to save",
+      "deleteFailed": "Failed to delete",
+      "uploadFailed": "Failed to upload",
+      "exportFailed": "Failed to export",
+      "updateFailed": "Failed to update"
     }
   },
   "header": {
@@ -2396,6 +2404,8 @@
     "stageUpdatedDesc": "CAPA stage has been successfully updated.",
     "capaRejected": "CAPA Rejected",
     "capaRejectedDesc": "CAPA has been rejected.",
+    "stageUpdateError": "Stage Update Error",
+    "stageUpdateErrorDesc": "Failed to update stage",
     "confirmReject": "Confirm Rejection",
     "confirmRejectDesc": "Are you sure you want to reject this CAPA? This action cannot be undone.",
     "investigatedBy": "Investigated By",
@@ -2435,6 +2445,23 @@
       "effectivenessScoreLabel": "Effectiveness Score (0-100)",
       "effectivenessScorePlaceholder": "Enter a score between 0 and 100",
       "immediateActionsPlaceholder": "Actions taken immediately after problem discovery"
+    },
+    "qualityContext": {
+      "title": "Quality Issue Context",
+      "description": "Enter detailed background information for the quality issue (optional)",
+      "model": "Model",
+      "modelPlaceholder": "e.g. GEL-KAYANO 31",
+      "supplierName": "Supplier",
+      "supplierPlaceholder": "Enter supplier name",
+      "defectLabel": "Defect Type",
+      "defectPlaceholder": "e.g. Bonding defect, Stitching defect",
+      "process": "Process",
+      "selectProcess": "Select process",
+      "building": "Building",
+      "selectBuilding": "Select building",
+      "responsibleProcess": "Responsible Process",
+      "discoveryProcess": "Discovery Process",
+      "linkedSystems": "Linked Systems"
     },
     "validation": {
       "titleRequired": "Title is required.",
@@ -3777,7 +3804,23 @@
     "subjectTemplate": "Subject Template",
     "emailPlaceholder": "Enter email address",
     "invalidEmail": "Invalid email format",
-    "duplicateEmail": "Email already added"
+    "duplicateEmail": "Email already added",
+    "notSet": "(Not set)",
+    "activeCount": "{{enabled}}/{{total}} Active",
+    "category": {
+      "training": "Training Operations",
+      "trainingEn": "Training Operations",
+      "newTqc": "New TQC",
+      "newTqcEn": "New TQC",
+      "equipment": "Equipment Compliance",
+      "equipmentEn": "Equipment Compliance",
+      "inspection": "Inspection Training",
+      "inspectionEn": "Inspection Training",
+      "capa": "CAPA",
+      "capaEn": "CAPA",
+      "executive": "Executive",
+      "executiveEn": "Executive"
+    }
   },
   "systemFeedback": {
     "title": "System Feedback",
@@ -3830,7 +3873,11 @@
       "screenshotsHint": "Attach relevant screenshots (optional)",
       "uploadingScreenshots": "Uploading screenshots... ({{completed}}/{{total}})",
       "submitting": "Submitting...",
-      "submit": "Submit"
+      "submit": "Submit",
+      "uploadFailed": "Screenshot Upload Failed",
+      "uploadFailedDesc": "Failed to upload screenshots. Please try again or submit without images.",
+      "submitFailed": "Submission Failed",
+      "submitFailedDesc": "Failed to submit feedback. Please try again."
     }
   },
   "errors": {

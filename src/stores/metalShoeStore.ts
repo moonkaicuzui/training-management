@@ -43,6 +43,7 @@ interface MetalShoeState {
     user: { uid: string; email: string; displayName: string }
   ) => Promise<MetalShoeCase>;
   updateCase: (year: number, id: string, data: Partial<MetalShoeCase>) => Promise<void>;
+  deleteCase: (year: number, id: string) => Promise<void>;
   createBulkCases: (
     cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
     user: { uid: string; email: string; displayName: string }
@@ -185,6 +186,27 @@ export const useMetalShoeStore = create<MetalShoeState>()(
           logger.error('[MetalShoeStore] updateCase failed', error);
           set((state) => {
             state.error = i18n.t('errors.metalShoe.updateCaseFailed', 'Failed to update case');
+          });
+          throw error;
+        }
+      },
+
+      deleteCase: async (year, id) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          await api.metalShoe.deleteCase(year, id);
+          set((state) => {
+            state.cases = state.cases.filter((c) => c.id !== id);
+            state.isLoading = false;
+          });
+        } catch (error) {
+          logger.error('[MetalShoeStore] deleteCase failed', error);
+          set((state) => {
+            state.error = i18n.t('errors.metalShoe.deleteCaseFailed', 'Failed to delete case');
+            state.isLoading = false;
           });
           throw error;
         }

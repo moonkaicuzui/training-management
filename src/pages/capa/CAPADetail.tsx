@@ -102,13 +102,13 @@ export default function CAPADetail() {
         title: stageUpdate.status === 'rejected' ? t('capa.capaRejected') : t('capa.stageUpdated'),
         description: stageUpdate.status === 'rejected' ? t('capa.capaRejectedDesc') : t('capa.stageUpdatedDesc'),
       });
-    } catch {
+    } catch (err) {
       toast({
-        title: 'Error',
-        description: String(error || 'Failed to update stage'),
+        title: t('capa.stageUpdateError'),
+        description: String(err || t('capa.stageUpdateErrorDesc')),
         variant: 'destructive',
       });
-      throw error; // Re-throw so dialog knows it failed
+      throw err; // Re-throw so dialog knows it failed
     }
   };
 

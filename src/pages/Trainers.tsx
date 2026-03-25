@@ -59,7 +59,7 @@ export default function TrainersPage() {
       setResults(resultsData);
     } catch (err) {
       logger.error('Failed to load trainers:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load trainers');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +111,7 @@ export default function TrainersPage() {
       await api.deleteTrainer(deleteTarget.trainer_id);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete trainer');
+      setError(err instanceof Error ? err.message : t('common.errors.deleteFailed'));
     } finally {
       setDeleteTarget(null);
     }

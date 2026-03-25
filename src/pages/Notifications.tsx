@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Settings, MailOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Notification } from '@/types/notification';
+import { logger } from '@/utils/logger';
 import * as api from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -59,10 +60,10 @@ export default function NotificationsPage() {
     } catch {
       // 설정 로드 실패 시 기본값 유지
     }
-  }, []);
+  }, [user?.id, user?.email]);
 
   useEffect(() => {
-    Promise.all([loadData(), loadSettings()]).catch(() => {});
+    Promise.all([loadData(), loadSettings()]).catch((err) => { logger.error('Notifications 초기 데이터 로드 실패:', err); });
   }, [loadData, loadSettings]);
 
   const filteredNotifications = useMemo(() => {

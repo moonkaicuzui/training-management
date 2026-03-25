@@ -37,7 +37,13 @@ export const getConsecutiveFailures = async (
         result: (data.result as 'PASS' | 'FAIL') || 'FAIL',
       };
     })
-    .sort((a, b) => b.training_date.localeCompare(a.training_date));
+    .sort((a, b) => {
+      // H-7: ISO 형식으로 정규화하여 안전한 정렬
+      const dateA = new Date(a.training_date).getTime();
+      const dateB = new Date(b.training_date).getTime();
+      if (!isNaN(dateA) && !isNaN(dateB)) return dateB - dateA;
+      return b.training_date.localeCompare(a.training_date);
+    });
 
   let consecutiveFailures = 0;
   for (const r of results) {
@@ -112,5 +118,6 @@ export const handleThreeStrikeOut = async (
     logger.info(`[inspectionService] Three-strike out handled for employee ${employeeId}`);
   } catch (error) {
     logger.error('[inspectionService] handleThreeStrikeOut failed:', error);
+    throw error;  // M-8: 에러를 호출자에게 전파
   }
 };

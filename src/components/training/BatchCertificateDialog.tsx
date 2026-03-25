@@ -194,10 +194,12 @@ const BatchCertificateDialog = memo(function BatchCertificateDialog({
         setProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const created = await api.createCertificatesBatch(certificatesToCreate);
-      successCount = created.length;
-
-      clearInterval(progressInterval);
+      try {
+        const created = await api.createCertificatesBatch(certificatesToCreate);
+        successCount = created.length;
+      } finally {
+        clearInterval(progressInterval);
+      }
       setProgress(100);
 
       setBatchResult({

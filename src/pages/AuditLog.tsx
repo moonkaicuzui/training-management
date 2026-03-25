@@ -38,7 +38,7 @@ export default function AuditLogPage() {
       const data = await api.getAuditLogs();
       setLogs(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit logs');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }

@@ -127,11 +127,32 @@ export const createTrainee = async (
   }
 };
 
+// M-6: TQC 교육생 상태 전환 유효성 맵
+const VALID_TRAINEE_TRANSITIONS: Record<string, string[]> = {
+  'IN_TRAINING': ['PASSED', 'FAILED', 'RESIGNED'],
+  'PASSED': [],
+  'FAILED': ['IN_TRAINING'],  // 재교육 가능
+  'RESIGNED': [],
+};
+
 export const updateTrainee = async (
   traineeId: string,
   updates: Partial<NewTQCTrainee>
 ): Promise<void> => {
   try {
+    // M-6: 상태 전환 검증
+    if (updates.status) {
+      const existing = await getTraineeById(traineeId);
+      if (existing) {
+        const allowed = VALID_TRAINEE_TRANSITIONS[existing.status];
+        if (allowed && !allowed.includes(updates.status)) {
+          throw new Error(
+            `Invalid trainee status transition: ${existing.status} → ${updates.status}. Allowed: [${allowed.join(', ') || 'none'}]`
+          );
+        }
+      }
+    }
+
     const docRef = doc(db, COLLECTIONS.TRAINEES, traineeId);
     await updateDoc(docRef, {
       ...updates,

@@ -190,6 +190,8 @@ export const metalShoe = {
     metalShoeService.createCase(data, user),
   updateCase: (year: number, id: string, data: Partial<MetalShoeCase>): Promise<void> =>
     metalShoeService.updateCase(year, id, data),
+  deleteCase: (year: number, id: string): Promise<void> =>
+    metalShoeService.deleteCase(year, id),
   createBulkCases: (
     cases: Array<Omit<MetalShoeCase, 'id' | 'createdAt' | 'updatedAt'>>,
     user: { uid: string; email: string; displayName: string }

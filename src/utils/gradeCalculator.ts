@@ -30,11 +30,11 @@ export const DEFAULT_GRADE_THRESHOLDS: GradeThresholds = {
   b: 80,
 };
 
-/** Inspection grade thresholds: AA=100%, A=95%, B=85%, C=<85% */
+/** Inspection grade thresholds: AA=100%, A>=95%, B>=80%, C<80% */
 export const INSPECTION_GRADE_THRESHOLDS: GradeThresholds = {
   aa: 100,
   a: 95,
-  b: 85,
+  b: 80,
 };
 
 // ========== Grade Calculation Functions ==========
@@ -94,7 +94,7 @@ export function calculateResult(
 
 /**
  * Calculate inspection grade based on match rate.
- * Uses inspection-specific thresholds: AA=100%, A>=95%, B>=85%, C<85%
+ * Uses inspection-specific thresholds: AA=100%, A>=95%, B>=80%, C<80%
  *
  * @param matchRate - Match rate percentage (0-100)
  * @returns Grade ('AA' | 'A' | 'B' | 'C')

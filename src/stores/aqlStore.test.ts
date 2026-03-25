@@ -27,6 +27,7 @@ const mockGetAqlEnrollmentLogs = vi.fn();
 const mockCreateAqlEmployeeLink = vi.fn();
 const mockDeleteAqlEmployeeLink = vi.fn();
 const mockCreateAqlEnrollmentLog = vi.fn();
+const mockCheckAqlEnrollmentDuplicate = vi.fn();
 const mockClearSupervisorLinks = vi.fn();
 const mockBatchImportSupervisorLinks = vi.fn();
 const mockFetchAqlManpower = vi.fn();
@@ -47,6 +48,7 @@ vi.mock('@/services/aqlService', () => ({
   createAqlEmployeeLink: (...args: unknown[]) => mockCreateAqlEmployeeLink(...args),
   deleteAqlEmployeeLink: (...args: unknown[]) => mockDeleteAqlEmployeeLink(...args),
   createAqlEnrollmentLog: (...args: unknown[]) => mockCreateAqlEnrollmentLog(...args),
+  checkAqlEnrollmentDuplicate: (...args: unknown[]) => mockCheckAqlEnrollmentDuplicate(...args),
   clearSupervisorLinks: (...args: unknown[]) => mockClearSupervisorLinks(...args),
   batchImportSupervisorLinks: (...args: unknown[]) => mockBatchImportSupervisorLinks(...args),
   fetchAqlManpower: (...args: unknown[]) => mockFetchAqlManpower(...args),
@@ -403,6 +405,7 @@ describe('AqlStore', () => {
         programs: [mockProgram],
         recommendations: [mockRecommendation],
       });
+      mockCheckAqlEnrollmentDuplicate.mockResolvedValueOnce(null);
       mockCheckDuplicateEnrollment.mockResolvedValueOnce({ status: 'PENDING' });
 
       await useAqlStore.getState().enrollRecommendation(mockRecommendation, 'INS-001', '2024-01');
@@ -417,6 +420,7 @@ describe('AqlStore', () => {
         programs: [mockProgram],
         recommendations: [mockRecommendation],
       });
+      mockCheckAqlEnrollmentDuplicate.mockResolvedValueOnce(null);
       mockCheckDuplicateEnrollment.mockResolvedValueOnce(null);
       mockCreateAqlEnrollmentLog.mockResolvedValueOnce(mockEnrollmentLog);
       mockCreateEnrollment.mockResolvedValueOnce({});
@@ -436,6 +440,7 @@ describe('AqlStore', () => {
         programs: [mockProgram],
         recommendations: [mockRecommendation],
       });
+      mockCheckAqlEnrollmentDuplicate.mockResolvedValueOnce(null);
       mockCheckDuplicateEnrollment.mockResolvedValueOnce(null);
       mockCreateAqlEnrollmentLog.mockResolvedValueOnce(mockEnrollmentLog);
       mockCreateEnrollment.mockResolvedValueOnce({});
@@ -452,7 +457,7 @@ describe('AqlStore', () => {
         programs: [mockProgram],
         recommendations: [mockRecommendation],
       });
-      mockCheckDuplicateEnrollment.mockResolvedValueOnce({ status: 'PENDING' });
+      mockCheckAqlEnrollmentDuplicate.mockResolvedValueOnce({ enrollment_id: 'existing' });
 
       await useAqlStore.getState().batchEnroll([mockRecommendation], 'INS-001', '2024-01');
 

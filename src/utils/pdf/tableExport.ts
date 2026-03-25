@@ -2,8 +2,8 @@ import { logger } from '@/utils/logger';
 import type { PDFExportOptions, PDFTableColumn } from './types';
 import { createPDFDocument, addHeader, addPageNumbers } from './helpers';
 
-export function exportTableToPDFWithUnicode<T extends Record<string, unknown>>(
-  data: T[],
+export function exportTableToPDFWithUnicode<T extends Record<string, unknown> = Record<string, unknown>>(
+  data: T[] | readonly T[],
   columns: Array<{ header: string; dataKey: string }>,
   options: {
     title?: string;
@@ -278,8 +278,7 @@ export async function exportMultiTablePDF<T extends Record<string, unknown>>(
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 20;
+      currentY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? currentY + 20;
     });
 
     if (includePageNumbers) {

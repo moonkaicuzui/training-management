@@ -23,6 +23,9 @@ import { logger } from '@/utils/logger';
 // Collection Name
 // ============================================================
 
+// NOTE: camelCase 컬렉션명 (레거시). 프로젝트 규칙은 snake_case이나
+// 기존 Firestore 데이터와 firestore.rules가 이 이름을 사용 중.
+// 변경하려면 데이터 마이그레이션(attendances → attendance_records) 필요.
 const COLLECTION = 'attendances';
 
 // ============================================================

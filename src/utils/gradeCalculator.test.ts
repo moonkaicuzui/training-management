@@ -142,7 +142,7 @@ describe('calculateResult', () => {
 });
 
 describe('calculateInspectionGrade', () => {
-  describe('inspection thresholds (AA=100, A=95, B=85)', () => {
+  describe('inspection thresholds (AA=100, A=95, B=80)', () => {
     it('should return AA for 100% match rate', () => {
       expect(calculateInspectionGrade(100)).toBe('AA');
     });
@@ -151,12 +151,12 @@ describe('calculateInspectionGrade', () => {
       expect(calculateInspectionGrade(95)).toBe('A');
     });
 
-    it('should return B for 85% match rate', () => {
-      expect(calculateInspectionGrade(85)).toBe('B');
+    it('should return B for 80% match rate', () => {
+      expect(calculateInspectionGrade(80)).toBe('B');
     });
 
-    it('should return C for 84% match rate', () => {
-      expect(calculateInspectionGrade(84)).toBe('C');
+    it('should return C for 79% match rate', () => {
+      expect(calculateInspectionGrade(79)).toBe('C');
     });
   });
 
@@ -169,16 +169,20 @@ describe('calculateInspectionGrade', () => {
       expect(calculateInspectionGrade(94)).toBe('B');
     });
 
-    it('should return B for exactly 85% (B threshold)', () => {
-      expect(calculateInspectionGrade(85)).toBe('B');
+    it('should return B for exactly 80% (B threshold)', () => {
+      expect(calculateInspectionGrade(80)).toBe('B');
     });
 
-    it('should return C for 84% (just below B threshold)', () => {
-      expect(calculateInspectionGrade(84)).toBe('C');
+    it('should return C for 79% (just below B threshold)', () => {
+      expect(calculateInspectionGrade(79)).toBe('C');
     });
 
     it('should return A for 99% (just below AA threshold)', () => {
       expect(calculateInspectionGrade(99)).toBe('A');
+    });
+
+    it('should return B for 84% (between B and A thresholds)', () => {
+      expect(calculateInspectionGrade(84)).toBe('B');
     });
   });
 
@@ -281,7 +285,7 @@ describe('programThresholds', () => {
   });
 
   it('should work with inspection-like values', () => {
-    const thresholds = programThresholds(100, 95, 85);
+    const thresholds = programThresholds(100, 95, 80);
 
     expect(thresholds).toEqual(INSPECTION_GRADE_THRESHOLDS);
   });
@@ -310,6 +314,6 @@ describe('constants', () => {
   });
 
   it('INSPECTION_GRADE_THRESHOLDS should have correct values', () => {
-    expect(INSPECTION_GRADE_THRESHOLDS).toEqual({ aa: 100, a: 95, b: 85 });
+    expect(INSPECTION_GRADE_THRESHOLDS).toEqual({ aa: 100, a: 95, b: 80 });
   });
 });

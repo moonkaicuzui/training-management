@@ -19,6 +19,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 import * as api from '@/services/api';
 import type { AnnualPlan } from '@/services/trainingPlanService';
 
@@ -89,7 +90,7 @@ export default function TrainingPlanPage() {
       const data = await api.getTrainingPlans();
       setPlans(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load training plans');
+      setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +104,7 @@ export default function TrainingPlanPage() {
       fetchExpiringTrainings(30),
       fetchDashboardStats(),
       fetchPrograms(),
-    ]).catch(() => {});
+    ]).catch((err) => { logger.error('TrainingPlan 초기 데이터 로드 실패:', err); });
   }, [loadData, fetchRetrainingTargets, fetchExpiringTrainings, fetchDashboardStats, fetchPrograms]);
 
   // 품질 지표 계산

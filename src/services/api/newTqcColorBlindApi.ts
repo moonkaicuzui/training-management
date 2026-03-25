@@ -13,11 +13,10 @@ export async function createNewTQCColorBlindTest(
   input: NewTQCColorBlindTestInput
 ): Promise<NewTQCColorBlindTest> {
   const now = new Date().toISOString();
-  const existingTests = await tqcService.getColorBlindTests();
-  const testCount = existingTests.length + 1;
-
-  const newTest: NewTQCColorBlindTest = {
-    test_id: `CBT-${new Date().getFullYear()}-${String(testCount).padStart(3, '0')}`,
+  // H-3: timestamp + random으로 고유 ID 생성 (충돌 방지)
+  // Firestore 쓰기용 데이터 (created_at는 tqcService에서 serverTimestamp() 적용)
+  const testData: NewTQCColorBlindTest = {
+    test_id: `CBT-${new Date().getFullYear()}-${Date.now().toString(36).slice(-4)}${Math.random().toString(36).substring(2, 5)}`,
     trainee_id: input.trainee_id,
     test_date: input.test_date,
     result: input.result,
@@ -26,12 +25,13 @@ export async function createNewTQCColorBlindTest(
     created_at: now,
   };
 
-  await tqcService.createColorBlindTest(newTest);
+  await tqcService.createColorBlindTest(testData);
 
+  // updated_at는 tqcService.updateTrainee 내부에서 serverTimestamp() 적용
   await tqcService.updateTrainee(input.trainee_id, {
     color_blind_status: input.result,
-    updated_at: now,
   });
 
-  return newTest;
+  // 반환 객체에는 클라이언트 시간 유지 (Firestore에는 serverTimestamp() 적용됨)
+  return testData;
 }

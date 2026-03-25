@@ -54,14 +54,14 @@ export async function createNewTQCTrainee(input: NewTQCTraineeInput): Promise<Ne
     ((startDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24) + 1) / 7
   );
 
-  const existingTrainees = await tqcService.getTrainees();
-  const traineeCount = existingTrainees.length + 1;
-  const traineeId = `TRN-${new Date().getFullYear()}-${String(traineeCount).padStart(3, '0')}`;
+  // H-3: timestamp + random으로 고유 ID 생성 (충돌 방지)
+  const traineeId = `TRN-${new Date().getFullYear()}-${Date.now().toString(36).slice(-4)}${Math.random().toString(36).substring(2, 5)}`;
 
   const expectedEndDate = new Date(startDate);
   expectedEndDate.setMonth(expectedEndDate.getMonth() + 3);
 
-  const newTrainee: NewTQCTrainee = {
+  // Firestore 쓰기용 데이터 (created_at/updated_at는 tqcService에서 serverTimestamp() 적용)
+  const traineeData: NewTQCTrainee = {
     trainee_id: traineeId,
     employee_id: input.employee_id,
     name: input.name,
@@ -116,10 +116,11 @@ export async function createNewTQCTrainee(input: NewTQCTraineeInput): Promise<Ne
     };
   });
 
-  await tqcService.createTrainee(newTrainee);
+  await tqcService.createTrainee(traineeData);
   await tqcService.batchCreateStagesAndMeetings(stages, meetings);
 
-  return newTrainee;
+  // 반환 객체에는 클라이언트 시간 유지 (Firestore에는 serverTimestamp() 적용됨)
+  return traineeData;
 }
 
 export async function updateNewTQCTrainee(
@@ -128,10 +129,8 @@ export async function updateNewTQCTrainee(
   const existing = await tqcService.getTraineeById(input.trainee_id);
   if (!existing) return null;
 
-  await tqcService.updateTrainee(input.trainee_id, {
-    ...input,
-    updated_at: new Date().toISOString(),
-  });
+  // updated_at는 tqcService.updateTrainee 내부에서 serverTimestamp() 적용
+  await tqcService.updateTrainee(input.trainee_id, input);
 
   return tqcService.getTraineeById(input.trainee_id);
 }

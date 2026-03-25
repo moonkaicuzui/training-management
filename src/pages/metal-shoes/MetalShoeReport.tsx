@@ -4,9 +4,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { useMetalShoeStore } from '../../stores/metalShoeStore';
 import { Loader2, FileSpreadsheet, FileText, Presentation, Download } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MetalShoeReport() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedWeek, setSelectedWeek] = useState<number | undefined>(undefined);
@@ -28,6 +30,10 @@ export default function MetalShoeReport() {
       await generateMetalShoeExcel(currentCases, selectedYear);
     } catch (err) {
       logger.error('Excel export failed:', err);
+      toast({
+        title: t('metalShoe.report.exportFailed', 'Excel export failed'),
+        variant: 'destructive',
+      });
     } finally {
       setGenerating(null);
     }
@@ -44,6 +50,10 @@ export default function MetalShoeReport() {
       await generateMetalShoePdfReport(currentCases, selectedYear, selectedWeek, kpis);
     } catch (err) {
       logger.error('PDF export failed:', err);
+      toast({
+        title: t('metalShoe.report.exportFailed', 'PDF export failed'),
+        variant: 'destructive',
+      });
     } finally {
       setGenerating(null);
     }
@@ -67,6 +77,10 @@ export default function MetalShoeReport() {
       }
     } catch (err) {
       logger.error('PPTX export failed:', err);
+      toast({
+        title: t('metalShoe.report.exportFailed', 'PPTX export failed'),
+        variant: 'destructive',
+      });
     } finally {
       setGenerating(null);
     }

@@ -188,7 +188,7 @@ describe('inspectionService', () => {
 
       expect(result.matchRate).toBe(80);
       const trainingResultData = mockBatch.set.mock.calls[0][1];
-      expect(trainingResultData.grade).toBe('C');
+      expect(trainingResultData.grade).toBe('B');  // C-5: 80% = B등급 (PASS 기준과 일치)
       expect(trainingResultData.result).toBe('PASS');
     });
 

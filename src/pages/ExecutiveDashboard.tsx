@@ -96,7 +96,7 @@ export default function ExecutiveDashboard() {
         setTqcStats(tqc);
         setTrainingCosts(costs);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        setError(err instanceof Error ? err.message : t('common.errors.loadFailed'));
       } finally {
         setLoading(false);
       }

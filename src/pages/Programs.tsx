@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ExportDropdown } from '@/components/common/ExportDropdown';
-import { useExport } from '@/hooks/useExport';
+import { useExport, toExportData } from '@/hooks/useExport';
 import { useShallow } from 'zustand/react/shallow';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -192,14 +192,14 @@ export default function Programs() {
         <div className="flex gap-2">
           <ExportDropdown
             onExportExcel={() =>
-              exportExcel(programs as unknown as Record<string, unknown>[], {
+              exportExcel(toExportData(programs), {
                 sheetName: 'Programs',
                 filename: 'programs',
               })
             }
             onExportPDF={() =>
               exportPDF(
-                programs as unknown as Record<string, unknown>[],
+                toExportData(programs),
                 [
                   { header: t('program.code'), dataKey: 'program_code' },
                   { header: t('program.name'), dataKey: 'program_name' },

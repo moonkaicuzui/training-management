@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import type { MetalShoeCase, MetalShoeStatus } from '../../types/metalShoe';
 
 const STATUS_COLORS: Record<MetalShoeStatus, string> = {
@@ -22,34 +22,48 @@ const STATUS_LABELS: Record<MetalShoeStatus, string> = {
 interface TrackingTableProps {
   cases: MetalShoeCase[];
   onViewDetail: (c: MetalShoeCase) => void;
+  onDelete?: (c: MetalShoeCase) => void;
 }
 
-export default function TrackingTable({ cases, onViewDetail }: TrackingTableProps) {
+export default function TrackingTable({ cases, onViewDetail, onDelete }: TrackingTableProps) {
   return (
     <>
       {/* Mobile Cards */}
       <div className="space-y-2 sm:hidden">
         {cases.map((c) => (
-          <button
+          <div
             key={c.id}
-            type="button"
-            onClick={() => onViewDetail(c)}
-            className="w-full rounded-lg border border-gray-200 bg-white p-3 text-left hover:bg-gray-50"
+            className="flex items-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-900">{c.model}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[c.status]}`}>
-                {STATUS_LABELS[c.status]}
-              </span>
-            </div>
-            <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-              <span>{c.detectionDate}</span>
-              <span>•</span>
-              <span>{c.factory}</span>
-              <span>•</span>
-              <span>{c.supplierName}</span>
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => onViewDetail(c)}
+              className="flex-1 p-3 text-left"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-900">{c.model}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[c.status]}`}>
+                  {STATUS_LABELS[c.status]}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                <span>{c.detectionDate}</span>
+                <span>•</span>
+                <span>{c.factory}</span>
+                <span>•</span>
+                <span>{c.supplierName}</span>
+              </div>
+            </button>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(c)}
+                className="px-3 text-gray-400 hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -98,12 +112,22 @@ export default function TrackingTable({ cases, onViewDetail }: TrackingTableProp
                   </span>
                 </td>
                 <td className="px-3 py-2">
-                  <button
-                    onClick={() => onViewDetail(c)}
-                    className="text-gray-400 hover:text-blue-600"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onViewDetail(c)}
+                      className="text-gray-400 hover:text-blue-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    {onDelete && (
+                      <button
+                        onClick={() => onDelete(c)}
+                        className="text-gray-400 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
