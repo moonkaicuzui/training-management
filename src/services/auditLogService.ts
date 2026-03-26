@@ -43,7 +43,7 @@ const convertTimestampToString = (
 const docToAuditLog = (docId: string, data: Record<string, unknown>): AuditLogEntry => {
   return {
     log_id: (data.log_id as string) || docId,
-    entity_type: (data.entity_type as AuditLogEntry['entity_type']) || 'PROGRAM',
+    entity_type: (data.entity_type as AuditLogEntry['entity_type']) || 'UNKNOWN',
     entity_id: (data.entity_id as string) || '',
     action: (data.action as AuditLogEntry['action']) || 'VIEW',
     changed_by: (data.changed_by as string) || '',
@@ -108,8 +108,12 @@ export const createAuditLog = async (
   const docRef = doc(db, COLLECTION, data.log_id);
   const now = serverTimestamp();
 
+  // entity_type이 없으면 기본값 'UNKNOWN' 설정 (null 감사 로그 방지)
+  const entityType = data.entity_type || ('UNKNOWN' as AuditLogEntry['entity_type']);
+
   await setDoc(docRef, {
     ...data,
+    entity_type: entityType,
     changed_at: now,
   });
 

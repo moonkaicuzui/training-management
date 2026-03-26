@@ -90,9 +90,9 @@ export default function Dashboard() {
     }
   }, []);
 
+  // 페이지 진입 시마다 데이터를 다시 fetch (API 레이어의 5분 캐시에 의존)
+  // Results 입력 후 돌아오면 캐시가 invalidate되어 있으므로 최신 데이터 반영
   useEffect(() => {
-    if (isDataLoaded) return;
-
     const loadData = async () => {
       try {
         await Promise.all([

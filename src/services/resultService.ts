@@ -100,7 +100,10 @@ export const getResults = async (
     constraints.push(where('result', '==', filters.result));
   }
 
-  constraints.push(limit(500));
+  // 필터가 있을 때만 limit 적용, 전체 조회 시에는 limit 없이 (KPI 정확성 보장)
+  if (filters?.employeeId || filters?.programCode || filters?.result) {
+    constraints.push(limit(2000));
+  }
 
   const q = query(collection(db, COLLECTION), ...constraints);
   const snapshot = await getDocs(q);

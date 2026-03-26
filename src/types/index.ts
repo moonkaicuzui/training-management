@@ -264,6 +264,8 @@ export interface DashboardStats {
   monthlyCompletions: number;
   overallCompletionRate: number;
   retrainingCount: number;
+  /** Google Drive CSV 기반 직원 수 (HR 참고용, KPI에는 미사용) */
+  hrTotalEmployees?: number;
 }
 
 export interface MonthlyTrainingData {

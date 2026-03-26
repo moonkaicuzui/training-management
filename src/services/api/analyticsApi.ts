@@ -48,12 +48,12 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const kpiResult = calculateDashboardKPIs(employees, programs, results);
   const stats = toDashboardStats(kpiResult);
 
-  // Override totalEmployees with live Google Drive CSV data
+  // Google Drive CSV 직원 수를 별도 필드로 보존 (KPI의 totalEmployees는 Firestore employees 기반 유지)
   try {
     const manpower = await aqlService.fetchAqlManpower();
     const activeCount = manpower.data.filter(row => !row.stop_working_date).length;
     if (activeCount > 0) {
-      stats.totalEmployees = activeCount;
+      stats.hrTotalEmployees = activeCount;
     }
   } catch (error) {
     logger.warn('[api] Failed to fetch manpower from Drive, using Firestore employee count:', error);

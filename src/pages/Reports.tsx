@@ -76,6 +76,17 @@ export default function ReportsPage() {
     loadData();
   }, [loadData]);
 
+  // selectedPeriod에 따라 results 필터링
+  const filteredByPeriod = useMemo(() => {
+    if (selectedPeriod === 'all') return results;
+    const monthsMatch = selectedPeriod.match(/^(\d+)/);
+    if (!monthsMatch) return results;
+    const months = parseInt(monthsMatch[1], 10);
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - months);
+    return results.filter(r => new Date(r.training_date) >= cutoff);
+  }, [results, selectedPeriod]);
+
   // Compute departments from actual employee data
   const departments = useMemo(() => {
     const deptSet = new Set(employees.filter(e => e.status === 'ACTIVE').map(e => e.department));
@@ -93,7 +104,7 @@ export default function ReportsPage() {
       deptMap.get(dept)!.employees++;
     });
 
-    results.forEach(r => {
+    filteredByPeriod.forEach(r => {
       const emp = employees.find(e => e.employee_id === r.employee_id);
       const dept = emp?.department || 'UNKNOWN';
       if (!deptMap.has(dept)) return;
@@ -119,11 +130,11 @@ export default function ReportsPage() {
     return allReports.filter(r =>
       selectedDepartment === 'all' || r.department === selectedDepartment
     );
-  }, [employees, results, selectedDepartment]);
+  }, [employees, filteredByPeriod, selectedDepartment]);
 
   const programReports = useMemo((): ProgramReport[] => {
     return programs.filter(p => p.is_active).map(p => {
-      const programResults = results.filter(r => r.program_code === p.program_code);
+      const programResults = filteredByPeriod.filter(r => r.program_code === p.program_code);
       const passCount = programResults.filter(r => r.result === 'PASS').length;
       const failCount = programResults.filter(r => r.result === 'FAIL').length;
       const scores = programResults.filter(r => r.score != null).map(r => r.score!);
@@ -140,11 +151,11 @@ export default function ReportsPage() {
         retrainingCount,
       };
     });
-  }, [programs, results]);
+  }, [programs, filteredByPeriod]);
 
   const employeeExportData = useMemo((): EmployeeExportItem[] => {
     return employees.filter(e => e.status === 'ACTIVE').map(emp => {
-      const empResults = results.filter(r => r.employee_id === emp.employee_id);
+      const empResults = filteredByPeriod.filter(r => r.employee_id === emp.employee_id);
       const passCount = empResults.filter(r => r.result === 'PASS').length;
       return {
         employee_id: emp.employee_id,
@@ -159,7 +170,7 @@ export default function ReportsPage() {
         totalCount: empResults.length,
       };
     });
-  }, [employees, results]);
+  }, [employees, filteredByPeriod]);
 
   // Compute unique positions from employee data
   const positions = useMemo(() => {
@@ -302,13 +313,13 @@ export default function ReportsPage() {
 
   const totalStats = useMemo(() => {
     const totalEmployees = employees.filter(e => e.status === 'ACTIVE').length;
-    const totalTrainings = results.length;
-    const passCount = results.filter(r => r.result === 'PASS').length;
+    const totalTrainings = filteredByPeriod.length;
+    const passCount = filteredByPeriod.filter(r => r.result === 'PASS').length;
     const passRate = totalTrainings > 0 ? Math.round((passCount / totalTrainings) * 100) : 0;
     const activePrograms = programs.filter(p => p.is_active).length;
 
     return { totalEmployees, totalTrainings, passRate, activePrograms };
-  }, [employees, programs, results]);
+  }, [employees, programs, filteredByPeriod]);
 
   if (isLoading) {
     return (
