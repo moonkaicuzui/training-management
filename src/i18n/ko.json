@@ -2479,6 +2479,20 @@
       "effectivenessScoreRange": "효과성 점수는 0~100 사이여야 합니다.",
       "invalidStageTransition": "잘못된 단계 전환입니다.",
       "missingRequiredFields": "필수 항목이 누락되었습니다."
+    },
+    "fieldInvestigation": {
+      "title": "현장 조사 결과 입력",
+      "relatedAction": "관련 액션",
+      "findings": "조사 결과",
+      "findingsPlaceholder": "현장 조사에서 확인된 내용을 상세히 기록하세요",
+      "quantity": "검사/불량 수량",
+      "quantityPlaceholder": "수량 입력",
+      "defectRate": "불량률 (%)",
+      "defectRatePlaceholder": "불량률 입력",
+      "photos": "사진 첨부",
+      "photosPlaceholder": "사진 업로드 기능은 추후 연동 예정입니다 (MultiImageUpload)",
+      "notes": "추가 메모",
+      "notesPlaceholder": "기타 특이사항이나 추가 메모를 입력하세요"
     }
   },
   "trainingPlan": {

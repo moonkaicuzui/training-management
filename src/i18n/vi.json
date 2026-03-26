@@ -2479,6 +2479,20 @@
       "effectivenessScoreRange": "Điểm hiệu quả phải từ 0 đến 100.",
       "invalidStageTransition": "Chuyển đổi giai đoạn không hợp lệ.",
       "missingRequiredFields": "Thiếu các trường bắt buộc."
+    },
+    "fieldInvestigation": {
+      "title": "Nhập kết quả điều tra hiện trường",
+      "relatedAction": "Hành động liên quan",
+      "findings": "Kết quả điều tra",
+      "findingsPlaceholder": "Mô tả chi tiết những phát hiện từ điều tra hiện trường",
+      "quantity": "Số lượng kiểm tra/lỗi",
+      "quantityPlaceholder": "Nhập số lượng",
+      "defectRate": "Tỷ lệ lỗi (%)",
+      "defectRatePlaceholder": "Nhập tỷ lệ lỗi",
+      "photos": "Đính kèm ảnh",
+      "photosPlaceholder": "Chức năng tải ảnh sẽ sớm được kích hoạt (MultiImageUpload)",
+      "notes": "Ghi chú thêm",
+      "notesPlaceholder": "Nhập ghi chú hoặc quan sát bổ sung"
     }
   },
   "trainingPlan": {

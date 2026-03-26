@@ -4,7 +4,7 @@
  * 메인 CAPA 대시보드 - 통계, 목록, 빠른 작업
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -25,7 +25,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useShallow } from 'zustand/react/shallow';
+
+const ActionFrameManager = lazy(() => import('@/components/capa/ActionFrameManager'));
 
 import { logger } from '@/utils/logger';
 import { useCAPAStore } from '@/stores/capaStore';

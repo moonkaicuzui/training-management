@@ -2479,6 +2479,20 @@
       "effectivenessScoreRange": "Effectiveness score must be between 0 and 100.",
       "invalidStageTransition": "Invalid stage transition.",
       "missingRequiredFields": "Required fields are missing."
+    },
+    "fieldInvestigation": {
+      "title": "Field Investigation Results",
+      "relatedAction": "Related Action",
+      "findings": "Findings",
+      "findingsPlaceholder": "Describe the findings from the field investigation in detail",
+      "quantity": "Inspection/Defect Quantity",
+      "quantityPlaceholder": "Enter quantity",
+      "defectRate": "Defect Rate (%)",
+      "defectRatePlaceholder": "Enter defect rate",
+      "photos": "Photo Attachments",
+      "photosPlaceholder": "Photo upload will be available soon (MultiImageUpload)",
+      "notes": "Additional Notes",
+      "notesPlaceholder": "Enter any additional notes or observations"
     }
   },
   "trainingPlan": {

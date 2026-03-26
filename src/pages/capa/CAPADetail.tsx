@@ -43,6 +43,7 @@ import {
   ClosureCard,
   StatusCard,
 } from '@/components/capa/CAPAInfoCards';
+import { CrossSystemPanel } from '@/components/capa/CrossSystemPanel';
 
 export default function CAPADetail() {
   const { t } = useTranslation();
@@ -202,6 +203,22 @@ export default function CAPADetail() {
           <HistoryTimeline currentCAPA={currentCAPA} />
         </div>
       </div>
+
+      {/* Cross System Panel */}
+      {currentCAPA?.qualityContext && (
+        <CrossSystemPanel
+          model={currentCAPA.qualityContext.model}
+          defectKey={currentCAPA.qualityContext.defectCode}
+          supplierId={currentCAPA.qualityContext.supplierId}
+          process={currentCAPA.qualityContext.process}
+          issueDate={currentCAPA.createdAt instanceof Date
+            ? currentCAPA.createdAt.toISOString().split('T')[0]
+            : currentCAPA.createdAt && 'toDate' in currentCAPA.createdAt
+              ? currentCAPA.createdAt.toDate().toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0]}
+          linkedSystems={currentCAPA.qualityContext.linkedSystems}
+        />
+      )}
 
       {/* Advance Stage Dialog */}
       {canAdvance && nextStatus && (
