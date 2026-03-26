@@ -45,6 +45,7 @@ import {
   DEFAULT_ACTION_FRAMES,
   type ActionFrame,
   type ActionFrameAction,
+  type ActionFrameMatchCondition,
 } from '@/data/actionFrames';
 
 type LangKey = 'ko' | 'en' | 'vi';
@@ -287,7 +288,7 @@ export default function ActionFrameManager() {
                 ...f,
                 name: editForm.name,
                 description: editForm.description,
-                matchConditions: editForm.matchConditions,
+                matchConditions: editForm.matchConditions as ActionFrameMatchCondition,
                 defaultActions: editForm.defaultActions,
               }
             : f
@@ -299,7 +300,7 @@ export default function ActionFrameManager() {
         id: `FRAME-${String(frames.length + 1).padStart(3, '0')}`,
         name: editForm.name,
         description: editForm.description,
-        matchConditions: editForm.matchConditions,
+        matchConditions: editForm.matchConditions as ActionFrameMatchCondition,
         defaultActions: editForm.defaultActions,
         isActive: true,
         usageCount: 0,

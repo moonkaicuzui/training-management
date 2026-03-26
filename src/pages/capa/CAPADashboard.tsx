@@ -144,211 +144,236 @@ export default function CAPADashboard() {
         </Card>
       )}
 
-      {/* Statistics Cards */}
-      {dashboardStats && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.totalCapa')}</CardTitle>
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('capa.dashboardPage.closedThisMonth', { count: dashboardStats.closedThisMonth })}
-              </p>
-            </CardContent>
-          </Card>
+      <Tabs defaultValue="capa-list">
+        <TabsList>
+          <TabsTrigger value="capa-list">
+            {t('capa.dashboardPage.tabCapaList')}
+          </TabsTrigger>
+          <TabsTrigger value="action-frames">
+            {t('capa.dashboardPage.tabActionFrames')}
+          </TabsTrigger>
+        </TabsList>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.inProgress')}</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {(dashboardStats.byStatus.discovery || 0) +
-                  (dashboardStats.byStatus.investigation || 0) +
-                  (dashboardStats.byStatus.action || 0) +
-                  (dashboardStats.byStatus.verification || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('capa.dashboardPage.overdue', { count: dashboardStats.overdue })}
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="capa-list" className="space-y-6">
+          {/* Statistics Cards */}
+          {dashboardStats && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.totalCapa')}</CardTitle>
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{dashboardStats.total}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('capa.dashboardPage.closedThisMonth', { count: dashboardStats.closedThisMonth })}
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.avgResolutionTime')}</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {t('capa.dashboardPage.days', { count: dashboardStats.averageResolutionDays })}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('capa.dashboardPage.effectivenessRate', { rate: dashboardStats.effectivenessRate })}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.bySeverity')}</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Badge variant="destructive">
-                  {t('capa.severityLabels.critical')}: {dashboardStats.bySeverity.critical || 0}
-                </Badge>
-                <Badge variant="secondary">
-                  {t('capa.severityLabels.major')}: {dashboardStats.bySeverity.major || 0}
-                </Badge>
-                <Badge variant="outline">
-                  {t('capa.severityLabels.minor')}: {dashboardStats.bySeverity.minor || 0}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('capa.dashboardPage.capaList')}</CardTitle>
-          <CardDescription>{t('capa.dashboardPage.capaListDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t('capa.dashboardPage.searchPlaceholder')}
-                className="pl-8"
-                value={searchText}
-                onChange={handleSearchChange}
-              />
-            </div>
-            {/* Using native select to avoid controlled/uncontrolled issues */}
-            <select
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              value={statusFilter}
-              onChange={handleStatusFilterChange}
-            >
-              <option value="all">{t('capa.dashboardPage.allStatus')}</option>
-              {CAPA_STATUSES.map((value) => (
-                <option key={value} value={value}>
-                  {t(`capa.statusLabels.${value}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* CAPA List */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : filteredCAPAs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {capas.length === 0 ? (
-                <>
-                  <ShieldCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{t('capa.dashboardPage.noCapa')}</p>
-                  <Button
-                    variant="link"
-                    onClick={() => navigate('/capa/new')}
-                    className="mt-2"
-                  >
-                    {t('capa.dashboardPage.createFirst')}
-                  </Button>
-                </>
-              ) : (
-                <p>{t('capa.dashboardPage.noResults')}</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredCAPAs.map((capa) => {
-                const StatusIcon = STATUS_ICONS[capa.status];
-                return (
-                  <div
-                    key={capa.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                    onClick={() => navigate(`/capa/${capa.id}`)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-full ${STATUS_COLORS[capa.status]}`}>
-                        <StatusIcon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{capa.capaNumber}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {t(`capa.typeLabels.${capa.type}`)}
-                          </Badge>
-                          <Badge
-                            variant={
-                              capa.severity === 'critical'
-                                ? 'destructive'
-                                : capa.severity === 'major'
-                                ? 'secondary'
-                                : 'outline'
-                            }
-                            className="text-xs"
-                          >
-                            {t(`capa.severityLabels.${capa.severity}`)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {capa.title}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge className={STATUS_COLORS[capa.status]}>
-                        {t(`capa.statusLabels.${capa.status}`)}
-                      </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.inProgress')}</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {(dashboardStats.byStatus.discovery || 0) +
+                      (dashboardStats.byStatus.investigation || 0) +
+                      (dashboardStats.byStatus.action || 0) +
+                      (dashboardStats.byStatus.verification || 0)}
                   </div>
-                );
-              })}
+                  <p className="text-xs text-muted-foreground">
+                    {t('capa.dashboardPage.overdue', { count: dashboardStats.overdue })}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.avgResolutionTime')}</CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {t('capa.dashboardPage.days', { count: dashboardStats.averageResolutionDays })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('capa.dashboardPage.effectivenessRate', { rate: dashboardStats.effectivenessRate })}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('capa.dashboardPage.bySeverity')}</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Badge variant="destructive">
+                      {t('capa.severityLabels.critical')}: {dashboardStats.bySeverity.critical || 0}
+                    </Badge>
+                    <Badge variant="secondary">
+                      {t('capa.severityLabels.major')}: {dashboardStats.bySeverity.major || 0}
+                    </Badge>
+                    <Badge variant="outline">
+                      {t('capa.severityLabels.minor')}: {dashboardStats.bySeverity.minor || 0}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Workflow Status Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('capa.dashboardPage.workflowStatus')}</CardTitle>
-          <CardDescription>{t('capa.dashboardPage.workflowStatusDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {CAPA_STATUSES.map((status) => {
-              const StatusIcon = STATUS_ICONS[status];
-              const count = dashboardStats?.byStatus[status] || 0;
-              return (
-                <div
-                  key={status}
-                  className={`p-4 rounded-lg text-center ${STATUS_COLORS[status]} cursor-pointer hover:opacity-80 transition-opacity`}
-                  onClick={() => setStatusFilter(status)}
-                >
-                  <StatusIcon className="h-6 w-6 mx-auto mb-2" />
-                  <div className="text-2xl font-bold">{count}</div>
-                  <div className="text-xs">{t(`capa.statusLabels.${status}`)}</div>
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('capa.dashboardPage.capaList')}</CardTitle>
+              <CardDescription>{t('capa.dashboardPage.capaListDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 mb-4">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder={t('capa.dashboardPage.searchPlaceholder')}
+                    className="pl-8"
+                    value={searchText}
+                    onChange={handleSearchChange}
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                {/* Using native select to avoid controlled/uncontrolled issues */}
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  value={statusFilter}
+                  onChange={handleStatusFilterChange}
+                >
+                  <option value="all">{t('capa.dashboardPage.allStatus')}</option>
+                  {CAPA_STATUSES.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`capa.statusLabels.${value}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* CAPA List */}
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : filteredCAPAs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {capas.length === 0 ? (
+                    <>
+                      <ShieldCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>{t('capa.dashboardPage.noCapa')}</p>
+                      <Button
+                        variant="link"
+                        onClick={() => navigate('/capa/new')}
+                        className="mt-2"
+                      >
+                        {t('capa.dashboardPage.createFirst')}
+                      </Button>
+                    </>
+                  ) : (
+                    <p>{t('capa.dashboardPage.noResults')}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredCAPAs.map((capa) => {
+                    const StatusIcon = STATUS_ICONS[capa.status];
+                    return (
+                      <div
+                        key={capa.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                        onClick={() => navigate(`/capa/${capa.id}`)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-2 rounded-full ${STATUS_COLORS[capa.status]}`}>
+                            <StatusIcon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{capa.capaNumber}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {t(`capa.typeLabels.${capa.type}`)}
+                              </Badge>
+                              <Badge
+                                variant={
+                                  capa.severity === 'critical'
+                                    ? 'destructive'
+                                    : capa.severity === 'major'
+                                    ? 'secondary'
+                                    : 'outline'
+                                }
+                                className="text-xs"
+                              >
+                                {t(`capa.severityLabels.${capa.severity}`)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {capa.title}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Badge className={STATUS_COLORS[capa.status]}>
+                            {t(`capa.statusLabels.${capa.status}`)}
+                          </Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Workflow Status Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('capa.dashboardPage.workflowStatus')}</CardTitle>
+              <CardDescription>{t('capa.dashboardPage.workflowStatusDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {CAPA_STATUSES.map((status) => {
+                  const StatusIcon = STATUS_ICONS[status];
+                  const count = dashboardStats?.byStatus[status] || 0;
+                  return (
+                    <div
+                      key={status}
+                      className={`p-4 rounded-lg text-center ${STATUS_COLORS[status]} cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={() => setStatusFilter(status)}
+                    >
+                      <StatusIcon className="h-6 w-6 mx-auto mb-2" />
+                      <div className="text-2xl font-bold">{count}</div>
+                      <div className="text-xs">{t(`capa.statusLabels.${status}`)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="action-frames">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              </div>
+            }
+          >
+            <ActionFrameManager />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
