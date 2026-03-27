@@ -148,6 +148,30 @@ const DEFAULT_EMAIL_TYPES: Record<string, EmailTypeConfig> = {
     subjectTemplate: '[Q-TRAIN] Metal Detector FAIL: Factory {{factory}} - {{date}}',
     recipients: { to: [], cc: [] },
   },
+  humidity_monitor_weekly_report: {
+    id: 'humidity_monitor_weekly_report',
+    name: '온도-습도 모니터링 주간 리포트',
+    nameEn: 'Humidity Monitor Weekly Report',
+    category: 'equipment',
+    description: '24/7 온도-습도 모니터링 장치 주간 점검 현황 보고서 (매주 일요일 23:30)',
+    enabled: false,
+    schedule: 'every sunday 23:30',
+    timezone: 'Asia/Ho_Chi_Minh',
+    subjectTemplate: '[Q-TRAIN] 24/7 Humidity Monitor Weekly Report — {{weekRange}}',
+    recipients: { to: ['hsrg_korean@hsvina.com', 'hwk_qa@hsvina.com', 'hwk_qc@hsvina.com'], cc: [] },
+  },
+  mold_prevention_monthly_report: {
+    id: 'mold_prevention_monthly_report',
+    name: '곰팡이 예방 관리 월간 보고서',
+    nameEn: 'Mold Prevention Monthly Report',
+    category: 'equipment',
+    description: '숯박스 관리 & 온도-습도 모니터링 장치 관리 통합 월간 보고서 (매월 1일 07:00)',
+    enabled: false,
+    schedule: '1st day of month 07:00',
+    timezone: 'Asia/Ho_Chi_Minh',
+    subjectTemplate: '[Quality OS] 곰팡이 예방 관리 점검 결과 보고서 : 숯박스 관리 & 온도-습도 모니터링 장치 관리 — {{month}} {{year}}',
+    recipients: { to: ['hsrg_korean@hsvina.com', 'hwk_qa@hsvina.com', 'hwk_qc@hsvina.com'], cc: [] },
+  },
 
   // Inspection & Quality
   inspection_result_summary: {
