@@ -468,6 +468,14 @@
       ]
     },
     {
+      "collectionGroup": "humidity_monitor_devices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "number", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "training_effectiveness",
       "queryScope": "COLLECTION",
       "fields": [

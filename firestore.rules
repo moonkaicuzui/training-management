@@ -518,6 +518,19 @@ service cloud.firestore {
       allow delete: if isAdmin() || isTrainer();
     }
 
+    // ========== 온도-습도 모니터링 장치 ==========
+    match /humidity_monitor_devices/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin() || isTrainer();
+    }
+
+    match /humidity_monitor_inspections/{docId} {
+      allow read: if isAuthenticated() && hasAllowedDomain();
+      allow create, update: if isAuthenticated() && hasAllowedDomain();
+      allow delete: if isAdmin() || isTrainer();
+    }
+
     // ========== TECH / NEW MODEL (신규 모델) ==========
     match /tech_models/{docId} {
       allow read, write: if isAuthenticated() && hasAllowedDomain();
