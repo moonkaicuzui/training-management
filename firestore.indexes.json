@@ -452,6 +452,14 @@
       ]
     },
     {
+      "collectionGroup": "md_failures",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "inspectionId", "order": "ASCENDING" },
+        { "fieldPath": "failureDate", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "trainer_directives",
       "queryScope": "COLLECTION",
       "fields": [
