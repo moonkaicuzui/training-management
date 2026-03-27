@@ -213,8 +213,15 @@ export async function updateFailure(id: string, data: Partial<Omit<MDFailure, 'i
 
 export async function deleteInspection(id: string): Promise<void> {
   try {
-    // 관련 failure 기록도 함께 삭제
-    const failures = await getFailures(id);
+    // 관련 failure 기록도 함께 삭제 (정렬 없이 조회 — 인덱스 불필요)
+    let failures: MDFailure[] = [];
+    try {
+      const q = query(collection(db, FAILURES_COLLECTION), where('inspectionId', '==', id));
+      const snapshot = await getDocs(q);
+      failures = snapshot.docs.map((d) => docToFailure(d.id, d.data() as Record<string, unknown>));
+    } catch (e) {
+      logger.warn('[MDInspectionService] Failed to fetch related failures, proceeding with inspection delete only', e);
+    }
     const batch = writeBatch(db);
     for (const f of failures) {
       batch.delete(doc(db, FAILURES_COLLECTION, f.id));
