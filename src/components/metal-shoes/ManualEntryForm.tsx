@@ -31,6 +31,8 @@ export interface ManualFormData {
 interface ManualEntryFormProps {
   form: ManualFormData;
   setForm: React.Dispatch<React.SetStateAction<ManualFormData>>;
+  defectPhotos: File[];
+  setDefectPhotos: React.Dispatch<React.SetStateAction<File[]>>;
   suppliers: Array<{ id: string; name: string; shortName: string; category: string }>;
   saving: boolean;
   onSupplierChange: (supplierId: string) => void;
@@ -40,6 +42,8 @@ interface ManualEntryFormProps {
 const ManualEntryForm = memo(function ManualEntryForm({
   form,
   setForm,
+  defectPhotos,
+  setDefectPhotos,
   suppliers,
   saving,
   onSupplierChange,
@@ -323,6 +327,41 @@ const ManualEntryForm = memo(function ManualEntryForm({
             rows={2}
             className={inputClass}
           />
+        </div>
+      </div>
+
+      {/* Defect Photos */}
+      <div className="mt-4">
+        <label className="mb-1 block text-xs font-medium text-gray-600">
+          {t('metalShoe.defectPhotos', 'Defect Photos')}
+        </label>
+        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setDefectPhotos((prev) => [...prev, ...Array.from(e.target.files || [])])}
+            className="w-full text-xs text-gray-600"
+          />
+          {defectPhotos.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {defectPhotos.map((file, idx) => (
+                <div key={idx} className="group relative h-16 w-16 overflow-hidden rounded-lg border border-gray-200">
+                  <img src={URL.createObjectURL(file)} alt={file.name} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setDefectPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-1 text-[10px] text-gray-400">
+            {t('metalShoe.defectPhotosHint', 'Upload photos of the metal defect found. These will be included in the action report.')}
+          </p>
         </div>
       </div>
 

@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, X, ClipboardList, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { useToast } from '@/hooks/use-toast';
 import { useMDInspectionStore } from '@/stores/mdInspectionStore';
 import type { FactoryCode, InspectionResult, MDInspection, MDFailure, CAStatus } from '@/types/metalDetector';
 
@@ -78,6 +79,7 @@ export default function MDHistory() {
   const [relatedFailures, setRelatedFailures] = useState<MDFailure[]>([]);
   const [caUpdate, setCAUpdate] = useState({ status: '' as CAStatus | '', description: '' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchInspections(filters);
@@ -121,8 +123,13 @@ export default function MDHistory() {
       if (selectedInspection?.id === id) {
         setSelectedInspection(null);
       }
-    } catch {
-      // error is handled in the store
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message.toLowerCase() : '';
+      const isPermission = errMsg.includes('permission') || errMsg.includes('denied') || errMsg.includes('unauthorized') || errMsg.includes('missing or insufficient');
+      const message = isPermission
+        ? t('metalDetector.history.deletePermissionDenied', 'Permission denied. Only Admin or Trainer can delete records.')
+        : t('metalDetector.history.deleteFailed', 'Failed to delete inspection record. Please try again.');
+      toast({ title: message, variant: 'destructive' });
     }
   };
 

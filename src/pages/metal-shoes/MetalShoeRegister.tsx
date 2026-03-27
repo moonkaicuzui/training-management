@@ -52,6 +52,7 @@ export default function MetalShoeRegister() {
   const [error, setError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<{ count: number } | null>(null);
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
+  const [defectPhotos, setDefectPhotos] = useState<File[]>([]);
 
   const { createCase, createBulkCases, updateCase, fetchSuppliers, suppliers } = useMetalShoeStore(
     useShallow((state) => ({
@@ -86,8 +87,22 @@ export default function MetalShoeRegister() {
     setSuccess(false);
     try {
       const userInfo = { uid: user.id, email: user.email, displayName: user.name };
+
+      // Upload defect photos to Firebase Storage
+      let photoUrls: string[] = [];
+      if (defectPhotos.length > 0) {
+        const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+        const { storage } = await import('../../services/firebase');
+        for (const photo of defectPhotos) {
+          const storageRef = ref(storage, `metal-shoe-defects/${Date.now()}_${photo.name}`);
+          const snap = await uploadBytes(storageRef, photo);
+          const url = await getDownloadURL(snap.ref);
+          photoUrls.push(url);
+        }
+      }
+
       const newCase = await createCase(
-        { ...form, year: 0, month: 0, week: '', weekNumber: 0, status: 'registered', createdBy: userInfo },
+        { ...form, defectPhotos: photoUrls, year: 0, month: 0, week: '', weekNumber: 0, status: 'registered', createdBy: userInfo },
         userInfo
       );
       if (BOTTOM_SUPPLIER_IDS.includes(form.supplierId)) {
@@ -103,6 +118,7 @@ export default function MetalShoeRegister() {
       }
       setSuccess(true);
       setForm(INITIAL_FORM);
+      setDefectPhotos([]);
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.errors.saveFailed'));
@@ -178,6 +194,8 @@ export default function MetalShoeRegister() {
         <ManualEntryForm
           form={form}
           setForm={setForm}
+          defectPhotos={defectPhotos}
+          setDefectPhotos={setDefectPhotos}
           suppliers={suppliers}
           saving={saving}
           onSupplierChange={handleSupplierChange}

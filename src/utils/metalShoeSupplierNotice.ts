@@ -147,6 +147,72 @@ export async function generateSupplierNotice(
     valign: 'middle', align: 'center',
   });
 
+  // ── Slide 5: Evidence & Defect Photos ─────────────────────
+  const allPhotos: { url: string; label: string }[] = [];
+  for (const c of cases) {
+    if (c.defectPhotos?.length) {
+      for (const url of c.defectPhotos) {
+        allPhotos.push({ url, label: `${c.model} - ${c.detectionDate} (Defect)` });
+      }
+    }
+    if (c.actionPlanActions?.length) {
+      for (const action of c.actionPlanActions) {
+        if (action.evidencePhotos?.length) {
+          for (const url of action.evidencePhotos) {
+            allPhotos.push({ url, label: `${c.model} - Action Evidence` });
+          }
+        }
+      }
+    }
+  }
+
+  if (allPhotos.length > 0) {
+    // Fetch images and convert to base64
+    const imageData: { base64: string; label: string }[] = [];
+    for (const photo of allPhotos.slice(0, 12)) { // max 12 photos (3 slides x 4)
+      try {
+        const resp = await fetch(photo.url);
+        const blob = await resp.blob();
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        imageData.push({ base64, label: photo.label });
+      } catch {
+        // skip failed images
+      }
+    }
+
+    // Create slides with 4 images each (2x2 grid)
+    for (let i = 0; i < imageData.length; i += 4) {
+      const photoSlide = pptx.addSlide();
+      photoSlide.addText(i === 0 ? 'Evidence & Defect Photos' : 'Evidence & Defect Photos (cont.)', {
+        x: 0.5, y: 0.3, w: 12.33, h: 0.5,
+        fontSize: 18, color: '1E40AF', bold: true,
+      });
+
+      const batch = imageData.slice(i, i + 4);
+      const positions = [
+        { x: 0.5, y: 1.0 }, { x: 6.7, y: 1.0 },
+        { x: 0.5, y: 4.0 }, { x: 6.7, y: 4.0 },
+      ];
+
+      for (let j = 0; j < batch.length; j++) {
+        const pos = positions[j];
+        photoSlide.addImage({
+          data: batch[j].base64,
+          x: pos.x, y: pos.y, w: 5.8, h: 2.6,
+          sizing: { type: 'contain', w: 5.8, h: 2.6 },
+        });
+        photoSlide.addText(batch[j].label, {
+          x: pos.x, y: pos.y + 2.6, w: 5.8, h: 0.3,
+          fontSize: 8, color: '6B7280', align: 'center',
+        });
+      }
+    }
+  }
+
   // ── Save ───────────────────────────────────────────────────
   const safeName = supplierName.replace(/[^a-zA-Z0-9]/g, '_');
   await pptx.writeFile({ fileName: `Metal_Notice_${safeName}_${weekLabel}_${year}.pptx` });
