@@ -173,7 +173,12 @@
       "msDashboard": "Bảng điều khiển",
       "msRegister": "Đăng ký trường hợp",
       "msTracking": "Theo dõi trường hợp",
-      "msReport": "Báo cáo"
+      "msReport": "Báo cáo",
+      "humidityMonitor": "Nhiệt độ-Độ ẩm",
+      "hmEntry": "Nhập kiểm tra",
+      "hmDashboard": "Bảng giám sát",
+      "hmSettings": "Cài đặt thiết bị",
+      "hmReport": "Báo cáo kiểm tra"
     },
     "inspectorStickers": "Quản lý tem KTV",
     "trainerDirectives": "Chi thi dao tao hang ngay",
@@ -3814,6 +3819,74 @@
       "downloadPptx": "Tải PPTX"
     }
   },
+  "humidityMonitor": {
+    "title": "Thiết bị giám sát nhiệt độ-độ ẩm",
+    "entry": {
+      "title": "Nhập kết quả kiểm tra",
+      "description": "Nhập kết quả kiểm tra thiết bị giám sát nhiệt độ-độ ẩm 24/7",
+      "inspectionDate": "Ngày kiểm tra",
+      "inspector": "Người kiểm tra",
+      "selectDate": "Chọn ngày",
+      "enterInspector": "Nhập tên người kiểm tra",
+      "saveAll": "Lưu tất cả",
+      "saving": "Đang lưu...",
+      "saveSuccess": "Đã lưu kết quả kiểm tra",
+      "saveFailed": "Lưu thất bại",
+      "existingData": "Dữ liệu kiểm tra đã tồn tại. Chuyển sang chế độ chỉnh sửa.",
+      "remarkRequired": "Thiết bị NO OK hoặc thiếu phải nhập ghi chú"
+    },
+    "dashboard": {
+      "title": "Bảng giám sát",
+      "description": "Tình trạng và xu hướng thiết bị giám sát nhiệt độ-độ ẩm 24/7",
+      "totalDevices": "Tổng thiết bị",
+      "okDevices": "Bình thường (OK)",
+      "noOkDevices": "Bất thường (NO OK)",
+      "missingDevices": "Thiếu",
+      "okRate": "Tỷ lệ OK",
+      "lastInspection": "Kiểm tra gần nhất",
+      "inspectionCount": "Tổng số lần kiểm tra",
+      "trendTitle": "Xu hướng tỷ lệ OK",
+      "buildingTitle": "Tình trạng theo tòa nhà",
+      "historyTitle": "Lịch sử kiểm tra",
+      "repeatedTitle": "Khu vực lỗi lặp lại",
+      "consecutiveNoOk": "NO OK liên tiếp {{count}} lần",
+      "noData": "Không có dữ liệu kiểm tra"
+    },
+    "settings": {
+      "title": "Cài đặt thiết bị",
+      "description": "Quản lý khu vực giám sát và thông tin tiêu chuẩn thiết bị",
+      "seedButton": "Đăng ký dữ liệu ban đầu (35 khu vực)",
+      "seedConfirm": "Bạn có muốn đăng ký dữ liệu ban đầu cho 35 khu vực không?",
+      "seedSuccess": "Đã đăng ký {{count}} khu vực",
+      "seedDisabled": "Dữ liệu đã tồn tại",
+      "area": "Khu vực",
+      "building": "Tòa nhà",
+      "targetQuantity": "T.O (Số lượng mục tiêu)",
+      "active": "Hoạt động"
+    },
+    "report": {
+      "title": "Báo cáo kiểm tra",
+      "description": "Báo cáo kết quả kiểm tra theo kỳ và xuất dữ liệu",
+      "dateRange": "Chọn kỳ",
+      "exportExcel": "Xuất Excel",
+      "exportPdf": "Xuất PDF",
+      "noData": "Không có dữ liệu kiểm tra trong kỳ đã chọn"
+    },
+    "table": {
+      "number": "#",
+      "area": "Khu vực",
+      "to": "T.O",
+      "okCount": "SL OK",
+      "noOkCount": "SL NO OK",
+      "totalHave": "Tổng có",
+      "missing": "Thiếu",
+      "status": "Trạng thái",
+      "remark": "Ghi chú",
+      "total": "Tổng",
+      "date": "Ngày",
+      "inspector": "Người kiểm tra"
+    }
+  },
   "inspectorStickers": {
     "title": "Quản lý tem kiểm tra viên",
     "description": "Đăng ký và quản lý ID tem xác thực sản phẩm chính hãng của kiểm tra viên. Theo dõi kiểm tra viên phụ trách từ tem trên sản phẩm lỗi.",
@@ -4020,6 +4093,13 @@
       "addEmailRecipientFailed": "Không thể thêm người nhận email.",
       "updateEmailRecipientFailed": "Không thể cập nhật người nhận email.",
       "removeEmailRecipientFailed": "Không thể xóa người nhận email."
+    },
+    "humidityMonitor": {
+      "fetchDevicesFailed": "Không thể tải dữ liệu khu vực",
+      "fetchInspectionsFailed": "Không thể tải dữ liệu kiểm tra",
+      "createInspectionFailed": "Không thể đăng ký kiểm tra",
+      "updateInspectionFailed": "Không thể cập nhật kiểm tra",
+      "seedFailed": "Không thể đăng ký dữ liệu ban đầu"
     },
     "techModel": {
       "fetchModelsFailed": "Không thể tải dữ liệu mô hình.",

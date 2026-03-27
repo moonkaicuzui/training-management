@@ -279,6 +279,25 @@ export { autoEnrollFromRecommendations } from './fivePrsApi';
 // Factory Line API
 export { getFactoryLines, extractMDFactoryLines } from './factoryLineApi';
 
+// Humidity Monitor API
+export {
+  invalidateHMMonitorCache,
+  getDevices as getHMDevices,
+  createDevice as createHMDevice,
+  updateDevice as updateHMDevice,
+  deleteDevice as deleteHMDevice,
+  seedDevices as seedHMDevices,
+  getInspections as getHMInspections,
+  getInspectionById as getHMInspectionById,
+  createInspection as createHMInspection,
+  updateInspection as updateHMInspection,
+  deleteInspection as deleteHMInspection,
+  getDashboardKPI as getHMDashboardKPI,
+  getTrend as getHMTrend,
+  getBuildingComparison as getHMBuildingComparison,
+  getRepeatedIssues as getHMRepeatedIssues,
+} from './hmMonitorApi';
+
 // Recommendation API (5PRS training recommendations)
 export {
   getRecommendationThresholds,

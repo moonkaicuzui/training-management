@@ -92,6 +92,7 @@ function docToCase(docId: string, data: Record<string, unknown>): MetalShoeCase 
     xrayReceivedDate: (data.xrayReceivedDate as string) || undefined,
     metalConfirm: (data.metalConfirm as MetalShoeCase['metalConfirm']) ?? 'NOT_YET',
     remark: (data.remark as string) || undefined,
+    defectPhotos: (data.defectPhotos as string[]) || undefined,
     isInternalOperation: (data.isInternalOperation as boolean) ?? false,
     returnDashboardIssueId: (data.returnDashboardIssueId as string) || undefined,
     actionPlanDeadline: (data.actionPlanDeadline as string) || undefined,

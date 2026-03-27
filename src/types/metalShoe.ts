@@ -42,6 +42,7 @@ export interface MetalShoeCase {
   metalConfirm: MetalConfirm;
   // 비고
   remark?: string;
+  defectPhotos?: string[];   // Firebase Storage URL 배열 (등록 시 첨부 사진)
   isInternalOperation: boolean;
   // Return Dashboard 연동
   returnDashboardIssueId?: string;

@@ -91,6 +91,12 @@ const MDHistory = lazy(() => import('./pages/metal-detector/MDHistory'));
 const MDReport = lazy(() => import('./pages/metal-detector/MDReport'));
 
 
+// Humidity Monitor (온도-습도 모니터링)
+const HMDashboard = lazy(() => import('./pages/humidity-monitor/HMDashboard'));
+const HMEntry = lazy(() => import('./pages/humidity-monitor/HMEntry'));
+const HMSettings = lazy(() => import('./pages/humidity-monitor/HMSettings'));
+const HMReport = lazy(() => import('./pages/humidity-monitor/HMReport'));
+
 // Metal Shoe Cases (금속 발견 신발)
 const MetalShoeDashboard = lazy(() => import('./pages/metal-shoes/MetalShoeDashboard'));
 const MetalShoeRegister = lazy(() => import('./pages/metal-shoes/MetalShoeRegister'));
@@ -562,6 +568,30 @@ function App() {
                   <Route path="report" element={
                     <Suspense fallback={<PageLoader />}>
                       <MDReport />
+                    </Suspense>
+                  } />
+                </Route>
+
+                {/* Humidity Monitor (온도-습도 모니터링) */}
+                <Route path="equipment/humidity-monitor" element={<ModuleErrorBoundary />}>
+                  <Route index element={
+                    <Suspense fallback={<PageLoader />}>
+                      <HMEntry />
+                    </Suspense>
+                  } />
+                  <Route path="dashboard" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <HMDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="settings" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <HMSettings />
+                    </Suspense>
+                  } />
+                  <Route path="report" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <HMReport />
                     </Suspense>
                   } />
                 </Route>

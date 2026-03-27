@@ -173,7 +173,12 @@
       "msDashboard": "대시보드",
       "msRegister": "케이스 등록",
       "msTracking": "케이스 추적",
-      "msReport": "리포트"
+      "msReport": "리포트",
+      "humidityMonitor": "온도-습도 모니터",
+      "hmEntry": "점검 입력",
+      "hmDashboard": "모니터링 대시보드",
+      "hmSettings": "장치 설정",
+      "hmReport": "점검 리포트"
     },
     "inspectorStickers": "검사원 스티커 관리",
     "trainerDirectives": "트레이너 업무 지시",
@@ -3814,6 +3819,74 @@
       "downloadPptx": "PPTX 다운로드"
     }
   },
+  "humidityMonitor": {
+    "title": "온도-습도 모니터링 장치",
+    "entry": {
+      "title": "점검 결과 입력",
+      "description": "24/7 온도-습도 모니터링 장치의 점검 결과를 입력합니다",
+      "inspectionDate": "점검 일자",
+      "inspector": "점검자",
+      "selectDate": "날짜를 선택하세요",
+      "enterInspector": "점검자 이름을 입력하세요",
+      "saveAll": "일괄 저장",
+      "saving": "저장 중...",
+      "saveSuccess": "점검 결과가 저장되었습니다",
+      "saveFailed": "저장에 실패했습니다",
+      "existingData": "이미 등록된 점검 데이터가 있습니다. 수정 모드로 전환합니다.",
+      "remarkRequired": "비정상 또는 부족 장치는 비고를 입력해야 합니다"
+    },
+    "dashboard": {
+      "title": "모니터링 대시보드",
+      "description": "24/7 온도-습도 모니터링 장치 현황 및 추이",
+      "totalDevices": "총 장치",
+      "okDevices": "정상 (OK)",
+      "noOkDevices": "비정상 (NO OK)",
+      "missingDevices": "부족",
+      "okRate": "정상률",
+      "lastInspection": "최근 점검일",
+      "inspectionCount": "총 점검 횟수",
+      "trendTitle": "정상률 추이",
+      "buildingTitle": "빌딩별 현황",
+      "historyTitle": "점검 이력",
+      "repeatedTitle": "반복 이슈 구역",
+      "consecutiveNoOk": "연속 비정상 {{count}}회",
+      "noData": "점검 데이터가 없습니다"
+    },
+    "settings": {
+      "title": "장치 설정",
+      "description": "모니터링 구역 및 장치 표준 정보를 관리합니다",
+      "seedButton": "초기 데이터 등록 (35개 구역)",
+      "seedConfirm": "35개 구역의 초기 데이터를 등록하시겠습니까?",
+      "seedSuccess": "{{count}}개 구역이 등록되었습니다",
+      "seedDisabled": "이미 등록된 데이터가 있습니다",
+      "area": "구역",
+      "building": "빌딩",
+      "targetQuantity": "T.O (목표 수량)",
+      "active": "활성"
+    },
+    "report": {
+      "title": "점검 리포트",
+      "description": "기간별 점검 결과 리포트 및 내보내기",
+      "dateRange": "기간 선택",
+      "exportExcel": "Excel 내보내기",
+      "exportPdf": "PDF 내보내기",
+      "noData": "선택한 기간에 점검 데이터가 없습니다"
+    },
+    "table": {
+      "number": "#",
+      "area": "구역",
+      "to": "T.O",
+      "okCount": "OK 수량",
+      "noOkCount": "NO OK 수량",
+      "totalHave": "보유 합계",
+      "missing": "부족",
+      "status": "상태",
+      "remark": "비고",
+      "total": "합계",
+      "date": "날짜",
+      "inspector": "검사자"
+    }
+  },
   "inspectorStickers": {
     "title": "검사원 스티커 관리",
     "description": "제품 검사원의 정품 인증 스티커 ID를 등록하고 관리합니다. 불량 제품의 스티커로 담당 검사원을 추적할 수 있습니다.",
@@ -4020,6 +4093,13 @@
       "addEmailRecipientFailed": "이메일 수신자 추가에 실패했습니다.",
       "updateEmailRecipientFailed": "이메일 수신자 수정에 실패했습니다.",
       "removeEmailRecipientFailed": "이메일 수신자 삭제에 실패했습니다."
+    },
+    "humidityMonitor": {
+      "fetchDevicesFailed": "구역 데이터를 불러오는데 실패했습니다",
+      "fetchInspectionsFailed": "점검 데이터를 불러오는데 실패했습니다",
+      "createInspectionFailed": "점검 등록에 실패했습니다",
+      "updateInspectionFailed": "점검 수정에 실패했습니다",
+      "seedFailed": "초기 데이터 등록에 실패했습니다"
     },
     "techModel": {
       "fetchModelsFailed": "모델 데이터를 불러오는데 실패했습니다.",

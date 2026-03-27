@@ -48,6 +48,7 @@ import {
   MessageSquarePlus,
   UserCog,
   Mail,
+  Thermometer,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -159,6 +160,10 @@ const equipmentComplianceItems: NavItem[] = [
   { titleKey: 'nav.equipment.msRegister', href: '/equipment/metal-shoes/register', icon: ClipboardList },
   { titleKey: 'nav.equipment.msTracking', href: '/equipment/metal-shoes/tracking', icon: Search },
   { titleKey: 'nav.equipment.msReport', href: '/equipment/metal-shoes/report', icon: FileBarChart },
+  { titleKey: 'nav.equipment.hmEntry', href: '/equipment/humidity-monitor', icon: Thermometer, subGroupLabel: 'nav.equipment.humidityMonitor' },
+  { titleKey: 'nav.equipment.hmDashboard', href: '/equipment/humidity-monitor/dashboard', icon: LayoutDashboard },
+  { titleKey: 'nav.equipment.hmSettings', href: '/equipment/humidity-monitor/settings', icon: Settings },
+  { titleKey: 'nav.equipment.hmReport', href: '/equipment/humidity-monitor/report', icon: FileBarChart },
 ];
 
 // 9. TECH / NEW MODEL

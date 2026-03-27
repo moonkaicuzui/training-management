@@ -173,7 +173,12 @@
       "msDashboard": "Dashboard",
       "msRegister": "Case Register",
       "msTracking": "Case Tracking",
-      "msReport": "Report"
+      "msReport": "Report",
+      "humidityMonitor": "Temp-Humidity Monitor",
+      "hmEntry": "Inspection Entry",
+      "hmDashboard": "Monitoring Dashboard",
+      "hmSettings": "Device Settings",
+      "hmReport": "Inspection Report"
     },
     "inspectorStickers": "Inspector Stickers",
     "trainerDirectives": "Trainer Directives",
@@ -3814,6 +3819,74 @@
       "downloadPptx": "Download PPTX"
     }
   },
+  "humidityMonitor": {
+    "title": "Temperature-Humidity Monitoring Device",
+    "entry": {
+      "title": "Inspection Result Entry",
+      "description": "Enter inspection results for 24/7 temperature-humidity monitoring devices",
+      "inspectionDate": "Inspection Date",
+      "inspector": "Inspector",
+      "selectDate": "Select a date",
+      "enterInspector": "Enter inspector name",
+      "saveAll": "Save All",
+      "saving": "Saving...",
+      "saveSuccess": "Inspection results have been saved",
+      "saveFailed": "Failed to save",
+      "existingData": "Inspection data already exists. Switching to edit mode.",
+      "remarkRequired": "Remark is required for NO OK or missing devices"
+    },
+    "dashboard": {
+      "title": "Monitoring Dashboard",
+      "description": "24/7 temperature-humidity monitoring device status and trends",
+      "totalDevices": "Total Devices",
+      "okDevices": "OK",
+      "noOkDevices": "NO OK",
+      "missingDevices": "Missing",
+      "okRate": "OK Rate",
+      "lastInspection": "Last Inspection",
+      "inspectionCount": "Total Inspections",
+      "trendTitle": "OK Rate Trend",
+      "buildingTitle": "Status by Building",
+      "historyTitle": "Inspection History",
+      "repeatedTitle": "Repeated Issue Areas",
+      "consecutiveNoOk": "{{count}} consecutive NO OK",
+      "noData": "No inspection data available"
+    },
+    "settings": {
+      "title": "Device Settings",
+      "description": "Manage monitoring areas and device standard information",
+      "seedButton": "Register Initial Data (35 areas)",
+      "seedConfirm": "Do you want to register initial data for 35 areas?",
+      "seedSuccess": "{{count}} areas have been registered",
+      "seedDisabled": "Data already exists",
+      "area": "Area",
+      "building": "Building",
+      "targetQuantity": "T.O (Target Quantity)",
+      "active": "Active"
+    },
+    "report": {
+      "title": "Inspection Report",
+      "description": "Period-based inspection result reports and export",
+      "dateRange": "Date Range",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "noData": "No inspection data for the selected period"
+    },
+    "table": {
+      "number": "#",
+      "area": "Area",
+      "to": "T.O",
+      "okCount": "OK Qty",
+      "noOkCount": "NO OK Qty",
+      "totalHave": "Total Have",
+      "missing": "Missing",
+      "status": "Status",
+      "remark": "Remark",
+      "total": "Total",
+      "date": "Date",
+      "inspector": "Inspector"
+    }
+  },
   "inspectorStickers": {
     "title": "Inspector Sticker Management",
     "description": "Register and manage product inspector authentication sticker IDs. Track responsible inspectors from stickers on defective products.",
@@ -4020,6 +4093,13 @@
       "addEmailRecipientFailed": "Failed to add email recipient.",
       "updateEmailRecipientFailed": "Failed to update email recipient.",
       "removeEmailRecipientFailed": "Failed to remove email recipient."
+    },
+    "humidityMonitor": {
+      "fetchDevicesFailed": "Failed to load area data",
+      "fetchInspectionsFailed": "Failed to load inspection data",
+      "createInspectionFailed": "Failed to register inspection",
+      "updateInspectionFailed": "Failed to update inspection",
+      "seedFailed": "Failed to register initial data"
     },
     "techModel": {
       "fetchModelsFailed": "Failed to load model data.",
