@@ -102,6 +102,25 @@ export default function CaseDetailDialog({
         submittedBy: userEmail,
       });
 
+      // Update local state immediately so user sees the change
+      const newAction = {
+        supplierId: detailCase.supplierId,
+        supplierName: detailCase.supplierName,
+        category: detailCase.component === 'BOTTOM' ? 'bottom' : 'upper',
+        dateSent: new Date().toISOString().split('T')[0],
+        timeTarget: detailCase.actionPlanDeadline || '',
+        actionStatus: 'DONE' as const,
+        actionContent,
+        evidencePhotos: photoUrls,
+        submittedBy: userEmail,
+        actionSubmittedDate: new Date().toISOString().split('T')[0],
+      };
+      setDetailCase((prev) => ({
+        ...prev,
+        actionPlanActions: [...(prev.actionPlanActions || []), newAction],
+        actionPlanStatus: 'submitted' as const,
+      }));
+
       setShowActionForm(false);
       setActionContent('');
       setActionPhotos([]);
@@ -168,6 +187,23 @@ export default function CaseDetailDialog({
           <DetailField label="Metal Confirm" value={detailCase.metalConfirm} />
           <DetailField label="Remark" value={detailCase.remark || '-'} />
         </div>
+
+        {/* Defect Photos */}
+        {detailCase.defectPhotos && detailCase.defectPhotos.length > 0 && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <label className="mb-2 flex items-center gap-1 text-xs font-medium text-gray-600">
+              <Camera className="h-3.5 w-3.5" />
+              {t('metalShoe.defectPhotos', 'Defect Photos')} ({detailCase.defectPhotos.length})
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {detailCase.defectPhotos.map((url, idx) => (
+                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-lg border border-gray-200 hover:ring-2 hover:ring-blue-400">
+                  <img src={url} alt={`Defect ${idx + 1}`} className="h-full w-full object-cover" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Status Change */}
         <div className="mt-4 border-t border-gray-100 pt-4">
