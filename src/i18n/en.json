@@ -3862,7 +3862,10 @@
       "area": "Area",
       "building": "Building",
       "targetQuantity": "T.O (Target Quantity)",
-      "active": "Active"
+      "active": "Active",
+      "actions": "Actions",
+      "empty": "No areas registered",
+      "seedDisabledHint": "Initial data already registered"
     },
     "report": {
       "title": "Inspection Report",
@@ -3885,6 +3888,31 @@
       "total": "Total",
       "date": "Date",
       "inspector": "Inspector"
+    },
+    "kpi": {
+      "totalTarget": "Total Devices",
+      "totalOk": "OK",
+      "totalNoOk": "NO OK",
+      "totalMissing": "Missing",
+      "units": "units",
+      "lastInspection": "Last Inspection"
+    },
+    "building": {
+      "title": "Status by Building",
+      "building": "Building",
+      "missing": "Missing",
+      "okRate": "OK Rate",
+      "label": {
+        "A": "Bldg A", "B": "Bldg B", "C": "Bldg C", "D": "Bldg D", "E": "Bldg E", "OTHER": "Other"
+      }
+    },
+    "history": {
+      "title": "Inspection History",
+      "date": "Date",
+      "okRate": "OK Rate",
+      "missing": "Missing",
+      "inspector": "Inspector",
+      "empty": "No inspection data"
     }
   },
   "inspectorStickers": {

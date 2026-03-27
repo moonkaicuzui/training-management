@@ -3862,7 +3862,10 @@
       "area": "Khu vực",
       "building": "Tòa nhà",
       "targetQuantity": "T.O (Số lượng mục tiêu)",
-      "active": "Hoạt động"
+      "active": "Hoạt động",
+      "actions": "Thao tác",
+      "empty": "Chưa có khu vực nào",
+      "seedDisabledHint": "Dữ liệu ban đầu đã được đăng ký"
     },
     "report": {
       "title": "Báo cáo kiểm tra",
@@ -3885,6 +3888,31 @@
       "total": "Tổng",
       "date": "Ngày",
       "inspector": "Người kiểm tra"
+    },
+    "kpi": {
+      "totalTarget": "Tổng thiết bị",
+      "totalOk": "Bình thường (OK)",
+      "totalNoOk": "Bất thường (NO OK)",
+      "totalMissing": "Thiếu",
+      "units": "thiết bị",
+      "lastInspection": "Kiểm tra gần nhất"
+    },
+    "building": {
+      "title": "Tình trạng theo tòa nhà",
+      "building": "Tòa nhà",
+      "missing": "Thiếu",
+      "okRate": "Tỷ lệ OK",
+      "label": {
+        "A": "Tòa A", "B": "Tòa B", "C": "Tòa C", "D": "Tòa D", "E": "Tòa E", "OTHER": "Khác"
+      }
+    },
+    "history": {
+      "title": "Lịch sử kiểm tra",
+      "date": "Ngày",
+      "okRate": "Tỷ lệ OK",
+      "missing": "Thiếu",
+      "inspector": "Người kiểm tra",
+      "empty": "Không có dữ liệu kiểm tra"
     }
   },
   "inspectorStickers": {

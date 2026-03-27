@@ -3862,7 +3862,10 @@
       "area": "구역",
       "building": "빌딩",
       "targetQuantity": "T.O (목표 수량)",
-      "active": "활성"
+      "active": "활성",
+      "actions": "관리",
+      "empty": "등록된 구역이 없습니다",
+      "seedDisabledHint": "초기 데이터가 이미 등록되어 있습니다"
     },
     "report": {
       "title": "점검 리포트",
@@ -3885,6 +3888,31 @@
       "total": "합계",
       "date": "날짜",
       "inspector": "검사자"
+    },
+    "kpi": {
+      "totalTarget": "총 장치",
+      "totalOk": "정상 (OK)",
+      "totalNoOk": "비정상 (NO OK)",
+      "totalMissing": "부족",
+      "units": "대",
+      "lastInspection": "최근 점검일"
+    },
+    "building": {
+      "title": "빌딩별 현황",
+      "building": "빌딩",
+      "missing": "부족",
+      "okRate": "정상률",
+      "label": {
+        "A": "A동", "B": "B동", "C": "C동", "D": "D동", "E": "E동", "OTHER": "기타"
+      }
+    },
+    "history": {
+      "title": "점검 이력",
+      "date": "날짜",
+      "okRate": "정상률",
+      "missing": "부족",
+      "inspector": "검사자",
+      "empty": "점검 데이터가 없습니다"
     }
   },
   "inspectorStickers": {
